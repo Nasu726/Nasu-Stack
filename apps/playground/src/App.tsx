@@ -89,13 +89,14 @@ function Intro() {
   return (
     <Stack space="sm">
       <h1 className="text-3xl leading-tight sm:text-4xl">
-        余白は選ばせない。
+        余白は迷わせない。
         <br />
         状態は書かせない。
       </h1>
       <ContentBlock width="narrow" align="start">
         <p className="text-sm leading-relaxed text-muted-fg">
-          レイアウトは 9 段階の余白からしか選べないので、配置で迷いません。
+          余白は 9 段階が既定なので配置で迷いません。ただし壁ではなく、
+          段階に無い値もそのまま書けます。
           非同期処理は関数を 1 つ渡すだけで、読込中・成功・失敗・空・二重送信・中断が付いてきます。
           上のスイッチでトンマナを切り替えると、色・角丸・影・書体・余白の広さまで一斉に変わります。
         </p>
