@@ -21,7 +21,10 @@
       `Box` / `Stack` / `Inline` / `Columns` + `Column` / `Tiles` / `Spread` /
       `PageBlock` / `ContentBlock` / `Section` / `Divider`
 - [x] 余白スケール 9 段階。テーマごとに実寸が変わる
-- [x] 画面幅ごとの指定（`space={{ mobile: "sm", tablet: "xl" }}`）
+- [x] **段階外の値も書ける**（`space="13px"` / `"clamp(...)"` / `width="18rem"` /
+      `columns="repeat(auto-fill, minmax(14rem, 1fr))"`）。
+      段階は既定値であって制約ではない
+- [x] 画面幅ごとの指定（`space={{ mobile: "sm", tablet: "3rem" }}`。段階と任意の混在も可）
 - [x] `Columns` は既定でタブレット幅未満に縦へ畳む
 - [x] `ActionDefaults` / `ActionProvider` / `Toast` / `useToast`
 - [x] 二重表示の抑制ルール（画面内に出せているものは通知しない）
@@ -29,11 +32,23 @@
 
 ### v0.2 で踏んだ罠（同じことを繰り返さないための記録）
 
-**余白トークンを Tailwind 標準の `--spacing-*` 名前空間に入れてはいけない。**
+**1. 余白トークンを Tailwind 標準の `--spacing-*` 名前空間に入れてはいけない。**
 `--spacing-sm: 0.75rem` を定義すると `max-w-sm` が 24rem ではなく 0.75rem になります。
 `sm` / `md` / `lg` は t シャツサイズと衝突するためです。
 `@utility gap-* { gap: --value(--space-*); }` の形で独自ユーティリティとして
 定義すれば、標準クラスを一切壊しません。
+
+**2. `@theme` は `static` を付けないと変数が消える。**
+既定の `@theme` は「CSS 内で使われている変数」しか出力しません。
+段階の値をインライン style から `var(--space-3xl)` として参照する設計にすると、
+Tailwind からは未使用に見えて変数ごと削除され、余白が 0 になります。
+`@theme static { ... }` が必須です。
+
+**3. 制約は壁ではなく既定値にする。**
+最初は `space` の型を 9 段階のリテラルに固定しましたが、
+「自由度の確保」という目的と、自分で書いた設計原則②（エスケープハッチを必ず残す）に
+反していました。`SpaceToken | (string & {})` にすることで、
+補完には段階だけを出しつつ任意の値も受けられます。
 
 ## v0.3 — 次
 

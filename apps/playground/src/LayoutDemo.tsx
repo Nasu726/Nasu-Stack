@@ -11,12 +11,12 @@ import {
   Spread,
   Stack,
   Tiles,
-  type Space,
+  type SpaceToken,
 } from "@/components/ui/layout";
 import { ActionButton, Button } from "@/components/ui/action-button";
 import { useToast } from "@/components/ui/action-provider";
 
-const SPACES: Space[] = [
+const SPACES: SpaceToken[] = [
   "none",
   "2xs",
   "xs",
@@ -97,13 +97,15 @@ function Blk({
 function SpaceScale() {
   return (
     <Panel
-      title="余白は 9 段階しかない"
+      title="余白の既定は 9 段階"
       description={
         <>
-          これが全部です。<code className="text-fg">13px</code>{" "}
-          のような値は型の時点で書けません。
-          段階ごとの実際の大きさはテーマで変わるので、
-          上のスイッチを切り替えると幅も変わります。
+          入力補完に出るのはこの 9 つだけなので、迷わずに済みます。
+          ただし壁ではありません。<code className="text-fg">space=&quot;13px&quot;</code>{" "}
+          のように段階に無い値もそのまま書けます（Tailwind の{" "}
+          <code className="text-fg">p-4</code> と{" "}
+          <code className="text-fg">p-[13px]</code> の関係と同じです）。
+          段階ごとの実寸はテーマで変わるので、上のスイッチを切り替えると幅も変わります。
         </>
       }
     >
@@ -120,25 +122,51 @@ function SpaceScale() {
 }
 
 function StackDemo() {
-  const [space, setSpace] = React.useState<Space>("md");
+  const [space, setSpace] = React.useState<string>("md");
+  const [custom, setCustom] = React.useState("13px");
+  const isToken = SPACES.includes(space as SpaceToken);
+
   return (
     <Panel
       title="Stack — 縦に積む"
       description="いちばん使う部品です。子側に margin を書く必要はありません。"
       code={`<Stack space="${space}">\n  <A /> <B /> <C />\n</Stack>`}
     >
-      <Inline space="2xs">
-        {SPACES.map((s) => (
+      <Stack space="xs">
+        <Inline space="2xs">
+          {SPACES.map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              variant={space === s ? "primary" : "outline"}
+              onClick={() => setSpace(s)}
+            >
+              {s}
+            </Button>
+          ))}
+        </Inline>
+
+        <Inline space="xs" alignY="center">
+          <span className="text-xs text-muted-fg">段階に無い値も書けます:</span>
+          <input
+            value={custom}
+            onChange={(e) => {
+              setCustom(e.target.value);
+              setSpace(e.target.value);
+            }}
+            aria-label="任意の余白"
+            className="w-44 rounded-md border border-input bg-card px-2 py-1 text-xs"
+          />
           <Button
-            key={s}
             size="sm"
-            variant={space === s ? "primary" : "outline"}
-            onClick={() => setSpace(s)}
+            variant={!isToken ? "primary" : "outline"}
+            onClick={() => setSpace(custom)}
           >
-            {s}
+            適用
           </Button>
-        ))}
-      </Inline>
+        </Inline>
+      </Stack>
+
       <Stack space={space}>
         <Blk>A</Blk>
         <Blk>B</Blk>
@@ -192,11 +220,8 @@ function ColumnsDemo() {
         </Columns>
 
         <Columns space="md">
-          <Column>
-            <Blk h="h-16">auto</Blk>
-          </Column>
-          <Column>
-            <Blk h="h-16">auto</Blk>
+          <Column width="18rem">
+            <Blk h="h-16">width=&quot;18rem&quot;（段階外）</Blk>
           </Column>
           <Column>
             <Blk h="h-16">auto</Blk>
@@ -211,16 +236,25 @@ function TilesDemo() {
   return (
     <Panel
       title="Tiles — 等間隔グリッド"
-      description="要素数が半端でも崩れません。列数は画面幅ごとに指定できます。"
-      code={`<Tiles columns={{ mobile: 1, tablet: 2, desktop: 3 }} space="md">\n  {items.map((i) => <Card key={i.id} />)}\n</Tiles>`}
+      description="要素数が半端でも崩れません。列数は画面幅ごとに指定できます。列数を決めず、幅で自動的に折り返させることもできます。"
+      code={`<Tiles columns={{ mobile: 2, tablet: 3, desktop: 4 }} space="md" />\n\n// 列数を決めない書き方\n<Tiles columns="repeat(auto-fill, minmax(9rem, 1fr))" space="md" />`}
     >
-      <Tiles columns={{ mobile: 2, tablet: 3, desktop: 4 }} space="md">
-        {Array.from({ length: 7 }).map((_, i) => (
-          <Blk key={i} h="h-16">
-            {i + 1}
-          </Blk>
-        ))}
-      </Tiles>
+      <Stack space="md">
+        <Tiles columns={{ mobile: 2, tablet: 3, desktop: 4 }} space="md">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Blk key={i} h="h-16">
+              {i + 1}
+            </Blk>
+          ))}
+        </Tiles>
+        <Tiles columns="repeat(auto-fill, minmax(9rem, 1fr))" space="sm">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Blk key={i} h="h-12">
+              auto {i + 1}
+            </Blk>
+          ))}
+        </Tiles>
+      </Stack>
     </Panel>
   );
 }

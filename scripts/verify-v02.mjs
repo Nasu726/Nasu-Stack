@@ -16,16 +16,16 @@ const log = (...a) => console.log("·", ...a);
 
 /* --- 1. 余白が本当にトークン由来か --------------------------------- */
 const gaps = await page.evaluate(() => {
-  const el = document.querySelector('[class*="gap-md"]');
+  const el = document.querySelector(".wt-gap");
   const cs = el ? getComputedStyle(el) : null;
   const root = getComputedStyle(document.documentElement);
   return {
-    gapMd: cs?.rowGap,
+    gap: cs?.rowGap,
     tokenMd: root.getPropertyValue("--space-md").trim(),
     tokenXl: root.getPropertyValue("--space-xl").trim(),
   };
 });
-log("gap-md の実測:", gaps.gapMd, "/ --space-md:", gaps.tokenMd);
+log("wt-gap の実測:", gaps.gap, "/ --space-md:", gaps.tokenMd);
 
 /* --- 2. テーマを変えると余白そのものが変わるか --------------------- */
 await page.evaluate(() => {
@@ -75,6 +75,23 @@ const narrow = await columnsDirection(500);
 log(`Columns 方向:  1100px=${wide}  500px=${narrow}  →`, wide === "row" && narrow === "column" ? "自動で畳む ✓" : "✗");
 await page.setViewportSize({ width: 1100, height: 900 });
 await page.waitForTimeout(200);
+
+/* --- 4.5 段階に無い値も書けるか（自由度の確保） -------------------- */
+const custom = page.getByLabel("任意の余白");
+const arbitrary = [];
+for (const v of ["13px", "2.75rem", "clamp(1rem, 5vw, 4rem)"]) {
+  await custom.fill("");
+  await custom.fill(v);
+  await page.waitForTimeout(200);
+  const got = await page.evaluate(() => {
+    const blks = [...document.querySelectorAll("div")].filter(
+      (d) => d.textContent?.trim() === "A" && d.className.includes("bg-accent"),
+    );
+    return blks[0] ? getComputedStyle(blks[0].parentElement).rowGap : null;
+  });
+  arbitrary.push(`${v}→${got}`);
+}
+log("段階外の値:", arbitrary.join("  "));
 
 /* --- 5. Tiles の列数がブレークポイントで変わるか ------------------- */
 async function tilesCols(width) {

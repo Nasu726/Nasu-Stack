@@ -261,7 +261,12 @@
    テーマごとに上書きできるので、「warm は全体的にゆったり」
    のような調整もトンマナの一部として表現できます。
    ============================================================ */
-@theme {
+/*
+ * `static` が必須です。既定の @theme は「CSS 内で使われている変数」しか
+ * 出力しないため、インライン style から var(--space-3xl) を参照する形だと
+ * Tailwind から見て未使用と判断され、変数ごと消えます（実際に踏みました）。
+ */
+@theme static {
   --space-none: 0px;
   --space-2xs: 0.25rem; /*  4px */
   --space-xs: 0.5rem; /*  8px */
@@ -310,6 +315,98 @@
 }
 @utility py-* {
   padding-block: --value(--space-*);
+}
+
+/* ============================================================
+   レイアウト部品の内部実装
+   ------------------------------------------------------------
+   段階の値（"lg"）でも任意の値（"13px"）でも、同じ仕組みで扱うための土台。
+   コンポーネントは CSS 変数を書き込むだけで、
+   段階 / 任意 / 画面幅ごとの指定が全部ここで解決されます。
+
+   utilities レイヤーはこの後に来るので、利用者が className="p-lg" や
+   className="gap-[13px]" を足せば、いつでも上書きできます。
+   ============================================================ */
+@layer components {
+  .wt-gap {
+    gap: var(--wt-gap, 0px);
+  }
+  .wt-p {
+    padding: var(--wt-p, 0px);
+  }
+  .wt-px {
+    padding-inline: var(--wt-px, 0px);
+  }
+  .wt-py {
+    padding-block: var(--wt-py, 0px);
+  }
+  .wt-cols {
+    grid-template-columns: var(--wt-cols, repeat(1, minmax(0, 1fr)));
+  }
+  .wt-maxw {
+    max-width: var(--wt-maxw, none);
+  }
+
+  /* 段組の 1 列。畳んでいる間は必ず全幅、開いたら指定幅。 */
+  .wt-col {
+    min-width: 0;
+    flex: 1 1 0%;
+  }
+  .wt-col--sized {
+    flex: none;
+    width: 100%;
+  }
+  .wt-col--sized.wt-col--always {
+    width: var(--wt-w, auto);
+  }
+
+  @media (min-width: 768px) {
+    .wt-gap {
+      gap: var(--wt-gap-t, var(--wt-gap, 0px));
+    }
+    .wt-p {
+      padding: var(--wt-p-t, var(--wt-p, 0px));
+    }
+    .wt-px {
+      padding-inline: var(--wt-px-t, var(--wt-px, 0px));
+    }
+    .wt-py {
+      padding-block: var(--wt-py-t, var(--wt-py, 0px));
+    }
+    .wt-cols {
+      grid-template-columns: var(
+        --wt-cols-t,
+        var(--wt-cols, repeat(1, minmax(0, 1fr)))
+      );
+    }
+    .wt-col--sized.wt-col--at-tablet {
+      width: var(--wt-w, auto);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .wt-gap {
+      gap: var(--wt-gap-d, var(--wt-gap-t, var(--wt-gap, 0px)));
+    }
+    .wt-p {
+      padding: var(--wt-p-d, var(--wt-p-t, var(--wt-p, 0px)));
+    }
+    .wt-px {
+      padding-inline: var(--wt-px-d, var(--wt-px-t, var(--wt-px, 0px)));
+    }
+    .wt-py {
+      padding-block: var(--wt-py-d, var(--wt-py-t, var(--wt-py, 0px)));
+    }
+    .wt-cols {
+      grid-template-columns: var(
+        --wt-cols-d,
+        var(--wt-cols-t, var(--wt-cols, repeat(1, minmax(0, 1fr))))
+      );
+    }
+    .wt-col--sized.wt-col--at-desktop {
+      width: var(--wt-w, auto);
+    }
+  }
 }
 
 @theme inline {

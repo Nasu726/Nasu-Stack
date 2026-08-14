@@ -64,18 +64,39 @@ type Action<TInput, TOutput> = (
 
 ---
 
-## レイアウト — 余白を選ばせない
+## レイアウト — 迷わせない。でも塞がない
 
 初心者が配置で詰まる原因は、自由度が高すぎることではなく
 **選択肢が無限にあること**です。`8px` か `12px` かは、経験が無いと判断できません。
-ビジュアルエディタでドラッグしても、その判断は必要なままです。
 
-なので値そのものを減らしました。**余白はこの 9 段階しかありません。**
+なので**既定の道を 9 段階に絞りました**。入力補完に出るのはこれだけです。
 
 ```
 none   2xs   xs    sm    md    lg    xl    2xl   3xl
  0      4     8    12    16    24    40    64    96   (px / neutral テーマ)
 ```
+
+ただし**壁ではありません。** 段階に無い値もそのまま書けます。
+Tailwind の `p-4` と `p-[13px]` の関係と同じです。
+
+```tsx
+<Stack space="lg" />                        {/* 推奨。補完が効く */}
+<Stack space="13px" />                      {/* 段階外の値 */}
+<Stack space="clamp(1rem, 4vw, 3rem)" />    {/* 計算式も可 */}
+<Stack space={{ mobile: "sm", tablet: "3rem" }} />  {/* 混在も可 */}
+```
+
+同じ考え方が幅にも通ります。
+
+```tsx
+<Column width="1/3" />       <Column width="18rem" />
+<ContentBlock width="narrow" />   <ContentBlock width="52rem" />
+<Tiles columns={{ tablet: 3 }} />
+<Tiles columns="repeat(auto-fill, minmax(14rem, 1fr))" />
+```
+
+**段階は既定値であって制約ではない**、という位置づけです。
+迷う人には道を示し、分かっている人は踏み外せます。
 
 そして唯一の原則があります。
 
@@ -276,8 +297,8 @@ TypeScript プロジェクトへ展開したうえで `tsc` を通します。
    「乗り換え」ではなく「降りる」形にすること。
 
    ```
-   <ActionButton action={…}>    →  <Button> + useAction()  →  useState / fetch
-   <Stack space="lg">           →  <Box padding={…}>       →  className="…"
+   <ActionButton action={…}>  →  <Button> + useAction()  →  useState / fetch
+   <Stack space="lg">         →  <Stack space="13px">    →  className="gap-[13px]"
    ```
 
 3. **エラーは必ず 1 つの型に揃える。** 何が throw されても `ActionError` になるので、
