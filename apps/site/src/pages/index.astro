@@ -1,0 +1,71 @@
+---
+import Base from "../layouts/Base.astro";
+import { ContactForm } from "../components/ContactForm";
+import { DataList } from "@/components/ui/data-list";
+
+// 静的サイト側は Astro で書き、状態を持つ部分だけ island として React を差し込みます。
+// ページ本体は JS 0 バイトで配信されます。
+---
+
+<Base title="WebTemplate — 静的サイトの例" theme="editorial">
+  <header class="border-b border-border">
+    <nav
+      class="mx-auto flex max-w-2xl items-center justify-between px-5 py-4 text-sm"
+    >
+      <span class="font-display text-base">Studio Nasu</span>
+      <div class="flex gap-5 text-muted-fg">
+        <a href="#works" class="hover:text-fg">Works</a>
+        <a href="#contact" class="hover:text-fg">Contact</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="mx-auto flex max-w-2xl flex-col gap-16 px-5 py-16">
+    <section class="flex flex-col gap-4">
+      <h1 class="text-4xl leading-tight">
+        静的なページは Astro。<br />動く部分だけ React。
+      </h1>
+      <p class="max-w-lg text-sm leading-relaxed text-muted-fg">
+        このページの本文は完全な静的 HTML です。下の 2 箇所だけが island
+        として読み込まれるので、トップの表示は JavaScript を待ちません。
+        トンマナは同じトークンを共有しているため、Astro 側と React
+        側で見た目がずれません。
+      </p>
+    </section>
+
+    <!-- パターン A: 関数を渡せない .astro からは、宣言（ActionSpec）で書く -->
+    <section id="works" class="flex flex-col gap-4">
+      <h2 class="text-2xl">Works</h2>
+      <p class="text-xs text-muted-fg">
+        関数の代わりに <code>{"{ url, method }"}</code> を渡しています。
+        .astro から props は JSON 化されるため、この形なら島に渡せます。
+      </p>
+      <DataList
+        client:load
+        loader={{ url: "/works.json", method: "GET" }}
+        columns={[
+          { key: "title", primary: true },
+          { key: "stack", badge: true },
+          { key: "year", badge: true },
+        ]}
+      />
+    </section>
+
+    <!-- パターン B: 独自ロジックを持つ島は .tsx でラップする -->
+    <section id="contact" class="flex flex-col gap-4">
+      <h2 class="text-2xl">Contact</h2>
+      <p class="text-xs text-muted-fg">
+        独自のバリデーションを持つのでラッパ (.tsx) 経由で読み込んでいます。
+      </p>
+      <div class="max-w-md">
+        <ContactForm client:load />
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-border">
+    <div class="mx-auto max-w-2xl px-5 py-6 text-xs text-muted-fg">
+      Built with WebTemplate — MIT
+    </div>
+  </footer>
+</Base>

@@ -1,0 +1,6 @@
+@import "../../../registry/nasu/lib/theme.css";
+
+/* Tailwind v4 は使われている class をソースから走査します。
+   レジストリのソースは node_modules 外なので明示的に指定します。 */
+@source "../../../registry/nasu";
+@source "../src";

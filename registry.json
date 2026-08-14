@@ -1,0 +1,115 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "nasu",
+  "homepage": "https://github.com/Nasu726/WebTemplate",
+  "items": [
+    {
+      "name": "action",
+      "type": "registry:lib",
+      "title": "Action 契約",
+      "description": "非同期処理の統一契約。エラー正規化と、Astro island 用のシリアライズ可能な ActionSpec を含みます。",
+      "files": [
+        { "path": "registry/nasu/lib/action.ts", "type": "registry:lib", "target": "lib/action.ts" }
+      ]
+    },
+    {
+      "name": "utils",
+      "type": "registry:lib",
+      "title": "cn ヘルパ",
+      "description": "Tailwind のクラス結合ユーティリティ。",
+      "dependencies": ["clsx", "tailwind-merge"],
+      "files": [
+        { "path": "registry/nasu/lib/utils.ts", "type": "registry:lib", "target": "lib/utils.ts" }
+      ]
+    },
+    {
+      "name": "theme",
+      "type": "registry:theme",
+      "title": "トンマナ 4 種",
+      "description": "neutral / warm / editorial / vivid。色だけでなく角丸・影・書体まで一括で切り替わります。",
+      "files": [
+        { "path": "registry/nasu/lib/theme.css", "type": "registry:file", "target": "styles/theme.css" }
+      ]
+    },
+    {
+      "name": "use-action",
+      "type": "registry:hook",
+      "title": "useAction",
+      "description": "書き込み系の非同期処理。二重送信防止・中断・自動リトライ・成功状態の自動リセットを内蔵。",
+      "registryDependencies": ["@nasu/action"],
+      "files": [
+        { "path": "registry/nasu/hooks/use-action.ts", "type": "registry:hook", "target": "hooks/use-action.ts" }
+      ]
+    },
+    {
+      "name": "use-resource",
+      "type": "registry:hook",
+      "title": "useResource",
+      "description": "読み取り系の非同期処理。依存キーの変化で再取得し、アンマウント時に中断します。",
+      "registryDependencies": ["@nasu/action"],
+      "files": [
+        { "path": "registry/nasu/hooks/use-resource.ts", "type": "registry:hook", "target": "hooks/use-resource.ts" }
+      ]
+    },
+    {
+      "name": "spinner",
+      "type": "registry:ui",
+      "title": "アイコン",
+      "description": "Spinner / CheckIcon / AlertIcon。",
+      "registryDependencies": ["@nasu/utils"],
+      "files": [
+        { "path": "registry/nasu/components/ui/spinner.tsx", "type": "registry:ui", "target": "components/ui/spinner.tsx" }
+      ]
+    },
+    {
+      "name": "action-button",
+      "type": "registry:ui",
+      "title": "ActionButton",
+      "description": "関数を渡すだけで idle/pending/success/error の 4 状態を持つボタン。連打防止と確認ダイアログつき。",
+      "registryDependencies": ["@nasu/use-action", "@nasu/spinner", "@nasu/utils"],
+      "files": [
+        { "path": "registry/nasu/components/ui/action-button.tsx", "type": "registry:ui", "target": "components/ui/action-button.tsx" }
+      ]
+    },
+    {
+      "name": "async-boundary",
+      "type": "registry:ui",
+      "title": "AsyncBoundary",
+      "description": "読込中 / エラー / 空 / データありの 4 分岐を 1 箇所に閉じ込めます。スケルトン同梱。",
+      "registryDependencies": ["@nasu/action", "@nasu/action-button", "@nasu/spinner"],
+      "files": [
+        { "path": "registry/nasu/components/ui/async-boundary.tsx", "type": "registry:ui", "target": "components/ui/async-boundary.tsx" }
+      ]
+    },
+    {
+      "name": "async-form",
+      "type": "registry:block",
+      "title": "AsyncForm + Field",
+      "description": "送信関数を 1 つ渡すだけのフォーム。フィールド単位のエラー表示と、打ち直しでの自動クリアつき。",
+      "registryDependencies": ["@nasu/use-action", "@nasu/action-button", "@nasu/spinner"],
+      "files": [
+        { "path": "registry/nasu/components/ui/async-form.tsx", "type": "registry:ui", "target": "components/ui/async-form.tsx" }
+      ]
+    },
+    {
+      "name": "data-list",
+      "type": "registry:block",
+      "title": "DataList",
+      "description": "取得・スケルトン・空状態・再試行つきのリスト。columns 指定で関数なし（Astro island）でも使えます。",
+      "registryDependencies": ["@nasu/use-resource", "@nasu/async-boundary"],
+      "files": [
+        { "path": "registry/nasu/components/ui/data-list.tsx", "type": "registry:ui", "target": "components/ui/data-list.tsx" }
+      ]
+    },
+    {
+      "name": "theme-provider",
+      "type": "registry:block",
+      "title": "ThemeProvider + ThemeSwitcher",
+      "description": "data-theme と .dark を付け替えるだけでトンマナ一式を切り替えます。初期描画のちらつき防止スクリプト同梱。",
+      "registryDependencies": ["@nasu/theme", "@nasu/utils"],
+      "files": [
+        { "path": "registry/nasu/components/ui/theme-provider.tsx", "type": "registry:ui", "target": "components/ui/theme-provider.tsx" }
+      ]
+    }
+  ]
+}

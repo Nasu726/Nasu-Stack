@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+public/r/
+*.log
+.DS_Store
+
+.verify-install/
