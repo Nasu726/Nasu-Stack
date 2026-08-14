@@ -16,7 +16,7 @@ execFileSync(
     "--exclude=node_modules",
     "--exclude=dist",
     "--exclude=.astro",
-    "--exclude=.git",
+    "--exclude=.verify-install",
     "-C",
     parent,
     name,
