@@ -32,11 +32,51 @@
       ]
     },
     {
+      "name": "action-defaults",
+      "type": "registry:lib",
+      "title": "ActionDefaults コンテキスト",
+      "description": "onError を書かなかったアクションの受け皿。ActionProvider が値を供給します。",
+      "registryDependencies": ["@nasu/action"],
+      "files": [
+        { "path": "registry/nasu/lib/action-defaults.ts", "type": "registry:lib", "target": "lib/action-defaults.ts" }
+      ]
+    },
+    {
+      "name": "layout",
+      "type": "registry:block",
+      "title": "レイアウト・プリミティブ",
+      "description": "Box / Stack / Inline / Columns / Tiles / Spread / PageBlock / ContentBlock / Section / Divider。余白は 9 段階からしか選べず、コンポーネントは外側の余白を持ちません。",
+      "registryDependencies": ["@nasu/utils", "@nasu/theme"],
+      "files": [
+        { "path": "registry/nasu/components/ui/layout.tsx", "type": "registry:ui", "target": "components/ui/layout.tsx" }
+      ]
+    },
+    {
+      "name": "toast",
+      "type": "registry:block",
+      "title": "Toast",
+      "description": "画面隅の通知。ToastProvider + useToast。tone / 自動消去 / アクションボタン / スクリーンリーダー対応つき。",
+      "registryDependencies": ["@nasu/layout", "@nasu/spinner", "@nasu/utils"],
+      "files": [
+        { "path": "registry/nasu/components/ui/toast.tsx", "type": "registry:ui", "target": "components/ui/toast.tsx" }
+      ]
+    },
+    {
+      "name": "action-provider",
+      "type": "registry:block",
+      "title": "ActionProvider",
+      "description": "アプリの一番外側に 1 回置くだけ。onError を書き忘れたアクションの失敗が握り潰されず、画面隅の通知になります。",
+      "registryDependencies": ["@nasu/action-defaults", "@nasu/toast"],
+      "files": [
+        { "path": "registry/nasu/components/ui/action-provider.tsx", "type": "registry:ui", "target": "components/ui/action-provider.tsx" }
+      ]
+    },
+    {
       "name": "use-action",
       "type": "registry:hook",
       "title": "useAction",
       "description": "書き込み系の非同期処理。二重送信防止・中断・自動リトライ・成功状態の自動リセットを内蔵。",
-      "registryDependencies": ["@nasu/action"],
+      "registryDependencies": ["@nasu/action", "@nasu/action-defaults"],
       "files": [
         { "path": "registry/nasu/hooks/use-action.ts", "type": "registry:hook", "target": "hooks/use-action.ts" }
       ]
@@ -66,7 +106,7 @@
       "type": "registry:ui",
       "title": "ActionButton",
       "description": "関数を渡すだけで idle/pending/success/error の 4 状態を持つボタン。連打防止と確認ダイアログつき。",
-      "registryDependencies": ["@nasu/use-action", "@nasu/spinner", "@nasu/utils"],
+      "registryDependencies": ["@nasu/use-action", "@nasu/action-defaults", "@nasu/spinner", "@nasu/utils"],
       "files": [
         { "path": "registry/nasu/components/ui/action-button.tsx", "type": "registry:ui", "target": "components/ui/action-button.tsx" }
       ]
@@ -86,7 +126,7 @@
       "type": "registry:block",
       "title": "AsyncForm + Field",
       "description": "送信関数を 1 つ渡すだけのフォーム。フィールド単位のエラー表示と、打ち直しでの自動クリアつき。",
-      "registryDependencies": ["@nasu/use-action", "@nasu/action-button", "@nasu/spinner"],
+      "registryDependencies": ["@nasu/use-action", "@nasu/action-defaults", "@nasu/action-button", "@nasu/spinner"],
       "files": [
         { "path": "registry/nasu/components/ui/async-form.tsx", "type": "registry:ui", "target": "components/ui/async-form.tsx" }
       ]

@@ -252,7 +252,71 @@
 /* ============================================================
    Tailwind へトークンを公開
    ============================================================ */
+/* ============================================================
+   余白スケール（レイアウト部品が使う唯一の値の集合）
+   ------------------------------------------------------------
+   ここに無い値は使えません。それが狙いです。
+   利用者が 13px か 14px かで悩む余地を、構造的に消しています。
+
+   テーマごとに上書きできるので、「warm は全体的にゆったり」
+   のような調整もトンマナの一部として表現できます。
+   ============================================================ */
+@theme {
+  --space-none: 0px;
+  --space-2xs: 0.25rem; /*  4px */
+  --space-xs: 0.5rem; /*  8px */
+  --space-sm: 0.75rem; /* 12px */
+  --space-md: 1rem; /* 16px */
+  --space-lg: 1.5rem; /* 24px */
+  --space-xl: 2.5rem; /* 40px */
+  --space-2xl: 4rem; /* 64px */
+  --space-3xl: 6rem; /* 96px */
+}
+
+:root {
+  /* ページ幅 */
+  --width-narrow: 44rem; /* 読み物向け */
+  --width-content: 64rem; /* 標準 */
+  --width-wide: 80rem; /* 広め */
+}
+
+/* warm は全体をゆったりめに、editorial は詰めぎみに */
+[data-theme="warm"] {
+  --space-xl: 3rem;
+  --space-2xl: 5rem;
+  --space-3xl: 7rem;
+}
+[data-theme="editorial"] {
+  --width-content: 56rem;
+  --space-3xl: 5rem;
+}
+
+/**
+ * 余白のユーティリティ。
+ *
+ * ここを `--spacing-md` のような Tailwind 標準の名前空間に入れてはいけません。
+ * `sm` / `md` / `lg` は `max-w-sm` などが使う t シャツサイズと衝突し、
+ * `max-w-sm` が 24rem ではなく 0.75rem になってしまいます（実際に踏みました）。
+ * 独自ユーティリティとして定義することで、標準のクラスを一切壊しません。
+ */
+@utility gap-* {
+  gap: --value(--space-*);
+}
+@utility p-* {
+  padding: --value(--space-*);
+}
+@utility px-* {
+  padding-inline: --value(--space-*);
+}
+@utility py-* {
+  padding-block: --value(--space-*);
+}
+
 @theme inline {
+  --container-narrow: var(--width-narrow);
+  --container-content: var(--width-content);
+  --container-wide: var(--width-wide);
+
   --color-bg: var(--bg);
   --color-fg: var(--fg);
   --color-card: var(--card);

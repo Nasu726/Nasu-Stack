@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { type ActionSpec, resolveAction } from "@/lib/action";
+import { useActionDefaults } from "@/lib/action-defaults";
 import { useAction, type UseActionOptions } from "@/hooks/use-action";
 import { Button } from "@/components/ui/action-button";
 import { AlertIcon, CheckIcon, Spinner } from "@/components/ui/spinner";
@@ -80,6 +81,7 @@ export function AsyncForm<TOutput = unknown>({
 }: AsyncFormProps<TOutput>) {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [cleared, setCleared] = React.useState<Set<string>>(new Set());
+  const defaults = useActionDefaults();
 
   const resolved = React.useMemo(
     () => resolveAction<Record<string, FormDataEntryValue>, TOutput>(action),
@@ -92,7 +94,16 @@ export function AsyncForm<TOutput = unknown>({
       if (resetOnSuccess) formRef.current?.reset();
       onSuccess?.(data, input);
     },
-    onError,
+    // フィールド単位で画面内に出せるエラー（入力ミス等）は通知しない。
+    // それ以外（通信断・サーバー障害など）は ActionProvider へ流して、
+    // フォームが画面外にあっても気づけるようにする。
+    onError:
+      onError ??
+      ((error) => {
+        const hasFieldErrors =
+          error.fields && Object.keys(error.fields).length > 0;
+        if (!hasFieldErrors) defaults.onError?.(error);
+      }),
     onSettled,
     resetAfter,
     retry,

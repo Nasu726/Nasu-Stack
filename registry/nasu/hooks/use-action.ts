@@ -9,6 +9,7 @@ import {
   type AsyncStatus,
   toActionError,
 } from "@/lib/action";
+import { useActionDefaults } from "@/lib/action-defaults";
 
 export interface UseActionOptions<TInput, TOutput> {
   /** 成功時に呼ばれます。 */
@@ -68,24 +69,19 @@ export function useAction<TInput = void, TOutput = unknown>(
   action: Action<TInput, TOutput>,
   options: UseActionOptions<TInput, TOutput> = {},
 ): UseActionResult<TInput, TOutput> {
-  const {
-    onSuccess,
-    onError,
-    onSettled,
-    resetAfter = 2000,
-    retry = 0,
-    retryDelay = 500,
-    guard,
-  } = options;
-
   const [state, setState] =
     React.useState<InternalState<TOutput>>(INITIAL as InternalState<TOutput>);
+
+  // ActionProvider があればその既定値を、無ければ空を受け取る
+  const defaults = useActionDefaults();
 
   // 再レンダリングのたびに action が新しい関数になっても再実行されないよう ref に逃がす
   const actionRef = React.useRef(action);
   actionRef.current = action;
   const optionsRef = React.useRef(options);
   optionsRef.current = options;
+  const defaultsRef = React.useRef(defaults);
+  defaultsRef.current = defaults;
 
   const abortRef = React.useRef<AbortController | null>(null);
   const inFlightRef = React.useRef(false);
@@ -128,6 +124,7 @@ export function useAction<TInput = void, TOutput = unknown>(
       if (inFlightRef.current) return undefined;
 
       const opts = optionsRef.current;
+      const dflt = defaultsRef.current;
 
       if (opts.guard) {
         const ok = await opts.guard(input);
@@ -140,7 +137,7 @@ export function useAction<TInput = void, TOutput = unknown>(
       abortRef.current = controller;
       inFlightRef.current = true;
 
-      const maxAttempts = (opts.retry ?? 0) + 1;
+      const maxAttempts = (opts.retry ?? dflt.retry ?? 0) + 1;
       let lastError: ActionError | undefined;
 
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -157,10 +154,12 @@ export function useAction<TInput = void, TOutput = unknown>(
 
           inFlightRef.current = false;
           safeSet({ status: "success", data, error: undefined });
-          opts.onSuccess?.(data, input);
+          // 個別指定が優先。無ければ ActionProvider の既定へ委ねる
+          if (opts.onSuccess) opts.onSuccess(data, input);
+          else dflt.onSuccess?.(data);
           opts.onSettled?.();
 
-          const after = opts.resetAfter ?? 2000;
+          const after = opts.resetAfter ?? dflt.resetAfter ?? 2000;
           if (after > 0) {
             resetTimerRef.current = setTimeout(() => {
               safeSet({ status: "idle" });
@@ -195,7 +194,13 @@ export function useAction<TInput = void, TOutput = unknown>(
 
       inFlightRef.current = false;
       safeSet({ status: "error", error: lastError });
-      if (lastError) opts.onError?.(lastError, input);
+      if (lastError) {
+        // 個別に onError を書いていればそちら。書いていなければ
+        // ActionProvider の既定（通常は画面隅の通知）へ流す。
+        // これで「エラー処理の書き忘れ」が握り潰されなくなります。
+        if (opts.onError) opts.onError(lastError, input);
+        else dflt.onError?.(lastError);
+      }
       opts.onSettled?.();
       return undefined;
     },

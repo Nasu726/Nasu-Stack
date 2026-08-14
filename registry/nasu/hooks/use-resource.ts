@@ -104,7 +104,11 @@ export function useResource<TOutput>(
 
       if (cancelled) return;
       setState((s) => ({ ...s, status: "error", error: lastError }));
-      if (lastError) optionsRef.current.onError?.(lastError);
+      if (lastError) {
+        // AsyncBoundary が画面内にエラーと再試行を出すので、
+        // 取得失敗は既定では通知を出しません（二重表示を避けるため）。
+        if (optionsRef.current.onError) optionsRef.current.onError(lastError);
+      }
     })();
 
     return () => {

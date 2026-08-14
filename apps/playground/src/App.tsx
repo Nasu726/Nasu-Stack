@@ -5,19 +5,39 @@ import { DataList } from "@/components/ui/data-list";
 import { AsyncBoundary } from "@/components/ui/async-boundary";
 import { ThemeSwitcher, useTheme } from "@/components/ui/theme-provider";
 import { useAction } from "@/hooks/use-action";
+import {
+  ContentBlock,
+  Inline,
+  PageBlock,
+  Spread,
+  Stack,
+} from "@/components/ui/layout";
+import { LayoutDemo } from "./LayoutDemo";
 import * as api from "./fake-api";
 
+type Tab = "layout" | "state";
+
 export function App() {
+  const [tab, setTab] = React.useState<Tab>("layout");
+
   return (
     <div className="min-h-dvh bg-bg text-fg">
-      <Header />
-      <main className="mx-auto flex max-w-3xl flex-col gap-12 px-5 pb-24 pt-10">
-        <Intro />
-        <ButtonSection />
-        <FormSection />
-        <ListSection />
-        <AbortSection />
-      </main>
+      <Header tab={tab} onTab={setTab} />
+      <PageBlock width="content" gutter="md" as="main" className="pb-3xl pt-xl">
+        <Stack space="3xl">
+          <Intro />
+          {tab === "layout" ? (
+            <LayoutDemo />
+          ) : (
+            <Stack space="3xl">
+              <ButtonSection />
+              <FormSection />
+              <ListSection />
+              <AbortSection />
+            </Stack>
+          )}
+        </Stack>
+      </PageBlock>
       <Footer />
     </div>
   );
@@ -25,35 +45,62 @@ export function App() {
 
 /* ---------------------------------------------------------------- */
 
-function Header() {
+function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
   const { theme } = useTheme();
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-bg/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 px-5 py-3">
-        <div className="flex items-baseline gap-2">
-          <span className="font-display text-lg">WebTemplate</span>
-          <span className="text-xs text-muted-fg">/ {theme}</span>
-        </div>
-        <ThemeSwitcher />
-      </div>
+      <PageBlock width="content" gutter="md" className="py-sm">
+        <Spread space="sm">
+          <Inline space="sm" alignY="baseline">
+            <span className="font-display text-lg">WebTemplate</span>
+            <span className="text-xs text-muted-fg">/ {theme}</span>
+          </Inline>
+          <Inline space="sm">
+            <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
+              {(
+                [
+                  ["layout", "レイアウト"],
+                  ["state", "状態"],
+                ] as const
+              ).map(([k, label]) => (
+                <button
+                  key={k}
+                  onClick={() => onTab(k)}
+                  aria-pressed={tab === k}
+                  className={
+                    tab === k
+                      ? "rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-fg"
+                      : "rounded-md px-2.5 py-1 text-xs font-medium text-muted-fg hover:bg-muted hover:text-fg"
+                  }
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <ThemeSwitcher />
+          </Inline>
+        </Spread>
+      </PageBlock>
     </header>
   );
 }
 
 function Intro() {
   return (
-    <section className="flex flex-col gap-3 pt-4">
+    <Stack space="sm">
       <h1 className="text-3xl leading-tight sm:text-4xl">
-        関数をひとつ渡すだけで、
+        余白は選ばせない。
         <br />
-        状態のあるUIが完成する。
+        状態は書かせない。
       </h1>
-      <p className="max-w-xl text-sm leading-relaxed text-muted-fg">
-        読込中・成功・失敗・空・二重送信・中断。
-        これらを毎回書くのをやめるためのコンポーネント群です。
-        上のスイッチでトンマナを切り替えると、色だけでなく角丸・影・書体まで一斉に変わります。
-      </p>
-    </section>
+      <ContentBlock width="narrow" align="start">
+        <p className="text-sm leading-relaxed text-muted-fg">
+          レイアウトは 9 段階の余白からしか選べないので、配置で迷いません。
+          非同期処理は関数を 1 つ渡すだけで、読込中・成功・失敗・空・二重送信・中断が付いてきます。
+          上のスイッチでトンマナを切り替えると、色・角丸・影・書体・余白の広さまで一斉に変わります。
+        </p>
+      </ContentBlock>
+    </Stack>
   );
 }
 
@@ -304,9 +351,9 @@ function AbortSection() {
 function Footer() {
   return (
     <footer className="border-t border-border">
-      <div className="mx-auto max-w-3xl px-5 py-6 text-xs text-muted-fg">
-        WebTemplate — MIT License
-      </div>
+      <PageBlock width="content" gutter="md" className="py-lg">
+        <p className="text-xs text-muted-fg">WebTemplate — MIT License</p>
+      </PageBlock>
     </footer>
   );
 }

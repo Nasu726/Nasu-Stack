@@ -11,6 +11,9 @@ page.on("console", (m) => {
 });
 
 await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
+// カタログは「レイアウト」タブが既定なので、状態のデモへ切り替える
+await page.getByRole("button", { name: "状態", exact: true }).click();
+await page.waitForTimeout(300);
 
 const log = (...a) => console.log("·", ...a);
 

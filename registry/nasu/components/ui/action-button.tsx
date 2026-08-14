@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { type ActionSpec, resolveAction } from "@/lib/action";
+import { useActionDefaults } from "@/lib/action-defaults";
 import { useAction, type UseActionOptions } from "@/hooks/use-action";
 import { AlertIcon, CheckIcon, Spinner } from "@/components/ui/spinner";
 
@@ -94,7 +95,12 @@ export interface ActionButtonProps<TInput, TOutput>
   children?: React.ReactNode;
   /** 押す前に確認ダイアログを出す文言。指定すると確認してから実行します。 */
   confirm?: string;
-  /** エラー時にボタン下へメッセージを表示するか。既定 true。 */
+  /**
+   * エラー時にボタン下へメッセージを表示するか。既定 true。
+   *
+   * true のときは画面内に出るので、ActionProvider の通知は出しません（二重表示を避けるため）。
+   * false にすると ActionProvider へ委ね、画面隅の通知だけになります。
+   */
   showError?: boolean;
 }
 
@@ -139,9 +145,15 @@ export function ActionButton<TInput = void, TOutput = unknown>({
     [typeof action === "function" ? action : JSON.stringify(action)],
   );
 
+  const defaults = useActionDefaults();
+
   const state = useAction<TInput, TOutput>(resolved, {
     onSuccess,
-    onError,
+    // showError=true のときは自分で画面内に出すので、通知は出さない。
+    // 明示的に onError を書いていればそれが最優先。
+    onError:
+      onError ??
+      (showError ? () => {} : (e) => defaults.onError?.(e)),
     onSettled,
     resetAfter,
     retry,
