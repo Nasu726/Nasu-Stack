@@ -71,7 +71,7 @@ const CASES = [
 const WIDTHS = [320, 375, 768];
 
 const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  executablePath: process.env.CHROMIUM_PATH || undefined,
 });
 
 const rows = [];

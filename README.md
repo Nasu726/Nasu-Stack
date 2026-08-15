@@ -41,7 +41,7 @@
 
 ```
 ┌─────────────────────────────────────────┐
-│  トンマナ層   theme.css                  │  ← 色・角丸・影・書体・余白を data-theme で切替
+│  トンマナ層  tokens.css + themes.css      │  ← 色・角丸・影・書体・余白を data-theme で切替
 ├─────────────────────────────────────────┤
 │  レイアウト層  Stack / Columns / Tiles   │  ← 余白は 9 段階のみ。外側の余白は部品が持たない
 ├─────────────────────────────────────────┤
@@ -90,7 +90,7 @@ Tailwind の `p-4` と `p-[13px]` の関係と同じです。
 
 ```tsx
 <Column width="1/3" />       <Column width="18rem" />
-<ContentBlock width="narrow" />   <ContentBlock width="52rem" />
+<ContentBlock width="prose" />    <ContentBlock width="52rem" />
 <Tiles columns={{ tablet: 3 }} />
 <Tiles columns="repeat(auto-fill, minmax(14rem, 1fr))" />
 ```
@@ -128,10 +128,10 @@ Tailwind の `p-4` と `p-[13px]` の関係と同じです。
 | 部品 | 役割 |
 |---|---|
 | `PageBlock` | ページの外枠。最大幅 + 左右の余白 |
-| `ContentBlock` | 中身の最大幅だけ（本文は `width="narrow"`） |
+| `ContentBlock` | 中身の最大幅だけ（本文は `width="prose"`） |
 | `Section` | ページ 1 区画。上下のリズムを統一 |
 | `Stack` | 縦に等間隔で積む（最頻出） |
-| `Inline` | 横に並べて、入り切らなければ折り返す |
+| `Inline` | 横に並べて折り返す（`wrap={false}` なら横スクロール） |
 | `Columns` / `Column` | 段組。既定でタブレット幅未満は縦に畳む |
 | `Tiles` | 等間隔グリッド。要素数が半端でも崩れない |
 | `Spread` | 両端に寄せる |
@@ -141,6 +141,27 @@ Tailwind の `p-4` と `p-[13px]` の関係と同じです。
 
 段階ごとの実寸はテーマで変わります（`warm` は広め、`editorial` は詰めぎみ）。
 つまり**余白の広さもトンマナの一部**です。
+
+### 自分のテーマを作る
+
+`tokens.css` の `:root` に並んでいる変数を、別のセレクタで上書きするだけです。
+
+```css
+[data-theme="mybrand"] {
+  --bg: oklch(0.99 0 0);
+  --fg: oklch(0.2 0 0);
+  --primary: oklch(0.55 0.2 150);
+  --primary-fg: oklch(0.99 0 0);
+  /* …一覧は tokens.css の :root を参照（25 個） */
+
+  --radius: 0.5rem;                 /* 角丸 */
+  --font-display: "Your Font", serif; /* 見出しの書体 */
+  --space-3xl: 8rem;                /* 余白の広さもテーマの一部 */
+}
+[data-theme="mybrand"].dark { /* 暗い版 */ }
+```
+
+`themes.css` を読み込まなければ、既定の neutral と自分のテーマだけになります。
 
 本文の幅には `width="prose"` を使ってください。**em 単位なので文字サイズに追従し**、
 小さい文字なら幅も自動的に狭まって、1 行の字数が一定に保たれます（和文で 40 字前後）。
@@ -223,7 +244,8 @@ npx shadcn@latest add https://<あなたのホスト>/r/action-button.json
 
 ```css
 /* src/index.css */
-@import "./styles/theme.css";
+@import "./styles/tokens.css";   /* 土台 + 既定テーマ。これだけで動きます */
+@import "./styles/themes.css";   /* 追加の 3 テーマ。不要なら省略可 */
 ```
 
 ```html
@@ -307,8 +329,10 @@ import { DataList } from "@/ui/data-list";
 registry/nasu/                ← 配布されるソース。ここが本体
   lib/action.ts                 契約・エラー正規化・ActionSpec
   lib/action-defaults.ts        既定のエラー処理を配るコンテキスト
-  lib/theme.css                 トンマナ 4 種 + 余白スケール
+  lib/tokens.css                余白・幅・ユーティリティ・壊れない土台・既定テーマ
+  lib/themes.css                追加テーマ 3 種（差し替え・追加が前提）
   lib/utils.ts                  cn()
+  scripts/check-responsive.mjs  端末幅チェック（利用者にも配られます）
   hooks/use-action.ts           書き込み系
   hooks/use-resource.ts         読み取り系
   components/ui/layout.tsx      レイアウト・プリミティブ
@@ -340,13 +364,23 @@ pnpm build        # 両方ビルド + レジストリ生成
 ### 動作確認
 
 ```bash
-node scripts/build-registry.mjs   # public/r/*.json を生成
-node scripts/verify-install.mjs   # 利用者プロジェクトへ展開して型検査
-node scripts/verify-states.mjs    # 実ブラウザで非同期の全状態を検証
-node scripts/verify-v02.mjs       # 実ブラウザでレイアウトと通知を検証
-pnpm audit                        # 壊しにくる中身を入れて耐えるか検証
-pnpm check -- http://localhost:4173/   # 端末幅の崩れを検出
+pnpm verify   # 型検査・ビルド・配布物・実ブラウザ検証をまとめて実行（10 項目）
+pnpm check -- http://localhost:5173/   # 端末幅の崩れだけを見る
 ```
+
+`pnpm verify` がやること:
+
+```
+✓ 型検査 (カタログ + レジストリ)      ✓ 実ブラウザ: 非同期の状態
+✓ 型検査 (Astro サイト)               ✓ 実ブラウザ: レイアウトと通知
+✓ ビルド (カタログ / Astro サイト)     ✓ 実ブラウザ: 壊しにくる中身
+✓ レジストリ生成                      ✓ 実ブラウザ: 端末幅の崩れ
+✓ 利用者プロジェクトへ展開して型検査
+```
+
+GitHub Actions で push・PR・週 1 の定期実行にかけています。
+Renovate の依存更新 PR も、これが緑なら中身を見ずに上げられます。
+**「テンプレは腐る」への唯一の実効的な対策です。**
 
 `verify-install.mjs` は shadcn CLI と同じ依存解決を再現して、まっさらな
 TypeScript プロジェクトへ展開したうえで `tsc` を通します。

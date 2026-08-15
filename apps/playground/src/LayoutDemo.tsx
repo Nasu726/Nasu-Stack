@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/layout";
 import { ActionButton, Button } from "@/components/ui/action-button";
 import { useToast } from "@/components/ui/action-provider";
+import { Blk, Panel } from "./Panel";
 
 const SPACES: SpaceToken[] = [
   "none",
@@ -39,59 +40,6 @@ export function LayoutDemo() {
       <PageDemo />
       <ToastDemo />
     </Stack>
-  );
-}
-
-/* ---------------------------------------------------------------- */
-
-function Panel({
-  title,
-  description,
-  children,
-  code,
-}: {
-  title: string;
-  description: React.ReactNode;
-  children: React.ReactNode;
-  code?: string;
-}) {
-  return (
-    <Stack space="md">
-      <Stack space="2xs">
-        <h2 className="text-xl">{title}</h2>
-        {/* 1 行が長くなりすぎると読みにくいので、説明文は narrow 幅に収める */}
-        <ContentBlock width="prose" align="start" className="text-sm">
-          <p className="leading-relaxed text-muted-fg">{description}</p>
-        </ContentBlock>
-      </Stack>
-      <Box padding="lg" background="card" border radius="xl" shadow="e1">
-        <Stack space="md">
-          {children}
-          {code && (
-            <pre className="overflow-x-auto rounded-md bg-muted p-sm text-[11px] leading-relaxed text-muted-fg">
-              <code>{code}</code>
-            </pre>
-          )}
-        </Stack>
-      </Box>
-    </Stack>
-  );
-}
-
-/** 見た目の当たり判定を分かりやすくするための塗り。 */
-function Blk({
-  children,
-  h,
-}: {
-  children?: React.ReactNode;
-  h?: string;
-}) {
-  return (
-    <div
-      className={`flex items-center justify-center rounded-md bg-accent px-sm py-xs text-xs text-accent-fg ${h ?? ""}`}
-    >
-      {children}
-    </div>
   );
 }
 
@@ -175,6 +123,17 @@ function StackDemo() {
         <Blk>B</Blk>
         <Blk>C</Blk>
       </Stack>
+
+      <Stack space="2xs">
+        <span className="text-xs font-medium text-muted-fg">
+          dividers（線は実際の要素なので、上下の余白が揃います）
+        </span>
+        <Stack space="md" dividers>
+          <Blk>A</Blk>
+          <Blk>B</Blk>
+          <Blk>C</Blk>
+        </Stack>
+      </Stack>
     </Panel>
   );
 }
@@ -186,7 +145,11 @@ function InlineDemo() {
       description="画面が狭くなると自動で折り返すので、はみ出しません。ウィンドウ幅を変えてみてください。"
       code={`<Inline space="sm">\n  {tags.map((t) => <Tag key={t} />)}\n</Inline>`}
     >
-      <Inline space="sm">
+      <Stack space="2xs">
+        <span className="text-xs font-medium text-muted-fg">
+          wrap（既定）— 入り切らなければ折り返す
+        </span>
+        <Inline space="sm">
         {[
           "TypeScript",
           "React",
@@ -200,7 +163,24 @@ function InlineDemo() {
         ].map((t) => (
           <Blk key={t}>{t}</Blk>
         ))}
-      </Inline>
+        </Inline>
+      </Stack>
+
+      <Stack space="2xs">
+        <span className="text-xs font-medium text-muted-fg">
+          wrap={"{false}"} — 折り返さず、入り切らなければ横スクロール
+        </span>
+        <Inline space="sm" wrap={false}>
+          {[
+            "折り返さない長いラベル 1",
+            "折り返さない長いラベル 2",
+            "折り返さない長いラベル 3",
+            "折り返さない長いラベル 4",
+          ].map((t) => (
+            <Blk key={t}>{t}</Blk>
+          ))}
+        </Inline>
+      </Stack>
     </Panel>
   );
 }

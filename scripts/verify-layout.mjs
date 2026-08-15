@@ -5,7 +5,7 @@
 import { chromium } from "playwright";
 
 const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  executablePath: process.env.CHROMIUM_PATH || undefined,
 });
 const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
 const errors = [];

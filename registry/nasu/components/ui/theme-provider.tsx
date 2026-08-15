@@ -171,9 +171,23 @@ export function ThemeSwitcher({ className }: { className?: string }) {
 }
 
 /**
- * ちらつき防止スクリプト。
- * <head> の中で dangerouslySetInnerHTML / Astro の <script is:inline> として
- * 最初に実行すると、初回描画前にテーマが当たります。
+ * ちらつき防止スクリプト。**必ずこれを参照してください。**
+ *
+ * 同じ処理を HTML 側へ手書きでコピーすると、片方だけ直し忘れたときに
+ * そのページだけ初回描画でちらつきます（気づきにくい類のバグです）。
+ *
+ * React / Next.js:
+ * ```tsx
+ * <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+ * ```
+ *
+ * Astro:
+ * ```astro
+ * <script is:inline set:html={themeInitScript} />
+ * ```
+ *
+ * 素の HTML しか使えない場合は、ビルド時にこの文字列を差し込んでください
+ * （Vite なら vite.config.ts の transformIndexHtml が使えます）。
  */
 export const themeInitScript = `
 (function(){try{

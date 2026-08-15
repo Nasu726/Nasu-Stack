@@ -210,6 +210,11 @@ export interface StackProps extends React.HTMLAttributes<HTMLElement> {
   /** 子同士の間隔。段階名でも任意の CSS 長さでも可。既定 md。 */
   space?: Responsive<Space>;
   align?: keyof typeof ALIGN_X;
+  /**
+   * 子の間に区切り線を入れます。
+   * 線は実際の要素として差し込まれるので、上下の余白が同じになります
+   * （`divide-y` だと線が要素の下端に張り付いて左右非対称に見えます）。
+   */
   dividers?: boolean;
   children?: React.ReactNode;
 }
@@ -237,19 +242,25 @@ export function Stack({
   children,
   ...props
 }: StackProps) {
+  const content = dividers ? withDividers(children) : children;
+
   return (
     <Tag
-      className={cn(
-        "flex flex-col wt-gap",
-        ALIGN_X[align],
-        dividers && "divide-y divide-border",
-        className,
-      )}
+      className={cn("flex flex-col wt-gap", ALIGN_X[align], className)}
       style={merge(spaceVars("gap", space), style)}
       {...props}
     >
-      {children}
+      {content}
     </Tag>
+  );
+}
+
+/** 子の間に区切り線を差し込みます。線自身も flex の子なので、上下の余白が揃います。 */
+function withDividers(children: React.ReactNode): React.ReactNode {
+  // React.Children.toArray は null / undefined / boolean を既に除いてくれる
+  const items = React.Children.toArray(children).filter((c) => c !== "");
+  return items.flatMap((child, i) =>
+    i === 0 ? [child] : [<Divider key={`wt-divider-${i}`} />, child],
   );
 }
 
@@ -276,7 +287,13 @@ export interface InlineProps extends React.HTMLAttributes<HTMLElement> {
   space?: Responsive<Space>;
   align?: keyof typeof JUSTIFY;
   alignY?: keyof typeof ALIGN_Y;
-  /** 折り返すか。既定 true。 */
+  /**
+   * 折り返すか。既定 true。
+   *
+   * `false` にすると、入り切らないときは**折り返さず横スクロール**になります。
+   * 子を潰して読めなくするより、スクロールさせる方がましだからです
+   * （`Scrollable` と同じ考え方）。
+   */
   wrap?: boolean;
   children?: React.ReactNode;
 }
@@ -300,7 +317,7 @@ export function Inline({
     <Tag
       className={cn(
         "flex wt-gap",
-        wrap ? "flex-wrap" : "flex-nowrap",
+        wrap ? "flex-wrap" : "flex-nowrap wt-nowrap",
         JUSTIFY[align],
         ALIGN_Y[alignY],
         className,
@@ -462,17 +479,17 @@ export function Column({
  * 列数。数値のほか、CSS の grid-template-columns をそのまま書けます。
  * 例: "repeat(auto-fill, minmax(14rem, 1fr))"
  */
-export type Columns_ = number | (string & {});
+export type TileColumns = number | (string & {});
 
 export interface TilesProps extends React.HTMLAttributes<HTMLElement> {
   as?: React.ElementType;
   /** 既定 { mobile: 1, tablet: 2, desktop: 3 }。 */
-  columns?: Responsive<Columns_>;
+  columns?: Responsive<TileColumns>;
   space?: Responsive<Space>;
   children?: React.ReactNode;
 }
 
-function columnsValue(v: Columns_): string {
+function columnsValue(v: TileColumns): string {
   return typeof v === "number" ? `repeat(${v}, minmax(0, 1fr))` : v;
 }
 

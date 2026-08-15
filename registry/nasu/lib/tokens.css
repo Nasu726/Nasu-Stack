@@ -1,13 +1,35 @@
 /**
- * WebTemplate — トンマナ（デザイントークン）
- * ---------------------------------------------------------------
- * テーマは「色」だけではありません。角丸・影・文字の間隔・フォントまで
- * 1 セットで切り替わります。これが `data-theme` を変えるだけで揃う理由です。
+ * WebTemplate — tokens.css（土台）
+ * ================================================================
+ * ここには「テーマに依らない構造」だけが入っています。
  *
- *   <html data-theme="editorial">   … 明るいテーマ
- *   <html data-theme="editorial" class="dark">  … その暗い版
+ *   - 余白スケール（9 段階）とページ幅
+ *   - レイアウト部品が使うユーティリティ（gap-md / p-lg / wt-*）
+ *   - 端末幅で壊れないための base CSS
+ *   - 既定テーマ（neutral）の値
+ *   - CSS 変数を Tailwind のクラスへ結び付ける対応表
  *
- * 追加したいときは、下の 5 変数群を埋めたブロックを増やすだけです。
+ * このファイル単体で完結して動きます。
+ * テーマを増やしたいときだけ themes.css を追加で読み込んでください。
+ *
+ * ----------------------------------------------------------------
+ * 自分のテーマを作るには
+ * ----------------------------------------------------------------
+ * 下の :root と同じ変数を、別のセレクタで上書きするだけです。
+ *
+ *   [data-theme="mybrand"] {
+ *     --bg: oklch(0.99 0 0);
+ *     --fg: oklch(0.2 0 0);
+ *     --primary: oklch(0.55 0.2 150);
+ *     --primary-fg: oklch(0.99 0 0);
+ *     ...（下の一覧と同じ 25 個）
+ *     --radius: 0.5rem;
+ *     --font-display: "Your Font", serif;
+ *   }
+ *   [data-theme="mybrand"].dark { ...暗い版... }
+ *
+ * 余白や幅もテーマの一部として上書きできます。
+ *   [data-theme="mybrand"] { --space-3xl: 8rem; }
  */
 
 @import "tailwindcss";
@@ -15,7 +37,10 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
-   1. neutral — 既定。癖がなく、業務アプリ／管理画面向き。
+   既定テーマ（neutral）
+   ------------------------------------------------------------
+   癖がなく、業務アプリ／管理画面向き。
+   ここに並ぶ変数が「テーマが定義すべきもの」の一覧です。
    ============================================================ */
 :root,
 [data-theme="neutral"] {
@@ -75,191 +100,7 @@
 }
 
 /* ============================================================
-   2. warm — 角丸大きめ・影やわらかめ。個人サービス／D2C 向き。
-   ============================================================ */
-[data-theme="warm"] {
-  --bg: oklch(0.985 0.008 85);
-  --fg: oklch(0.26 0.02 55);
-  --card: oklch(1 0.004 85);
-  --card-fg: oklch(0.26 0.02 55);
-  --muted: oklch(0.955 0.014 80);
-  --muted-fg: oklch(0.53 0.03 60);
-  --primary: oklch(0.62 0.17 42);
-  --primary-fg: oklch(0.99 0.005 85);
-  --accent: oklch(0.94 0.035 70);
-  --accent-fg: oklch(0.38 0.08 45);
-  --danger: oklch(0.55 0.19 22);
-  --danger-fg: oklch(0.99 0 0);
-  --success: oklch(0.57 0.12 145);
-  --success-fg: oklch(0.99 0 0);
-  --warning: oklch(0.74 0.15 80);
-  --warning-fg: oklch(0.24 0.05 80);
-  --border: oklch(0.9 0.018 75);
-  --input: oklch(0.9 0.018 75);
-  --ring: oklch(0.62 0.17 42);
-
-  --radius: 1rem;
-  --shadow-color: 30deg 30% 40%;
-  --shadow-strength: 0.09;
-  --font-sans: ui-rounded, "Hiragino Maru Gothic ProN", ui-sans-serif,
-    system-ui, sans-serif;
-  --font-display: var(--font-sans);
-  --tracking-display: -0.01em;
-  --weight-display: 700;
-}
-
-[data-theme="warm"].dark {
-  --bg: oklch(0.2 0.014 50);
-  --fg: oklch(0.96 0.008 80);
-  --card: oklch(0.25 0.016 50);
-  --card-fg: oklch(0.96 0.008 80);
-  --muted: oklch(0.3 0.018 55);
-  --muted-fg: oklch(0.73 0.02 70);
-  --primary: oklch(0.72 0.15 45);
-  --primary-fg: oklch(0.19 0.03 45);
-  --accent: oklch(0.32 0.04 55);
-  --accent-fg: oklch(0.9 0.05 70);
-  --danger: oklch(0.65 0.17 22);
-  --danger-fg: oklch(0.16 0.03 22);
-  --success: oklch(0.7 0.13 145);
-  --success-fg: oklch(0.16 0.03 145);
-  --warning: oklch(0.8 0.14 80);
-  --warning-fg: oklch(0.22 0.04 80);
-  --border: oklch(0.34 0.02 55);
-  --input: oklch(0.36 0.02 55);
-  --ring: oklch(0.72 0.15 45);
-  --shadow-color: 30deg 20% 4%;
-  --shadow-strength: 0.35;
-}
-
-/* ============================================================
-   3. editorial — 角丸ほぼ無し・高コントラスト。読み物／ポートフォリオ向き。
-   ============================================================ */
-[data-theme="editorial"] {
-  --bg: oklch(0.975 0.008 95);
-  --fg: oklch(0.17 0.004 95);
-  --card: oklch(0.995 0.004 95);
-  --card-fg: oklch(0.17 0.004 95);
-  --muted: oklch(0.94 0.01 95);
-  --muted-fg: oklch(0.46 0.008 95);
-  --primary: oklch(0.2 0.005 95);
-  --primary-fg: oklch(0.98 0.006 95);
-  --accent: oklch(0.92 0.02 95);
-  --accent-fg: oklch(0.24 0.01 95);
-  --danger: oklch(0.48 0.2 27);
-  --danger-fg: oklch(0.98 0 0);
-  --success: oklch(0.46 0.12 155);
-  --success-fg: oklch(0.98 0 0);
-  --warning: oklch(0.68 0.15 70);
-  --warning-fg: oklch(0.18 0.04 70);
-  --border: oklch(0.85 0.01 95);
-  --input: oklch(0.85 0.01 95);
-  --ring: oklch(0.2 0.005 95);
-
-  --radius: 0.125rem;
-  --shadow-color: 40deg 10% 20%;
-  --shadow-strength: 0.05;
-  --font-sans: ui-sans-serif, system-ui, "Hiragino Sans", "Noto Sans JP",
-    sans-serif;
-  --font-display: ui-serif, "Hiragino Mincho ProN", "Noto Serif JP", Georgia,
-    serif;
-  --tracking-display: -0.005em;
-  --weight-display: 600;
-}
-
-[data-theme="editorial"].dark {
-  --bg: oklch(0.15 0.004 95);
-  --fg: oklch(0.95 0.006 95);
-  --card: oklch(0.19 0.005 95);
-  --card-fg: oklch(0.95 0.006 95);
-  --muted: oklch(0.25 0.006 95);
-  --muted-fg: oklch(0.68 0.008 95);
-  --primary: oklch(0.95 0.006 95);
-  --primary-fg: oklch(0.15 0.004 95);
-  --accent: oklch(0.27 0.008 95);
-  --accent-fg: oklch(0.9 0.01 95);
-  --danger: oklch(0.62 0.19 27);
-  --danger-fg: oklch(0.14 0.03 27);
-  --success: oklch(0.64 0.13 155);
-  --success-fg: oklch(0.14 0.03 155);
-  --warning: oklch(0.76 0.14 70);
-  --warning-fg: oklch(0.18 0.04 70);
-  --border: oklch(0.3 0.006 95);
-  --input: oklch(0.32 0.006 95);
-  --ring: oklch(0.95 0.006 95);
-  --shadow-color: 40deg 10% 0%;
-  --shadow-strength: 0.4;
-}
-
-/* ============================================================
-   4. vivid — 彩度高め・影強め。ランディング／キャンペーン向き。
-   ============================================================ */
-[data-theme="vivid"] {
-  --bg: oklch(0.99 0.006 300);
-  --fg: oklch(0.22 0.03 295);
-  --card: oklch(1 0 0);
-  --card-fg: oklch(0.22 0.03 295);
-  --muted: oklch(0.965 0.014 300);
-  --muted-fg: oklch(0.52 0.04 295);
-  --primary: oklch(0.55 0.24 295);
-  --primary-fg: oklch(0.99 0.005 300);
-  --accent: oklch(0.94 0.05 320);
-  --accent-fg: oklch(0.34 0.14 300);
-  --danger: oklch(0.56 0.22 15);
-  --danger-fg: oklch(0.99 0 0);
-  --success: oklch(0.6 0.16 160);
-  --success-fg: oklch(0.99 0 0);
-  --warning: oklch(0.76 0.16 85);
-  --warning-fg: oklch(0.22 0.05 85);
-  --border: oklch(0.91 0.02 300);
-  --input: oklch(0.91 0.02 300);
-  --ring: oklch(0.55 0.24 295);
-
-  --radius: 0.875rem;
-  --shadow-color: 295deg 45% 35%;
-  --shadow-strength: 0.14;
-  --font-sans: ui-sans-serif, system-ui, "Hiragino Sans", "Noto Sans JP",
-    sans-serif;
-  --font-display: var(--font-sans);
-  --tracking-display: -0.035em;
-  --weight-display: 800;
-}
-
-[data-theme="vivid"].dark {
-  --bg: oklch(0.16 0.025 295);
-  --fg: oklch(0.97 0.008 300);
-  --card: oklch(0.21 0.03 295);
-  --card-fg: oklch(0.97 0.008 300);
-  --muted: oklch(0.27 0.035 295);
-  --muted-fg: oklch(0.73 0.03 300);
-  --primary: oklch(0.72 0.2 295);
-  --primary-fg: oklch(0.15 0.04 295);
-  --accent: oklch(0.3 0.07 305);
-  --accent-fg: oklch(0.92 0.06 305);
-  --danger: oklch(0.68 0.2 15);
-  --danger-fg: oklch(0.14 0.04 15);
-  --success: oklch(0.72 0.16 160);
-  --success-fg: oklch(0.14 0.04 160);
-  --warning: oklch(0.82 0.15 85);
-  --warning-fg: oklch(0.2 0.05 85);
-  --border: oklch(0.32 0.04 295);
-  --input: oklch(0.34 0.04 295);
-  --ring: oklch(0.72 0.2 295);
-  --shadow-color: 295deg 50% 3%;
-  --shadow-strength: 0.45;
-}
-
-/* ============================================================
-   Tailwind へトークンを公開
-   ============================================================ */
-/* ============================================================
-   余白スケール（レイアウト部品が使う唯一の値の集合）
-   ------------------------------------------------------------
-   ここに無い値は使えません。それが狙いです。
-   利用者が 13px か 14px かで悩む余地を、構造的に消しています。
-
-   テーマごとに上書きできるので、「warm は全体的にゆったり」
-   のような調整もトンマナの一部として表現できます。
+   余白スケールとページ幅
    ============================================================ */
 /*
  * `static` が必須です。既定の @theme は「CSS 内で使われている変数」しか
@@ -285,17 +126,6 @@
   --width-narrow: 44rem; /* 読み物向け */
   --width-content: 64rem; /* 標準 */
   --width-wide: 80rem; /* 広め */
-}
-
-/* warm は全体をゆったりめに、editorial は詰めぎみに */
-[data-theme="warm"] {
-  --space-xl: 3rem;
-  --space-2xl: 5rem;
-  --space-3xl: 7rem;
-}
-[data-theme="editorial"] {
-  --width-content: 56rem;
-  --space-3xl: 5rem;
 }
 
 /**
@@ -411,6 +241,11 @@
   }
 }
 
+/* ============================================================
+   CSS 変数と Tailwind クラスの対応表
+   ------------------------------------------------------------
+   テーマが定義した --bg などを bg-bg / text-fg のように使えるようにします。
+   ============================================================ */
 @theme inline {
   --container-narrow: var(--width-narrow);
   --container-content: var(--width-content);
@@ -511,6 +346,17 @@
   .wt-gap > * {
     min-width: 0;
   }
+
+  /* 折り返さない Inline。子を潰して読めなくするより、横スクロールさせる。
+     min-width の解除で自然な幅を保ち、はみ出した分はこの中でスクロールします。 */
+  .wt-nowrap {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+  .wt-nowrap > * {
+    min-width: auto;
+    flex-shrink: 0;
+  }
 }
 
 @layer base {
@@ -555,3 +401,4 @@
     }
   }
 }
+

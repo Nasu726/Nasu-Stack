@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 
 const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  executablePath: process.env.CHROMIUM_PATH || undefined,
 });
 const page = await browser.newPage({ viewport: { width: 900, height: 900 } });
 const errors = [];
@@ -32,13 +32,25 @@ log(
   ),
 );
 
-/* 2. 二重送信の防止 --------------------------------------------- */
+/* 2. 二重送信の防止 ---------------------------------------------
+   「押せない」ことではなく「連打しても 1 回しか実行されない」ことを見る。 */
 await page.waitForTimeout(2200); // idle へ戻る
-const btn = page.getByRole("button", { name: "保存する" });
-await btn.click();
-const disabledDuringPending = await btn.isDisabled();
-log("送信中に disabled:", disabledDuringPending);
-await page.waitForTimeout(1400);
+await page.getByRole("button", { name: "保存する" }).click({ force: true });
+await page.waitForTimeout(150);
+const pendingBtn = page.locator("button[aria-busy='true']").first();
+log(
+  "pending 中の属性:",
+  `disabled=${(await pendingBtn.getAttribute("disabled")) !== null}`,
+  `aria-busy=${await pendingBtn.getAttribute("aria-busy")}`,
+);
+for (let i = 0; i < 5; i++) {
+  await pendingBtn.click({ force: true, timeout: 500 }).catch(() => {});
+}
+await page.waitForTimeout(1500);
+log(
+  "連打後に success 状態のボタン数(1 なら二重送信なし):",
+  await page.getByRole("button", { name: /保存しました/ }).count(),
+);
 
 /* 3. 失敗パス --------------------------------------------------- */
 await page.getByRole("button", { name: "送信する" }).click();
@@ -69,7 +81,8 @@ log("打ち直し後に残るエラー:", afterTyping);
 
 /* 6. 一覧の失敗 → 再試行 ---------------------------------------- */
 await page.getByRole("button", { name: "失敗", exact: true }).click();
-await page.waitForTimeout(1600);
+// useResource は既定で 1 回リトライするので、700ms x2 + 待ち時間より長く待つ
+await page.waitForTimeout(4000);
 const retry = page.getByRole("button", { name: "再試行" });
 log("再試行ボタンが出る:", await retry.isVisible());
 

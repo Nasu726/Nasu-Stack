@@ -4,7 +4,7 @@ const themes = process.argv[2]?.split(",") ?? ["neutral"];
 const base = "http://127.0.0.1:4173/";
 
 const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  executablePath: process.env.CHROMIUM_PATH || undefined,
 });
 for (const spec of themes) {
   const [theme, mode = "light"] = spec.split(":");

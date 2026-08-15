@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { themeInitScript } from "@/components/ui/theme-provider";
 
 interface Props {
   title: string;
@@ -19,22 +20,9 @@ const { title, description = "", theme = "warm" } = Astro.props;
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
 
-    <!-- 保存済みのテーマを描画前に適用してちらつきを防ぐ -->
-    <script is:inline>
-      (function () {
-        try {
-          var s = localStorage.getItem("webtemplate.theme");
-          var v = s ? JSON.parse(s) : {};
-          if (v.theme) document.documentElement.dataset.theme = v.theme;
-          var m = v.mode || "system";
-          var dark =
-            m === "dark" ||
-            (m === "system" &&
-              matchMedia("(prefers-color-scheme: dark)").matches);
-          document.documentElement.classList.toggle("dark", dark);
-        } catch (e) {}
-      })();
-    </script>
+    {/* 保存済みのテーマを描画前に適用してちらつきを防ぐ。
+        処理の定義は theme-provider.tsx にしかありません（二重管理を避けるため）。 */}
+    <script is:inline set:html={themeInitScript} />
   </head>
 
   <body class="min-h-dvh bg-bg text-fg">

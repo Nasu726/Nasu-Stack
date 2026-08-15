@@ -15,6 +15,7 @@ import {
   Stack,
   Tiles,
 } from "@/components/ui/layout";
+import { Panel } from "./Panel";
 import { LayoutDemo } from "./LayoutDemo";
 import { ResponsiveDemo } from "./ResponsiveDemo";
 import * as api from "./fake-api";
@@ -119,43 +120,11 @@ function Intro() {
   );
 }
 
-function Section({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-xl">{title}</h2>
-        <ContentBlock width="prose" align="start" className="text-sm">
-          <p className="leading-relaxed text-muted-fg">{description}</p>
-        </ContentBlock>
-      </div>
-      <div className="rounded-xl border border-border bg-card p-5 shadow-e1">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function Code({ children }: { children: string }) {
-  return (
-    <pre className="mt-4 overflow-x-auto rounded-md bg-muted p-3 text-[11px] leading-relaxed text-muted-fg">
-      <code>{children}</code>
-    </pre>
-  );
-}
-
 /* ---------------------------------------------------------------- */
 
 function ButtonSection() {
   return (
-    <Section
+    <Panel
       title="ActionButton"
       description={
         <>
@@ -164,31 +133,26 @@ function ButtonSection() {
           自動リトライが最初から入っています。
         </>
       }
+      code={`<ActionButton action={() => api.save(form)}>\n  保存する\n</ActionButton>`}
     >
-      <div className="flex flex-wrap items-start gap-6">
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-muted-fg">成功する</span>
+      <Inline space="lg" alignY="start">
+        <Labeled label="成功する">
           <ActionButton action={api.save} labels={{ success: "保存しました" }}>
             保存する
           </ActionButton>
-        </div>
+        </Labeled>
 
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-muted-fg">失敗する</span>
+        <Labeled label="失敗する">
           <ActionButton action={api.alwaysFail}>送信する</ActionButton>
-        </div>
+        </Labeled>
 
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-muted-fg">
-            2回失敗→自動で3回目
-          </span>
+        <Labeled label="2回失敗→自動で3回目">
           <ActionButton action={api.flaky} retry={3} retryDelay={400}>
             同期する
           </ActionButton>
-        </div>
+        </Labeled>
 
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-muted-fg">確認つき</span>
+        <Labeled label="確認つき">
           <ActionButton
             action={api.save}
             variant="danger"
@@ -197,13 +161,25 @@ function ButtonSection() {
           >
             削除する
           </ActionButton>
-        </div>
-      </div>
+        </Labeled>
+      </Inline>
+    </Panel>
+  );
+}
 
-      <Code>{`<ActionButton action={() => api.save(form)}>
-  保存する
-</ActionButton>`}</Code>
-    </Section>
+/** 見出しつきの縦組み。デモで「何を試しているか」を示すためだけの薄い包み。 */
+function Labeled({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Stack space="2xs" align="start">
+      <span className="text-xs font-medium text-muted-fg">{label}</span>
+      {children}
+    </Stack>
   );
 }
 
@@ -211,7 +187,7 @@ function ButtonSection() {
 
 function FormSection() {
   return (
-    <Section
+    <Panel
       title="AsyncForm + Field"
       description={
         <>
@@ -219,15 +195,12 @@ function FormSection() {
           <code className="text-fg">ActionError</code> の{" "}
           <code className="text-fg">fields</code> に入れたエラーは、
           対応する入力欄の下へ自動で表示され、打ち直すと消えます。
-          <br />
-          <span className="text-xs">
-            （メールを空欄や <code>a@example.com</code>{" "}
-            にすると挙動が確認できます）
-          </span>
+          メールを空欄や <code>a@example.com</code> にすると挙動が確認できます。
         </>
       }
+      code={`<AsyncForm action={api.signup} submitLabel="アカウントを作成">\n  <Field name="email" label="メールアドレス" type="email" required />\n</AsyncForm>`}
     >
-      <div className="max-w-md">
+      <ContentBlock width="28rem" align="start">
         <AsyncForm
           action={api.signup}
           submitLabel="アカウントを作成"
@@ -250,12 +223,8 @@ function FormSection() {
             required
           />
         </AsyncForm>
-      </div>
-
-      <Code>{`<AsyncForm action={api.signup} submitLabel="アカウントを作成">
-  <Field name="email" label="メールアドレス" type="email" required />
-</AsyncForm>`}</Code>
-    </Section>
+      </ContentBlock>
+    </Panel>
   );
 }
 
@@ -271,11 +240,12 @@ function ListSection() {
         : api.listBroken;
 
   return (
-    <Section
+    <Panel
       title="DataList / AsyncBoundary"
       description="取得・スケルトン・空状態・失敗と再試行を 1 コンポーネントに閉じ込めています。下のボタンで各状態を確認できます。"
+      code={`<DataList\n  loader={(_, ctx) => jsonRequest<Task[]>("/api/tasks", { ctx })}\n  renderItem={(t) => <span>{t.title}</span>}\n/>`}
     >
-      <div className="mb-4 flex gap-2">
+      <Inline space="xs">
         {(["ok", "empty", "error"] as const).map((k) => (
           <Button
             key={k}
@@ -286,7 +256,7 @@ function ListSection() {
             {k === "ok" ? "データあり" : k === "empty" ? "空" : "失敗"}
           </Button>
         ))}
-      </div>
+      </Inline>
 
       <DataList
         key={which}
@@ -295,22 +265,17 @@ function ListSection() {
         deps={[which]}
         getKey={(t) => t.id}
         renderItem={(t) => (
-          <div className="flex items-center justify-between gap-3">
+          <Spread space="sm">
             <span className={t.done ? "text-muted-fg line-through" : ""}>
               {t.title}
             </span>
             <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-fg">
               {t.owner}
             </span>
-          </div>
+          </Spread>
         )}
       />
-
-      <Code>{`<DataList
-  loader={(_, ctx) => jsonRequest<Task[]>("/api/tasks", { ctx })}
-  renderItem={(t) => <span>{t.title}</span>}
-/>`}</Code>
-    </Section>
+    </Panel>
   );
 }
 
@@ -320,46 +285,36 @@ function AbortSection() {
   const slow = useAction(api.slow, { resetAfter: 3000 });
 
   return (
-    <Section
+    <Panel
       title="中断とスケルトン"
       description="6 秒かかる処理です。実行中に「中断」を押すとリクエストが止まり、状態が idle に戻ります。ctx.signal を fetch に渡すだけで実現できます。"
     >
-      <div className="flex flex-wrap items-center gap-3">
+      <Inline space="sm">
         <Button
           onClick={() => void slow.run(undefined)}
           disabled={slow.isPending}
         >
           {slow.isPending ? "処理中…" : "重い処理を実行"}
         </Button>
-        <Button
-          variant="outline"
-          onClick={slow.abort}
-          disabled={!slow.isPending}
-        >
+        <Button variant="outline" onClick={slow.abort} disabled={!slow.isPending}>
           中断
         </Button>
         <span className="text-xs text-muted-fg">status: {slow.status}</span>
-      </div>
+      </Inline>
 
-      <div className="mt-5">
-        <AsyncBoundary
-          state={slow}
-          loading={
-            slow.isPending ? undefined : (
-              <p className="text-sm text-muted-fg">
-                実行するとここに結果が出ます
-              </p>
-            )
-          }
-          skeletonRows={3}
-          isEmpty={() => false}
-        >
-          {() => (
-            <p className="text-sm text-success">処理が完了しました</p>
-          )}
-        </AsyncBoundary>
-      </div>
-    </Section>
+      <AsyncBoundary
+        state={slow}
+        loading={
+          slow.isPending ? undefined : (
+            <p className="text-sm text-muted-fg">実行するとここに結果が出ます</p>
+          )
+        }
+        skeletonRows={3}
+        isEmpty={() => false}
+      >
+        {() => <p className="text-sm text-success">処理が完了しました</p>}
+      </AsyncBoundary>
+    </Panel>
   );
 }
 

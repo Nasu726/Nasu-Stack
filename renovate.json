@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Asia/Tokyo",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "パッチ・マイナーはまとめて 1 本の PR に。CI が緑なら中身を見ずに上げられる",
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "依存の更新 (patch/minor)",
+      "automerge": false
+    },
+    {
+      "description": "メジャーは 1 つずつ。壊れたときに原因を切り分けられるように",
+      "matchUpdateTypes": ["major"],
+      "groupName": null
+    },
+    {
+      "description": "土台になるものは慎重に扱いたいので個別 PR",
+      "matchPackageNames": [
+        "tailwindcss",
+        "@tailwindcss/vite",
+        "astro",
+        "react",
+        "react-dom",
+        "vite"
+      ],
+      "groupName": null
+    }
+  ]
+}

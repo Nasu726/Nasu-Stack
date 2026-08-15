@@ -1,0 +1,46 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # 依存を更新していなくても、週 1 で外部要因の破損に気づけるようにする
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # 実ブラウザでの検証に使う
+      - name: Chromium を用意
+        run: pnpm exec playwright install --with-deps chromium
+
+      # 型検査・ビルド・配布物・実ブラウザ検証をまとめて実行
+      - name: verify
+        run: pnpm verify
+
+      - name: 失敗時にスクリーンショットを残す
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: |
+            apps/*/dist
+            /home/runner/shots
+          if-no-files-found: ignore
+          retention-days: 7

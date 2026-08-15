@@ -90,6 +90,36 @@ Tailwind からは未使用に見えて変数ごと削除され、余白が 0 �
 拡大は画面幅ではなくフォントサイズで起きるので、iPad でも発生します。
 入力欄は常に 16px 以上にするしかありません。
 
+## v0.3.5 — 完了（リファクタリング）
+
+部品を増やす前に土台を整えました。
+
+- [x] `theme.css`（557 行）を `tokens.css`（土台 + 既定テーマ）と
+      `themes.css`（追加 3 テーマ）に分割。**自分のテーマを作れるようになった**
+- [x] レジストリも `@nasu/tokens` と `@nasu/theme` に分離。
+      `@nasu/layout` は tokens にだけ依存（テーマ無しでも動く）
+- [x] デモを配布物のレイアウト部品で組み直し。生の `flex flex-col gap-*` を一掃
+- [x] `Panel` の重複を解消し、`App.tsx` のローカル `Section` の名前衝突を解消
+- [x] ちらつき防止スクリプトの 3 重重複を解消（定義は `themeInitScript` の 1 箇所だけ）
+- [x] スクリプト 10 本 → 8 本。死んでいた `audit-responsive.mjs` を削除、
+      `verify-states2` を統合、`verify-v02` → `verify-layout` に改名
+- [x] `pnpm verify` で 10 項目を 1 コマンド実行
+- [x] GitHub Actions（push / PR / 週 1）+ Renovate
+- [x] `Columns_` → `TileColumns`
+
+### リファクタ中に見つけて直したもの
+
+**1. `Stack dividers` の線が左右非対称だった。**
+`divide-y` は要素の下端に線を付けるので、`gap` と併用すると
+線の上が 0、下が gap 分になります。区切り線を**実際の要素として差し込む**形に変更し、
+上下とも同じ余白（実測 24px / 24px）になりました。
+
+**2. `Inline wrap={false}` が子を潰していた。**
+`.wt-gap > * { min-width: 0 }` が効いて、幅 400px に 3 つ入れると
+261/163/49px まで圧縮されていました。折り返さない指定なら
+**潰さず横スクロール**が正しいので（`Scrollable` と同じ考え方）、
+`min-width` を解除して `overflow-x: auto` にしました。
+
 ## v0.4 — 次
 
 状態を持つ部品を増やす。**見た目だけの部品は引き続き作りません。**

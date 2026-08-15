@@ -34,15 +34,31 @@
       ]
     },
     {
-      "name": "theme",
+      "name": "tokens",
       "type": "registry:theme",
-      "title": "トンマナ 4 種",
-      "description": "neutral / warm / editorial / vivid。色・角丸・影・書体・余白の広さを一括で切り替え。端末幅で壊れないための土台（折り返し・メディアの最大幅・タップ領域）も含みます。",
+      "title": "トークンと土台",
+      "description": "余白スケール 9 段階・ページ幅・レイアウト用ユーティリティ・端末幅で壊れないための base CSS・既定テーマ(neutral)。これ単体で完結して動きます。",
       "files": [
         {
-          "path": "registry/nasu/lib/theme.css",
+          "path": "registry/nasu/lib/tokens.css",
           "type": "registry:file",
-          "target": "styles/theme.css"
+          "target": "styles/tokens.css"
+        }
+      ]
+    },
+    {
+      "name": "theme",
+      "type": "registry:theme",
+      "title": "追加テーマ 3 種",
+      "description": "warm / editorial / vivid。色だけでなく角丸・影・書体・余白の広さまで一括で切り替わります。自分のテーマを足すときの雛型にもなります。",
+      "registryDependencies": [
+        "@nasu/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/lib/themes.css",
+          "type": "registry:file",
+          "target": "styles/themes.css"
         }
       ]
     },
@@ -69,7 +85,7 @@
       "description": "Box / Stack / Inline / Columns / Tiles / Spread / PageBlock / ContentBlock / Section / Divider。余白は 9 段階が既定だが段階外の値も書ける。コンポーネントは外側の余白を持たない。",
       "registryDependencies": [
         "@nasu/utils",
-        "@nasu/theme"
+        "@nasu/tokens"
       ],
       "files": [
         {
@@ -258,7 +274,7 @@
       "title": "ThemeProvider + ThemeSwitcher",
       "description": "data-theme と .dark を付け替えるだけでトンマナ一式を切り替えます。初期描画のちらつき防止スクリプト同梱。",
       "registryDependencies": [
-        "@nasu/theme",
+        "@nasu/tokens",
         "@nasu/utils"
       ],
       "files": [

@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/layout";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Button } from "@/components/ui/action-button";
+import { Panel } from "./Panel";
 
 export function ResponsiveDemo() {
   return (
@@ -16,41 +17,6 @@ export function ResponsiveDemo() {
       <BreakingContent />
       <ScrollableDemo />
       <CheckCommand />
-    </Stack>
-  );
-}
-
-/* ---------------------------------------------------------------- */
-
-function Panel({
-  title,
-  description,
-  children,
-  code,
-}: {
-  title: string;
-  description: React.ReactNode;
-  children: React.ReactNode;
-  code?: string;
-}) {
-  return (
-    <Stack space="md">
-      <Stack space="2xs">
-        <h2 className="text-xl">{title}</h2>
-        <ContentBlock width="prose" align="start" className="text-sm">
-          <p className="leading-relaxed text-muted-fg">{description}</p>
-        </ContentBlock>
-      </Stack>
-      <Box padding="lg" background="card" border radius="xl" shadow="e1">
-        <Stack space="md">
-          {children}
-          {code && (
-            <pre className="overflow-x-auto rounded-md bg-muted p-sm text-[11px] leading-relaxed text-muted-fg">
-              <code>{code}</code>
-            </pre>
-          )}
-        </Stack>
-      </Box>
     </Stack>
   );
 }
