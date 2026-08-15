@@ -3,7 +3,7 @@
  */
 import { launch, log } from "./_browser.mjs";
 
-const { errors, openTab, finish } = await launch();
+const { errors, openTab, finish, must, mustEq } = await launch();
 const open = (width = 1200, height = 950) => openTab("forms", { width, height });
 
 /* ===== 9. 複数値 / 10. 未チェック =============================== */
@@ -30,18 +30,22 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
       return null;
     }
   });
-  log("9/10. 送信された値:", JSON.stringify(sent));
-  log(
-    "    複数選択セレクト:",
-    Array.isArray(sent?.langs) ? `配列 ${sent.langs.length} 件 ✓` : "✗ 壊れている",
+  log("送信された値:", JSON.stringify(sent));
+  // Object.fromEntries(fd.entries()) に戻すと、ここが 3 つとも落ちます
+  must(
+    "9. 複数選択セレクトが配列で届く",
+    Array.isArray(sent?.langs) && sent.langs.length === 3,
+    JSON.stringify(sent?.langs),
   );
-  log(
-    "    チェック群:",
-    Array.isArray(sent?.tags) ? `配列 ${sent.tags.length} 件 ✓` : "✗ 壊れている",
+  must(
+    "   同じ name のチェック群が配列で届く",
+    Array.isArray(sent?.tags) && sent.tags.length === 2,
+    JSON.stringify(sent?.tags),
   );
-  log(
-    "    未チェック:",
-    "agree" in (sent ?? {}) ? `キーが届く ("${sent.agree}") ✓` : "✗ キーごと無い",
+  must(
+    "10. 未チェックのチェックボックスもキーが届く",
+    sent !== null && "agree" in sent,
+    JSON.stringify(sent?.agree),
   );
 
   /* ===== 12. 日付の font-size / 11. タップ領域 ================== */
@@ -61,7 +65,16 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
       ラベルの高さ: [...new Set(labels.filter((h) => h > 0))],
     };
   });
-  log("11/12.", JSON.stringify(sizes));
+  must(
+    "12. 日付入力の文字も 16px 以上（iOS の自動拡大よけ）",
+    (sizes.dateFontSize ?? 0) >= 16,
+    `${sizes.dateFontSize}px`,
+  );
+  must(
+    "11. チェック／ラジオの当たり判定が 44px 以上",
+    sizes["ラベルの高さ"].every((h) => h >= 44),
+    JSON.stringify(sizes["ラベルの高さ"]),
+  );
 
   /* ===== 13. RadioGroup の構造 ================================== */
   const radio = await page.evaluate(() => {
@@ -72,7 +85,12 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
       legend: fs?.querySelector("legend")?.textContent?.trim(),
     };
   });
-  log("13. RadioGroup:", JSON.stringify(radio));
+  must("13. RadioGroup が fieldset で囲まれている", radio.fieldset);
+  must(
+    "    legend に見出しが入っている（div+label では代用できない）",
+    !!radio.legend,
+    radio.legend,
+  );
 
   /* --- フィールドエラーが radio group にも出るか --- */
   // ?tab= を持ったままなので、reload だけで同じタブに戻ります
@@ -82,7 +100,11 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
   await page.getByRole("button", { name: "送信して中身を見る" }).click();
   await page.waitForTimeout(900);
   const fieldErr = await page.locator("fieldset p[role=alert]").allTextContents();
-  log("    プラン未選択のエラー:", JSON.stringify(fieldErr));
+  must(
+    "    選択群にもフィールド単位のエラーが出る",
+    fieldErr.length >= 1,
+    JSON.stringify(fieldErr),
+  );
 
   await page.close();
 }
@@ -103,23 +125,45 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
       属性として存在: head?.hasAttribute("indeterminate"),
     };
   });
-  log("1. indeterminate:", JSON.stringify(ind));
+  must("1. 一部選択で indeterminate が立つ", ind.indeterminate === true, JSON.stringify(ind));
+  must(
+    "   indeterminate は属性ではなくプロパティ（JSX に書いても効かない）",
+    ind["属性として存在"] === false,
+  );
 
   // 3. 行クリックに伝播しないか（伝播すると Toast が出る）
   const toasts = await page.locator('[role="status"],[role="alert"]').count();
-  log("3. チェックで行クリックが発火しない:", toasts === 0 ? "✓" : `✗ (${toasts})`);
+  must("3. チェックのクリックが行クリックへ伝播しない", toasts === 0, `通知 ${toasts} 件`);
 
   // 2. ページを移っても残るか
   await page.getByRole("button", { name: "次へ" }).first().click();
   await page.waitForTimeout(300);
   const afterPage = await page.getByText(/^\d+ 件選択中$/).textContent();
-  log("2. ページ移動後:", JSON.stringify(afterPage?.trim()));
+  must(
+    "2. ページを移っても選択が残る（キーで保持している）",
+    /^1 件選択中$/.test(afterPage?.trim() ?? ""),
+    afterPage?.trim(),
+  );
 
-  // ヘッダで「表示中を全選択」
+  // ヘッダで「表示中を全選択」。
+  // **件数をべた書きで期待してはいけません。** 1 ページの行数を変えた瞬間に
+  // 落ちて、しかも部品は壊れていません。見たい性質は
+  // 「増えたのは、いま表示している行のぶんだけ」です。
+  const num = (t) => Number((t ?? "").replace(/[^0-9]/g, ""));
+  const visibleUnselected = await page.evaluate(
+    () =>
+      [...document.querySelectorAll("table tbody tr")].filter(
+        (r) => !r.querySelector('input[type="checkbox"]')?.checked,
+      ).length,
+  );
   await page.locator('table thead input[type="checkbox"]').click();
   await page.waitForTimeout(300);
   const afterAll = await page.getByText(/^\d+ 件選択中$/).textContent();
-  log("   表示中を全選択した後:", JSON.stringify(afterAll?.trim()));
+  must(
+    "   ヘッダのチェックは「表示中の行」だけを足す",
+    num(afterAll) === num(afterPage) + visibleUnselected,
+    `${num(afterPage)} + 表示中 ${visibleUnselected} = ${num(afterAll)}`,
+  );
 
   // 5. Shift+クリックの範囲選択
   await page.getByRole("button", { name: "全解除" }).click();
@@ -129,9 +173,17 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
   await boxes.nth(3).click({ modifiers: ["Shift"] });
   await page.waitForTimeout(250);
   const afterShift = await page.getByText(/^\d+ 件選択中$/).textContent();
-  log("5. Shift+クリック:", JSON.stringify(afterShift?.trim()));
+  must(
+    "5. Shift+クリックで範囲選択できる",
+    /^4 件選択中$/.test(afterShift?.trim() ?? ""),
+    afterShift?.trim(),
+  );
 
-  // 4. 並べ替えても同じ行に付いているか
+  /* 4. 並べ替えても同じ行に付いているか。
+     **画面に見えている選択行を比べてはいけません。** 並べ替えると
+     選ばれた行が別のページへ移るので、見えなくなるのが正常です。
+     見たい性質は「選択そのものが失われていないこと」です。 */
+  const countBefore = await page.getByText(/^\d+ 件選択中$/).textContent();
   const before = await page.evaluate(() => {
     const rows = [...document.querySelectorAll("table tbody tr")];
     return rows
@@ -155,16 +207,22 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
   const ascending = sortedAmounts.every(
     (v, i, a) => i === 0 || a[i - 1] <= v,
   );
-  log(
-    "4b. 整形済み列の並べ替え:",
-    `${JSON.stringify(sortedAmounts)} → 昇順=${ascending ? "✓" : "✗"}`,
+  // get で "¥12,400" のように整形した列を、整形後の文字列で並べ替えると
+  // "¥2,600" が "¥12,400" より後ろに来ます。元の値で並ぶことを見ます。
+  must(
+    "4b. 整形済みの列でも数値として正しく並ぶ",
+    ascending,
+    JSON.stringify(sortedAmounts),
   );
 
-  const count = await page.getByText(/^\d+ 件選択中$/).textContent();
-  log(
-    "4. 並べ替え後:",
-    `選択件数=${count?.trim()} / 並べ替え前の可視選択=${JSON.stringify(before)} 後=${JSON.stringify(after)}`,
+  const countAfter = await page.getByText(/^\d+ 件選択中$/).textContent();
+  must(
+    "4. 並べ替えても選択件数が変わらない（index ではなくキーで持っている）",
+    num(countAfter) === num(countBefore),
+    `${countBefore?.trim()} → ${countAfter?.trim()}`,
   );
+  // 見えている行は入れ替わって当然なので、参考として出すだけにします
+  log("   並べ替え前の可視選択:", JSON.stringify(before), "後:", JSON.stringify(after));
   await page.close();
 }
 
@@ -193,9 +251,11 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
       .map((s) => s.textContent?.trim())
       .filter((t) => t && /レイアウト|フォーム|端末幅|fail-add-me/.test(t));
   });
-  log("6. 追加失敗後の一覧:", JSON.stringify(items));
-  log(
-    "   → fail-add-me が消え、削除した項目が復活していないこと",
+  // 「配列を控えて戻す」実装だと、ここで削除した項目が復活します
+  must(
+    "6. 追加が失敗しても、同時に走った削除が取り消されない",
+    !items.includes("fail-add-me") && !items.some((t) => /レイアウトを直す/.test(t)),
+    JSON.stringify(items),
   );
 
   // 8. 再取得しても保留中が消えないか
@@ -206,9 +266,10 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
   await page.getByRole("button", { name: /再取得/ }).click();
   await page.waitForTimeout(300);
   const pendingAfter = await page.getByText(/保留中: /).textContent();
-  log(
-    "8. 再取得:",
-    `${pendingBefore?.trim()} → ${pendingAfter?.trim()}（消えていないこと）`,
+  must(
+    "8. 再取得しても保留中の操作が消えない",
+    pendingAfter?.trim() === pendingBefore?.trim(),
+    `${pendingBefore?.trim()} → ${pendingAfter?.trim()}`,
   );
   await page.waitForTimeout(1500);
   await page.close();

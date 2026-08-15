@@ -4,7 +4,7 @@
  */
 import { launch, log } from "./_browser.mjs";
 
-const { errors, openTab, finish } = await launch();
+const { errors, openTab, finish, must, mustEq } = await launch();
 const openParts = (width = 1100, height = 900) =>
   openTab("parts", { width, height });
 
@@ -24,7 +24,8 @@ const openParts = (width = 1100, height = 900) =>
       matchesTopLayer: d.matches(":modal"),
     };
   });
-  log("1. dialog:", JSON.stringify(r));
+  must("1. dialog が showModal で開く（:modal にマッチ）", r?.matchesTopLayer, JSON.stringify(r));
+  must("   ::backdrop に色が付く", /rgba?\(/.test(r?.backdrop ?? ""), r?.backdrop);
 
   /* ===== 2. Esc で閉じ、フォーカスが戻るか ======================== */
   await page.keyboard.press("Escape");
@@ -33,21 +34,24 @@ const openParts = (width = 1100, height = 900) =>
     open: document.querySelector("dialog")?.open ?? false,
     focused: document.activeElement?.textContent?.trim().slice(0, 12),
   }));
-  log("2. Esc で閉じる:", JSON.stringify(afterEsc));
+  must("2. Esc で閉じる", afterEsc.open === false);
+  must(
+    "   閉じたら開いた要素へフォーカスが戻る",
+    (afterEsc.focused ?? "").includes("削除"),
+    afterEsc.focused,
+  );
 
   /* ===== 3. 決定すると true が返るか（通知で確認） ================ */
   await page.getByRole("button", { name: "削除する", exact: true }).click();
   await page.waitForTimeout(250);
   await page.locator("dialog").getByRole("button", { name: "削除する" }).click();
   await page.waitForTimeout(400);
-  log(
-    "3. 決定の結果:",
-    JSON.stringify(
-      (await page.locator('[role="status"],[role="alert"]').allTextContents())
-        .join(" ")
-        .slice(0, 30),
-    ),
-  );
+  const decided = (
+    await page.locator('[role="status"],[role="alert"]').allTextContents()
+  )
+    .join(" ")
+    .trim();
+  must("3. 決定すると後続の処理が走る", decided.length > 0, decided.slice(0, 30));
   await page.close();
 }
 
@@ -64,7 +68,7 @@ const openParts = (width = 1100, height = 900) =>
       headers: t.querySelectorAll("th").length,
     };
   });
-  log("4. 表:", JSON.stringify(r));
+  must("4. 表が潰れない（min-width が効いている）", parseFloat(r?.minWidth ?? "0") > 0, JSON.stringify(r));
 
   /* ===== 5. 並べ替えの aria-sort とキーボード ==================== */
   const sortBtn = page.locator("th button").first();
@@ -79,10 +83,15 @@ const openParts = (width = 1100, height = 900) =>
   await page.keyboard.press("Enter");
   await page.waitForTimeout(250);
   const firstCell2 = await page.locator("tbody tr td").first().textContent();
-  log(
-    "5. 並べ替え: aria-sort=",
+  must(
+    "5. 並べ替え中の列に aria-sort が付く",
+    sortState.some((v) => v === "ascending" || v === "descending"),
     JSON.stringify(sortState),
-    `キーボードで昇順→降順: ${firstCell?.trim()} → ${firstCell2?.trim()}`,
+  );
+  must(
+    "   キーボード（Enter）で昇順と降順が切り替わる",
+    firstCell?.trim() !== firstCell2?.trim(),
+    `${firstCell?.trim()} → ${firstCell2?.trim()}`,
   );
 
   /* ===== 6. ページング ============================================ */
@@ -90,7 +99,11 @@ const openParts = (width = 1100, height = 900) =>
   await page.getByRole("button", { name: "次へ" }).click();
   await page.waitForTimeout(250);
   const pager2 = await page.getByText(/^\d+ \/ \d+$/).first().textContent();
-  log("6. ページング:", `${pager?.trim()} → ${pager2?.trim()}`);
+  must(
+    "6. 次へでページが進む",
+    pager?.trim() !== pager2?.trim(),
+    `${pager?.trim()} → ${pager2?.trim()}`,
+  );
   await page.close();
 }
 
@@ -108,7 +121,12 @@ const openParts = (width = 1100, height = 900) =>
       .filter((t) => ["日付", "案件", "状態", "件数", "金額"].includes(t));
     return { tableVisible, カードの列名: [...new Set(labels)] };
   });
-  log("7. 375px:", JSON.stringify(r));
+  must("7. 375px では表が消える", r.tableVisible === false);
+  must(
+    "   カードに列名が付く（カードでは列名が唯一の手がかり）",
+    r.カードの列名.length >= 4,
+    JSON.stringify(r.カードの列名),
+  );
   await page.close();
 }
 
@@ -130,7 +148,15 @@ const openParts = (width = 1100, height = 900) =>
       fontSize: el ? parseFloat(getComputedStyle(el).fontSize) : null,
     };
   });
-  log("8. combobox 属性:", JSON.stringify(attrs));
+  mustEq("8. combobox の aria-expanded", attrs.expanded, "true");
+  mustEq("   aria-autocomplete", attrs.autocomplete, "list");
+  must("   aria-controls がある", attrs.controls);
+  must("   候補が出る", attrs.options > 0, `${attrs.options} 件`);
+  must(
+    "   入力欄の文字が 16px 以上（iOS の自動拡大よけ）",
+    (attrs.fontSize ?? 0) >= 16,
+    `${attrs.fontSize}px`,
+  );
 
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ArrowDown");
@@ -144,9 +170,16 @@ const openParts = (width = 1100, height = 900) =>
   await page.keyboard.press("Enter");
   await page.waitForTimeout(300);
   const chosen = await page.getByText(/^選択中:/).textContent();
-  log(
-    "9. ↑↓ Enter:",
-    `activedescendant=${activeIdx.split("-opt-")[1]} → ${chosen?.trim()}`,
+  // 開いた時点で先頭（0）が選ばれているので、↓ を 2 回押すと 2 になります
+  must(
+    "9. ↓ を 2 回で aria-activedescendant が 3 番目（index 2）を指す",
+    activeIdx.endsWith("-opt-2"),
+    activeIdx,
+  );
+  must(
+    "   Enter で選択が確定する",
+    /選択中: .+/.test(chosen?.trim() ?? "") && !/選択中: *$/.test(chosen?.trim() ?? ""),
+    chosen?.trim(),
   );
 
   /* ===== 10. 前の要求が中断されるか（打ち直し） ================== */
@@ -160,7 +193,12 @@ const openParts = (width = 1100, height = 900) =>
   const finalOptions = await page
     .locator('[role="option"]')
     .allTextContents();
-  log("10. 打ち直し後の候補:", JSON.stringify(finalOptions.slice(0, 3)));
+  // 古い応答が新しい応答を上書きしていたら "Bo" の結果が残ります
+  must(
+    "10. 打ち直すと前の要求が中断され、古い候補が残らない",
+    finalOptions.length > 0 && finalOptions.every((t) => !/^Bo/i.test(t.trim())),
+    JSON.stringify(finalOptions.slice(0, 3)),
+  );
   await page.close();
 }
 
@@ -191,7 +229,7 @@ const openParts = (width = 1100, height = 900) =>
       出た向き: lr.top < ir.top ? "上" : "下",
     };
   });
-  log("11. 320px 最下部:", JSON.stringify(r));
+  must("11. 320px の最下部でも候補が画面内に収まる", r?.画面内に収まる, JSON.stringify(r));
   await page.close();
 }
 
@@ -212,7 +250,11 @@ const openParts = (width = 1100, height = 900) =>
       p.getAttribute("aria-valuenow"),
     ),
   }));
-  log("12. 進捗バー:", JSON.stringify(mid));
+  must(
+    "12. アップロード中に進捗バーが出る",
+    mid.progressbars >= 2,
+    JSON.stringify(mid),
+  );
 
   await page.waitForTimeout(3000);
   const after = await page.evaluate(() => ({
@@ -223,7 +265,11 @@ const openParts = (width = 1100, height = 900) =>
       (b) => b.textContent?.trim() === "再送",
     ).length,
   }));
-  log("13. 失敗した 1 件だけ:", JSON.stringify(after));
+  must(
+    "13. 失敗した 1 件だけにエラーと再送が出る",
+    after.再送ボタン === 1 && after.エラー表示.length >= 1,
+    JSON.stringify(after),
+  );
 
   // サイズ超過が弾かれるか
   await input.setInputFiles([
@@ -235,7 +281,7 @@ const openParts = (width = 1100, height = 900) =>
       .map((e) => e.textContent?.trim())
       .filter((t) => t?.includes("超えて")),
   );
-  log("14. サイズ超過:", JSON.stringify(tooBig));
+  must("14. サイズ超過が弾かれる", tooBig.length >= 1, JSON.stringify(tooBig));
   await page.close();
 }
 

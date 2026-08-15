@@ -3,21 +3,45 @@
  */
 import { launch, log } from "./_browser.mjs";
 
-const { openTab, finish } = await launch();
+const { openTab, finish, must, mustEq } = await launch();
 const page = await openTab("layout", { width: 1100, height: 900 });
 
-/* --- 1. 余白が本当にトークン由来か --------------------------------- */
+/* --- 1. 余白が本当にトークン由来か ---------------------------------
+   トークンは rem で書かれ、実測値は px で返ります。単純に文字列で
+   比べると 1rem と 16px が食い違って落ちるので、**段階の一覧を px に
+   直してから、実測値がその中にあるか**を見ます。
+   「トークン由来であること」が確かめたい性質で、
+   「たまたま md であること」ではありません。 */
 const gaps = await page.evaluate(() => {
-  const el = document.querySelector(".wt-gap");
-  const cs = el ? getComputedStyle(el) : null;
   const root = getComputedStyle(document.documentElement);
+  // 段階の値を px に直す（probe に入れて実測する）
+  const probe = document.createElement("div");
+  probe.style.position = "absolute";
+  probe.style.visibility = "hidden";
+  document.body.appendChild(probe);
+  const toPx = (v) => {
+    probe.style.width = v;
+    return getComputedStyle(probe).width;
+  };
+  const steps = ["none", "2xs", "xs", "sm", "md", "lg", "xl", "2xl", "3xl"]
+    .map((k) => root.getPropertyValue(`--space-${k}`).trim())
+    .filter(Boolean);
+  const stepsPx = steps.map(toPx);
+  const el = document.querySelector(".wt-gap");
+  const gap = el ? getComputedStyle(el).rowGap : null;
+  probe.remove();
   return {
-    gap: cs?.rowGap,
+    gap,
+    stepsPx,
     tokenMd: root.getPropertyValue("--space-md").trim(),
     tokenXl: root.getPropertyValue("--space-xl").trim(),
   };
 });
-log("wt-gap の実測:", gaps.gap, "/ --space-md:", gaps.tokenMd);
+must(
+  "wt-gap の余白が、段階のどれかと一致する（べた書きでない）",
+  gaps.stepsPx.includes(gaps.gap),
+  `実測 ${gaps.gap} / 段階 ${gaps.stepsPx.join(" ")}`,
+);
 
 /* --- 2. テーマを変えると余白そのものが変わるか --------------------- */
 await page.evaluate(() => {
@@ -31,7 +55,11 @@ await page.evaluate(() => {
   document.documentElement.dataset.theme = "neutral";
 });
 await page.waitForTimeout(200);
-log(`--space-xl  neutral=${gaps.tokenXl}  warm=${warmXl}  →`, gaps.tokenXl !== warmXl ? "テーマで変わる ✓" : "変わらない ✗");
+must(
+  "テーマを変えると余白そのものが変わる",
+  gaps.tokenXl !== warmXl,
+  `neutral=${gaps.tokenXl} warm=${warmXl}`,
+);
 
 /* --- 3. Stack の space を切り替えると間隔が変わるか ----------------- */
 async function stackGap(label) {
@@ -50,7 +78,12 @@ async function stackGap(label) {
 const gNone = await stackGap("none");
 const gLg = await stackGap("lg");
 const g3xl = await stackGap("3xl");
-log(`Stack space:  none=${gNone}  lg=${gLg}  3xl=${g3xl}`);
+mustEq("Stack space=none は 0px", gNone, "0px");
+must(
+  "space を上げると間隔が広がる",
+  parseFloat(gLg) > 0 && parseFloat(g3xl) > parseFloat(gLg),
+  `none=${gNone} lg=${gLg} 3xl=${g3xl}`,
+);
 
 /* --- 4. Columns がモバイル幅で縦に畳むか --------------------------- */
 async function columnsDirection(width) {
@@ -64,7 +97,11 @@ async function columnsDirection(width) {
 }
 const wide = await columnsDirection(1100);
 const narrow = await columnsDirection(500);
-log(`Columns 方向:  1100px=${wide}  500px=${narrow}  →`, wide === "row" && narrow === "column" ? "自動で畳む ✓" : "✗");
+must(
+  "Columns は狭い画面で縦に畳む",
+  wide === "row" && narrow === "column",
+  `1100px=${wide} 500px=${narrow}`,
+);
 await page.setViewportSize({ width: 1100, height: 900 });
 await page.waitForTimeout(200);
 
@@ -82,8 +119,11 @@ for (const v of ["13px", "2.75rem", "clamp(1rem, 5vw, 4rem)"]) {
     return blks[0] ? getComputedStyle(blks[0].parentElement).rowGap : null;
   });
   arbitrary.push(`${v}→${got}`);
+  // 段階に無い値を書いても、そのまま反映されること（自由度の確保）。
+  // ここが効かなくなると「既定値はあるが、外れた値も書ける」という
+  // この設計の根っこが崩れます。
+  must(`段階外の値 ${v} が反映される`, !!got && got !== "0px" && got !== "normal", got);
 }
-log("段階外の値:", arbitrary.join("  "));
 
 /* --- 5. Tiles の列数がブレークポイントで変わるか ------------------- */
 async function tilesCols(width) {
@@ -96,8 +136,13 @@ async function tilesCols(width) {
     return t ? getComputedStyle(t).gridTemplateColumns.split(" ").length : null;
   });
 }
-log(
-  `Tiles 列数:  500px=${await tilesCols(500)}  800px=${await tilesCols(800)}  1200px=${await tilesCols(1200)}`,
+const t500 = await tilesCols(500);
+const t800 = await tilesCols(800);
+const t1200 = await tilesCols(1200);
+must(
+  "Tiles の列数が画面幅で増える",
+  t500 < t800 && t800 <= t1200,
+  `500px=${t500} 800px=${t800} 1200px=${t1200}`,
 );
 await page.setViewportSize({ width: 1100, height: 900 });
 await page.waitForTimeout(200);
@@ -106,7 +151,11 @@ await page.waitForTimeout(200);
 await page.getByRole("button", { name: "onError を書かずに失敗させる" }).click();
 await page.waitForTimeout(1200);
 const toast1 = await page.locator('[role="alert"]').allTextContents();
-log("未指定で失敗 → 通知:", JSON.stringify(toast1.join(" | ").slice(0, 60)));
+must(
+  "onError を書かずに失敗したら、既定の通知が出る",
+  toast1.some((t) => t.trim().length > 0),
+  toast1.join(" | ").slice(0, 40),
+);
 
 /* --- 7. onError を書いた場合は既定が走らないか --------------------- */
 // 前の通知が残っていると判定できないので、読み直して状態を空にする
@@ -116,15 +165,17 @@ await page.getByRole("button", { name: "onError を自分で書く" }).click();
 await page.waitForTimeout(1200);
 const statuses = await page.locator('[role="status"]').allTextContents();
 const alerts = await page.locator('[role="alert"]').allTextContents();
-log(
-  "自前 onError → 出た通知:",
-  JSON.stringify([...statuses, ...alerts].filter((t) => t.trim()).join(" | ").slice(0, 60)),
+const shown = [...statuses, ...alerts].filter((t) => t.trim());
+must(
+  "onError を自分で書いたら、既定の通知は走らない",
+  alerts.filter((t) => t.trim()).length === 0,
+  shown.join(" | ").slice(0, 40) || "(通知なし)",
 );
 
 /* --- 8. 通知が自動で消えるか（success は 5s） --------------------- */
 await page.getByRole("button", { name: "通知を直接出す" }).click();
 await page.waitForTimeout(400);
 const before = await page.locator('[role="status"]').count();
-log("通知を直接表示:", before > 0 ? "表示された ✓" : "✗");
+must("通知を直接出せる", before > 0, `${before} 件`);
 
 await finish();

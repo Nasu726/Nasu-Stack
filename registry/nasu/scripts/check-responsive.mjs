@@ -82,7 +82,15 @@ export function inspect(viewportWidth) {
       const p = el.parentElement;
       const inText =
         p && /^(P|LI|TD|TH|H1|H2|H3|H4|H5|H6|BLOCKQUOTE|SPAN|EM|STRONG|FIGCAPTION|DD|DT)$/.test(p.tagName);
-      if (inText && cs.display.startsWith("inline")) continue;
+      /* **`inline-flex` を除外に含めてはいけません。**
+         最初 `startsWith("inline")` にしていたら、ナビゲーションのリンク
+         （`<li>` の中の `inline-flex`）まで例外になり、
+         わざと高さを潰したのに検出できませんでした。
+
+         地の文に混ざったリンクは `display: inline` です。
+         `inline-flex` はレイアウトのために明示的に選んだもので、
+         文章の一部ではありません。だから `inline` だけを除外します。 */
+      if (inText && cs.display === "inline") continue;
     }
 
     // 包んでいる label / button があれば、それが実際の当たり判定

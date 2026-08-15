@@ -16,6 +16,7 @@
  * どれか 1 つでも落ちたら終了コード 1。CI にそのまま載せられます。
  */
 import { spawn, spawnSync } from "node:child_process";
+import process from "node:process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -23,12 +24,28 @@ import { setTimeout as sleep } from "node:timers/promises";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CHROMIUM = process.env.CHROMIUM_PATH || "";
 
+/* ------------------------------------------------------------------
+ * Windows 対応（**未検証**）
+ * ------------------------------------------------------------------
+ * ⚠️ 要確認: Windows の実機で動かしていません。コードを読んだ限りの対応です。
+ *
+ * 1. pnpm は Windows では `pnpm.cmd` という実体です。
+ *    `spawn("pnpm")` は拡張子を補ってくれないので ENOENT になります。
+ * 2. `process.kill(-pid)` の負の値は「プロセスグループ」の意味で、
+ *    POSIX にしかありません。Windows では taskkill を使います。
+ *
+ * 配布物（利用者が受け取る 33 ファイル）には OS 依存はありません。
+ * ここは開発用スクリプトの話です。
+ * ---------------------------------------------------------------- */
+const isWindows = process.platform === "win32";
+const PNPM = isWindows ? "pnpm.cmd" : "pnpm";
+
 const results = [];
 let failed = false;
 
 function step(name, cmd, args, opts = {}) {
   process.stdout.write(`\n── ${name}\n`);
-  const r = spawnSync(cmd, args, {
+  const r = spawnSync(cmd === "pnpm" ? PNPM : cmd, args, {
     cwd: root,
     stdio: "inherit",
     env: { ...process.env },
@@ -68,10 +85,12 @@ step("利用者プロジェクトへ展開して型検査", "node", [
 
 const servers = [];
 function serve(filter, cmd, args, port) {
-  const p = spawn("pnpm", ["--filter", filter, "exec", cmd, ...args], {
+  const p = spawn(PNPM, ["--filter", filter, "exec", cmd, ...args], {
     cwd: root,
     stdio: "ignore",
-    detached: true,
+    // detached は POSIX でプロセスグループを作るためのものです。
+    // Windows では意味が違うので付けません（下の停止処理も分岐します）。
+    detached: !isWindows,
   });
   servers.push(p);
   return port;
@@ -114,7 +133,16 @@ step("実ブラウザ: 端末幅の崩れ", "node", [
 
 for (const p of servers) {
   try {
-    process.kill(-p.pid);
+    if (isWindows) {
+      // ⚠️ 要確認: Windows 実機で未検証。
+      // /T で子プロセスごと、/F で強制終了します。
+      spawnSync("taskkill", ["/pid", String(p.pid), "/T", "/F"], {
+        stdio: "ignore",
+      });
+    } else {
+      // 負の PID は「このプロセスグループ全体」。POSIX のみ。
+      process.kill(-p.pid);
+    }
   } catch {
     /* すでに落ちている */
   }

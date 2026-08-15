@@ -151,5 +151,9 @@ for (const [name, list] of byCase) {
 console.log(
   broken === 0
     ? "\n✅ どのケースでもはみ出しませんでした"
-    : `\n⚠️  ${broken} / ${byCase.size} ケースで崩れます`,
+    : `\n❌ ${broken} / ${byCase.size} ケースで崩れます`,
 );
+
+// 崩れたら落とします。以前は印字するだけで、
+// **壊れていても pnpm verify は緑のまま**でした。
+process.exit(broken > 0 ? 1 : 0);

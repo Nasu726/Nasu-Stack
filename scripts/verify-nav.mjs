@@ -6,7 +6,7 @@
  */
 import { launch, log, BASE } from "./_browser.mjs";
 
-const { openTab, finish } = await launch();
+const { openTab, finish, must, mustEq } = await launch();
 
 /** その要素にフォーカスが当たっているかを、読める形で返します。 */
 const active = (page) =>
@@ -33,8 +33,14 @@ const active = (page) =>
       .trim(),
     scrollbarGutter: getComputedStyle(document.documentElement).scrollbarGutter,
   }));
-  log("1. アンカーの逃げ:", JSON.stringify(r));
-  log("   → scroll-padding-top が 0 でなければ、見出しはヘッダの下に隠れません");
+  // 実測で 64px のヘッダに見出しが 64px ぶん完全に隠れていました
+  must(
+    "1. アンカーがヘッダの下に潜らない（scroll-padding-top がある）",
+    parseFloat(r.scrollPaddingTop) > 0,
+    JSON.stringify(r),
+  );
+  must("   ヘッダの高さがトークンとして 1 か所にある", r.headerH.length > 0, r.headerH);
+  mustEq("   開閉で横に揺れない（scrollbar-gutter）", r.scrollbarGutter, "stable");
   await page.close();
 }
 
@@ -54,8 +60,9 @@ const active = (page) =>
       dialogの数: document.querySelectorAll("dialog").length,
     };
   });
-  log("2. 開いた直後:", JSON.stringify(opened));
-  log("   → modal=true なら top layer。htmlOverflow=hidden なら背面は動きません");
+  must("2. showModal で開いている（open 属性ではない）", opened.modal, JSON.stringify(opened));
+  must("   ::backdrop に色が付く", /rgba?\(/.test(opened.backdrop));
+  mustEq("   背面のスクロールを止めている", opened.htmlOverflow, "hidden");
 
   // 背面が本当に動かないか。
   // **window.scrollBy では測れません。** あれはプログラムからの操作で、
@@ -65,7 +72,7 @@ const active = (page) =>
   await page.mouse.wheel(0, 600);
   await page.waitForTimeout(300);
   const after = await page.evaluate(() => window.scrollY);
-  log("3. ホイールでの背面スクロール:", `${before} → ${after}（動いていないこと）`);
+  must("3. ホイールでも背面がスクロールしない", before === after, `${before} → ${after}`);
 
   /* Tab を 12 回押して、ダイアログの外の**ページ内要素**へ移らないか。
      body に落ちるのは数えません。Chrome はモーダルの端でブラウザ UI
@@ -84,7 +91,11 @@ const active = (page) =>
     });
     if (out) escaped.push(out);
   }
-  log("4. Tab 12 回でダイアログ外の要素へ移った回数:", escaped.length, JSON.stringify(escaped));
+  must(
+    "4. Tab を 12 回押してもダイアログ外の要素へ移らない",
+    escaped.length === 0,
+    JSON.stringify(escaped),
+  );
 
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
@@ -92,7 +103,8 @@ const active = (page) =>
     open: !!document.querySelector("dialog[open]"),
     htmlOverflow: getComputedStyle(document.documentElement).overflow,
   }));
-  log("5. Esc の後:", JSON.stringify(closed), "（背面のスクロールも戻ること）");
+  must("5. Esc で閉じる", closed.open === false);
+  must("   閉じたら背面のスクロールが戻る", closed.htmlOverflow !== "hidden", closed.htmlOverflow);
 
   await page.close();
 }
@@ -112,20 +124,31 @@ const active = (page) =>
       パネルが存在: !!document.getElementById(t.getAttribute("aria-controls") ?? ""),
     }));
   });
-  log("6. roving tabindex:", JSON.stringify(roving));
-  log("   → tabIndex が 0 なのは 1 つだけ。aria-controls の先が実在すること");
+  must(
+    "6. Tab キーで止まるタブは 1 つだけ（roving tabindex）",
+    roving.filter((t) => t.tabIndex === 0).length === 1,
+    JSON.stringify(roving.map((t) => `${t.label}:${t.tabIndex}`)),
+  );
+  must("   aria-controls の先がすべて実在する", roving.every((t) => t["パネルが存在"]));
+  must(
+    "   aria-selected が立っているのは 1 つだけ",
+    roving.filter((t) => t.selected === "true").length === 1,
+  );
 
   // 矢印キー
   await list.getByRole("tab", { name: "概要" }).focus();
   await page.keyboard.press("ArrowRight");
   await page.waitForTimeout(150);
-  log("7. → を 1 回:", JSON.stringify(await active(page)));
+  const t1 = await active(page);
+  must("7. → で隣のタブへ移る", t1?.text === "詳細", JSON.stringify(t1));
   await page.keyboard.press("ArrowRight");
   await page.waitForTimeout(150);
-  log("   もう 1 回（無効なタブを飛ばすこと）:", JSON.stringify(await active(page)));
+  const t2 = await active(page);
+  must("   無効なタブを飛ばす", t2?.text === "履歴", JSON.stringify(t2));
   await page.keyboard.press("End");
   await page.waitForTimeout(150);
-  log("   End:", JSON.stringify(await active(page)));
+  const t3 = await active(page);
+  must("   End で最後のタブへ", t3?.text === "履歴", JSON.stringify(t3));
 
   // 入力がタブ切り替えで消えないか
   await list.getByRole("tab", { name: "詳細" }).click();
@@ -136,7 +159,11 @@ const active = (page) =>
   await list.getByRole("tab", { name: "詳細" }).click();
   await page.waitForTimeout(200);
   const kept = await page.locator('input[placeholder^="何か入力"]').inputValue();
-  log("8. タブを往復した後の入力:", JSON.stringify(kept));
+  must(
+    "8. タブを往復しても入力が消えない（既定は hidden で隠すだけ）",
+    kept === "消えないで",
+    JSON.stringify(kept),
+  );
 
   // 多いタブが潰れずに横スクロールするか。
   // **広い画面では入りきってしまうので、狭くしてから測ります。**
@@ -151,7 +178,11 @@ const active = (page) =>
       スクロールできる: (scroller?.scrollWidth ?? 0) > (scroller?.clientWidth ?? 0),
     };
   });
-  log("9. 12 個のタブ:", JSON.stringify(many));
+  must(
+    "9. タブが多いとき、潰さずに横スクロールする",
+    many["スクロールできる"] && many["タブの幅"] > 40,
+    JSON.stringify(many),
+  );
 
   await page.close();
 }
@@ -170,7 +201,9 @@ const active = (page) =>
       高さ: Math.round(s?.getBoundingClientRect().height ?? 0),
     };
   });
-  log("10. summary:", JSON.stringify(marker), "（矢印が無いと開けると分からない）");
+  mustEq("10. summary の既定マーカーを消している", marker.listStyle, "none");
+  must("    代わりの矢印を出している（消しっぱなしは不可）", marker["矢印がある"]);
+  must("    当たり判定が 44px 以上", marker["高さ"] >= 44, `${marker["高さ"]}px`);
 
   // name 属性の排他がブラウザで効くか
   const accordion = await page.evaluate(() => {
@@ -183,9 +216,10 @@ const active = (page) =>
   const openCount = await page.evaluate(
     () => document.querySelectorAll("details[name][open]").length,
   );
-  log(
-    "11. name による排他:",
-    `${JSON.stringify(accordion)} → 2 つ目を開いた後に開いている数=${openCount}（1 なら効いている）`,
+  must(
+    "11. details[name] の排他がブラウザで効く（JS なし）",
+    openCount === 1,
+    `${accordion["数"]} 個中 開いている=${openCount}`,
   );
 
   await page.close();
@@ -197,20 +231,25 @@ const active = (page) =>
 
   await page.getByRole("button", { name: "操作" }).click();
   await page.waitForTimeout(250);
-  log("12. 開いた直後のフォーカス:", JSON.stringify(await active(page)));
+  const m0 = await active(page);
+  must("12. 開くとフォーカスが先頭の項目へ移る", m0?.role === "menuitem", JSON.stringify(m0));
 
   await page.keyboard.press("ArrowDown");
   await page.waitForTimeout(120);
-  log("    ↓ を 1 回:", JSON.stringify(await active(page)));
+  const m1 = await active(page);
+  must("    ↓ で次の項目へ", m1?.text === "書き出す", JSON.stringify(m1));
   await page.keyboard.press("End");
   await page.waitForTimeout(120);
-  log("    End:", JSON.stringify(await active(page)));
+  const m2 = await active(page);
+  must("    End で最後の項目へ（区切り線は飛ばす）", m2?.text === "削除する", JSON.stringify(m2));
 
   await page.keyboard.press("Escape");
   await page.waitForTimeout(250);
-  log(
-    "13. Esc の後（開いたボタンへ戻ること）:",
-    JSON.stringify(await active(page)),
+  const m3 = await active(page);
+  must(
+    "13. Esc で閉じると、開いたボタンへフォーカスが戻る",
+    m3?.tag === "button" && (m3?.text ?? "").startsWith("操作"),
+    JSON.stringify(m3),
   );
 
   // リンクの下ろし物に role=menu を使っていないこと
@@ -228,8 +267,12 @@ const active = (page) =>
       menuitemの数: panel?.querySelectorAll('[role="menuitem"]').length,
     };
   });
-  log("14. NavDropdown:", JSON.stringify(navRoles));
-  log("    → role は null、中身は a。menuitem が 0 であること");
+  must(
+    "14. リンクの下ろし物に role=menu を使っていない",
+    navRoles.role === null && navRoles["menuitemの数"] === 0,
+    JSON.stringify(navRoles),
+  );
+  mustEq("    中身はただのリンク", navRoles["中身"], "a");
 
   await page.close();
 }
@@ -251,7 +294,8 @@ const active = (page) =>
       ハンバーガーの大きさ: `${Math.round(r?.width ?? 0)}x${Math.round(r?.height ?? 0)}`,
     };
   });
-  log("15. 狭い画面のメニュー:", JSON.stringify(mobile));
+  must("15. 狭い画面では details のメニューになる", mobile["detailsがある"], JSON.stringify(mobile));
+  mustEq("    ハンバーガーの当たり判定", mobile["ハンバーガーの大きさ"], "44x44");
 
   await page.close();
 
@@ -285,7 +329,9 @@ const active = (page) =>
       パネルの高さ: Math.round(r?.height ?? 0),
     };
   });
-  log("16. 実サイトで開いた後:", JSON.stringify(afterOpen));
+  must("16. 実サイトでメニューが開く", afterOpen["開いた"] === true, JSON.stringify(afterOpen));
+  must("    開いたパネルが画面内に収まる", afterOpen["画面内に収まっている"]);
+  must("    リンクが入っている", (afterOpen["リンクの数"] ?? 0) > 0);
 
   await site.close();
 
@@ -297,10 +343,11 @@ const active = (page) =>
     const marked = [...document.querySelectorAll('[aria-current="page"]')];
     return marked.map((a) => a.textContent?.trim());
   });
-  log(
-    "17. aria-current:",
+  // 広い画面用と狭い画面用に同じリンクを 2 回書き出すので 2 件が正常です
+  must(
+    "17. いま開いているページに aria-current が付く",
+    current.length === 2 && current.every((t) => t === "料金"),
     JSON.stringify(current),
-    "（広い画面用と狭い画面用に同じリンクを 2 回書き出すので 2 件が正常）",
   );
   await cat.close();
 }
@@ -337,8 +384,16 @@ const active = (page) =>
     po.disconnect();
     return { before, after, cls: Number(total.toFixed(4)) };
   });
-  log("18. 画像の読み込み前後の位置:", JSON.stringify(shift));
-  log("   → 包まない側だけが動き、Frame で包んだ側は動かないこと");
+  /* 座標そのものを判定にしてはいけません（環境で変わります）。
+     判定するのは「片方だけ動いた」という関係です。 */
+  const movedUnwrapped = Math.abs(shift.after[0] - shift.before[0]);
+  const movedWrapped = Math.abs(shift.after[1] - shift.before[1]);
+  must(
+    "18. Frame で包むと、画像が届いても下の文章が動かない",
+    movedWrapped === 0,
+    `包んだ側 ${movedWrapped}px / 包まない側 ${movedUnwrapped}px`,
+  );
+  must("    包まない側は実際に動く（比較が成立している）", movedUnwrapped > 0, `${movedUnwrapped}px`);
 
   const imgAttrs = await page.evaluate(() =>
     [...document.querySelectorAll("img")].map((i) => ({
@@ -347,7 +402,12 @@ const active = (page) =>
       比率が指定された箱の中: !!i.closest("[style*='aspect-ratio']"),
     })),
   );
-  log("19. img の属性:", JSON.stringify(imgAttrs));
+  const priority = imgAttrs.find((i) => i["比率が指定された箱の中"]);
+  must(
+    "19. priority を付けた画像は lazy にならない",
+    priority?.loading === "eager" && priority?.fetchPriority === "high",
+    JSON.stringify(priority),
+  );
 
   await page.close();
 }
@@ -371,8 +431,20 @@ const active = (page) =>
       wtProse自身の外余白: `${cs(root)?.marginTop} / ${cs(root)?.marginBottom}`,
     };
   });
-  log("20. prose:", JSON.stringify(prose));
-  log("   → wt-prose 自身は外側の余白を持たないこと（0px / 0px）");
+  must(
+    "20. wt-prose 自身は外側の余白を持たない（原則を守る）",
+    prose["wtProse自身の外余白"] === "0px / 0px",
+    prose["wtProse自身の外余白"],
+  );
+  must("    見出しの上に余白が入る", parseFloat(prose["h3の上余白"]) > 0, prose["h3の上余白"]);
+  mustEq("    本文の文字は 16px", prose["本文のフォント"], "16px");
+  mustEq("    pre は横スクロール（base 層と競合しない）", prose["preの横スクロール"], "auto");
+  mustEq("    リンクの下線を消していない", prose["リンクの下線"], "underline");
+  must(
+    "    本文の幅が読みやすい範囲に収まる",
+    prose["本文の幅"] > 0 && prose["本文の幅"] <= 720,
+    `${prose["本文の幅"]}px`,
+  );
 
   await page.close();
 }
@@ -406,8 +478,11 @@ const active = (page) =>
       リンクの数: d?.querySelectorAll("a").length,
     };
   });
-  log("21. JavaScript を切った Astro ページ:", JSON.stringify(noJs));
-  log("   → JS 無しでメニューが開くこと（<details> の力）");
+  must(
+    "21. JavaScript を切ってもメニューが開く（<details> の力）",
+    noJs["開いた"] === true && (noJs["リンクの数"] ?? 0) > 0,
+    JSON.stringify(noJs),
+  );
   await page.close();
 }
 

@@ -1,4 +1,10 @@
-/** 配布用アーカイブを作ります: node scripts/pack.mjs */
+/**
+ * 配布用アーカイブを作ります: node scripts/pack.mjs
+ *
+ * ⚠️ 要確認: `tar` を外部コマンドとして呼んでいます。
+ * Windows 10 以降には `tar.exe`（bsdtar）が同梱されているので概ね動くはずですが、
+ * **実機で確かめていません。**
+ */
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
