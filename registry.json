@@ -9,7 +9,11 @@
       "title": "Action 契約",
       "description": "非同期処理の統一契約。エラー正規化と、Astro island 用のシリアライズ可能な ActionSpec を含みます。",
       "files": [
-        { "path": "registry/nasu/lib/action.ts", "type": "registry:lib", "target": "lib/action.ts" }
+        {
+          "path": "registry/nasu/lib/action.ts",
+          "type": "registry:lib",
+          "target": "lib/action.ts"
+        }
       ]
     },
     {
@@ -17,18 +21,29 @@
       "type": "registry:lib",
       "title": "cn ヘルパ",
       "description": "Tailwind のクラス結合ユーティリティ。",
-      "dependencies": ["clsx", "tailwind-merge"],
+      "dependencies": [
+        "clsx",
+        "tailwind-merge"
+      ],
       "files": [
-        { "path": "registry/nasu/lib/utils.ts", "type": "registry:lib", "target": "lib/utils.ts" }
+        {
+          "path": "registry/nasu/lib/utils.ts",
+          "type": "registry:lib",
+          "target": "lib/utils.ts"
+        }
       ]
     },
     {
       "name": "theme",
       "type": "registry:theme",
       "title": "トンマナ 4 種",
-      "description": "neutral / warm / editorial / vivid。色だけでなく角丸・影・書体まで一括で切り替わります。",
+      "description": "neutral / warm / editorial / vivid。色・角丸・影・書体・余白の広さを一括で切り替え。端末幅で壊れないための土台（折り返し・メディアの最大幅・タップ領域）も含みます。",
       "files": [
-        { "path": "registry/nasu/lib/theme.css", "type": "registry:file", "target": "styles/theme.css" }
+        {
+          "path": "registry/nasu/lib/theme.css",
+          "type": "registry:file",
+          "target": "styles/theme.css"
+        }
       ]
     },
     {
@@ -36,19 +51,48 @@
       "type": "registry:lib",
       "title": "ActionDefaults コンテキスト",
       "description": "onError を書かなかったアクションの受け皿。ActionProvider が値を供給します。",
-      "registryDependencies": ["@nasu/action"],
+      "registryDependencies": [
+        "@nasu/action"
+      ],
       "files": [
-        { "path": "registry/nasu/lib/action-defaults.ts", "type": "registry:lib", "target": "lib/action-defaults.ts" }
+        {
+          "path": "registry/nasu/lib/action-defaults.ts",
+          "type": "registry:lib",
+          "target": "lib/action-defaults.ts"
+        }
       ]
     },
     {
       "name": "layout",
       "type": "registry:block",
       "title": "レイアウト・プリミティブ",
-      "description": "Box / Stack / Inline / Columns / Tiles / Spread / PageBlock / ContentBlock / Section / Divider。余白は 9 段階からしか選べず、コンポーネントは外側の余白を持ちません。",
-      "registryDependencies": ["@nasu/utils", "@nasu/theme"],
+      "description": "Box / Stack / Inline / Columns / Tiles / Spread / PageBlock / ContentBlock / Section / Divider。余白は 9 段階が既定だが段階外の値も書ける。コンポーネントは外側の余白を持たない。",
+      "registryDependencies": [
+        "@nasu/utils",
+        "@nasu/theme"
+      ],
       "files": [
-        { "path": "registry/nasu/components/ui/layout.tsx", "type": "registry:ui", "target": "components/ui/layout.tsx" }
+        {
+          "path": "registry/nasu/components/ui/layout.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/layout.tsx"
+        }
+      ]
+    },
+    {
+      "name": "scrollable",
+      "type": "registry:ui",
+      "title": "Scrollable",
+      "description": "表やコードのように縮められない中身を、その部分だけ横スクロールさせます。端の影とキーボード到達つき。",
+      "registryDependencies": [
+        "@nasu/utils"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/scrollable.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/scrollable.tsx"
+        }
       ]
     },
     {
@@ -56,9 +100,17 @@
       "type": "registry:block",
       "title": "Toast",
       "description": "画面隅の通知。ToastProvider + useToast。tone / 自動消去 / アクションボタン / スクリーンリーダー対応つき。",
-      "registryDependencies": ["@nasu/layout", "@nasu/spinner", "@nasu/utils"],
+      "registryDependencies": [
+        "@nasu/layout",
+        "@nasu/spinner",
+        "@nasu/utils"
+      ],
       "files": [
-        { "path": "registry/nasu/components/ui/toast.tsx", "type": "registry:ui", "target": "components/ui/toast.tsx" }
+        {
+          "path": "registry/nasu/components/ui/toast.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/toast.tsx"
+        }
       ]
     },
     {
@@ -66,9 +118,16 @@
       "type": "registry:block",
       "title": "ActionProvider",
       "description": "アプリの一番外側に 1 回置くだけ。onError を書き忘れたアクションの失敗が握り潰されず、画面隅の通知になります。",
-      "registryDependencies": ["@nasu/action-defaults", "@nasu/toast"],
+      "registryDependencies": [
+        "@nasu/action-defaults",
+        "@nasu/toast"
+      ],
       "files": [
-        { "path": "registry/nasu/components/ui/action-provider.tsx", "type": "registry:ui", "target": "components/ui/action-provider.tsx" }
+        {
+          "path": "registry/nasu/components/ui/action-provider.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/action-provider.tsx"
+        }
       ]
     },
     {
@@ -76,9 +135,16 @@
       "type": "registry:hook",
       "title": "useAction",
       "description": "書き込み系の非同期処理。二重送信防止・中断・自動リトライ・成功状態の自動リセットを内蔵。",
-      "registryDependencies": ["@nasu/action", "@nasu/action-defaults"],
+      "registryDependencies": [
+        "@nasu/action",
+        "@nasu/action-defaults"
+      ],
       "files": [
-        { "path": "registry/nasu/hooks/use-action.ts", "type": "registry:hook", "target": "hooks/use-action.ts" }
+        {
+          "path": "registry/nasu/hooks/use-action.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-action.ts"
+        }
       ]
     },
     {
@@ -86,9 +152,15 @@
       "type": "registry:hook",
       "title": "useResource",
       "description": "読み取り系の非同期処理。依存キーの変化で再取得し、アンマウント時に中断します。",
-      "registryDependencies": ["@nasu/action"],
+      "registryDependencies": [
+        "@nasu/action"
+      ],
       "files": [
-        { "path": "registry/nasu/hooks/use-resource.ts", "type": "registry:hook", "target": "hooks/use-resource.ts" }
+        {
+          "path": "registry/nasu/hooks/use-resource.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-resource.ts"
+        }
       ]
     },
     {
@@ -96,9 +168,15 @@
       "type": "registry:ui",
       "title": "アイコン",
       "description": "Spinner / CheckIcon / AlertIcon。",
-      "registryDependencies": ["@nasu/utils"],
+      "registryDependencies": [
+        "@nasu/utils"
+      ],
       "files": [
-        { "path": "registry/nasu/components/ui/spinner.tsx", "type": "registry:ui", "target": "components/ui/spinner.tsx" }
+        {
+          "path": "registry/nasu/components/ui/spinner.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/spinner.tsx"
+        }
       ]
     },
     {
@@ -106,9 +184,18 @@
       "type": "registry:ui",
       "title": "ActionButton",
       "description": "関数を渡すだけで idle/pending/success/error の 4 状態を持つボタン。連打防止と確認ダイアログつき。",
-      "registryDependencies": ["@nasu/use-action", "@nasu/action-defaults", "@nasu/spinner", "@nasu/utils"],
+      "registryDependencies": [
+        "@nasu/use-action",
+        "@nasu/action-defaults",
+        "@nasu/spinner",
+        "@nasu/utils"
+      ],
       "files": [
-        { "path": "registry/nasu/components/ui/action-button.tsx", "type": "registry:ui", "target": "components/ui/action-button.tsx" }
+        {
+          "path": "registry/nasu/components/ui/action-button.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/action-button.tsx"
+        }
       ]
     },
     {
@@ -116,9 +203,17 @@
       "type": "registry:ui",
       "title": "AsyncBoundary",
       "description": "読込中 / エラー / 空 / データありの 4 分岐を 1 箇所に閉じ込めます。スケルトン同梱。",
-      "registryDependencies": ["@nasu/action", "@nasu/action-button", "@nasu/spinner"],
+      "registryDependencies": [
+        "@nasu/action",
+        "@nasu/action-button",
+        "@nasu/spinner"
+      ],
       "files": [
-        { "path": "registry/nasu/components/ui/async-boundary.tsx", "type": "registry:ui", "target": "components/ui/async-boundary.tsx" }
+        {
+          "path": "registry/nasu/components/ui/async-boundary.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/async-boundary.tsx"
+        }
       ]
     },
     {
@@ -126,9 +221,18 @@
       "type": "registry:block",
       "title": "AsyncForm + Field",
       "description": "送信関数を 1 つ渡すだけのフォーム。フィールド単位のエラー表示と、打ち直しでの自動クリアつき。",
-      "registryDependencies": ["@nasu/use-action", "@nasu/action-defaults", "@nasu/action-button", "@nasu/spinner"],
+      "registryDependencies": [
+        "@nasu/use-action",
+        "@nasu/action-defaults",
+        "@nasu/action-button",
+        "@nasu/spinner"
+      ],
       "files": [
-        { "path": "registry/nasu/components/ui/async-form.tsx", "type": "registry:ui", "target": "components/ui/async-form.tsx" }
+        {
+          "path": "registry/nasu/components/ui/async-form.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/async-form.tsx"
+        }
       ]
     },
     {
@@ -136,9 +240,16 @@
       "type": "registry:block",
       "title": "DataList",
       "description": "取得・スケルトン・空状態・再試行つきのリスト。columns 指定で関数なし（Astro island）でも使えます。",
-      "registryDependencies": ["@nasu/use-resource", "@nasu/async-boundary"],
+      "registryDependencies": [
+        "@nasu/use-resource",
+        "@nasu/async-boundary"
+      ],
       "files": [
-        { "path": "registry/nasu/components/ui/data-list.tsx", "type": "registry:ui", "target": "components/ui/data-list.tsx" }
+        {
+          "path": "registry/nasu/components/ui/data-list.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/data-list.tsx"
+        }
       ]
     },
     {
@@ -146,9 +257,32 @@
       "type": "registry:block",
       "title": "ThemeProvider + ThemeSwitcher",
       "description": "data-theme と .dark を付け替えるだけでトンマナ一式を切り替えます。初期描画のちらつき防止スクリプト同梱。",
-      "registryDependencies": ["@nasu/theme", "@nasu/utils"],
+      "registryDependencies": [
+        "@nasu/theme",
+        "@nasu/utils"
+      ],
       "files": [
-        { "path": "registry/nasu/components/ui/theme-provider.tsx", "type": "registry:ui", "target": "components/ui/theme-provider.tsx" }
+        {
+          "path": "registry/nasu/components/ui/theme-provider.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/theme-provider.tsx"
+        }
+      ]
+    },
+    {
+      "name": "check-responsive",
+      "type": "registry:file",
+      "title": "端末幅チェック",
+      "description": "実ブラウザを 5 つの幅で開き、はみ出し・タップ領域・iOS の自動拡大・1 行の長さを検出します。崩れがあれば終了コード 1。",
+      "devDependencies": [
+        "playwright"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/scripts/check-responsive.mjs",
+          "type": "registry:file",
+          "target": "scripts/check-responsive.mjs"
+        }
       ]
     }
   ]

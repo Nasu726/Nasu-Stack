@@ -136,10 +136,73 @@ Tailwind の `p-4` と `p-[13px]` の関係と同じです。
 | `Tiles` | 等間隔グリッド。要素数が半端でも崩れない |
 | `Spread` | 両端に寄せる |
 | `Box` | 内側の余白・背景・角丸・影 |
+| `Scrollable` | 縮められない中身（表・コード）をその部分だけ横スクロールに |
 | `Divider` | 区切り線 |
 
 段階ごとの実寸はテーマで変わります（`warm` は広め、`editorial` は詰めぎみ）。
 つまり**余白の広さもトンマナの一部**です。
+
+本文の幅には `width="prose"` を使ってください。**em 単位なので文字サイズに追従し**、
+小さい文字なら幅も自動的に狭まって、1 行の字数が一定に保たれます（和文で 40 字前後）。
+
+---
+
+## 端末幅 — スマホで崩れないこと、崩れていないと確かめられること
+
+### 壊れない土台
+
+スマホ表示が壊れる原因は、ほぼ「縮まない中身」です。
+利用者が `overflow-wrap` を知らなくても崩れないよう、テーマ側で受け止めます。
+
+```css
+body { overflow-wrap: break-word; }        /* 折り返せない長い URL・英単語 */
+img, video, svg, iframe { max-width: 100%; } /* 実寸の大きいメディア */
+pre { overflow-x: auto; }                   /* コードは折り返さず内側でスクロール */
+.wt-gap > * { min-width: 0; }               /* flex/grid の子が縮めるように */
+
+@media (pointer: coarse) {                  /* 指で押す端末では小さすぎないように */
+  button, select, input, textarea { min-block-size: 2.75rem; }
+}
+```
+
+表のように**縮めると読めなくなる**中身は、潰さずその部分だけスクロールさせます。
+
+```tsx
+<Scrollable label="売上の表">
+  <table>…</table>
+</Scrollable>
+```
+
+端が切れていることを示す影が出て、キーボードだけでも到達できます。
+
+入力欄は常に 16px 以上です。16px 未満だと **iOS Safari が触れた瞬間に画面を自動拡大**し、
+手動でしか戻せません。iPad でも起きるので「狭い画面のときだけ」では防げません。
+
+### 崩れていないことを数値で確かめる
+
+```bash
+npm run check -- http://localhost:5173
+```
+
+実ブラウザを 320 / 375 / 414 / 768 / 1024px で開いて機械的に調べます。
+崩れがあれば終了コード 1 を返すので、CI にそのまま載せられます。
+
+```
+  ✗ http://localhost:5173  @ 320 (小さいスマホ)
+      横に 577px はみ出しています
+        ↳ <p class="…"> が 577px 外へ  "https://example.com/very/long…"
+        → 長い文字列なら overflow-wrap、表やコードなら <Scrollable> で囲んでください
+      入力欄の文字が 16px 未満: 3 件 (name=14px, email=14px, password=14px)
+        → iOS では触れた瞬間に画面が自動拡大されます
+      タップ領域が 24px 未満: 2 件 (a 43x20 "Works", a 54x20 "Contact")
+        → 指で押しづらく、WCAG 2.1 AA の最低基準を下回ります
+```
+
+検出するもの: 横スクロールの発生と原因要素 / タップ領域 24px 未満 /
+入力欄の 16px 未満 / 画面幅より縮まない要素 / 1 行が長すぎる本文。
+
+1 行の長さは**和文と欧文で閾値を変えています**。和文は 1 文字がほぼ 1em、
+欧文は平均 0.5em 前後で、同じ px 幅でも読みやすさが倍違うためです。
 
 ---
 
@@ -281,6 +344,8 @@ node scripts/build-registry.mjs   # public/r/*.json を生成
 node scripts/verify-install.mjs   # 利用者プロジェクトへ展開して型検査
 node scripts/verify-states.mjs    # 実ブラウザで非同期の全状態を検証
 node scripts/verify-v02.mjs       # 実ブラウザでレイアウトと通知を検証
+pnpm audit                        # 壊しにくる中身を入れて耐えるか検証
+pnpm check -- http://localhost:4173/   # 端末幅の崩れを検出
 ```
 
 `verify-install.mjs` は shadcn CLI と同じ依存解決を再現して、まっさらな

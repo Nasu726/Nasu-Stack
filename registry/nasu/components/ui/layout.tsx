@@ -555,10 +555,13 @@ export function Spread({
  * ============================================================== */
 
 /** 幅の目安。ここに無い値（"52rem" など）もそのまま書けます。 */
-export type WidthToken = "narrow" | "content" | "wide" | "full";
+export type WidthToken = "prose" | "narrow" | "content" | "wide" | "full";
 export type Width = WidthToken | (string & {});
 
 const WIDTH_VALUE: Record<string, string> = {
+  // prose だけ em 単位。文字サイズに追従するので、
+  // 小さい文字なら自動的に狭くなり、1 行の字数が一定に保たれます。
+  prose: "var(--width-prose)",
   narrow: "var(--width-narrow)",
   content: "var(--width-content)",
   wide: "var(--width-wide)",
@@ -571,7 +574,10 @@ function widthValue(w: Width): string {
 
 export interface ContentBlockProps extends React.HTMLAttributes<HTMLElement> {
   as?: React.ElementType;
-  /** narrow=読み物向け / content=標準 / wide=広め / full=制限なし。既定 content。 */
+  /**
+   * prose=本文（文字サイズに追従）/ narrow=読み物向け / content=標準 /
+   * wide=広め / full=制限なし。既定 content。
+   */
   width?: Width;
   /** 中央寄せ(center)か左寄せ(start)か。既定 center。 */
   align?: "start" | "center";
@@ -580,7 +586,16 @@ export interface ContentBlockProps extends React.HTMLAttributes<HTMLElement> {
 
 /**
  * 中身の最大幅を決めます。左右の余白は付けません（それは PageBlock の役目）。
- * 本文が横に伸びすぎると読みにくいので、文章には `width="narrow"` を使ってください。
+ *
+ * 本文が横に伸びすぎると読みにくくなります。**文章には `width="prose"`** を使ってください。
+ * prose だけは em 単位なので、文字サイズを小さくすれば幅も自動的に狭くなり、
+ * 1 行の字数が一定に保たれます（和文で 40 字前後）。
+ *
+ * ```tsx
+ * <ContentBlock width="prose" className="text-sm">
+ *   <p>説明文…</p>
+ * </ContentBlock>
+ * ```
  */
 export function ContentBlock({
   as: Tag = "div",

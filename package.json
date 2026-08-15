@@ -10,7 +10,9 @@
     "dev:site": "pnpm --filter site dev",
     "build": "pnpm -r build && pnpm registry:build",
     "registry:build": "node scripts/build-registry.mjs",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "check": "node registry/nasu/scripts/check-responsive.mjs",
+    "audit": "node scripts/audit-stress.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

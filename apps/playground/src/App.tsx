@@ -6,19 +6,30 @@ import { AsyncBoundary } from "@/components/ui/async-boundary";
 import { ThemeSwitcher, useTheme } from "@/components/ui/theme-provider";
 import { useAction } from "@/hooks/use-action";
 import {
+  Column,
+  Columns,
   ContentBlock,
   Inline,
   PageBlock,
   Spread,
   Stack,
+  Tiles,
 } from "@/components/ui/layout";
 import { LayoutDemo } from "./LayoutDemo";
+import { ResponsiveDemo } from "./ResponsiveDemo";
 import * as api from "./fake-api";
 
-type Tab = "layout" | "state";
+type Tab = "layout" | "responsive" | "state";
+
+/** 端末プレビューの iframe から読まれているときは、入れ子を避けて簡略表示にする。 */
+const isEmbedded =
+  typeof window !== "undefined" &&
+  new URLSearchParams(window.location.search).has("embed");
 
 export function App() {
   const [tab, setTab] = React.useState<Tab>("layout");
+
+  if (isEmbedded) return <EmbeddedPreview />;
 
   return (
     <div className="min-h-dvh bg-bg text-fg">
@@ -28,6 +39,8 @@ export function App() {
           <Intro />
           {tab === "layout" ? (
             <LayoutDemo />
+          ) : tab === "responsive" ? (
+            <ResponsiveDemo />
           ) : (
             <Stack space="3xl">
               <ButtonSection />
@@ -60,6 +73,7 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
               {(
                 [
                   ["layout", "レイアウト"],
+                  ["responsive", "端末幅"],
                   ["state", "状態"],
                 ] as const
               ).map(([k, label]) => (
@@ -93,8 +107,8 @@ function Intro() {
         <br />
         状態は書かせない。
       </h1>
-      <ContentBlock width="narrow" align="start">
-        <p className="text-sm leading-relaxed text-muted-fg">
+      <ContentBlock width="prose" align="start" className="text-sm">
+        <p className="leading-relaxed text-muted-fg">
           余白は 9 段階が既定なので配置で迷いません。ただし壁ではなく、
           段階に無い値もそのまま書けます。
           非同期処理は関数を 1 つ渡すだけで、読込中・成功・失敗・空・二重送信・中断が付いてきます。
@@ -118,7 +132,9 @@ function Section({
     <section className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-xl">{title}</h2>
-        <p className="text-sm leading-relaxed text-muted-fg">{description}</p>
+        <ContentBlock width="prose" align="start" className="text-sm">
+          <p className="leading-relaxed text-muted-fg">{description}</p>
+        </ContentBlock>
       </div>
       <div className="rounded-xl border border-border bg-card p-5 shadow-e1">
         {children}
@@ -348,6 +364,75 @@ function AbortSection() {
 }
 
 /* ---------------------------------------------------------------- */
+
+/** 端末プレビュー用の簡略ページ。実際のレイアウト部品だけで組んであります。 */
+function EmbeddedPreview() {
+  return (
+    <div className="min-h-dvh bg-bg text-fg">
+      <PageBlock width="content" gutter="md" className="py-lg">
+        <Stack space="lg">
+          <Spread space="sm">
+            <span className="font-display text-base">Studio Nasu</span>
+            <Inline space="xs">
+              <span className="text-xs text-muted-fg">Works</span>
+              <span className="text-xs text-muted-fg">About</span>
+            </Inline>
+          </Spread>
+
+          <Stack space="xs">
+            <h1 className="text-2xl leading-tight">
+              幅を変えても崩れません
+            </h1>
+            <ContentBlock width="prose" align="start" className="text-sm">
+              <p className="leading-relaxed text-muted-fg">
+                段組は狭い画面で自動的に縦へ畳み、タイルは列数が変わり、
+                タグは折り返します。長い URL も折れます。
+                https://example.com/very/long/path/that/never/breaks/anywhere
+              </p>
+            </ContentBlock>
+          </Stack>
+
+          <Columns space="md">
+            <Column width="1/3">
+              <div className="rounded-md bg-accent px-sm py-xs text-xs text-accent-fg">
+                1/3
+              </div>
+            </Column>
+            <Column>
+              <div className="rounded-md bg-accent px-sm py-xs text-xs text-accent-fg">
+                auto
+              </div>
+            </Column>
+          </Columns>
+
+          <Tiles columns={{ mobile: 1, tablet: 2, desktop: 3 }} space="sm">
+            {["A", "B", "C"].map((t) => (
+              <div
+                key={t}
+                className="rounded-md border border-border bg-card px-sm py-xs text-xs"
+              >
+                カード {t}
+              </div>
+            ))}
+          </Tiles>
+
+          <Inline space="xs">
+            {["TypeScript", "React", "Astro", "Tailwind", "アクセシビリティ"].map(
+              (t) => (
+                <span
+                  key={t}
+                  className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-fg"
+                >
+                  {t}
+                </span>
+              ),
+            )}
+          </Inline>
+        </Stack>
+      </PageBlock>
+    </div>
+  );
+}
 
 function Footer() {
   return (

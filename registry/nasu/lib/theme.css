@@ -279,7 +279,9 @@
 }
 
 :root {
-  /* ページ幅 */
+  /* ページ幅。prose だけ em 単位なので、文字サイズに追従します。
+     和文は 1 文字がほぼ 1em なので、40em ≒ 40 字/行。読みやすい範囲です。 */
+  --width-prose: 40em; /* 本文（文字サイズ追従） */
   --width-narrow: 44rem; /* 読み物向け */
   --width-content: 64rem; /* 標準 */
   --width-wide: 80rem; /* 広め */
@@ -449,6 +451,66 @@
   --shadow-e3:
     0 8px 20px hsl(var(--shadow-color) / var(--shadow-strength)),
     0 2px 6px hsl(var(--shadow-color) / calc(var(--shadow-strength) * 0.6));
+}
+
+/* ============================================================
+   端末幅で壊れないための土台
+   ------------------------------------------------------------
+   実際のサイトがスマホで崩れる原因は、ほぼ次の 4 つです。
+   利用者が overflow-wrap を知らなくても壊れないように、ここで潰します。
+   ============================================================ */
+@layer base {
+  /* 1. 折り返せない長い文字列（URL・ID・英単語の羅列）
+        既定の overflow-wrap: normal では途中で折れず、画面外へ突き抜けます。 */
+  body {
+    overflow-wrap: break-word;
+  }
+
+  /* 2. コードは折り返さず、その要素の中だけを横スクロールさせる */
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+    overflow-wrap: normal;
+  }
+  pre code {
+    overflow-wrap: normal;
+  }
+
+  /* 3. 実寸の大きいメディアを親の幅に収める */
+  img,
+  video,
+  svg,
+  canvas,
+  iframe,
+  embed,
+  object {
+    max-width: 100%;
+  }
+  img,
+  video {
+    height: auto;
+  }
+
+  /* 4. 指で押す端末では、触れる要素が小さすぎないようにする
+        （WCAG 2.1 AA は 24px、実用上は 44px 前後が快適） */
+  @media (pointer: coarse) {
+    button,
+    [role="button"],
+    select,
+    summary,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    textarea {
+      min-block-size: 2.75rem;
+    }
+  }
+}
+
+/* flex / grid の子は既定で min-width:auto のため、中身が縮まないと
+   親がいくら縮んでも子が縮みません。レイアウト部品の子だけ解除します。 */
+@layer components {
+  .wt-gap > * {
+    min-width: 0;
+  }
 }
 
 @layer base {

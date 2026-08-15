@@ -13,9 +13,15 @@ import { DataList } from "@/components/ui/data-list";
       class="mx-auto flex max-w-2xl items-center justify-between px-5 py-4 text-sm"
     >
       <span class="font-display text-base">Studio Nasu</span>
-      <div class="flex gap-5 text-muted-fg">
-        <a href="#works" class="hover:text-fg">Works</a>
-        <a href="#contact" class="hover:text-fg">Contact</a>
+      <!-- 指で押せる大きさを確保する。inline のままだと高さ 20px 前後になり、
+           WCAG 2.1 AA の最低基準（24px）を下回ります。 -->
+      <div class="flex gap-3 text-muted-fg">
+        <a
+          href="#works"
+          class="inline-flex min-h-11 items-center px-2 hover:text-fg">Works</a>
+        <a
+          href="#contact"
+          class="inline-flex min-h-11 items-center px-2 hover:text-fg">Contact</a>
       </div>
     </nav>
   </header>
@@ -36,7 +42,7 @@ import { DataList } from "@/components/ui/data-list";
     <!-- パターン A: 関数を渡せない .astro からは、宣言（ActionSpec）で書く -->
     <section id="works" class="flex flex-col gap-4">
       <h2 class="text-2xl">Works</h2>
-      <p class="text-xs text-muted-fg">
+      <p class="max-w-prose text-xs text-muted-fg">
         関数の代わりに <code>{"{ url, method }"}</code> を渡しています。
         .astro から props は JSON 化されるため、この形なら島に渡せます。
       </p>
@@ -54,7 +60,7 @@ import { DataList } from "@/components/ui/data-list";
     <!-- パターン B: 独自ロジックを持つ島は .tsx でラップする -->
     <section id="contact" class="flex flex-col gap-4">
       <h2 class="text-2xl">Contact</h2>
-      <p class="text-xs text-muted-fg">
+      <p class="max-w-prose text-xs text-muted-fg">
         独自のバリデーションを持つのでラッパ (.tsx) 経由で読み込んでいます。
       </p>
       <div class="max-w-md">

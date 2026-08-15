@@ -59,7 +59,10 @@ function Panel({
     <Stack space="md">
       <Stack space="2xs">
         <h2 className="text-xl">{title}</h2>
-        <p className="text-sm leading-relaxed text-muted-fg">{description}</p>
+        {/* 1 行が長くなりすぎると読みにくいので、説明文は narrow 幅に収める */}
+        <ContentBlock width="prose" align="start" className="text-sm">
+          <p className="leading-relaxed text-muted-fg">{description}</p>
+        </ContentBlock>
       </Stack>
       <Box padding="lg" background="card" border radius="xl" shadow="e1">
         <Stack space="md">
@@ -155,7 +158,7 @@ function StackDemo() {
               setSpace(e.target.value);
             }}
             aria-label="任意の余白"
-            className="w-44 rounded-md border border-input bg-card px-2 py-1 text-xs"
+            className="w-44 rounded-md border border-input bg-card px-2 py-1 text-base"
           />
           <Button
             size="sm"
@@ -278,11 +281,10 @@ function PageDemo() {
                 </Inline>
               </Spread>
               <Divider />
-              <ContentBlock width="narrow">
-                <p className="text-sm leading-relaxed text-muted-fg">
-                  ContentBlock は読み物向けの幅に制限します。
-                  1 行が長くなりすぎると読みにくいので、
-                  本文にはこれを使ってください。
+              <ContentBlock width="prose" className="text-sm">
+                <p className="leading-relaxed text-muted-fg">
+                  ContentBlock は本文の幅を制限します。prose は em 単位なので、
+                  文字を小さくすると幅も自動的に狭まり、1 行の字数が保たれます。
                 </p>
               </ContentBlock>
             </Stack>
