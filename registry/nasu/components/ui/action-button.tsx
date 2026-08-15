@@ -5,6 +5,10 @@ import { cn } from "@/lib/utils";
 import { type ActionSpec, resolveAction } from "@/lib/action";
 import { useActionDefaults } from "@/lib/action-defaults";
 import { useAction, type UseActionOptions } from "@/hooks/use-action";
+import {
+  useConfirm,
+  type ConfirmOptions,
+} from "@/components/ui/confirm-dialog";
 import { AlertIcon, CheckIcon, Spinner } from "@/components/ui/spinner";
 
 /* ------------------------------------------------------------------
@@ -93,8 +97,13 @@ export interface ActionButtonProps<TInput, TOutput>
   labels?: ActionButtonLabels;
   /** labels.idle の短縮形。`<ActionButton action={...}>保存</ActionButton>` と書けます。 */
   children?: React.ReactNode;
-  /** 押す前に確認ダイアログを出す文言。指定すると確認してから実行します。 */
-  confirm?: string;
+  /**
+   * 押す前に確認する文言。指定すると確認してから実行します。
+   *
+   * `ActionProvider` があれば整ったダイアログ、無ければ `window.confirm` になります。
+   * 文言以外も指定したいときはオブジェクトを渡せます。
+   */
+  confirm?: string | ConfirmOptions;
   /**
    * エラー時にボタン下へメッセージを表示するか。既定 true。
    *
@@ -146,6 +155,8 @@ export function ActionButton<TInput = void, TOutput = unknown>({
   );
 
   const defaults = useActionDefaults();
+  // Provider があれば整ったダイアログ、無ければ window.confirm に落ちる
+  const askConfirm = useConfirm();
 
   const state = useAction<TInput, TOutput>(resolved, {
     onSuccess,
@@ -160,7 +171,7 @@ export function ActionButton<TInput = void, TOutput = unknown>({
     retryDelay,
     guard: confirm
       ? async (i) => {
-          const ok = window.confirm(confirm);
+          const ok = await askConfirm(confirm);
           if (!ok) return false;
           return guard ? await guard(i) : true;
         }

@@ -18,9 +18,10 @@ import {
 import { Panel } from "./Panel";
 import { LayoutDemo } from "./LayoutDemo";
 import { ResponsiveDemo } from "./ResponsiveDemo";
+import { PartsDemo } from "./PartsDemo";
 import * as api from "./fake-api";
 
-type Tab = "layout" | "responsive" | "state";
+type Tab = "layout" | "responsive" | "parts" | "state";
 
 /** 端末プレビューの iframe から読まれているときは、入れ子を避けて簡略表示にする。 */
 const isEmbedded =
@@ -42,6 +43,8 @@ export function App() {
             <LayoutDemo />
           ) : tab === "responsive" ? (
             <ResponsiveDemo />
+          ) : tab === "parts" ? (
+            <PartsDemo />
           ) : (
             <Stack space="3xl">
               <ButtonSection />
@@ -75,6 +78,7 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
                 [
                   ["layout", "レイアウト"],
                   ["responsive", "端末幅"],
+                  ["parts", "部品"],
                   ["state", "状態"],
                 ] as const
               ).map(([k, label]) => (

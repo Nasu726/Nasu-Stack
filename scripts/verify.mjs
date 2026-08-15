@@ -96,6 +96,7 @@ for (let i = 0; i < 40; i++) {
 step("実ブラウザ: 非同期の状態", "node", ["scripts/verify-states.mjs"]);
 step("実ブラウザ: レイアウトと通知", "node", ["scripts/verify-layout.mjs"]);
 step("実ブラウザ: 壊しにくる中身", "node", ["scripts/audit-stress.mjs"]);
+step("実ブラウザ: 部品 (v0.4)", "node", ["scripts/verify-parts.mjs"]);
 step("実ブラウザ: 端末幅の崩れ", "node", [
   "registry/nasu/scripts/check-responsive.mjs",
   "http://127.0.0.1:4173/",

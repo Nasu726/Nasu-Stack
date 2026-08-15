@@ -4,6 +4,7 @@ import * as React from "react";
 import type { ActionError } from "@/lib/action";
 import { ActionDefaultsContext } from "@/lib/action-defaults";
 import { ToastProvider, useToast } from "@/components/ui/toast";
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 
 /**
  * ActionProvider — 「書かなかったときの受け皿」
@@ -62,15 +63,17 @@ export function ActionProvider({
 }: ActionProviderProps) {
   return (
     <ToastProvider position={position}>
-      <DefaultsBridge
-        toastOnError={toastOnError}
-        toastOnSuccess={toastOnSuccess}
-        retry={retry}
-        resetAfter={resetAfter}
-        onError={onError}
-      >
-        {children}
-      </DefaultsBridge>
+      <ConfirmProvider>
+        <DefaultsBridge
+          toastOnError={toastOnError}
+          toastOnSuccess={toastOnSuccess}
+          retry={retry}
+          resetAfter={resetAfter}
+          onError={onError}
+        >
+          {children}
+        </DefaultsBridge>
+      </ConfirmProvider>
     </ToastProvider>
   );
 }
@@ -129,3 +132,4 @@ function DefaultsBridge({
 }
 
 export { useToast } from "@/components/ui/toast";
+export { useConfirm } from "@/components/ui/confirm-dialog";

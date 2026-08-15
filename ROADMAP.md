@@ -120,16 +120,55 @@ Tailwind からは未使用に見えて変数ごと削除され、余白が 0 �
 **潰さず横スクロール**が正しいので（`Scrollable` と同じ考え方）、
 `min-width` を解除して `overflow-x: auto` にしました。
 
-## v0.4 — 次
+## v0.4 — 完了
 
-状態を持つ部品を増やす。**見た目だけの部品は引き続き作りません。**
+状態を持つ部品を 4 つ。**見た目だけの部品は引き続き作っていません。**
 
-- [ ] `DataTable` — ソート・ページング・行選択。`Scrollable` の上に載せる
-- [ ] `AsyncSelect` — 検索つきセレクト。入力のたびに取得し、前の要求を中断
-- [ ] `FileDrop` — ドラッグ&ドロップ + 進捗 + 失敗した分だけ再送
-- [ ] `ConfirmDialog` — 現在 `window.confirm` で代用している箇所を置換
+- [x] `ConfirmDialog` / `useConfirm` — native `<dialog>`。Provider が無ければ
+      `window.confirm` に落ちるので、置かなくても壊れない
+- [x] `DataTable` — 並べ替え・ページング。**狭い画面では 1 行 = 1 カードに組み替え**
+- [x] `AsyncSelect` — debounce + 前の要求の自動中断 + WAI-ARIA combobox
+- [x] `FileDrop` + `uploadWithProgress` — 進捗つき、1 ファイルずつ、失敗分だけ再送
+- [x] カタログに「部品」タブ
+- [x] `scripts/verify-parts.mjs`（14 項目）を `pnpm verify` に追加 → 全 11 項目
+
+### 計画に書いた「実測で確かめる項目」の結果
+
+計画段階で 10 個列挙しておいたものを全部測りました。
+
+```
+1. dialog::backdrop     rgba(0,0,0,0.45) が効く。:modal にも一致（top layer）
+2. Provider 無しの confirm  window.confirm に落ちる
+3. Scrollable 内の表     min-width 576px で潰れない
+4. 320px 最下部の候補    上向きに出て画面内に収まる（自前実装で足りた）
+5. キーボード操作        ↑↓ で activedescendant が動き、Enter で確定
+6. XHR の中断            signal で abort される
+7. 失敗分だけ再送        2 件中 1 件失敗 → 再送ボタンは 1 つ
+8. pnpm check            2 ページ × 5 幅すべて緑
+9. カードの列名          日付/案件/状態/件数/金額 が全部読める
+10. 打ち直しの競合        古い候補が残らない
+```
+
+**AsyncSelect の位置決めは自前で足りました。** 320px・画面最下部で
+候補が上向きに出て、画面内（上端 292 / 下端 552 / 画面高 600）に収まりました。
+floating-ui への差し替えは不要と判断します。
+
+### v0.4 で見つけて直したもの
+
+**エラーが二重に出ていた。** FileDrop が失敗を行内に出しつつ
+`ActionProvider` の通知にも流していました。
+v0.2 で決めた「画面内に出せているものは通知しない」に反していたので、
+`onError` を任意の口として切り出し、既定では通知しないようにしました。
+
+**`id` が固定で衝突していた。** FileDrop の `<input type="file">` が
+`id="wt-file-input"` 固定だったので、1 画面に 2 つ置くと `label` の
+関連付けが壊れます。`useId` に変更。
+
+## v0.5 — 次
+
+- [ ] `DataTable` の行選択（ページをまたいで選択を保つかを先に決める）
 - [ ] `OptimisticList` — 楽観更新と、失敗時のロールバック
-- [ ] `Field` の拡張（select / checkbox / radio / date）
+- [ ] `Field` の拡張（select / checkbox / radio / date）。`AsyncSelect` の設計が固まったので着手できる
 
 ## v0.5 — テンプレート化
 

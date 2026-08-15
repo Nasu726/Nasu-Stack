@@ -268,11 +268,55 @@ npx shadcn@latest add https://<あなたのホスト>/r/action-button.json
 | `AsyncForm` + `Field` | 送信関数 1 つでフォーム完成。フィールド単位のエラー表示と自動クリア |
 | `DataList` | 取得・スケルトン・空・失敗と再試行を 1 個で |
 | `AsyncBoundary` | 読込中 / エラー / 空 / データありの 4 分岐を閉じ込める |
+| `DataTable` | 並べ替え・ページング。**狭い画面では 1 行 = 1 カードに組み替え** |
+| `AsyncSelect` | 検索つきセレクト。前の要求を自動で中断。キーボード操作つき |
+| `FileDrop` | ドラッグ&ドロップ・進捗・失敗した分だけ再送 |
+| `ConfirmDialog` / `useConfirm` | 確認ダイアログ。native `<dialog>` |
 | `ActionProvider` | エラー処理の書き忘れを握り潰さない安全網（下記） |
 | `Toast` / `useToast` | 画面隅の通知 |
 | `ThemeProvider` / `ThemeSwitcher` | トンマナ切替。ちらつき防止スクリプトつき |
 | `useAction` | 書き込み系の状態管理フック |
 | `useResource` | 読み取り系の状態管理フック |
+
+### DataTable — 狭い画面では表をやめる
+
+320px で 8 列の表は、横スクロールできても実用に耐えません。
+なので**タブレット幅未満では 1 行 = 1 カード**に組み替え、各値に列名を付けます。
+
+```tsx
+<DataTable
+  rows={rows}                    // 配列を渡せばメモリ上で並べ替え・ページング
+  columns={[
+    { key: "date",  label: "日付", sortable: true },
+    { key: "owner", label: "担当", hideOnCard: true },  // カードでは省く
+    { key: "amount", label: "金額", sortable: true, align: "end" },
+  ]}
+  pageSize={5}
+/>
+```
+
+`label` が必須なのは、**カード表示では列名が唯一の手がかりになる**ためです。
+サーバー側で処理したい場合は `loader` に `{ rows, total }` を返す関数を渡します。
+
+### FileDrop — なぜ XHR なのか
+
+**`fetch` はアップロードの進捗を取れません。** 2026 年時点でもそうです。
+リクエストのストリームで測れるのは「ブラウザが自分のストリームからデータを
+引き取った時点」であって、送信された時点ではありません。
+
+なので内部では `XMLHttpRequest` を使いますが、`uploadWithProgress` が隠すので
+利用者が XHR を書くことはありません。
+
+```tsx
+<FileDrop
+  action={(file, ctx) => uploadWithProgress("/api/upload", file, ctx)}
+  accept="image/*"
+  maxSize={5 * 1024 * 1024}
+/>
+```
+
+**1 ファイルずつ**送ります。まとめて送ると 1 つ失敗しただけで全部やり直しになるためです。
+個別に状態を持つので「失敗した分だけ再送」が自然に書けます。
 
 ### ActionProvider — 書き忘れの受け皿
 

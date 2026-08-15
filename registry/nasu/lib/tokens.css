@@ -347,6 +347,13 @@
     min-width: 0;
   }
 
+  /* モーダルの背景。::backdrop は別の擬似要素ツリーなので、
+     テーマ変数が届くかは実測で確かめています（届きます）。 */
+  .wt-dialog::backdrop {
+    background: oklch(0 0 0 / 0.45);
+    backdrop-filter: blur(2px);
+  }
+
   /* 折り返さない Inline。子を潰して読めなくするより、横スクロールさせる。
      min-width の解除で自然な幅を保ち、はみ出した分はこの中でスクロールします。 */
   .wt-nowrap {

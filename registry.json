@@ -17,6 +17,22 @@
       ]
     },
     {
+      "name": "upload",
+      "type": "registry:lib",
+      "title": "アップロードの契約とヘルパ",
+      "description": "進捗つきアップロード。fetch は送信の進捗を取れないため XHR を使いますが、uploadWithProgress が隠します。中核の Action 契約は変えていません。",
+      "registryDependencies": [
+        "@nasu/action"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/lib/upload.ts",
+          "type": "registry:lib",
+          "target": "lib/upload.ts"
+        }
+      ]
+    },
+    {
       "name": "utils",
       "type": "registry:lib",
       "title": "cn ヘルパ",
@@ -136,7 +152,8 @@
       "description": "アプリの一番外側に 1 回置くだけ。onError を書き忘れたアクションの失敗が握り潰されず、画面隅の通知になります。",
       "registryDependencies": [
         "@nasu/action-defaults",
-        "@nasu/toast"
+        "@nasu/toast",
+        "@nasu/confirm-dialog"
       ],
       "files": [
         {
@@ -203,6 +220,7 @@
       "registryDependencies": [
         "@nasu/use-action",
         "@nasu/action-defaults",
+        "@nasu/confirm-dialog",
         "@nasu/spinner",
         "@nasu/utils"
       ],
@@ -211,6 +229,24 @@
           "path": "registry/nasu/components/ui/action-button.tsx",
           "type": "registry:ui",
           "target": "components/ui/action-button.tsx"
+        }
+      ]
+    },
+    {
+      "name": "confirm-dialog",
+      "type": "registry:ui",
+      "title": "ConfirmDialog",
+      "description": "native <dialog> による確認ダイアログ。フォーカスの閉じ込め・背景の暗転・Esc・最前面表示をブラウザに任せます。Provider が無ければ window.confirm に落ちます。",
+      "registryDependencies": [
+        "@nasu/action-button",
+        "@nasu/layout",
+        "@nasu/utils"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/confirm-dialog.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/confirm-dialog.tsx"
         }
       ]
     },
@@ -298,6 +334,63 @@
           "path": "registry/nasu/scripts/check-responsive.mjs",
           "type": "registry:file",
           "target": "scripts/check-responsive.mjs"
+        }
+      ]
+    },
+    {
+      "name": "data-table",
+      "type": "registry:block",
+      "title": "DataTable",
+      "description": "並べ替え・ページング・取得。狭い画面では 1 行 = 1 カードに組み替えて各値に列名を付けます（列定義の label が必須）。",
+      "registryDependencies": [
+        "@nasu/use-resource",
+        "@nasu/async-boundary",
+        "@nasu/scrollable",
+        "@nasu/action-button",
+        "@nasu/layout"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/data-table.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/data-table.tsx"
+        }
+      ]
+    },
+    {
+      "name": "async-select",
+      "type": "registry:block",
+      "title": "AsyncSelect",
+      "description": "検索つきセレクト。debounce と前の要求の自動中断つき。WAI-ARIA の combobox パターンに従い、↑↓ Enter Esc Home End で操作できます。画面下部では候補が上に出ます。",
+      "registryDependencies": [
+        "@nasu/use-resource",
+        "@nasu/spinner",
+        "@nasu/utils"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/async-select.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/async-select.tsx"
+        }
+      ]
+    },
+    {
+      "name": "file-drop",
+      "type": "registry:block",
+      "title": "FileDrop",
+      "description": "ドラッグ&ドロップ・進捗バー・失敗した分だけ再送。1 ファイルずつ送るので部分的な失敗から復帰できます。本物の input を残しキーボードでも使えます。",
+      "registryDependencies": [
+        "@nasu/upload",
+        "@nasu/action-button",
+        "@nasu/spinner",
+        "@nasu/layout"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/file-drop.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/file-drop.tsx"
         }
       ]
     }
