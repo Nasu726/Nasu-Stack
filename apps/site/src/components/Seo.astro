@@ -1,0 +1,38 @@
+---
+/**
+ * Seo — メタ情報を <head> に流す薄い包み
+ *
+ * 中身の組み立ては registry の `lib/seo.ts`（純粋な関数）が持っています。
+ * ここは Astro 用の 10 行程度の変換だけです。React で使うときは
+ * `buildMeta()` を直接呼んで、好きな方法で head に入れてください。
+ */
+import { buildMeta, type MetaInput } from "@/lib/seo";
+
+type Props = Omit<MetaInput, "site"> & { site?: string };
+
+const { site = Astro.site?.toString() ?? "", ...rest } = Astro.props;
+
+if (!site) {
+  // ここを黙って通すと、canonical も OGP も相対パスのまま出ます。
+  // 静かに壊れるより、ビルドで止めたほうが安全です。
+  throw new Error(
+    "astro.config の `site` が設定されていません。canonical と OGP に絶対 URL が必要です。",
+  );
+}
+
+const tags = buildMeta({ ...rest, site });
+---
+
+{
+  tags.map((t) =>
+    t.tag === "title" ? (
+      <title set:text={t.children} />
+    ) : t.tag === "meta" ? (
+      <meta {...t.attrs} />
+    ) : t.tag === "link" ? (
+      <link {...t.attrs} />
+    ) : (
+      <script type="application/ld+json" is:inline set:html={t.children} />
+    ),
+  )
+}

@@ -495,6 +495,34 @@
       ]
     },
     {
+      "name": "seo",
+      "type": "registry:lib",
+      "title": "buildMeta",
+      "description": "title / canonical / OGP / JSON-LD を組み立てる純粋な関数。相対 URL を絶対に直します。",
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/nasu/lib/seo.ts",
+          "type": "registry:lib",
+          "target": "lib/seo.ts"
+        }
+      ]
+    },
+    {
+      "name": "feed",
+      "type": "registry:lib",
+      "title": "buildSitemap / buildRss / buildRobots",
+      "description": "sitemap.xml と RSS を組み立てる純粋な関数。XML のエスケープを 1 か所に持ちます。",
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/nasu/lib/feed.ts",
+          "type": "registry:lib",
+          "target": "lib/feed.ts"
+        }
+      ]
+    },
+    {
       "name": "data-table",
       "type": "registry:block",
       "title": "DataTable",

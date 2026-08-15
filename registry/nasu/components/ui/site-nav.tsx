@@ -55,6 +55,16 @@ export interface NavItem {
 
 export interface SiteHeaderProps {
   brand?: React.ReactNode;
+  /**
+   * ブランド名を押したときの行き先。ふつうは `/`。
+   *
+   * **`brand` に `<a>` を入れて渡すことはできません。**
+   * `.astro` のファイルでは、props に要素を書けないためです
+   * （`brand={<a href="/">…</a>}` はビルドで構文エラーになります）。
+   * Astro の island に渡せるのは JSON になる値だけ、という制約の一部です。
+   * だから行き先だけを文字列で受け取ります。
+   */
+  brandHref?: string;
   items?: NavItem[];
   /**
    * いま開いているページのパス。
@@ -82,6 +92,7 @@ function isCurrent(href: string, currentPath?: string) {
 
 export function SiteHeader({
   brand,
+  brandHref,
   items = [],
   currentPath,
   actions,
@@ -119,7 +130,21 @@ export function SiteHeader({
     >
       <PageBlock width={width} gutter="md">
         <div className="flex min-h-[var(--header-h)] items-center gap-sm">
-          {brand && <div className="font-display text-lg">{brand}</div>}
+          {brand && (
+            <div className="font-display text-lg">
+              {brandHref ? (
+                // 文字の高さのままだと押しづらいので、ここでも 44px 確保します
+                <a
+                  href={brandHref}
+                  className="inline-flex min-h-11 items-center rounded-md hover:text-primary"
+                >
+                  {brand}
+                </a>
+              ) : (
+                brand
+              )}
+            </div>
+          )}
 
           <div className="flex-1" />
 

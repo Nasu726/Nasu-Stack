@@ -1,0 +1,46 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE } from "../site.config";
+import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { PageBlock, Stack, Inline } from "@/components/ui/layout";
+
+const NAV = [
+  { href: "/", label: "ホーム" },
+  { href: "/blog", label: "ブログ" },
+];
+---
+
+{/* 見つからないページは検索結果に載せません */}
+<Base
+  title="ページが見つかりません"
+  description="お探しのページは移動したか、削除された可能性があります。"
+  noindex
+>
+  <SkipLink />
+  <SiteHeader brand={SITE.name} items={NAV} width="narrow" />
+
+  <PageBlock width="narrow" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+    <Stack space="md">
+      <p class="text-sm text-muted-fg">404</p>
+      <h1 class="text-3xl">ページが見つかりません</h1>
+      <p class="max-w-prose text-sm leading-relaxed text-muted-fg">
+        お探しのページは移動したか、削除された可能性があります。
+        URL の打ち間違いでなければ、下のどちらかからお探しください。
+      </p>
+      <Inline space="sm">
+        <a
+          href="/"
+          class="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-fg"
+        >
+          ホームへ
+        </a>
+        <a
+          href="/blog"
+          class="inline-flex min-h-11 items-center rounded-md border border-border px-4 text-sm"
+        >
+          記事一覧へ
+        </a>
+      </Inline>
+    </Stack>
+  </PageBlock>
+</Base>

@@ -77,6 +77,9 @@ step("ビルド (カタログ)", "pnpm", ["--filter", "playground", "build"]);
 step("ビルド (Astro サイト)", "pnpm", ["--filter", "site", "build"]);
 step("レジストリ生成", "node", ["scripts/build-registry.mjs"]);
 step("配布の依存漏れ", "node", ["scripts/check-registry-deps.mjs"]);
+// 純粋な関数の単体検査。ブラウザを立てないので速く、
+// `&` ひとつでフィードが壊れる類の間違いはここでしか捕まえられません。
+step("単体: SEO / フィードの組み立て", "node", ["scripts/verify-seo-unit.mjs"]);
 step("利用者プロジェクトへ展開して型検査", "node", [
   "scripts/verify-install.mjs",
 ]);
@@ -119,16 +122,43 @@ step("実ブラウザ: 壊しにくる中身", "node", ["scripts/audit-stress.mj
 step("実ブラウザ: 部品 (v0.4)", "node", ["scripts/verify-parts.mjs"]);
 step("実ブラウザ: 入力/選択/楽観更新 (v0.5)", "node", ["scripts/verify-forms.mjs"]);
 step("実ブラウザ: ナビ/開閉/本文/画像 (v0.6)", "node", ["scripts/verify-nav.mjs"]);
+step("実ブラウザ: SEO / ブログ / フィード (v0.7)", "node", ["scripts/verify-seo.mjs"]);
 // カタログはタブで中身が入れ替わるので、既定タブだけを見ても
 // 後から足した部品は一度も検査されません。全タブを URL で指定して回します。
 // 一覧はカタログ側の 1 か所から読みます（書き写すと必ずずれます）。
 const { TAB_KEYS: PLAYGROUND_TABS } = await import(
   "../apps/playground/src/tabs.mjs"
 );
+/* Astro サイト側のページ一覧は **sitemap.xml から取ります。**
+   ここに手で書き並べると、ページを足したときに検査から漏れます
+   （カタログのタブで一度やった失敗です）。
+   sitemap は下書きを外した公開ページの一覧そのものなので、
+   これを使えば「新しいページが自動で検査に入る」状態になります。 */
+async function sitePages() {
+  const fallback = ["http://127.0.0.1:4321/"];
+  try {
+    const xml = await (await fetch("http://127.0.0.1:4321/sitemap.xml")).text();
+    const paths = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+      .map((m) => m[1].replace(/^https?:\/\/[^/]+/, ""))
+      .filter(Boolean);
+    if (paths.length === 0) {
+      console.error("⚠️ sitemap.xml に URL がありませんでした。トップだけ検査します");
+      return fallback;
+    }
+    return paths.map((p) => `http://127.0.0.1:4321${p}`);
+  } catch (e) {
+    // 黙って 1 ページに落とすと「全部見たつもり」になります。理由を必ず出します。
+    console.error("⚠️ sitemap.xml を取得できませんでした:", String(e).slice(0, 120));
+    return fallback;
+  }
+}
+const SITE_PAGES = await sitePages();
+process.stdout.write(`\n（Astro サイトの検査対象: ${SITE_PAGES.length} ページ）\n`);
+
 step("実ブラウザ: 端末幅の崩れ", "node", [
   "registry/nasu/scripts/check-responsive.mjs",
   ...PLAYGROUND_TABS.map((t) => `http://127.0.0.1:4173/?tab=${t}`),
-  "http://127.0.0.1:4321/",
+  ...SITE_PAGES,
 ]);
 
 for (const p of servers) {

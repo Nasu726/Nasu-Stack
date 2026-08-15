@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import { SITE } from "../site.config";
 import { ContactForm } from "../components/ContactForm";
 import { DataList } from "@/components/ui/data-list";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
@@ -14,10 +15,15 @@ import { PageBlock, Section, Stack } from "@/components/ui/layout";
 const NAV = [
   { href: "#works", label: "Works" },
   { href: "#contact", label: "Contact" },
+  { href: "/blog", label: "Blog" },
 ];
 ---
 
-<Base title="WebTemplate — 静的サイトの例" theme="editorial">
+<Base
+  title="WebTemplate — 静的サイトの例"
+  description={SITE.description}
+  theme="editorial"
+>
   <SkipLink />
 
   <SiteHeader

@@ -1,0 +1,73 @@
+---
+import Base from "../../layouts/Base.astro";
+import { SITE } from "../../site.config";
+import { getPublishedPosts, formatDate } from "../../lib/posts";
+import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { PageBlock, Stack, Inline, Divider } from "@/components/ui/layout";
+
+const posts = await getPublishedPosts();
+
+const NAV = [
+  { href: "/", label: "ホーム" },
+  { href: "/blog", label: "ブログ" },
+];
+---
+
+<Base
+  title="ブログ"
+  description={`${SITE.name} の記事一覧です。`}
+  type="website"
+>
+  <SkipLink />
+  <SiteHeader
+    brand={SITE.name}
+    brandHref="/"
+    items={NAV}
+    currentPath={Astro.url.pathname}
+    width="narrow"
+  />
+
+  <PageBlock width="narrow" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+    <Stack space="xl">
+      <h1 class="text-3xl">ブログ</h1>
+
+      <Stack space="lg" dividers>
+        {
+          posts.map((post) => {
+            const d = formatDate(post.data.date);
+            return (
+              <article>
+                <Stack space="2xs">
+                  {/* 日付は必ず <time datetime> で出します。
+                      「2026年8月1日」という文字列だけでは機械が読めません。 */}
+                  <time datetime={d.iso} class="text-xs text-muted-fg">
+                    {d.text}
+                  </time>
+                  <h2 class="text-xl">
+                    <a href={`/blog/${post.id}/`} class="hover:text-primary">
+                      {post.data.title}
+                    </a>
+                  </h2>
+                  <p class="text-sm leading-relaxed text-muted-fg">
+                    {post.data.description}
+                  </p>
+                  {post.data.tags.length > 0 && (
+                    <Inline space="2xs">
+                      {post.data.tags.map((tag) => (
+                        <span class="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-fg">
+                          {tag}
+                        </span>
+                      ))}
+                    </Inline>
+                  )}
+                </Stack>
+              </article>
+            );
+          })
+        }
+      </Stack>
+
+      {posts.length === 0 && <p class="text-sm text-muted-fg">まだ記事がありません。</p>}
+    </Stack>
+  </PageBlock>
+</Base>
