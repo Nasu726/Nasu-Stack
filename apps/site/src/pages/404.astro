@@ -1,13 +1,12 @@
 ---
 import Base from "../layouts/Base.astro";
 import { SITE } from "../site.config";
+import { NAV, FOOTER_GROUPS } from "../lib/nav";
+import { SiteFooter } from "@/components/ui/site-footer";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { PageBlock, Stack, Inline } from "@/components/ui/layout";
 
-const NAV = [
-  { href: "/", label: "ホーム" },
-  { href: "/blog", label: "ブログ" },
-];
+
 ---
 
 {/* 見つからないページは検索結果に載せません */}
@@ -17,7 +16,7 @@ const NAV = [
   noindex
 >
   <SkipLink />
-  <SiteHeader brand={SITE.name} items={NAV} width="narrow" />
+  <SiteHeader brand={SITE.name} brandHref="/" items={NAV} width="narrow" />
 
   <PageBlock width="narrow" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
     <Stack space="md">
@@ -43,4 +42,12 @@ const NAV = [
       </Inline>
     </Stack>
   </PageBlock>
+
+  <SiteFooter
+    brand={SITE.name}
+    description={SITE.description}
+    groups={FOOTER_GROUPS}
+    note="© 2026 Studio Nasu — MIT"
+    width="narrow"
+  />
 </Base>

@@ -13,6 +13,9 @@ export const GET: APIRoute = async () => {
 
   const xml = buildSitemap(SITE.url, [
     { path: "/", changefreq: "weekly", priority: 1 },
+    { path: "/lp/", changefreq: "monthly", priority: 0.9 },
+    { path: "/about/", changefreq: "yearly", priority: 0.5 },
+    { path: "/contact/", changefreq: "yearly", priority: 0.7 },
     { path: "/blog/", changefreq: "weekly", priority: 0.8 },
     ...posts.map((p) => ({
       path: `/blog/${p.id}/`,

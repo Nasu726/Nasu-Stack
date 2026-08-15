@@ -141,7 +141,22 @@ export function inspect(viewportWidth) {
         cls: String(el.className || "").slice(0, 40),
         minWidth: minW,
       });
-    } else if (cs.flexShrink === "0" && px(w) > viewportWidth * 0.9) {
+    } else if (
+      cs.flexShrink === "0" &&
+      px(w) > viewportWidth * 0.9 &&
+      /* **横並びのときだけ問題になります。**
+         flex-shrink は主軸の縮み方の指定です。親が縦並び（flex-direction: column）
+         なら、これは高さの話であって幅とは関係ありません。
+         区別せずに数えると、狭い画面で縦に畳んだ段組みが毎回引っかかります
+         （実測: Column が 343px / 375px で誤検知）。 */
+      (() => {
+        const p = el.parentElement;
+        if (!p) return false;
+        const ps = getComputedStyle(p);
+        if (!ps.display.includes("flex")) return false;
+        return ps.flexDirection.startsWith("row");
+      })()
+    ) {
       rigid.push({
         tag: el.tagName.toLowerCase(),
         cls: String(el.className || "").slice(0, 40),
@@ -185,34 +200,13 @@ export function inspect(viewportWidth) {
     }
   }
 
-  /* 6. 場所を取っていない画像 ----------------------------------
-     画像は読み込みが終わるまで大きさが分かりません。比率も寸法も
-     決まっていないと、届いた瞬間に高さを持ち、その下の文章が下へずれます。
-     読んでいる最中に行が動く、押そうとしたボタンが逃げる、あれです。
-     ここでは「まだ届いていない画像のうち、場所を取っていないもの」を数えます。 */
-  const unsizedImages = [];
-  for (const img of document.querySelectorAll("img")) {
-    const cs = getComputedStyle(img);
-    // 親か自分に aspect-ratio があるか、height が px で決まっていれば場所は取れている
-    const hasRatio =
-      cs.aspectRatio !== "auto" ||
-      (img.parentElement &&
-        getComputedStyle(img.parentElement).aspectRatio !== "auto");
-    const hasAttrs = img.hasAttribute("width") && img.hasAttribute("height");
-    const fixedHeight = cs.height.endsWith("px") && parseFloat(cs.height) > 0;
-    if (hasRatio || hasAttrs) continue;
-    // 既に読み終わっていて高さが確定しているものは、これ以上ずれません
-    if (img.complete && fixedHeight) continue;
-    unsizedImages.push({
-      src: (img.getAttribute("src") || "").slice(-40),
-      alt: (img.getAttribute("alt") || "").slice(0, 20),
-    });
-  }
+  /* 6. 場所を取っていない画像は、別の走査で調べます（下の checkImageSizing）。
+     ここで属性から推測すると、**読み込みが速い環境では見逃します。**
+     実際、寸法の無い画像を置いて試したところ、この方式では検出できませんでした
+     （プレビューが速すぎて、測るときには既に読み終わっていたため）。 */
 
   return {
     overflow,
-    unsizedImages: unsizedImages.slice(0, 3),
-    unsizedCount: unsizedImages.length,
     culprits: culprits.slice(0, 5),
     smallTargets: smallTargets.slice(0, 5),
     smallCount: smallTargets.length,
@@ -228,6 +222,116 @@ export function inspect(viewportWidth) {
 /* ================================================================
  * CLI
  * ============================================================== */
+
+/**
+ * 画像が「場所を先に取っているか」を調べます。
+ * ================================================================
+ * **読み込みを止めてから測るのが要点です。**
+ *
+ * 属性や computed style から推測しようとすると、速い環境では見逃します。
+ * 画像が届いてしまえば高さは確定するので、測るときには
+ * 「ちゃんと場所を取っている画像」と区別が付きません。
+ * 実際、寸法の無い画像を置いて試したら 1 件も検出できませんでした。
+ *
+ * そこで**画像のリクエストを遮断した状態**で開きます。
+ * 場所を取っていない画像は高さがほぼ 0 になり、取っている画像は
+ * 指定された高さのまま残ります。これは推測ではなく、
+ * 利用者が遅い回線で見るのと同じ状態です。
+ */
+export async function checkImageSizing(urls, { width = 375 } = {}) {
+  const browser = await chromium.launch({
+    executablePath: process.env.CHROMIUM_PATH || undefined,
+  });
+  const report = [];
+
+  for (const url of urls) {
+    const page = await browser.newPage({ viewport: { width, height: 800 } });
+    // 画像だけ届かないようにする
+    await page.route("**/*", (route) =>
+      route.request().resourceType() === "image" ? route.abort() : route.continue(),
+    );
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+      await page.waitForTimeout(300);
+      const unsized = await page.evaluate(() =>
+        [...document.querySelectorAll("img")]
+          .filter((img) => {
+            const cs = getComputedStyle(img);
+            if (cs.display === "none") return false;
+            // 遮断できていない画像は判定材料になりません
+            if (img.naturalWidth !== 0) return false;
+
+            // 場所を取る方法は 3 つ。どれか 1 つでもあれば問題ありません。
+            //   1. width / height 属性（ブラウザが比率に変換します）
+            //   2. 自分か親の aspect-ratio（<Frame> がこれ）
+            //   3. CSS で高さを決めている（h-48 など）
+            const hasAttrs = img.hasAttribute("width") && img.hasAttribute("height");
+            const selfAR = cs.aspectRatio !== "auto";
+            const parentAR =
+              img.parentElement &&
+              getComputedStyle(img.parentElement).aspectRatio !== "auto";
+            if (hasAttrs || selfAR || parentAR) return false;
+
+            /* 残るのは「CSS で高さを決めている」か「何も無い」かの 2 つです。
+               **高さの数値では区別できません。** 届かなかった画像は
+               代替テキストの高さになるので、`h-8`（32px）のような指定と
+               同じ数字になり得ます（実測で 30px でした）。
+
+               そこで直接調べます。代替テキストを一時的に空にして、
+               高さが消えるなら「文字の高さだった」＝場所を取っていない。
+               CSS で高さを持っていれば、消しても高さは残ります。
+               検査用の使い捨てページなので、書き換えて構いません。 */
+            const alt = img.getAttribute("alt");
+            img.setAttribute("alt", "");
+            const withoutAlt = img.getBoundingClientRect().height;
+            if (alt === null) img.removeAttribute("alt");
+            else img.setAttribute("alt", alt);
+            /* 代替テキストを消しても、壊れた画像の枠が 16px ほど残ります
+               （実測: 場所を取っていない画像 16px / 取っている画像 185px）。
+               24px を境にすれば、この 2 つは確実に分かれます。 */
+            return withoutAlt < 24;
+          })
+          .map((img) => ({
+            src: (img.getAttribute("src") || "").slice(-44),
+            alt: (img.getAttribute("alt") || "").slice(0, 24),
+          })),
+      );
+      report.push({ url, unsized });
+    } catch (e) {
+      report.push({ url, error: String(e).slice(0, 120), unsized: [] });
+    }
+    await page.close();
+  }
+
+  await browser.close();
+  return report;
+}
+
+export function formatImageReport(report) {
+  const lines = [];
+  let problems = 0;
+  for (const r of report) {
+    if (r.error) {
+      problems++;
+      lines.push(`  ✗ ${r.url}  ページを開けませんでした: ${r.error}`);
+    } else if (r.unsized.length === 0) {
+      lines.push(`  ✓ ${r.url}  画像は全部あらかじめ場所を取っています`);
+    } else {
+      problems++;
+      lines.push(`  ✗ ${r.url}  場所を取っていない画像 ${r.unsized.length} 件`);
+      for (const i of r.unsized.slice(0, 5)) {
+        lines.push(`      ↳ …${i.src}  "${i.alt}"`);
+      }
+      lines.push(
+        "      → 届いた瞬間に下の文章がずれます。<Frame ratio=\"16/9\"> で囲むか、",
+      );
+      lines.push(
+        "        width と height を書いてください（Markdown なら相対パスにすると自動で付きます）",
+      );
+    }
+  }
+  return { text: lines.join("\n"), problems };
+}
 
 export async function checkUrls(urls, { widths = WIDTHS } = {}) {
   // CI などで Chromium の場所が固定されている場合に差し替えられるようにする
@@ -294,15 +398,6 @@ export function formatReport(report) {
       );
       issues.push("  → 指で押しづらく、WCAG 2.1 AA の最低基準を下回ります");
     }
-    if (r.unsizedCount > 0) {
-      issues.push(
-        `場所を取っていない画像: ${r.unsizedCount} 件 ` +
-          `(${(r.unsizedImages ?? []).map((i) => `…${i.src}`).join(", ")})`,
-      );
-      issues.push(
-        "  → 読み込んだ瞬間に下の文章がずれます。<Frame ratio=\"16/9\"> で囲むか、width と height を書いてください",
-      );
-    }
     if (r.rigidCount > 0) {
       issues.push(
         `画面幅より縮まない要素: ${r.rigidCount} 件 ` +
@@ -357,5 +452,16 @@ if (
   const report = await checkUrls(urls);
   const { text, problems } = formatReport(report);
   console.log(text);
-  process.exit(problems > 0 ? 1 : 0);
+
+  console.log("\n画像が場所を先に取っているか（画像の読み込みを止めて確認）\n");
+  const imgReport = await checkImageSizing(urls);
+  const img = formatImageReport(imgReport);
+  console.log(img.text);
+  console.log(
+    img.problems === 0
+      ? "\n✅ どのページでも画像は場所を先に取っています"
+      : `\n⚠️  ${img.problems} ページで画像が場所を取っていません`,
+  );
+
+  process.exit(problems + img.problems > 0 ? 1 : 0);
 }

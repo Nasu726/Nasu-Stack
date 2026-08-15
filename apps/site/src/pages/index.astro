@@ -1,6 +1,8 @@
 ---
 import Base from "../layouts/Base.astro";
 import { SITE } from "../site.config";
+import { NAV, FOOTER_GROUPS } from "../lib/nav";
+import { SiteFooter } from "@/components/ui/site-footer";
 import { ContactForm } from "../components/ContactForm";
 import { DataList } from "@/components/ui/data-list";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
@@ -12,11 +14,8 @@ import { PageBlock, Section, Stack } from "@/components/ui/layout";
 // ヘッダとレイアウトは配布している部品をそのまま使っています。
 // **client: を付けていません。** 静的 HTML として書き出されるだけで、
 // 狭い画面のメニューは <details> なので JavaScript 無しで開閉します。
-const NAV = [
-  { href: "#works", label: "Works" },
-  { href: "#contact", label: "Contact" },
-  { href: "/blog", label: "Blog" },
-];
+// ナビとフッタの定義は 1 か所（src/lib/nav.ts）にまとめています。
+// ページごとに書くと「新しいページを足したのにヘッダから辿れない」が起きます。
 ---
 
 <Base
@@ -27,7 +26,8 @@ const NAV = [
   <SkipLink />
 
   <SiteHeader
-    brand="Studio Nasu"
+    brand={SITE.name}
+    brandHref="/"
     items={NAV}
     currentPath={Astro.url.pathname}
     width="narrow"
@@ -78,9 +78,11 @@ const NAV = [
     </Stack>
   </PageBlock>
 
-  <footer class="border-t border-border">
-    <PageBlock width="narrow" gutter="md" className="py-lg text-xs text-muted-fg">
-      Built with WebTemplate — MIT
-    </PageBlock>
-  </footer>
+  <SiteFooter
+    brand={SITE.name}
+    description={SITE.description}
+    groups={FOOTER_GROUPS}
+    note="Built with WebTemplate — MIT"
+    width="narrow"
+  />
 </Base>

@@ -109,7 +109,16 @@ must(
  * 3. 各ページのメタ情報
  * ============================================================== */
 
-const PAGES = ["/", "/blog/", "/blog/hello/", "/blog/qa/", "/404.html"];
+const PAGES = [
+  "/",
+  "/lp/",
+  "/about/",
+  "/contact/",
+  "/blog/",
+  "/blog/hello/",
+  "/blog/qa/",
+  "/404.html",
+];
 const metas = [];
 
 for (const path of PAGES) {
@@ -262,6 +271,40 @@ if (headingId) {
     return Math.round(header.getBoundingClientRect().bottom - h.getBoundingClientRect().top);
   }, headingId);
   log("アンカーで飛んだときの隠れ量:", `${hidden}px（0 以下なら隠れていない）`);
+}
+
+/* ================================================================
+ * 4.5 雛型ページの骨格
+ * ============================================================== */
+
+for (const path of ["/lp/", "/about/", "/contact/"]) {
+  await page.goto(SITE_BASE + path, { waitUntil: "networkidle" });
+  const s = await page.evaluate(() => ({
+    h1: document.querySelectorAll("h1").length,
+    h2: document.querySelectorAll("h2").length,
+    // landmark が無いと、読み上げの利用者はページ内を飛べません
+    header: document.querySelectorAll("header").length,
+    main: document.querySelectorAll("main").length,
+    footer: document.querySelectorAll("footer").length,
+    skip: !!document.querySelector('a[href="#main"]'),
+    mainFocusable: document.querySelector("main")?.getAttribute("tabindex") === "-1",
+    // 見出しの飛び級（h1 の次が h3 など）は構造が壊れている合図
+    headingOrder: [...document.querySelectorAll("h1,h2,h3")].map((h) =>
+      Number(h.tagName[1]),
+    ),
+  }));
+  must(`${path} h1 がちょうど 1 つ`, s.h1 === 1, `${s.h1} 個`);
+  must(
+    `${path} landmark が揃っている（header / main / footer）`,
+    s.header >= 1 && s.main === 1 && s.footer >= 1,
+    JSON.stringify({ header: s.header, main: s.main, footer: s.footer }),
+  );
+  must(`${path} スキップリンクの飛び先が focus できる`, s.skip && s.mainFocusable);
+  must(
+    `${path} 見出しが飛び級していない`,
+    s.headingOrder.every((lv, i, a) => i === 0 || lv - a[i - 1] <= 1),
+    JSON.stringify(s.headingOrder),
+  );
 }
 
 /* ================================================================

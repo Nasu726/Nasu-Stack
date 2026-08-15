@@ -2,6 +2,8 @@
 import { render } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import { SITE } from "../../site.config";
+import { NAV, FOOTER_GROUPS } from "../../lib/nav";
+import { SiteFooter } from "@/components/ui/site-footer";
 import { getPublishedPosts, formatDate, type Post } from "../../lib/posts";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { PageBlock, ContentBlock, Stack, Inline } from "@/components/ui/layout";
@@ -21,10 +23,7 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 const d = formatDate(post.data.date);
 
-const NAV = [
-  { href: "/", label: "ホーム" },
-  { href: "/blog", label: "ブログ" },
-];
+
 ---
 
 <Base
@@ -75,4 +74,12 @@ const NAV = [
       </p>
     </Stack>
   </PageBlock>
+
+  <SiteFooter
+    brand={SITE.name}
+    description={SITE.description}
+    groups={FOOTER_GROUPS}
+    note="© 2026 Studio Nasu — MIT"
+    width="narrow"
+  />
 </Base>

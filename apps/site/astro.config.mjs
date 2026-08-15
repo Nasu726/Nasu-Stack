@@ -1,4 +1,4 @@
-import { defineConfig } from "astro/config";
+import { defineConfig, passthroughImageService } from "astro/config";
 import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
@@ -9,6 +9,10 @@ export default defineConfig({
   // 設定し忘れると相対パスのまま出て、静かに壊れます（Seo.astro が止めます）。
   // src/site.config.ts の SITE.url と同じ値にしてください。
   site: "https://example.com",
+  image: {
+    // 実測用: sharp を入れずに寸法だけ付くか確かめる
+    service: passthroughImageService(),
+  },
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],

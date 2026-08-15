@@ -523,6 +523,23 @@
       ]
     },
     {
+      "name": "site-footer",
+      "type": "registry:ui",
+      "title": "SiteFooter",
+      "description": "ページ下端。リンク群に見出しを付け、当たり判定を 44px 確保します。",
+      "registryDependencies": [
+        "@nasu/layout",
+        "@nasu/utils"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/site-footer.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/site-footer.tsx"
+        }
+      ]
+    },
+    {
       "name": "data-table",
       "type": "registry:block",
       "title": "DataTable",
