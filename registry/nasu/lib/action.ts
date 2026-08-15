@@ -212,9 +212,9 @@ export async function jsonRequest<T>(
   if (!res.ok) {
     let body: unknown = undefined;
     try {
-      body = await res.json();
+      body = await readBody(res);
     } catch {
-      /* JSON でないレスポンスは無視 */
+      /* 読めない応答は無視して、下でステータスから文言を作ります */
     }
     const o = (body ?? {}) as Record<string, unknown>;
     throw new ActionError(
@@ -234,6 +234,43 @@ export async function jsonRequest<T>(
     );
   }
 
-  if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  return (await readBody<T>(res)) as T;
+}
+
+/**
+ * 応答の本文を読みます。
+ *
+ * **`res.json()` をそのまま呼んではいけません。**
+ * 次のどれでも落ちて、`SyntaxError: Unexpected token '<'` のような
+ * 技術的な文言がそのまま画面に出ます。
+ *
+ *   - 200 だが本文が空（よくある「保存しました」の返し方）
+ *   - 200 だが HTML（プロキシや静的ホスティングの設定ミス）
+ *   - 204 No Content
+ *
+ * どれも「失敗」ではないので、落とさずに受け止めます。
+ */
+async function readBody<T>(res: Response): Promise<T | undefined> {
+  if (res.status === 204 || res.status === 205) return undefined;
+
+  const type = res.headers.get("content-type") ?? "";
+  const text = await res.text();
+  if (text.trim() === "") return undefined;
+
+  if (!type.includes("json")) {
+    // JSON でないと分かっているものを JSON.parse しません。
+    // 中身は使えないので、そのまま文字列として返します。
+    return text as unknown as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (e) {
+    throw new ActionError("応答を読み取れませんでした", {
+      displayMessage:
+        "サーバーから予期しない形式の応答が返りました。送信先の設定を確認してください。",
+      code: "BAD_RESPONSE",
+      cause: { text: text.slice(0, 200), error: String(e) },
+    });
+  }
 }

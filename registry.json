@@ -540,6 +540,38 @@
       ]
     },
     {
+      "name": "submit",
+      "type": "registry:lib",
+      "title": "createSubmit",
+      "description": "フォームを送信先へ繋ぎます。タイムアウト・通信断の翻訳・検証エラーの吸収・おとりの欄。",
+      "registryDependencies": [
+        "@nasu/action"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/lib/submit.ts",
+          "type": "registry:lib",
+          "target": "lib/submit.ts"
+        }
+      ]
+    },
+    {
+      "name": "honeypot-field",
+      "type": "registry:ui",
+      "title": "HoneypotField",
+      "description": "bot 用のおとりの欄。人にも読み上げにもキーボードにも到達させません。",
+      "registryDependencies": [
+        "@nasu/submit"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/honeypot-field.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/honeypot-field.tsx"
+        }
+      ]
+    },
+    {
       "name": "data-table",
       "type": "registry:block",
       "title": "DataTable",

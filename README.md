@@ -378,6 +378,7 @@ registry/nasu/                ← 配布されるソース。ここが本体
   lib/prose.css                 本文（Markdown）の見た目。幅は持たない
   lib/seo.ts                    title / canonical / OGP / JSON-LD の組み立て
   lib/feed.ts                   sitemap.xml / rss.xml / robots.txt の組み立て
+  lib/submit.ts                 フォームの送信先への配線（タイムアウト・翻訳・おとり）
   lib/themes.css                追加テーマ 3 種（差し替え・追加が前提）
   lib/utils.ts                  cn() / inputClass()
   scripts/check-responsive.mjs  端末幅チェック（利用者にも配られます）
@@ -389,7 +390,7 @@ registry/nasu/                ← 配布されるソース。ここが本体
 apps/playground/              ← React + Vite のカタログ（全状態を手で確認できる）
 apps/site/                    ← Astro の静的サイト例（island 連携の確認）
 scripts/                      ← レジストリ生成・検証・スクリーンショット
-registry.json                 ← 配布定義（36 アイテム）
+registry.json                 ← 配布定義（38 アイテム）
 public/r/*.json               ← 生成物（shadcn CLI が読む）
 ```
 
@@ -412,7 +413,7 @@ pnpm build        # 両方ビルド + レジストリ生成
 ### 動作確認
 
 ```bash
-pnpm verify   # 型検査・ビルド・配布物・実ブラウザ検証をまとめて実行（16 項目）
+pnpm verify   # 型検査・ビルド・配布物・実ブラウザ検証をまとめて実行（17 項目）
 pnpm check -- http://localhost:5173/   # 端末幅の崩れだけを見る
 ```
 
@@ -447,7 +448,7 @@ Astro 側のページ一覧は **sitemap.xml から取ります**（手で並べ
 ここが漏れていても**このリポジトリでは何も起きず**、
 利用者が部品を 1 つだけ入れたときにだけ壊れるためです。
 
-**判定は 214 件あります。** 以前は測った数字を印字するだけで、
+**判定は 242 件あります。** 以前は測った数字を印字するだけで、
 タップ領域が 44px から 20px に戻っても緑のまま通っていました。
 いまは 1 つでも外れると落ちます。
 

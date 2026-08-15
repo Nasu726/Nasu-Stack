@@ -123,6 +123,8 @@ step("実ブラウザ: 部品 (v0.4)", "node", ["scripts/verify-parts.mjs"]);
 step("実ブラウザ: 入力/選択/楽観更新 (v0.5)", "node", ["scripts/verify-forms.mjs"]);
 step("実ブラウザ: ナビ/開閉/本文/画像 (v0.6)", "node", ["scripts/verify-nav.mjs"]);
 step("実ブラウザ: SEO / ブログ / フィード (v0.7)", "node", ["scripts/verify-seo.mjs"]);
+// 受け口サーバを立てて、本物の HTTP を飛ばして測ります
+step("実ブラウザ: フォームの送信先 (v0.8)", "node", ["scripts/verify-submit.mjs"]);
 // カタログはタブで中身が入れ替わるので、既定タブだけを見ても
 // 後から足した部品は一度も検査されません。全タブを URL で指定して回します。
 // 一覧はカタログ側の 1 か所から読みます（書き写すと必ずずれます）。
