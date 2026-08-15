@@ -235,6 +235,23 @@
       ]
     },
     {
+      "name": "dialog",
+      "type": "registry:ui",
+      "title": "Dialog",
+      "description": "モーダルとシート。フォーカスの閉じ込め・Esc・背面のスクロール停止つき。",
+      "registryDependencies": [
+        "@nasu/layout",
+        "@nasu/utils"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/dialog.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/dialog.tsx"
+        }
+      ]
+    },
+    {
       "name": "confirm-dialog",
       "type": "registry:ui",
       "title": "ConfirmDialog",
@@ -242,7 +259,7 @@
       "registryDependencies": [
         "@nasu/action-button",
         "@nasu/layout",
-        "@nasu/utils"
+        "@nasu/dialog"
       ],
       "files": [
         {
@@ -363,6 +380,121 @@
       ]
     },
     {
+      "name": "tabs",
+      "type": "registry:ui",
+      "title": "Tabs",
+      "description": "切り替えて見せる。矢印キー・roving tabindex・はみ出し時の横スクロールつき。",
+      "registryDependencies": [
+        "@nasu/scrollable",
+        "@nasu/utils"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/tabs.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/tabs.tsx"
+        }
+      ]
+    },
+    {
+      "name": "disclosure",
+      "type": "registry:ui",
+      "title": "Disclosure / Accordion",
+      "description": "details/summary ベース。JavaScript 無しで開閉します。",
+      "registryDependencies": [
+        "@nasu/utils",
+        "@nasu/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/disclosure.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/disclosure.tsx"
+        }
+      ]
+    },
+    {
+      "name": "use-popover",
+      "type": "registry:hook",
+      "title": "usePopover",
+      "description": "外側クリック・Esc・出す向きの共通処理。",
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/nasu/hooks/use-popover.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-popover.ts"
+        }
+      ]
+    },
+    {
+      "name": "dropdown-menu",
+      "type": "registry:ui",
+      "title": "DropdownMenu / NavDropdown",
+      "description": "命令のメニューと、リンクの下ろし物。role を取り違えないよう別部品にしています。",
+      "registryDependencies": [
+        "@nasu/use-popover",
+        "@nasu/utils"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/dropdown-menu.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/dropdown-menu.tsx"
+        }
+      ]
+    },
+    {
+      "name": "site-nav",
+      "type": "registry:ui",
+      "title": "SiteHeader / NavLink / SkipLink",
+      "description": "サイトのヘッダ。狭い画面のメニューは details なので JavaScript 無しで開閉します。",
+      "registryDependencies": [
+        "@nasu/layout",
+        "@nasu/utils",
+        "@nasu/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/site-nav.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/site-nav.tsx"
+        }
+      ]
+    },
+    {
+      "name": "prose",
+      "type": "registry:style",
+      "title": "prose.css",
+      "description": "本文（Markdown）の見た目。幅は ContentBlock の担当なので持ちません。",
+      "registryDependencies": [
+        "@nasu/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/lib/prose.css",
+          "type": "registry:file",
+          "target": "lib/prose.css"
+        }
+      ]
+    },
+    {
+      "name": "frame",
+      "type": "registry:ui",
+      "title": "Frame / Img",
+      "description": "画像の場所を先に取ってレイアウトシフトを防ぐ箱。",
+      "registryDependencies": [
+        "@nasu/utils"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/frame.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/frame.tsx"
+        }
+      ]
+    },
+    {
       "name": "data-table",
       "type": "registry:block",
       "title": "DataTable",
@@ -393,7 +525,8 @@
         "@nasu/use-resource",
         "@nasu/spinner",
         "@nasu/utils",
-        "@nasu/action"
+        "@nasu/action",
+        "@nasu/use-popover"
       ],
       "files": [
         {

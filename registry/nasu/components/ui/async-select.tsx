@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn, inputClass } from "@/lib/utils";
 import type { Action } from "@/lib/action";
 import { useResource } from "@/hooks/use-resource";
+import { usePopover } from "@/hooks/use-popover";
 import { Spinner } from "@/components/ui/spinner";
 
 /**
@@ -75,9 +76,7 @@ export function AsyncSelect<T>({
   const [text, setText] = React.useState("");
   const [query, setQuery] = React.useState("");
   const [active, setActive] = React.useState(0);
-  const [placement, setPlacement] = React.useState<"below" | "above">("below");
 
-  const wrapRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const listRef = React.useRef<HTMLUListElement>(null);
 
@@ -107,36 +106,14 @@ export function AsyncSelect<T>({
     setActive(0);
   }, [query, open]);
 
-  /* --- 開く位置。下に入らなければ上へ ---------------------------
-     依存を増やさないための最小実装です。開いた瞬間に一度だけ測ります。
-     スクロール追従が要る場面が出てきたら、この関数だけ差し替えてください。 */
-  const decidePlacement = React.useCallback(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const below = window.innerHeight - r.bottom;
-    const above = r.top;
-    const needed = 260; // 候補リストの最大高さの目安
-    setPlacement(below < needed && above > below ? "above" : "below");
-  }, []);
-
-  React.useEffect(() => {
-    if (!open) return;
-    decidePlacement();
-    window.addEventListener("resize", decidePlacement);
-    return () => window.removeEventListener("resize", decidePlacement);
-  }, [open, decidePlacement]);
-
-  /* --- 外側をクリックしたら閉じる -------------------------------- */
-  React.useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) close();
-    };
-    document.addEventListener("pointerdown", onDown);
-    return () => document.removeEventListener("pointerdown", onDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  /* --- 開く向き・外側クリック・Esc は usePopover の担当 ----------
+     DropdownMenu と同じ要件なので、実装は 1 つに寄せています。
+     Esc は入力欄の onKeyDown でも拾いますが、close() は何度呼んでも
+     同じ結果になるので二重に効いても問題ありません。 */
+  const { anchorRef: wrapRef, placement } = usePopover<HTMLDivElement>({
+    open,
+    onClose: () => close(), // 理由に関わらず、選択中の表示へ戻すだけ
+  });
 
   function close() {
     setOpen(false);

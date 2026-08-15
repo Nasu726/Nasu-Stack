@@ -5,11 +5,15 @@
  * ここに 1 つだけ置きます。片方だけ直してもう片方が古いまま、を防ぐためです。
  */
 import { chromium } from "playwright";
+import { TAB_KEYS } from "../apps/playground/src/tabs.mjs";
 
 export const BASE = process.env.PLAYGROUND_URL || "http://127.0.0.1:4173";
 
-/** カタログのタブ。App.tsx の TABS と対応します。 */
-export const TABS = ["layout", "responsive", "parts", "forms", "state"];
+/**
+ * カタログのタブ。**定義はカタログ側の 1 か所にしかありません。**
+ * ここに書き写すと、タブを足したときに検査対象から漏れます。
+ */
+export { TAB_KEYS as TABS } from "../apps/playground/src/tabs.mjs";
 
 export async function launch() {
   const browser = await chromium.launch({
@@ -26,7 +30,7 @@ export async function launch() {
    * 別のタブを検査してしまうためです。URL なら開けなければ失敗します。
    */
   async function openTab(tab, { width = 1200, height = 950 } = {}) {
-    if (!TABS.includes(tab)) throw new Error(`知らないタブです: ${tab}`);
+    if (!TAB_KEYS.includes(tab)) throw new Error(`知らないタブです: ${tab}`);
     const page = await browser.newPage({
       viewport: { width, height },
       isMobile: width < 768,

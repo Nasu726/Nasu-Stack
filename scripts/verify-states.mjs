@@ -1,21 +1,16 @@
-import { chromium } from "playwright";
+/**
+ * v0.1（非同期の状態）の実ブラウザ検証。
+ */
+import { launch, log } from "./_browser.mjs";
 
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || undefined,
-});
-const page = await browser.newPage({ viewport: { width: 900, height: 900 } });
-const errors = [];
-page.on("pageerror", (e) => errors.push(String(e)));
+const { errors, openTab, finish } = await launch();
+// タブはボタンのクリックではなく URL で開きます。
+// 以前はここで getByRole("button") を使っていて、タブを正しい
+// role="tab" にした瞬間に見つからなくなりました。URL なら壊れません。
+const page = await openTab("state", { width: 900, height: 900 });
 page.on("console", (m) => {
   if (m.type() === "error") errors.push(m.text());
 });
-
-await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
-// カタログは「レイアウト」タブが既定なので、状態のデモへ切り替える
-await page.getByRole("button", { name: "状態", exact: true }).click();
-await page.waitForTimeout(300);
-
-const log = (...a) => console.log("·", ...a);
 
 /* 1. 成功パス --------------------------------------------------- */
 await page.getByRole("button", { name: "保存する" }).click();
@@ -104,10 +99,4 @@ await page.waitForTimeout(400);
 const status = await page.getByText(/^status:/).textContent();
 log("中断後の status:", JSON.stringify(status?.trim()));
 
-console.log(
-  errors.length === 0
-    ? "\n✅ コンソールエラー 0 件"
-    : `\n❌ コンソールエラー ${errors.length} 件:\n` + errors.join("\n"),
-);
-
-await browser.close();
+await finish();

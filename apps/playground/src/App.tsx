@@ -15,22 +15,18 @@ import {
   Stack,
   Tiles,
 } from "@/components/ui/layout";
+import { Tabs } from "@/components/ui/tabs";
 import { Panel } from "./Panel";
 import { LayoutDemo } from "./LayoutDemo";
 import { ResponsiveDemo } from "./ResponsiveDemo";
 import { PartsDemo } from "./PartsDemo";
 import { FormsDemo } from "./FormsDemo";
+import { NavDemo } from "./NavDemo";
+import { TextDemo } from "./TextDemo";
 import * as api from "./fake-api";
+import { TABS, normalizeTab } from "./tabs.mjs";
 
-type Tab = "layout" | "responsive" | "parts" | "forms" | "state";
-
-const TABS: [Tab, string][] = [
-  ["layout", "レイアウト"],
-  ["responsive", "端末幅"],
-  ["parts", "部品"],
-  ["forms", "入力/選択"],
-  ["state", "状態"],
-];
+type Tab = string;
 
 const params =
   typeof window !== "undefined"
@@ -45,10 +41,39 @@ const isEmbedded = params.has("embed");
  * こうしないと `pnpm check` が既定タブしか検査できません
  * （実際、v0.4 と v0.5 で作った部品は一度も 320px で検査されていませんでした）。
  */
-const initialTab = ((): Tab => {
-  const t = params.get("tab") as Tab | null;
-  return t && TABS.some(([k]) => k === t) ? t : "layout";
-})();
+const initialTab = normalizeTab(params.get("tab"));
+
+/**
+ * タブごとの中身。**tabs.mjs にあるキーと対応させます。**
+ * 対応が無いタブは黙って別の画面を出さず、未実装だと明示します
+ * （黙って既定の画面を出すと、検査は通るのに中身が違う、が起きます）。
+ */
+const PANELS: Record<string, React.ReactNode> = {
+  layout: <LayoutDemo />,
+  responsive: <ResponsiveDemo />,
+  parts: <PartsDemo />,
+  forms: <FormsDemo />,
+  nav: <NavDemo />,
+  text: <TextDemo />,
+  state: (
+    <Stack space="3xl">
+      <ButtonSection />
+      <FormSection />
+      <ListSection />
+      <AbortSection />
+    </Stack>
+  ),
+};
+
+function NotBuilt({ tab }: { tab: string }) {
+  return (
+    <Panel title={`「${tab}」はまだ作っていません`} description={null}>
+      <p className="text-sm text-muted-fg">
+        tabs.mjs にはありますが、App.tsx の PANELS に対応する中身がありません。
+      </p>
+    </Panel>
+  );
+}
 
 export function App() {
   const [tab, setTab] = React.useState<Tab>(initialTab);
@@ -63,22 +88,17 @@ export function App() {
       <PageBlock width="content" gutter="md" as="main" className="pb-3xl pt-xl">
         <Stack space="3xl">
           <Intro />
-          {tab === "layout" ? (
-            <LayoutDemo />
-          ) : tab === "responsive" ? (
-            <ResponsiveDemo />
-          ) : tab === "parts" ? (
-            <PartsDemo />
-          ) : tab === "forms" ? (
-            <FormsDemo />
-          ) : (
-            <Stack space="3xl">
-              <ButtonSection />
-              <FormSection />
-              <ListSection />
-              <AbortSection />
-            </Stack>
-          )}
+          {/* タブ列はヘッダ、中身はここ、と離れています。
+              離れていても読み上げが繋がるように、id を明示しています。 */}
+          <div
+            id="catalog-panel"
+            role="tabpanel"
+            aria-labelledby={`catalog-tab-${tab}`}
+            tabIndex={0}
+            className="outline-none"
+          >
+            {PANELS[tab] ?? <NotBuilt tab={tab} />}
+          </div>
         </Stack>
       </PageBlock>
       <Footer />
@@ -99,28 +119,24 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
             <span className="text-xs text-muted-fg">/ {theme}</span>
           </Inline>
           <Inline space="sm">
-            <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
-              {TABS.map(([k, label]) => (
-                <button
-                  key={k}
-                  onClick={() => {
-                    onTab(k);
-                    // 検査スクリプトが直接そのタブを開けるように URL を合わせる
-                    const u = new URL(window.location.href);
-                    u.searchParams.set("tab", k);
-                    window.history.replaceState(null, "", u);
-                  }}
-                  aria-pressed={tab === k}
-                  className={
-                    tab === k
-                      ? "rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-fg"
-                      : "rounded-md px-2.5 py-1 text-xs font-medium text-muted-fg hover:bg-muted hover:text-fg"
-                  }
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            {/* 配布している Tabs をそのまま使っています。
+                自分で使わない部品は必ず腐るので、手書きの button 列から
+                差し替えました（矢印キー・roving tabindex が付きます）。 */}
+            <Tabs
+              items={TABS.map((t) => ({ value: t.key, label: t.label }))}
+              value={tab}
+              onValueChange={(k) => {
+                onTab(k);
+                // 検査スクリプトが直接そのタブを開けるように URL を合わせる
+                const u = new URL(window.location.href);
+                u.searchParams.set("tab", k);
+                window.history.replaceState(null, "", u);
+              }}
+              label="カタログの章"
+              idPrefix="catalog"
+              panelId="catalog-panel"
+              className="min-w-0 max-w-[min(38rem,60vw)]"
+            />
             <ThemeSwitcher />
           </Inline>
         </Spread>

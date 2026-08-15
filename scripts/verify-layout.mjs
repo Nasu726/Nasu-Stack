@@ -1,18 +1,10 @@
 /**
  * v0.2（レイアウト + ActionProvider）の実ブラウザ検証。
- *   node scripts/verify-v02.mjs
  */
-import { chromium } from "playwright";
+import { launch, log } from "./_browser.mjs";
 
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || undefined,
-});
-const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
-const errors = [];
-page.on("pageerror", (e) => errors.push(String(e)));
-
-await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
-const log = (...a) => console.log("·", ...a);
+const { openTab, finish } = await launch();
+const page = await openTab("layout", { width: 1100, height: 900 });
 
 /* --- 1. 余白が本当にトークン由来か --------------------------------- */
 const gaps = await page.evaluate(() => {
@@ -135,9 +127,4 @@ await page.waitForTimeout(400);
 const before = await page.locator('[role="status"]').count();
 log("通知を直接表示:", before > 0 ? "表示された ✓" : "✗");
 
-console.log(
-  errors.length === 0
-    ? "\n✅ pageerror 0 件"
-    : `\n❌ pageerror ${errors.length} 件:\n` + errors.join("\n"),
-);
-await browser.close();
+await finish();

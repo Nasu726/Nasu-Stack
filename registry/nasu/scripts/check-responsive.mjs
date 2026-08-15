@@ -74,6 +74,17 @@ export function inspect(viewportWidth) {
     // ファイル選択のように、見た目を label に差し替えている場合がこれに当たります。
     if (r.width <= 1 || r.height <= 1) continue;
 
+    // 文章の中に混ざったリンクは対象外です。
+    // WCAG 2.1 の 2.5.8（ターゲットのサイズ）には「インライン」の例外があり、
+    // 文中や段落の中のリンクは 24px 未満でも適合とされています。
+    // 行の高さを広げれば直りますが、それは本文が読みにくくなるだけです。
+    if (el.tagName === "A") {
+      const p = el.parentElement;
+      const inText =
+        p && /^(P|LI|TD|TH|H1|H2|H3|H4|H5|H6|BLOCKQUOTE|SPAN|EM|STRONG|FIGCAPTION|DD|DT)$/.test(p.tagName);
+      if (inText && cs.display.startsWith("inline")) continue;
+    }
+
     // 包んでいる label / button があれば、それが実際の当たり判定
     const wrapper = el.closest("label, button, a[href]");
     const target = wrapper && wrapper !== el ? wrapper.getBoundingClientRect() : r;
@@ -166,8 +177,34 @@ export function inspect(viewportWidth) {
     }
   }
 
+  /* 6. 場所を取っていない画像 ----------------------------------
+     画像は読み込みが終わるまで大きさが分かりません。比率も寸法も
+     決まっていないと、届いた瞬間に高さを持ち、その下の文章が下へずれます。
+     読んでいる最中に行が動く、押そうとしたボタンが逃げる、あれです。
+     ここでは「まだ届いていない画像のうち、場所を取っていないもの」を数えます。 */
+  const unsizedImages = [];
+  for (const img of document.querySelectorAll("img")) {
+    const cs = getComputedStyle(img);
+    // 親か自分に aspect-ratio があるか、height が px で決まっていれば場所は取れている
+    const hasRatio =
+      cs.aspectRatio !== "auto" ||
+      (img.parentElement &&
+        getComputedStyle(img.parentElement).aspectRatio !== "auto");
+    const hasAttrs = img.hasAttribute("width") && img.hasAttribute("height");
+    const fixedHeight = cs.height.endsWith("px") && parseFloat(cs.height) > 0;
+    if (hasRatio || hasAttrs) continue;
+    // 既に読み終わっていて高さが確定しているものは、これ以上ずれません
+    if (img.complete && fixedHeight) continue;
+    unsizedImages.push({
+      src: (img.getAttribute("src") || "").slice(-40),
+      alt: (img.getAttribute("alt") || "").slice(0, 20),
+    });
+  }
+
   return {
     overflow,
+    unsizedImages: unsizedImages.slice(0, 3),
+    unsizedCount: unsizedImages.length,
     culprits: culprits.slice(0, 5),
     smallTargets: smallTargets.slice(0, 5),
     smallCount: smallTargets.length,
@@ -248,6 +285,15 @@ export function formatReport(report) {
           `(${r.smallTargets.map((s) => `${s.tag} ${s.size} "${s.label}"`).join(", ")})`,
       );
       issues.push("  → 指で押しづらく、WCAG 2.1 AA の最低基準を下回ります");
+    }
+    if (r.unsizedCount > 0) {
+      issues.push(
+        `場所を取っていない画像: ${r.unsizedCount} 件 ` +
+          `(${(r.unsizedImages ?? []).map((i) => `…${i.src}`).join(", ")})`,
+      );
+      issues.push(
+        "  → 読み込んだ瞬間に下の文章がずれます。<Frame ratio=\"16/9\"> で囲むか、width と height を書いてください",
+      );
     }
     if (r.rigidCount > 0) {
       issues.push(

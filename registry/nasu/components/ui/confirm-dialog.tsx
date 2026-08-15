@@ -1,21 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/action-button";
-import { Inline, Stack } from "@/components/ui/layout";
+import { Dialog } from "@/components/ui/dialog";
+import { Inline } from "@/components/ui/layout";
 
 /**
  * ConfirmDialog — 「本当に削除しますか？」
  * ================================================================
- * native の `<dialog>` を使っています。自前で作ると必要になる次のものが、
- * 全部ブラウザ任せになるためです。
+ * 土台は `Dialog` です。**同じものを 2 つ実装しません。**
+ * フォーカスの閉じ込め・Esc・背面のスクロール停止は、全部そちらの担当です。
  *
- *   - フォーカスの閉じ込め（Tab でダイアログの外に出られない）
- *   - 背景の暗転（::backdrop）
- *   - Esc で閉じる
- *   - 他のどの要素より手前に出る（top layer。z-index 戦争が起きない）
- *   - 閉じたあと、元の要素へフォーカスが戻る
+ * ここが足しているのは「Promise で答えが返る」という 1 点だけです。
  *
  * ```tsx
  * const confirm = useConfirm();
@@ -80,10 +76,6 @@ interface Pending {
  */
 export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const [pending, setPending] = React.useState<Pending | null>(null);
-  const dialogRef = React.useRef<HTMLDialogElement>(null);
-  // 固定 id は、Provider が 2 つ置かれた瞬間に重複します。
-  // 重複した id は aria-labelledby の参照先を狂わせるので useId で作ります。
-  const titleId = React.useId();
 
   const confirm = React.useCallback<ConfirmFn>((options) => {
     const normalized: ConfirmOptions =
@@ -93,16 +85,10 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // pending が立ったらモーダルとして開く
-  React.useEffect(() => {
-    const el = dialogRef.current;
-    if (!el) return;
-    if (pending && !el.open) el.showModal();
-    if (!pending && el.open) el.close();
-  }, [pending]);
-
   const settle = React.useCallback(
     (ok: boolean) => {
+      // 待っている人を必ず起こします。ここで resolve を忘れると、
+      // await している側が永遠に止まります。
       pending?.resolve(ok);
       setPending(null);
     },
@@ -113,53 +99,30 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     <ConfirmContext.Provider value={confirm}>
       {children}
 
-      <dialog
-        ref={dialogRef}
-        // Esc で閉じられたときも「取り消し」として扱う
-        onCancel={(e) => {
-          e.preventDefault();
-          settle(false);
+      <Dialog
+        open={pending !== null}
+        // Esc も背景クリックも「取り消し」として扱います
+        onOpenChange={(next) => {
+          if (!next) settle(false);
         }}
-        onClose={() => settle(false)}
-        // 背景（::backdrop 部分）のクリックで閉じる。
-        // dialog 自身が全面を占めるので、中身の外側かどうかで判定する。
-        onClick={(e) => {
-          if (e.target === dialogRef.current) settle(false);
-        }}
-        aria-labelledby={titleId}
-        className={cn(
-          "wt-dialog m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-border",
-          "bg-card p-lg text-card-fg shadow-e3",
-        )}
-      >
-        {pending && (
-          <Stack space="md">
-            <Stack space="2xs">
-              <h2 id={titleId} className="text-base font-semibold">
-                {pending.options.title}
-              </h2>
-              {pending.options.description && (
-                <p className="text-sm leading-relaxed text-muted-fg">
-                  {pending.options.description}
-                </p>
-              )}
-            </Stack>
-
-            <Inline space="xs" align="end">
-              <Button variant="outline" onClick={() => settle(false)}>
-                {pending.options.cancelLabel ?? "キャンセル"}
-              </Button>
-              <Button
-                variant={pending.options.tone === "danger" ? "danger" : "primary"}
-                autoFocus
-                onClick={() => settle(true)}
-              >
-                {pending.options.confirmLabel ?? "OK"}
-              </Button>
-            </Inline>
-          </Stack>
-        )}
-      </dialog>
+        title={pending?.options.title}
+        description={pending?.options.description}
+        size="md"
+        footer={
+          <Inline space="xs" align="end">
+            <Button variant="outline" onClick={() => settle(false)}>
+              {pending?.options.cancelLabel ?? "キャンセル"}
+            </Button>
+            <Button
+              variant={pending?.options.tone === "danger" ? "danger" : "primary"}
+              autoFocus
+              onClick={() => settle(true)}
+            >
+              {pending?.options.confirmLabel ?? "OK"}
+            </Button>
+          </Inline>
+        }
+      />
     </ConfirmContext.Provider>
   );
 }

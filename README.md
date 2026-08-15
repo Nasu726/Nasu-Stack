@@ -46,6 +46,7 @@
 │  レイアウト層  Stack / Columns / Tiles   │  ← 余白は 9 段階のみ。外側の余白は部品が持たない
 ├─────────────────────────────────────────┤
 │  部品層       ActionButton / AsyncForm   │  ← 状態を全部持つ。バックエンド非依存
+│               SiteHeader / Dialog / Tabs  │  ← ナビと開閉。ARIA とキーボードは部品の担当
 ├─────────────────────────────────────────┤
 │  契約層       Action / ActionSpec        │  ← (input, ctx) => Promise<output> だけ
 └─────────────────────────────────────────┘
@@ -373,7 +374,8 @@ import { DataList } from "@/ui/data-list";
 registry/nasu/                ← 配布されるソース。ここが本体
   lib/action.ts                 契約・エラー正規化・ActionSpec
   lib/action-defaults.ts        既定のエラー処理を配るコンテキスト
-  lib/tokens.css                余白・幅・ユーティリティ・壊れない土台・既定テーマ
+  lib/tokens.css                余白・幅・ヘッダ高さ・壊れない土台・既定テーマ
+  lib/prose.css                 本文（Markdown）の見た目。幅は持たない
   lib/themes.css                追加テーマ 3 種（差し替え・追加が前提）
   lib/utils.ts                  cn() / inputClass()
   scripts/check-responsive.mjs  端末幅チェック（利用者にも配られます）
@@ -385,7 +387,7 @@ registry/nasu/                ← 配布されるソース。ここが本体
 apps/playground/              ← React + Vite のカタログ（全状態を手で確認できる）
 apps/site/                    ← Astro の静的サイト例（island 連携の確認）
 scripts/                      ← レジストリ生成・検証・スクリーンショット
-registry.json                 ← 配布定義（25 アイテム）
+registry.json                 ← 配布定義（33 アイテム）
 public/r/*.json               ← 生成物（shadcn CLI が読む）
 ```
 
@@ -408,7 +410,7 @@ pnpm build        # 両方ビルド + レジストリ生成
 ### 動作確認
 
 ```bash
-pnpm verify   # 型検査・ビルド・配布物・実ブラウザ検証をまとめて実行（13 項目）
+pnpm verify   # 型検査・ビルド・配布物・実ブラウザ検証をまとめて実行（14 項目）
 pnpm check -- http://localhost:5173/   # 端末幅の崩れだけを見る
 ```
 
@@ -420,11 +422,12 @@ pnpm check -- http://localhost:5173/   # 端末幅の崩れだけを見る
 ✓ ビルド (カタログ / Astro サイト)     ✓ 実ブラウザ: 壊しにくる中身
 ✓ レジストリ生成                      ✓ 実ブラウザ: 部品
 ✓ 配布の依存漏れ                      ✓ 実ブラウザ: 入力/選択/楽観更新
-✓ 利用者プロジェクトへ展開して型検査   ✓ 実ブラウザ: 端末幅の崩れ
+✓ 利用者プロジェクトへ展開して型検査   ✓ 実ブラウザ: ナビ/開閉/本文/画像
+                                     ✓ 実ブラウザ: 端末幅の崩れ
 ```
 
-端末幅の検査は、カタログの **5 タブすべて**（`?tab=` で指定）と Astro サイトを、
-5 つの画面幅で回します。合わせて 30 通り。
+端末幅の検査は、カタログの **全タブ**（`?tab=` で指定）と Astro サイトを、
+5 つの画面幅で回します。合わせて 40 通り。
 既定タブしか見ていなかったせいで新しい部品が検査から漏れていた、という事故が
 実際にあったためです（[docs/refactor-v05.md](docs/refactor-v05.md)）。
 

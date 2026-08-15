@@ -99,9 +99,13 @@ step("実ブラウザ: レイアウトと通知", "node", ["scripts/verify-layou
 step("実ブラウザ: 壊しにくる中身", "node", ["scripts/audit-stress.mjs"]);
 step("実ブラウザ: 部品 (v0.4)", "node", ["scripts/verify-parts.mjs"]);
 step("実ブラウザ: 入力/選択/楽観更新 (v0.5)", "node", ["scripts/verify-forms.mjs"]);
+step("実ブラウザ: ナビ/開閉/本文/画像 (v0.6)", "node", ["scripts/verify-nav.mjs"]);
 // カタログはタブで中身が入れ替わるので、既定タブだけを見ても
 // 後から足した部品は一度も検査されません。全タブを URL で指定して回します。
-const PLAYGROUND_TABS = ["layout", "responsive", "parts", "forms", "state"];
+// 一覧はカタログ側の 1 か所から読みます（書き写すと必ずずれます）。
+const { TAB_KEYS: PLAYGROUND_TABS } = await import(
+  "../apps/playground/src/tabs.mjs"
+);
 step("実ブラウザ: 端末幅の崩れ", "node", [
   "registry/nasu/scripts/check-responsive.mjs",
   ...PLAYGROUND_TABS.map((t) => `http://127.0.0.1:4173/?tab=${t}`),
