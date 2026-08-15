@@ -4,6 +4,7 @@
  * 差し替えるだけでコンポーネント側は一切変更不要です。
  */
 import { ActionError } from "@/lib/action";
+import type { FormValues } from "@/components/ui/async-form";
 
 export interface Task {
   id: number;
@@ -89,7 +90,7 @@ export async function listBroken(
 
 /** サインアップ。バリデーションエラーをフィールド単位で返します。 */
 export async function signup(
-  values: Record<string, FormDataEntryValue>,
+  values: FormValues,
   ctx: { signal: AbortSignal },
 ) {
   await wait(900, ctx.signal);

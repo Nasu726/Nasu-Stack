@@ -32,10 +32,19 @@ export interface TableColumn<T> {
   key: string;
   /** 列名。**カード表示ではこれが唯一の手がかりになるので必須です。** */
   label: string;
-  /** 値の取り出し方。省略時は `row[key]`。 */
+  /** 表示する値の作り方。省略時は `row[key]`。**表示専用です。** */
   get?: (row: T) => React.ReactNode;
   /** 並べ替えの対象にするか。 */
   sortable?: boolean;
+  /**
+   * 並べ替えに使う値。省略時は `row[key]`（`get` の結果ではありません）。
+   *
+   * `get` で「¥12,400」のように整形していると、そのまま並べ替えれば
+   * 文字列比較になり `¥2,600` が `¥12,400` より後ろに来ます。
+   * 元の値で並べ替えるのが正しいので、既定は `row[key]` です。
+   * 別のキーで並べたいときだけここを指定してください。
+   */
+  sortValue?: (row: T) => string | number | Date;
   /** 右寄せ（数値など）。 */
   align?: "start" | "end";
   /** 狭い画面のカードで省くか（重要度の低い列）。 */
@@ -67,6 +76,19 @@ export interface DataTableProps<T> {
   mobile?: "cards" | "scroll";
   /** 行をクリックしたとき。 */
   onRowClick?: (row: T) => void;
+  /**
+   * 行を選べるようにします。**`getKey` が必須になります。**
+   * index をキーにすると、並べ替えた瞬間に選択が別の行へずれるためです。
+   */
+  selectable?: boolean;
+  /** 選択されているキー。省略すると内部で持ちます。 */
+  selected?: Set<React.Key>;
+  onSelectedChange?: (keys: Set<React.Key>) => void;
+  /** 選択中に出す操作。件数を受け取ります。 */
+  selectionActions?: (
+    keys: Set<React.Key>,
+    clear: () => void,
+  ) => React.ReactNode;
   caption?: React.ReactNode;
   empty?: React.ReactNode;
   className?: string;
@@ -80,6 +102,10 @@ export function DataTable<T>({
   pageSize = 10,
   mobile = "cards",
   onRowClick,
+  selectable = false,
+  selected,
+  onSelectedChange,
+  selectionActions,
   caption,
   empty,
   className,
@@ -87,6 +113,35 @@ export function DataTable<T>({
   const [page, setPage] = React.useState(0);
   const [sort, setSort] = React.useState<string | undefined>();
   const [dir, setDir] = React.useState<"asc" | "desc">("asc");
+
+  /* --- 選択 -----------------------------------------------------
+     キー（getKey の戻り値）で持つので、ページを移っても並べ替えても残ります。
+     index で持つと並べ替えた瞬間に別の行へずれます。 */
+  const [innerSelected, setInnerSelected] = React.useState<Set<React.Key>>(
+    () => new Set(),
+  );
+  const selection = selected ?? innerSelected;
+  const setSelection = React.useCallback(
+    (next: Set<React.Key>) => {
+      if (selected === undefined) setInnerSelected(next);
+      onSelectedChange?.(next);
+    },
+    [selected, onSelectedChange],
+  );
+  // Shift+クリックの基準点。並べ替えやページ移動をまたぐと無意味になるので破棄します。
+  const anchorRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    anchorRef.current = null;
+  }, [page, sort, dir]);
+
+  if (selectable && !getKey && typeof console !== "undefined") {
+    // 型で強制できないので実行時に知らせます
+    console.warn(
+      "[DataTable] selectable を使うときは getKey が必須です。" +
+        "index をキーにすると、並べ替えで選択が別の行へずれます。",
+    );
+  }
 
   const query = React.useMemo<TableQuery>(
     () => ({ page, pageSize, sort, dir }),
@@ -100,12 +155,9 @@ export function DataTable<T>({
     if (sort) {
       const col = columns.find((c) => c.key === sort);
       list = [...rows].sort((a, b) => {
-        const av = cellValue(a, col);
-        const bv = cellValue(b, col);
-        const r =
-          typeof av === "number" && typeof bv === "number"
-            ? av - bv
-            : String(av).localeCompare(String(bv), "ja");
+        const av = sortValueOf(a, col);
+        const bv = sortValueOf(b, col);
+        const r = compare(av, bv);
         return dir === "asc" ? r : -r;
       });
     }
@@ -152,6 +204,46 @@ export function DataTable<T>({
     setPage(0);
   };
 
+  /* --- 選択の操作 ------------------------------------------------ */
+  const pageKeys = (data: TablePage<T>) =>
+    data.rows.map((r, i) => (getKey ? getKey(r, i) : i));
+
+  const toggleOne = (key: React.Key, index: number, shiftKey: boolean, data: TablePage<T>) => {
+    const next = new Set(selection);
+    const keys = pageKeys(data);
+
+    // Shift+クリック: 基準点から今の行までをまとめて切り替える
+    if (shiftKey && anchorRef.current !== null) {
+      const [from, to] = [anchorRef.current, index].sort((a, b) => a - b);
+      const turningOn = !selection.has(key);
+      for (let i = from; i <= to; i++) {
+        if (turningOn) next.add(keys[i]);
+        else next.delete(keys[i]);
+      }
+    } else {
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      anchorRef.current = index;
+    }
+    setSelection(next);
+  };
+
+  /** ヘッダのチェックは「いま表示している行」だけを対象にします。 */
+  const toggleAllOnPage = (data: TablePage<T>, checked: boolean) => {
+    const next = new Set(selection);
+    for (const k of pageKeys(data)) {
+      if (checked) next.add(k);
+      else next.delete(k);
+    }
+    anchorRef.current = null;
+    setSelection(next);
+  };
+
+  const clearSelection = () => {
+    anchorRef.current = null;
+    setSelection(new Set());
+  };
+
   return (
     <Stack space="sm" className={className}>
       {caption && (
@@ -161,6 +253,22 @@ export function DataTable<T>({
             <span className="text-xs text-muted-fg">{total} 件</span>
           )}
         </Spread>
+      )}
+
+      {selectable && selection.size > 0 && (
+        <Box padding="xs" background="accent" radius="md">
+          <Spread space="sm">
+            <span className="self-center text-sm">
+              {selection.size} 件選択中
+            </span>
+            <Inline space="xs">
+              {selectionActions?.(selection, clearSelection)}
+              <Button size="sm" variant="ghost" onClick={clearSelection}>
+                全解除
+              </Button>
+            </Inline>
+          </Spread>
+        </Box>
       )}
 
       <AsyncBoundary
@@ -178,6 +286,15 @@ export function DataTable<T>({
                 <table className="w-full min-w-[36rem] border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-border">
+                      {selectable && (
+                        <th className="w-10 px-sm py-xs">
+                          <SelectAllBox
+                            keys={pageKeys(data)}
+                            selection={selection}
+                            onChange={(checked) => toggleAllOnPage(data, checked)}
+                          />
+                        </th>
+                      )}
                       {columns.map((c) => (
                         <Th
                           key={c.key}
@@ -198,6 +315,17 @@ export function DataTable<T>({
                         )}
                         onClick={onRowClick ? () => onRowClick(row) : undefined}
                       >
+                        {selectable && (
+                          <td className="px-sm py-xs">
+                            <RowBox
+                              checked={selection.has(getKey ? getKey(row, i) : i)}
+                              label={`${i + 1} 行目を選択`}
+                              onToggle={(shiftKey) =>
+                                toggleOne(getKey ? getKey(row, i) : i, i, shiftKey, data)
+                              }
+                            />
+                          </td>
+                        )}
                         {columns.map((c) => (
                           <td
                             key={c.key}
@@ -219,6 +347,16 @@ export function DataTable<T>({
             {/* 狭い画面: 1 行 = 1 カード。各値に列名を付ける。 */}
             {mobile === "cards" && (
               <Stack space="xs" className="md:hidden">
+                {selectable && (
+                  <Inline space="xs" alignY="center">
+                    <SelectAllBox
+                      keys={pageKeys(data)}
+                      selection={selection}
+                      onChange={(checked) => toggleAllOnPage(data, checked)}
+                      withLabel="表示中をすべて選択"
+                    />
+                  </Inline>
+                )}
                 <SortBar
                   columns={columns}
                   sort={sort}
@@ -236,6 +374,16 @@ export function DataTable<T>({
                     className={onRowClick ? "cursor-pointer" : undefined}
                   >
                     <Stack space="2xs">
+                      {selectable && (
+                        <RowBox
+                          checked={selection.has(getKey ? getKey(row, i) : i)}
+                          label={`${i + 1} 件目を選択`}
+                          onToggle={(shiftKey) =>
+                            toggleOne(getKey ? getKey(row, i) : i, i, shiftKey, data)
+                          }
+                          withLabel="この項目を選択"
+                        />
+                      )}
                       {columns
                         .filter((c) => !c.hideOnCard)
                         .map((c) => (
@@ -266,15 +414,37 @@ export function DataTable<T>({
 
 /* ---------------------------------------------------------------- */
 
-function cellValue<T>(row: T, col?: TableColumn<T>): unknown {
+/**
+ * 並べ替えに使う値。
+ *
+ * **`get` の結果は使いません。** 表示用に整形された文字列で並べ替えると
+ * `¥2,600` が `¥12,400` より後ろに来ます（"2" > "1" のため）。
+ */
+function sortValueOf<T>(row: T, col?: TableColumn<T>): unknown {
   if (!col) return "";
-  if (col.get) return col.get(row);
+  if (col.sortValue) return col.sortValue(row);
   return (row as Record<string, unknown>)[col.key];
 }
 
+function compare(a: unknown, b: unknown): number {
+  if (a == null && b == null) return 0;
+  if (a == null) return -1;
+  if (b == null) return 1;
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  if (typeof a === "boolean" && typeof b === "boolean")
+    return Number(a) - Number(b);
+  if (a instanceof Date && b instanceof Date) return a.getTime() - b.getTime();
+  // 数値らしい文字列は数値として比べる（"10" が "9" より後ろになるのを防ぐ）
+  const na = Number(a);
+  const nb = Number(b);
+  if (!Number.isNaN(na) && !Number.isNaN(nb) && String(a).trim() !== "" && String(b).trim() !== "")
+    return na - nb;
+  return String(a).localeCompare(String(b), "ja");
+}
+
 function renderCell<T>(row: T, col: TableColumn<T>): React.ReactNode {
-  const v = cellValue(row, col);
-  return v as React.ReactNode;
+  if (col.get) return col.get(row);
+  return (row as Record<string, unknown>)[col.key] as React.ReactNode;
 }
 
 /**
@@ -411,5 +581,99 @@ function Pager({
         次へ
       </Button>
     </Spread>
+  );
+}
+
+/* ----------------------------------------------------------------
+ * チェックボックス
+ * ---------------------------------------------------------------- */
+
+/**
+ * ヘッダの「表示中をすべて選択」。
+ *
+ * 一部だけ選ばれている状態を示す `indeterminate` は
+ * **HTML 属性ではなく DOM のプロパティ**です。JSX に書いても効きません。
+ * ref 経由で代入する必要があります。
+ */
+function SelectAllBox({
+  keys,
+  selection,
+  onChange,
+  withLabel,
+}: {
+  keys: React.Key[];
+  selection: Set<React.Key>;
+  onChange: (checked: boolean) => void;
+  withLabel?: string;
+}) {
+  const ref = React.useRef<HTMLInputElement>(null);
+  const on = keys.filter((k) => selection.has(k)).length;
+  const all = keys.length > 0 && on === keys.length;
+  const some = on > 0 && !all;
+
+  React.useEffect(() => {
+    if (ref.current) ref.current.indeterminate = some;
+  }, [some]);
+
+  const box = (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={all}
+      onChange={(e) => onChange(e.target.checked)}
+      onClick={(e) => e.stopPropagation()}
+      aria-label={withLabel ?? "表示中の行をすべて選択"}
+      className="size-5 accent-primary"
+    />
+  );
+
+  if (!withLabel) return box;
+  return (
+    <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-muted-fg">
+      {box}
+      {withLabel}
+    </label>
+  );
+}
+
+/** 1 行ぶんのチェック。行クリックへ伝播させないのが要点です。 */
+function RowBox({
+  checked,
+  label,
+  onToggle,
+  withLabel,
+}: {
+  checked: boolean;
+  label: string;
+  onToggle: (shiftKey: boolean) => void;
+  withLabel?: string;
+}) {
+  const box = (
+    <input
+      type="checkbox"
+      checked={checked}
+      aria-label={label}
+      // チェックのクリックが onRowClick へ伝播すると、
+      // 選択と同時に行の詳細が開いてしまいます。
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle(e.shiftKey);
+      }}
+      onChange={() => {
+        /* onClick で処理済み。React の制御コンポーネント警告を避けるため空で置く */
+      }}
+      className="size-5 accent-primary"
+    />
+  );
+
+  if (!withLabel) return box;
+  return (
+    <label
+      className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-muted-fg"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {box}
+      {withLabel}
+    </label>
   );
 }

@@ -272,7 +272,7 @@
       "name": "async-form",
       "type": "registry:block",
       "title": "AsyncForm + Field",
-      "description": "送信関数を 1 つ渡すだけのフォーム。フィールド単位のエラー表示と、打ち直しでの自動クリアつき。",
+      "description": "送信関数を 1 つ渡すだけのフォーム。同名の値を配列に畳むので複数選択も壊れません。フィールド単位のエラー表示と自動クリアつき。",
       "registryDependencies": [
         "@nasu/use-action",
         "@nasu/action-defaults",
@@ -284,6 +284,24 @@
           "path": "registry/nasu/components/ui/async-form.tsx",
           "type": "registry:ui",
           "target": "components/ui/async-form.tsx"
+        }
+      ]
+    },
+    {
+      "name": "form-fields",
+      "type": "registry:block",
+      "title": "入力部品",
+      "description": "SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField。ラベル全体をタップ領域にし、入力欄は 16px 以上。RadioGroup は fieldset + legend。",
+      "registryDependencies": [
+        "@nasu/async-form",
+        "@nasu/layout",
+        "@nasu/utils"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/form-fields.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/form-fields.tsx"
         }
       ]
     },
@@ -341,7 +359,7 @@
       "name": "data-table",
       "type": "registry:block",
       "title": "DataTable",
-      "description": "並べ替え・ページング・取得。狭い画面では 1 行 = 1 カードに組み替えて各値に列名を付けます（列定義の label が必須）。",
+      "description": "並べ替え・ページング・行選択。狭い画面では 1 行 = 1 カードに組み替えます（列定義の label が必須）。選択はキーで保持するのでページや並べ替えをまたいで残ります。",
       "registryDependencies": [
         "@nasu/use-resource",
         "@nasu/async-boundary",
@@ -391,6 +409,24 @@
           "path": "registry/nasu/components/ui/file-drop.tsx",
           "type": "registry:ui",
           "target": "components/ui/file-drop.tsx"
+        }
+      ]
+    },
+    {
+      "name": "use-optimistic-list",
+      "type": "registry:hook",
+      "title": "useOptimisticList",
+      "description": "楽観更新と、失敗した操作だけのロールバック。基準の配列 + 保留中の差分で持つので、同時に走った他の操作を巻き戻しません。",
+      "registryDependencies": [
+        "@nasu/action",
+        "@nasu/action-defaults",
+        "@nasu/use-resource"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/hooks/use-optimistic-list.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-optimistic-list.ts"
         }
       ]
     }
