@@ -59,6 +59,7 @@ step("型検査 (Astro サイト)", "pnpm", [
 step("ビルド (カタログ)", "pnpm", ["--filter", "playground", "build"]);
 step("ビルド (Astro サイト)", "pnpm", ["--filter", "site", "build"]);
 step("レジストリ生成", "node", ["scripts/build-registry.mjs"]);
+step("配布の依存漏れ", "node", ["scripts/check-registry-deps.mjs"]);
 step("利用者プロジェクトへ展開して型検査", "node", [
   "scripts/verify-install.mjs",
 ]);
@@ -98,9 +99,12 @@ step("実ブラウザ: レイアウトと通知", "node", ["scripts/verify-layou
 step("実ブラウザ: 壊しにくる中身", "node", ["scripts/audit-stress.mjs"]);
 step("実ブラウザ: 部品 (v0.4)", "node", ["scripts/verify-parts.mjs"]);
 step("実ブラウザ: 入力/選択/楽観更新 (v0.5)", "node", ["scripts/verify-forms.mjs"]);
+// カタログはタブで中身が入れ替わるので、既定タブだけを見ても
+// 後から足した部品は一度も検査されません。全タブを URL で指定して回します。
+const PLAYGROUND_TABS = ["layout", "responsive", "parts", "forms", "state"];
 step("実ブラウザ: 端末幅の崩れ", "node", [
   "registry/nasu/scripts/check-responsive.mjs",
-  "http://127.0.0.1:4173/",
+  ...PLAYGROUND_TABS.map((t) => `http://127.0.0.1:4173/?tab=${t}`),
   "http://127.0.0.1:4321/",
 ]);
 

@@ -287,7 +287,7 @@ export function DataTable<T>({
                   <thead>
                     <tr className="border-b border-border">
                       {selectable && (
-                        <th className="w-10 px-sm py-xs">
+                        <th className="w-12 px-sm py-xs">
                           <SelectAllBox
                             keys={pageKeys(data)}
                             selection={selection}
@@ -483,7 +483,9 @@ function Th<T>({
     >
       <button
         onClick={onSort}
-        className="inline-flex items-center gap-1 rounded-sm hover:text-fg"
+        // 文字の高さ（20px 前後）のままだと WCAG 2.1 AA の 24px を下回ります。
+        // 指で触る端末では tokens.css の base 層がさらに 44px まで広げます。
+        className="inline-flex min-h-6 items-center gap-1 rounded-sm hover:text-fg"
       >
         {column.label}
         <SortIcon dir={sorted} />
@@ -627,11 +629,37 @@ function SelectAllBox({
     />
   );
 
-  if (!withLabel) return box;
+  return <BoxLabel text={withLabel}>{box}</BoxLabel>;
+}
+
+/**
+ * チェックボックスの当たり判定を作る包み。
+ *
+ * `<input type="checkbox">` は 20px 程度しかなく、それだけでは指で押せません
+ * （WCAG 2.1 AA の最低は 24px）。文字ラベルの有無にかかわらず必ず `<label>` で
+ * 包んで、押せる範囲を 44px 確保します。表の中でも同じです。
+ */
+function BoxLabel({
+  text,
+  children,
+}: {
+  text?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-muted-fg">
-      {box}
-      {withLabel}
+    <label
+      className={cn(
+        "flex min-h-11 cursor-pointer items-center text-xs text-muted-fg",
+        // 文字が無いときは幅が四角のぶん（20px）しか無いので広げます。
+        // `w-full` は効きません。表の列幅は中身から決まるので、
+        // 中身が「親の 100%」と言うと循環して結局 20px のままになります。
+        // min-width で下限を与えるのが正しいやり方です。
+        text ? "gap-2" : "min-w-11 justify-center",
+      )}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {children}
+      {text}
     </label>
   );
 }
@@ -666,14 +694,5 @@ function RowBox({
     />
   );
 
-  if (!withLabel) return box;
-  return (
-    <label
-      className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-muted-fg"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {box}
-      {withLabel}
-    </label>
-  );
+  return <BoxLabel text={withLabel}>{box}</BoxLabel>;
 }

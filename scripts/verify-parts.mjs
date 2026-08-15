@@ -2,26 +2,11 @@
  * v0.4 の部品を実ブラウザで検証します。
  * docs/plan-v04.md の「実測で確かめる項目」10 個に対応しています。
  */
-import { chromium } from "playwright";
+import { launch, log } from "./_browser.mjs";
 
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || undefined,
-});
-const errors = [];
-const log = (...a) => console.log("·", ...a);
-
-async function openParts(width = 1100, height = 900) {
-  const page = await browser.newPage({
-    viewport: { width, height },
-    isMobile: width < 768,
-    hasTouch: width < 768,
-  });
-  page.on("pageerror", (e) => errors.push(String(e)));
-  await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: "部品", exact: true }).click();
-  await page.waitForTimeout(400);
-  return page;
-}
+const { errors, openTab, finish } = await launch();
+const openParts = (width = 1100, height = 900) =>
+  openTab("parts", { width, height });
 
 /* ===== 1. dialog::backdrop にスタイルが効くか ===================== */
 {
@@ -254,10 +239,4 @@ async function openParts(width = 1100, height = 900) {
   await page.close();
 }
 
-console.log(
-  errors.length === 0
-    ? "\n✅ pageerror 0 件"
-    : `\n❌ pageerror ${errors.length} 件:\n` + errors.join("\n"),
-);
-await browser.close();
-process.exit(errors.length ? 1 : 0);
+await finish();

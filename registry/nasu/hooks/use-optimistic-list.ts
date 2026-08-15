@@ -160,7 +160,28 @@ export function useOptimisticList<T>({
     [],
   );
 
-  const ctx = (): ActionContext => ({ signal: new AbortController().signal });
+  /* --- 中断 ------------------------------------------------------
+     画面から消えたのに保存が走り続けるのを防ぎます。
+     毎回 `new AbortController().signal` を渡すだけでは、その controller は
+     誰にも中断されないので、実質「中断できない」のと同じでした。
+     ここでは書き込み全体をひとつの controller にぶら下げ、
+     アンマウント時にまとめて中断します。 */
+  const abortRef = React.useRef<AbortController | null>(null);
+  if (abortRef.current === null) abortRef.current = new AbortController();
+  React.useEffect(() => {
+    // StrictMode は開発中に mount → unmount → mount を通します。
+    // 一度中断された controller を使い回すと、以降の保存が全部中断扱いになるので
+    // 中断済みなら作り直します。
+    if (abortRef.current?.signal.aborted) abortRef.current = new AbortController();
+    return () => abortRef.current?.abort();
+  }, []);
+
+  const ctx = (): ActionContext => ({
+    signal: (abortRef.current ??= new AbortController()).signal,
+  });
+
+  /** アンマウントによる中断は、利用者に見せるべき失敗ではありません。 */
+  const isUnmountAbort = () => abortRef.current?.signal.aborted === true;
 
   /* --- 追加 ------------------------------------------------------ */
   const add = React.useCallback(
@@ -176,7 +197,7 @@ export function useOptimisticList<T>({
         dropOp(id);
       } catch (raw) {
         dropOp(id); // この操作だけ取り消す。他の保留中はそのまま。
-        report(toActionError(raw), "add");
+        if (!isUnmountAbort()) report(toActionError(raw), "add");
       }
     },
     [dropOp, report],
@@ -206,7 +227,7 @@ export function useOptimisticList<T>({
         dropOp(id);
       } catch (raw) {
         dropOp(id);
-        report(toActionError(raw), "remove");
+        if (!isUnmountAbort()) report(toActionError(raw), "remove");
       }
     },
     [pending, dropOp, report],
@@ -232,7 +253,7 @@ export function useOptimisticList<T>({
           dropOp(id);
         } catch (raw) {
           dropOp(id);
-          report(toActionError(raw), "update");
+          if (!isUnmountAbort()) report(toActionError(raw), "update");
         }
       });
     },

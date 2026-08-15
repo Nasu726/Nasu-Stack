@@ -24,18 +24,41 @@ import * as api from "./fake-api";
 
 type Tab = "layout" | "responsive" | "parts" | "forms" | "state";
 
+const TABS: [Tab, string][] = [
+  ["layout", "レイアウト"],
+  ["responsive", "端末幅"],
+  ["parts", "部品"],
+  ["forms", "入力/選択"],
+  ["state", "状態"],
+];
+
+const params =
+  typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search)
+    : new URLSearchParams();
+
 /** 端末プレビューの iframe から読まれているときは、入れ子を避けて簡略表示にする。 */
-const isEmbedded =
-  typeof window !== "undefined" &&
-  new URLSearchParams(window.location.search).has("embed");
+const isEmbedded = params.has("embed");
+
+/**
+ * タブを URL で指定できるようにしています。
+ * こうしないと `pnpm check` が既定タブしか検査できません
+ * （実際、v0.4 と v0.5 で作った部品は一度も 320px で検査されていませんでした）。
+ */
+const initialTab = ((): Tab => {
+  const t = params.get("tab") as Tab | null;
+  return t && TABS.some(([k]) => k === t) ? t : "layout";
+})();
 
 export function App() {
-  const [tab, setTab] = React.useState<Tab>("layout");
+  const [tab, setTab] = React.useState<Tab>(initialTab);
 
   if (isEmbedded) return <EmbeddedPreview />;
 
   return (
-    <div className="min-h-dvh bg-bg text-fg">
+    // data-active-tab は検証スクリプト用。?tab= で開いたつもりが
+    // 別のタブだった、を黙って見逃さないための目印です。
+    <div className="min-h-dvh bg-bg text-fg" data-active-tab={tab}>
       <Header tab={tab} onTab={setTab} />
       <PageBlock width="content" gutter="md" as="main" className="pb-3xl pt-xl">
         <Stack space="3xl">
@@ -77,18 +100,16 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
           </Inline>
           <Inline space="sm">
             <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
-              {(
-                [
-                  ["layout", "レイアウト"],
-                  ["responsive", "端末幅"],
-                  ["parts", "部品"],
-                  ["forms", "入力/選択"],
-                  ["state", "状態"],
-                ] as const
-              ).map(([k, label]) => (
+              {TABS.map(([k, label]) => (
                 <button
                   key={k}
-                  onClick={() => onTab(k)}
+                  onClick={() => {
+                    onTab(k);
+                    // 検査スクリプトが直接そのタブを開けるように URL を合わせる
+                    const u = new URL(window.location.href);
+                    u.searchParams.set("tab", k);
+                    window.history.replaceState(null, "", u);
+                  }}
                   aria-pressed={tab === k}
                   className={
                     tab === k

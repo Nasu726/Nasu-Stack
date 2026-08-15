@@ -153,7 +153,8 @@
       "registryDependencies": [
         "@nasu/action-defaults",
         "@nasu/toast",
-        "@nasu/confirm-dialog"
+        "@nasu/confirm-dialog",
+        "@nasu/action"
       ],
       "files": [
         {
@@ -222,7 +223,8 @@
         "@nasu/action-defaults",
         "@nasu/confirm-dialog",
         "@nasu/spinner",
-        "@nasu/utils"
+        "@nasu/utils",
+        "@nasu/action"
       ],
       "files": [
         {
@@ -258,7 +260,8 @@
       "registryDependencies": [
         "@nasu/action",
         "@nasu/action-button",
-        "@nasu/spinner"
+        "@nasu/spinner",
+        "@nasu/utils"
       ],
       "files": [
         {
@@ -277,7 +280,9 @@
         "@nasu/use-action",
         "@nasu/action-defaults",
         "@nasu/action-button",
-        "@nasu/spinner"
+        "@nasu/spinner",
+        "@nasu/utils",
+        "@nasu/action"
       ],
       "files": [
         {
@@ -312,7 +317,9 @@
       "description": "取得・スケルトン・空状態・再試行つきのリスト。columns 指定で関数なし（Astro island）でも使えます。",
       "registryDependencies": [
         "@nasu/use-resource",
-        "@nasu/async-boundary"
+        "@nasu/async-boundary",
+        "@nasu/utils",
+        "@nasu/action"
       ],
       "files": [
         {
@@ -365,7 +372,9 @@
         "@nasu/async-boundary",
         "@nasu/scrollable",
         "@nasu/action-button",
-        "@nasu/layout"
+        "@nasu/layout",
+        "@nasu/utils",
+        "@nasu/action"
       ],
       "files": [
         {
@@ -383,7 +392,8 @@
       "registryDependencies": [
         "@nasu/use-resource",
         "@nasu/spinner",
-        "@nasu/utils"
+        "@nasu/utils",
+        "@nasu/action"
       ],
       "files": [
         {
@@ -402,7 +412,9 @@
         "@nasu/upload",
         "@nasu/action-button",
         "@nasu/spinner",
-        "@nasu/layout"
+        "@nasu/layout",
+        "@nasu/utils",
+        "@nasu/action"
       ],
       "files": [
         {

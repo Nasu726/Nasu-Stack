@@ -81,6 +81,9 @@ interface Pending {
 export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const [pending, setPending] = React.useState<Pending | null>(null);
   const dialogRef = React.useRef<HTMLDialogElement>(null);
+  // 固定 id は、Provider が 2 つ置かれた瞬間に重複します。
+  // 重複した id は aria-labelledby の参照先を狂わせるので useId で作ります。
+  const titleId = React.useId();
 
   const confirm = React.useCallback<ConfirmFn>((options) => {
     const normalized: ConfirmOptions =
@@ -123,7 +126,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
         onClick={(e) => {
           if (e.target === dialogRef.current) settle(false);
         }}
-        aria-labelledby="wt-confirm-title"
+        aria-labelledby={titleId}
         className={cn(
           "wt-dialog m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-border",
           "bg-card p-lg text-card-fg shadow-e3",
@@ -132,7 +135,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
         {pending && (
           <Stack space="md">
             <Stack space="2xs">
-              <h2 id="wt-confirm-title" className="text-base font-semibold">
+              <h2 id={titleId} className="text-base font-semibold">
                 {pending.options.title}
               </h2>
               {pending.options.description && (

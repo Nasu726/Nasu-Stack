@@ -325,31 +325,34 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
                 wrap={false}
                 className={state ? "opacity-50" : undefined}
               >
-                <input
-                  type="checkbox"
-                  checked={t.done}
-                  aria-label={`${t.title} を完了にする`}
-                  className="size-5 shrink-0 accent-primary"
-                  onChange={() =>
-                    void list.update(t, { done: !t.done }, async (i) => {
-                      await wait(700);
-                      if (/fail/i.test(i.title)) {
-                        throw new ActionError("update failed", {
-                          displayMessage: `「${i.title}」の更新に失敗しました`,
-                        });
-                      }
-                      serverTodos = serverTodos.map((x) =>
-                        x.id === i.id ? i : x,
-                      );
-                      return i;
-                    })
-                  }
-                />
-                <span
-                  className={`min-w-0 flex-1 text-sm ${t.done ? "text-muted-fg line-through" : ""}`}
-                >
-                  {t.title}
-                </span>
+                {/* 四角だけだと 20px ほどしかなく指で押せません。
+                    題名まで含めて <label> で包み、44px の当たり判定にします。 */}
+                <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-xs">
+                  <input
+                    type="checkbox"
+                    checked={t.done}
+                    className="size-5 shrink-0 accent-primary"
+                    onChange={() =>
+                      void list.update(t, { done: !t.done }, async (i) => {
+                        await wait(700);
+                        if (/fail/i.test(i.title)) {
+                          throw new ActionError("update failed", {
+                            displayMessage: `「${i.title}」の更新に失敗しました`,
+                          });
+                        }
+                        serverTodos = serverTodos.map((x) =>
+                          x.id === i.id ? i : x,
+                        );
+                        return i;
+                      })
+                    }
+                  />
+                  <span
+                    className={`min-w-0 flex-1 text-sm ${t.done ? "text-muted-fg line-through" : ""}`}
+                  >
+                    {t.title}
+                  </span>
+                </label>
                 {state && (
                   <span className="shrink-0 text-[11px] text-muted-fg">
                     {state === "add"

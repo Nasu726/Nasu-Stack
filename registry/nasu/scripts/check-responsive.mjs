@@ -58,18 +58,30 @@ export function inspect(viewportWidth) {
     }
   }
 
-  /* 2. タップ領域 ---------------------------------------------- */
+  /* 2. タップ領域 ----------------------------------------------
+     測るのは「押せる範囲」であって、要素そのものの大きさではありません。
+     チェックボックスが 20px でも、それを包む <label> が 44px なら
+     指で押せる範囲は 44px です。包みを辿って実際の当たり判定を測ります。 */
   const smallTargets = [];
   for (const el of document.querySelectorAll(
     "a[href], button, input, select, textarea, [role=button], [role=link], summary",
   )) {
     const r = el.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) continue;
-    if (getComputedStyle(el).visibility === "hidden") continue;
-    if (r.width < 24 || r.height < 24) {
+    const cs = getComputedStyle(el);
+    if (cs.visibility === "hidden") continue;
+    // sr-only で隠した入力（幅 1px など）は視覚的なターゲットではありません。
+    // ファイル選択のように、見た目を label に差し替えている場合がこれに当たります。
+    if (r.width <= 1 || r.height <= 1) continue;
+
+    // 包んでいる label / button があれば、それが実際の当たり判定
+    const wrapper = el.closest("label, button, a[href]");
+    const target = wrapper && wrapper !== el ? wrapper.getBoundingClientRect() : r;
+
+    if (target.width < 24 || target.height < 24) {
       smallTargets.push({
         tag: el.tagName.toLowerCase(),
-        size: `${Math.round(r.width)}x${Math.round(r.height)}`,
+        size: `${Math.round(target.width)}x${Math.round(target.height)}`,
         label: (el.getAttribute("aria-label") || el.textContent || "")
           .trim()
           .slice(0, 24),
@@ -101,17 +113,16 @@ export function inspect(viewportWidth) {
     const w = cs.width;
     const minW = cs.minWidth;
     const px = (v) => (v.endsWith("px") ? parseFloat(v) : 0);
+    // 横スクロール領域の中身は、画面より広くて当然です（表やコードがこれ）。
+    // min-width も width も、その中では指摘しません。
+    if (insideScroller(el)) continue;
     if (px(minW) > viewportWidth) {
       rigid.push({
         tag: el.tagName.toLowerCase(),
         cls: String(el.className || "").slice(0, 40),
         minWidth: minW,
       });
-    } else if (
-      cs.flexShrink === "0" &&
-      px(w) > viewportWidth * 0.9 &&
-      !insideScroller(el)
-    ) {
+    } else if (cs.flexShrink === "0" && px(w) > viewportWidth * 0.9) {
       rigid.push({
         tag: el.tagName.toLowerCase(),
         cls: String(el.className || "").slice(0, 40),
@@ -130,6 +141,11 @@ export function inspect(viewportWidth) {
   for (const el of document.querySelectorAll("p, li")) {
     const text = (el.textContent || "").trim();
     if (text.length < 60) continue;
+    // URL や長い識別子は「読みやすい行長」の話ではありません。
+    // 途中で切れない 1 語なので、はみ出しの検査（1 番）の担当です。
+    // ここで数えると、直しようのない指摘が毎回出ます。
+    const longestWord = Math.max(...text.split(/\s+/).map((s) => s.length));
+    if (longestWord > 40) continue;
     const r = el.getBoundingClientRect();
     const fs = parseFloat(getComputedStyle(el).fontSize);
     if (!fs || !r.width) continue;

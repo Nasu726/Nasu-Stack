@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn, inputClass } from "@/lib/utils";
 import {
   CHECKBOX_ABSENT,
   useFieldState,
@@ -73,15 +73,10 @@ export function SelectField({
         aria-describedby={f.describedBy}
         disabled={f.disabled}
         onChange={f.clear}
-        className={cn(
-          "w-full rounded-md border bg-card px-3 py-2 text-card-fg",
-          // 16px 未満だと iOS が触れた瞬間に画面を自動拡大します
-          "text-base",
-          "transition-colors disabled:opacity-60",
-          f.error ? "border-danger" : "border-input",
-          multiple && "min-h-32",
-          className,
-        )}
+        className={inputClass({
+          error: f.error,
+          className: cn(multiple && "min-h-32", className),
+        })}
         {...props}
       >
         {!multiple && placeholder && (
@@ -347,14 +342,7 @@ export function DateField({
         aria-describedby={f.describedBy}
         disabled={f.disabled}
         onInput={f.clear}
-        className={cn(
-          "w-full rounded-md border bg-card px-3 py-2 text-card-fg",
-          // 日付入力も例外ではありません。16px 未満だと iOS が拡大します。
-          "text-base",
-          "transition-colors disabled:opacity-60",
-          f.error ? "border-danger" : "border-input",
-          className,
-        )}
+        className={inputClass({ error: f.error, className })}
         {...props}
       />
     </FieldShell>

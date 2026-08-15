@@ -1,26 +1,10 @@
 /**
  * v0.5 の検証。docs/plan-v05.md の「実測で確かめる項目」14 個に対応します。
  */
-import { chromium } from "playwright";
+import { launch, log } from "./_browser.mjs";
 
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || undefined,
-});
-const errors = [];
-const log = (...a) => console.log("·", ...a);
-
-async function open(width = 1200, height = 950) {
-  const page = await browser.newPage({
-    viewport: { width, height },
-    isMobile: width < 768,
-    hasTouch: width < 768,
-  });
-  page.on("pageerror", (e) => errors.push(String(e)));
-  await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: "入力/選択", exact: true }).click();
-  await page.waitForTimeout(700);
-  return page;
-}
+const { errors, openTab, finish } = await launch();
+const open = (width = 1200, height = 950) => openTab("forms", { width, height });
 
 /* ===== 9. 複数値 / 10. 未チェック =============================== */
 {
@@ -91,8 +75,8 @@ async function open(width = 1200, height = 950) {
   log("13. RadioGroup:", JSON.stringify(radio));
 
   /* --- フィールドエラーが radio group にも出るか --- */
+  // ?tab= を持ったままなので、reload だけで同じタブに戻ります
   await page.reload({ waitUntil: "networkidle" });
-  await page.getByRole("button", { name: "入力/選択", exact: true }).click();
   await page.waitForTimeout(500);
   await page.fill('input[name="title"]', "x");
   await page.getByRole("button", { name: "送信して中身を見る" }).click();
@@ -230,10 +214,4 @@ async function open(width = 1200, height = 950) {
   await page.close();
 }
 
-console.log(
-  errors.length === 0
-    ? "\n✅ pageerror 0 件"
-    : `\n❌ pageerror ${errors.length} 件:\n` + errors.join("\n"),
-);
-await browser.close();
-process.exit(errors.length ? 1 : 0);
+await finish();

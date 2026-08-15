@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn, inputClass } from "@/lib/utils";
 import { type ActionSpec, resolveAction } from "@/lib/action";
 import { useActionDefaults } from "@/lib/action-defaults";
 import { useAction, type UseActionOptions } from "@/hooks/use-action";
@@ -364,17 +364,7 @@ export function Field({
     "aria-describedby": f.describedBy,
     disabled: f.disabled,
     onInput: f.clear,
-    className: cn(
-      "w-full rounded-md border bg-card px-3 py-2 text-card-fg",
-      // 16px 未満だと、iOS Safari は入力欄に触れた瞬間に画面を自動拡大します。
-      // 拡大は手動でしか戻せず、しかも iPad でも起きるため、
-      // 「狭い画面のときだけ 16px」では防げません。常に 16px 以上にします。
-      "text-base",
-      "placeholder:text-muted-fg",
-      "transition-colors disabled:opacity-60",
-      f.error ? "border-danger" : "border-input",
-      className,
-    ),
+    className: inputClass({ error: f.error, className }),
   };
 
   return (

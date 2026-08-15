@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn, inputClass } from "@/lib/utils";
 import type { Action } from "@/lib/action";
 import { useResource } from "@/hooks/use-resource";
 import { Spinner } from "@/components/ui/spinner";
@@ -244,12 +244,7 @@ export function AsyncSelect<T>({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          className={cn(
-            "w-full rounded-md border border-input bg-card px-3 py-2 pr-8 text-card-fg",
-            // 16px 未満だと iOS が触れた瞬間に画面を自動拡大します
-            "text-base",
-            "placeholder:text-muted-fg disabled:opacity-60",
-          )}
+          className={inputClass({ className: "pr-8" })}
         />
 
         <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
