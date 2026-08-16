@@ -6,3 +6,4 @@ public/r/
 .DS_Store
 
 .verify-install/
+packages/create-webtemplate/template/

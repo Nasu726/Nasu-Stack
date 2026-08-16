@@ -129,9 +129,14 @@ export function SiteHeader({
       )}
     >
       <PageBlock width={width} gutter="md">
-        <div className="flex min-h-[var(--header-h)] items-center gap-sm">
+        {/* 横一列。**どの子も縮めるようにしておく必要があります。**
+            flex の子は既定で min-width:auto なので、中身より小さくなれません。
+            幅のある actions（テーマ切り替えなど）を渡された瞬間、
+            行が画面からはみ出します（実測: 375px で 15px はみ出し）。
+            min-w-0 を与えて、縮むか折り返すかできるようにします。 */}
+        <div className="flex min-h-[var(--header-h)] min-w-0 items-center gap-sm">
           {brand && (
-            <div className="font-display text-lg">
+            <div className="min-w-0 shrink font-display text-lg">
               {brandHref ? (
                 // 文字の高さのままだと押しづらいので、ここでも 44px 確保します
                 <a
@@ -161,7 +166,7 @@ export function SiteHeader({
             </nav>
           )}
 
-          {actions}
+          {actions && <div className="flex min-w-0 items-center">{actions}</div>}
 
           {/* 狭い画面: <details> で開閉する。JS 不要。 */}
           {items.length > 0 && (

@@ -1,0 +1,33 @@
+---
+/**
+ * メタ情報を <head> に流す薄い包み。
+ * 組み立ては src/lib/seo.ts（純粋な関数）が持っています。
+ */
+import { buildMeta, type MetaInput } from "@/lib/seo";
+
+type Props = Omit<MetaInput, "site"> & { site?: string };
+
+const { site = Astro.site?.toString() ?? "", ...rest } = Astro.props;
+
+if (!site) {
+  // 黙って通すと canonical も OGP も相対パスのまま出ます。
+  // 静かに壊れるより、ビルドで止めたほうが安全です。
+  throw new Error("astro.config の `site` が設定されていません");
+}
+
+const tags = buildMeta({ ...rest, site });
+---
+
+{
+  tags.map((t) =>
+    t.tag === "title" ? (
+      <title set:text={t.children} />
+    ) : t.tag === "meta" ? (
+      <meta {...t.attrs} />
+    ) : t.tag === "link" ? (
+      <link {...t.attrs} />
+    ) : (
+      <script type="application/ld+json" is:inline set:html={t.children} />
+    ),
+  )
+}

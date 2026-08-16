@@ -133,11 +133,16 @@ export function ThemeSwitcher({ className }: { className?: string }) {
   const { theme, setTheme, resolvedMode, setMode } = useTheme();
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+    <div className={cn("flex min-w-0 flex-wrap items-center gap-2", className)}>
+      {/* テーマの数だけボタンが並ぶので、狭い画面では 1 行に収まりません。
+          **折り返せるようにしておく必要があります。**
+          flex の子は既定で min-width:auto なので、min-w-0 が無いと
+          縮むことも折り返すこともできず、画面の外へ突き抜けます
+          （実測: 320px のヘッダに置いて 15px はみ出し）。 */}
       <div
         role="radiogroup"
         aria-label="デザインテーマ"
-        className="flex gap-1 rounded-lg border border-border bg-card p-1"
+        className="flex min-w-0 flex-wrap gap-1 rounded-lg border border-border bg-card p-1"
       >
         {THEMES.map((t) => (
           <button

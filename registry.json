@@ -474,7 +474,7 @@
         {
           "path": "registry/nasu/lib/prose.css",
           "type": "registry:file",
-          "target": "lib/prose.css"
+          "target": "styles/prose.css"
         }
       ]
     },

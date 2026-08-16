@@ -1,0 +1,10 @@
+{
+  "name": "create-webtemplate",
+  "version": "0.1.0",
+  "description": "WebTemplate の初期プロジェクトを作ります",
+  "type": "module",
+  "license": "MIT",
+  "bin": { "create-webtemplate": "index.mjs" },
+  "files": ["index.mjs", "template"],
+  "engines": { "node": ">=18" }
+}

@@ -80,6 +80,9 @@ step("配布の依存漏れ", "node", ["scripts/check-registry-deps.mjs"]);
 // 純粋な関数の単体検査。ブラウザを立てないので速く、
 // `&` ひとつでフィードが壊れる類の間違いはここでしか捕まえられません。
 step("単体: SEO / フィードの組み立て", "node", ["scripts/verify-seo-unit.mjs"]);
+// 入口。生成物を install / build するところまでは重いので
+// `pnpm verify:create` に分けています（ここは生成と検証だけ）。
+step("入口: create-webtemplate", "node", ["scripts/verify-create.mjs"]);
 step("利用者プロジェクトへ展開して型検査", "node", [
   "scripts/verify-install.mjs",
 ]);

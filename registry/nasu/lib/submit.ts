@@ -34,7 +34,7 @@ import {
  * ここはその 5 つだけを引き受けます。**送信そのものは fetch のままです。**
  */
 
-export interface SubmitOptions<TInput, TOutput> {
+export interface SubmitOptions<TInput> {
   /** 送信先。 */
   url: string;
   method?: "POST" | "PUT" | "PATCH";
@@ -63,7 +63,7 @@ export function createSubmit<TInput = unknown, TOutput = unknown>({
   timeout = 15000,
   honeypot = HONEYPOT_NAME,
   transform,
-}: SubmitOptions<TInput, TOutput>): Action<TInput, TOutput> {
+}: SubmitOptions<TInput>): Action<TInput, TOutput> {
   return async (input: TInput, ctx: ActionContext): Promise<TOutput> => {
     /* --- おとりの欄 --------------------------------------------
        値が入っているのは、人ではなく自動入力です。
