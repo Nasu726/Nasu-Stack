@@ -1,0 +1,11 @@
+/* 土台（余白・レイアウト・壊れない base・既定テーマ） */
+@import "../../../registry/nasu/lib/tokens.css";
+/* 追加テーマ（warm / editorial / vivid）。不要なら消せます */
+@import "../../../registry/nasu/lib/themes.css";
+/* 本文（Markdown）の見た目。記事を書かないなら不要です */
+@import "../../../registry/nasu/lib/prose.css";
+
+/* Tailwind v4 は使われている class をソースから走査します。
+   レジストリのソースは node_modules 外なので明示的に指定します。 */
+@source "../../../registry/nasu";
+@source "../src";

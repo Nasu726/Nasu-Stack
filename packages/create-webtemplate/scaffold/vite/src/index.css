@@ -1,0 +1,10 @@
+/* 土台（余白・レイアウト・壊れない base・既定テーマ） */
+@import "./styles/tokens.css";
+/* 追加テーマ（warm / editorial / vivid）。不要なら消せます */
+@import "./styles/themes.css";
+/* 本文（Markdown）の見た目。記事を書かないなら不要です */
+@import "./styles/prose.css";
+
+/* Tailwind v4 は使われている class をソースから走査します。
+   既定で拾えているか怪しいときはここで明示してください。 */
+@source "./";

@@ -1,0 +1,46 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE } from "../site.config";
+import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { SiteFooter } from "@/components/ui/site-footer";
+import { PageBlock, Stack, Section, Inline } from "@/components/ui/layout";
+
+const NAV = [{ href: "/", label: "ホーム" }];
+---
+
+<Base title="ここから始めます" description={SITE.description}>
+  <SkipLink />
+  <SiteHeader brand={SITE.name} brandHref="/" items={NAV} currentPath={Astro.url.pathname} />
+
+  <PageBlock width="content" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+    <Stack space="3xl">
+      <Section space="md">
+        <h1 class="text-3xl leading-tight">ここから始めます</h1>
+        <p class="max-w-prose text-sm leading-relaxed text-muted-fg">
+          このページは静的な HTML です。JavaScript は 1 バイトも読み込んでいません。
+          動く部分が必要になったら、その部分だけ React の island にしてください。
+        </p>
+        <Inline space="sm">
+          <a
+            href="https://github.com/Nasu726/WebTemplate"
+            class="inline-flex min-h-11 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-fg"
+          >
+            部品の一覧を見る
+          </a>
+        </Inline>
+      </Section>
+
+      <Section space="md">
+        <h2 class="text-2xl">次にやること</h2>
+        <ol class="flex max-w-prose flex-col gap-xs text-sm leading-relaxed text-muted-fg">
+          <li>1. <code class="text-fg">src/site.config.ts</code> のサイト名と説明を書き換える</li>
+          <li>2. <code class="text-fg">astro.config.mjs</code> の <code class="text-fg">site</code> を公開先のドメインにする</li>
+          <li>3. このページ（<code class="text-fg">src/pages/index.astro</code>）を書き換える</li>
+          <li>4. 部品が足りなくなったら <code class="text-fg">npx shadcn add</code> で足す</li>
+        </ol>
+      </Section>
+    </Stack>
+  </PageBlock>
+
+  <SiteFooter brand={SITE.name} note="Built with WebTemplate" />
+</Base>

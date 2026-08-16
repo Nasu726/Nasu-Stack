@@ -1,0 +1,88 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE } from "../site.config";
+import { NAV, FOOTER_GROUPS } from "../lib/nav";
+import { SiteFooter } from "@/components/ui/site-footer";
+import { ContactForm } from "../components/ContactForm";
+import { DataList } from "@/components/ui/data-list";
+import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { PageBlock, Section, Stack } from "@/components/ui/layout";
+
+// 静的サイト側は Astro で書き、状態を持つ部分だけ island として React を差し込みます。
+// ページ本体は JS 0 バイトで配信されます。
+//
+// ヘッダとレイアウトは配布している部品をそのまま使っています。
+// **client: を付けていません。** 静的 HTML として書き出されるだけで、
+// 狭い画面のメニューは <details> なので JavaScript 無しで開閉します。
+// ナビとフッタの定義は 1 か所（src/lib/nav.ts）にまとめています。
+// ページごとに書くと「新しいページを足したのにヘッダから辿れない」が起きます。
+---
+
+<Base
+  title="WebTemplate — 静的サイトの例"
+  description={SITE.description}
+  theme="editorial"
+>
+  <SkipLink />
+
+  <SiteHeader
+    brand={SITE.name}
+    brandHref="/"
+    items={NAV}
+    currentPath={Astro.url.pathname}
+    width="narrow"
+  />
+
+  <PageBlock width="narrow" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+    <Stack space="3xl">
+      <Section space="sm">
+        <h1 class="text-4xl leading-tight">
+          静的なページは Astro。<br />動く部分だけ React。
+        </h1>
+        <p class="max-w-lg text-sm leading-relaxed text-muted-fg">
+          このページの本文は完全な静的 HTML です。下の 2 箇所だけが island
+          として読み込まれるので、トップの表示は JavaScript を待ちません。
+          トンマナは同じトークンを共有しているため、Astro 側と React
+          側で見た目がずれません。
+        </p>
+      </Section>
+
+      {/* パターン A: 関数を渡せない .astro からは、宣言（ActionSpec）で書く */}
+      <Section space="sm" id="works">
+        <h2 class="text-2xl">Works</h2>
+        <p class="max-w-prose text-xs text-muted-fg">
+          関数の代わりに <code>{"{ url, method }"}</code> を渡しています。
+          .astro から props は JSON 化されるため、この形なら島に渡せます。
+        </p>
+        <DataList
+          client:load
+          loader={{ url: "/works.json", method: "GET" }}
+          columns={[
+            { key: "title", primary: true },
+            { key: "stack", badge: true },
+            { key: "year", badge: true },
+          ]}
+        />
+      </Section>
+
+      {/* パターン B: 独自ロジックを持つ島は .tsx でラップする */}
+      <Section space="sm" id="contact">
+        <h2 class="text-2xl">Contact</h2>
+        <p class="max-w-prose text-xs text-muted-fg">
+          独自のバリデーションを持つのでラッパ (.tsx) 経由で読み込んでいます。
+        </p>
+        <div class="max-w-md">
+          <ContactForm client:load />
+        </div>
+      </Section>
+    </Stack>
+  </PageBlock>
+
+  <SiteFooter
+    brand={SITE.name}
+    description={SITE.description}
+    groups={FOOTER_GROUPS}
+    note="Built with WebTemplate — MIT"
+    width="narrow"
+  />
+</Base>

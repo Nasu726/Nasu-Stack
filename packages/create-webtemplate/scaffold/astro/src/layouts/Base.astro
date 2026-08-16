@@ -1,0 +1,30 @@
+---
+import "../styles/global.css";
+import Seo from "../components/Seo.astro";
+import { SITE } from "../site.config";
+import type { MetaInput } from "@/lib/seo";
+
+interface Props extends Omit<MetaInput, "site" | "siteName"> {
+  theme?: "neutral" | "warm" | "editorial" | "vivid";
+}
+
+const { theme = "neutral", ...seo } = Astro.props;
+---
+
+<!doctype html>
+<html lang={SITE.locale} data-theme={theme}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <Seo
+      {...seo}
+      siteName={SITE.name}
+      path={seo.path ?? Astro.url.pathname}
+      image={seo.image ?? SITE.ogImage}
+      locale={SITE.locale}
+    />
+  </head>
+  <body class="min-h-dvh bg-bg text-fg">
+    <slot />
+  </body>
+</html>

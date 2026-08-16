@@ -1,0 +1,6 @@
+@import "../../../../registry/nasu/lib/tokens.css";
+@import "../../../../registry/nasu/lib/themes.css";
+@import "../../../../registry/nasu/lib/prose.css";
+
+@source "../../../../registry/nasu";
+@source "../../src";

@@ -1,0 +1,111 @@
+---
+/**
+ * 会社概要の雛型。
+ *
+ * 見た目より**構造**が要点です。
+ *   - 項目と値の組は <dl> で書く（表ではありません）
+ *   - 沿革は順序のあるリスト（<ol>）と <time>
+ *   - 住所は <address>
+ * これらは読み上げと機械可読性のためのもので、見た目には出ません。
+ */
+import Base from "../layouts/Base.astro";
+import { SITE } from "../site.config";
+import { NAV, FOOTER_GROUPS } from "../lib/nav";
+import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { SiteFooter } from "@/components/ui/site-footer";
+import { PageBlock, Stack, Section, Divider } from "@/components/ui/layout";
+
+const FACTS = [
+  { label: "名称", value: "Studio Nasu" },
+  { label: "所在地", value: "東京都調布市" },
+  { label: "事業内容", value: "Web サイトおよび Web アプリケーションの設計・開発" },
+  { label: "設立", value: "2026 年 4 月" },
+];
+
+const HISTORY = [
+  { date: "2026-04", text: "設立。受託開発を開始" },
+  { date: "2026-06", text: "WebTemplate の開発を開始" },
+  { date: "2026-08", text: "レイアウト部品と検査の仕組みを公開" },
+];
+---
+
+<Base
+  title="会社概要"
+  description={`${SITE.name} の会社概要と沿革です。`}
+>
+  <SkipLink />
+  <SiteHeader
+    brand={SITE.name}
+    brandHref="/"
+    items={NAV}
+    currentPath={Astro.url.pathname}
+  />
+
+  <PageBlock width="narrow" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+    <Stack space="3xl">
+      <Stack space="sm">
+        <h1 class="text-3xl">会社概要</h1>
+        <p class="max-w-prose text-sm leading-relaxed text-muted-fg">
+          小さく作って、長く直せるものを作っています。
+        </p>
+      </Stack>
+
+      <Section space="md">
+        <h2 class="text-xl">基本情報</h2>
+        {/* 項目と値の組は <dl>。表にすると「行と列の関係」を
+            読み上げが探しに行って、かえって分かりにくくなります。 */}
+        <dl class="grid grid-cols-1 gap-y-sm sm:grid-cols-[8rem_1fr] sm:gap-x-lg">
+          {
+            FACTS.map((f) => (
+              <>
+                <dt class="text-sm font-medium text-muted-fg">{f.label}</dt>
+                <dd class="text-sm leading-relaxed">{f.value}</dd>
+              </>
+            ))
+          }
+        </dl>
+      </Section>
+
+      <Divider />
+
+      <Section space="md">
+        <h2 class="text-xl">沿革</h2>
+        <ol class="flex flex-col gap-sm">
+          {
+            HISTORY.map((h) => (
+              <li class="flex gap-md">
+                <time datetime={h.date} class="w-20 shrink-0 text-sm text-muted-fg">
+                  {h.date.replace("-", "年")}月
+                </time>
+                <span class="min-w-0 text-sm leading-relaxed">{h.text}</span>
+              </li>
+            ))
+          }
+        </ol>
+      </Section>
+
+      <Divider />
+
+      <Section space="md">
+        <h2 class="text-xl">所在地</h2>
+        {/* 連絡先は <address>。見た目は変わりませんが、意味が付きます。 */}
+        <address class="text-sm not-italic leading-relaxed text-muted-fg">
+          〒182-0000<br />
+          東京都調布市（この雛型では住所を伏せています）
+        </address>
+        <p class="text-sm">
+          <a href="/contact/" class="text-primary underline underline-offset-2">
+            お問い合わせはこちら
+          </a>
+        </p>
+      </Section>
+    </Stack>
+  </PageBlock>
+
+  <SiteFooter
+    brand={SITE.name}
+    description={SITE.description}
+    groups={FOOTER_GROUPS}
+    note="© 2026 Studio Nasu — MIT"
+  />
+</Base>

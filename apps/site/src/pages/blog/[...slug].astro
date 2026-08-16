@@ -1,0 +1,85 @@
+---
+import { render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import { SITE } from "../../site.config";
+import { NAV, FOOTER_GROUPS } from "../../lib/nav";
+import { SiteFooter } from "@/components/ui/site-footer";
+import { getPublishedPosts, formatDate, type Post } from "../../lib/posts";
+import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { PageBlock, ContentBlock, Stack, Inline } from "@/components/ui/layout";
+
+// 下書きは getPublishedPosts が外すので、URL 自体が生成されません。
+// 「一覧から消したがページは残っている」を防ぐには、ここが唯一の経路であることが要ります。
+export async function getStaticPaths() {
+  const posts = await getPublishedPosts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const d = formatDate(post.data.date);
+
+
+---
+
+<Base
+  title={post.data.title}
+  description={post.data.description}
+  type="article"
+  publishedAt={post.data.date.toISOString()}
+  updatedAt={post.data.updated?.toISOString()}
+  theme="editorial"
+>
+  <SkipLink />
+  <SiteHeader
+    brand={SITE.name}
+    brandHref="/"
+    items={NAV}
+    currentPath="/blog"
+    width="narrow"
+  />
+
+  <PageBlock width="narrow" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+    <Stack space="xl">
+      <Stack space="2xs">
+        <time datetime={d.iso} class="text-xs text-muted-fg">{d.text}</time>
+        <h1 class="text-3xl leading-tight">{post.data.title}</h1>
+        {post.data.tags.length > 0 && (
+          <Inline space="2xs">
+            {post.data.tags.map((tag) => (
+              <span class="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-fg">
+                {tag}
+              </span>
+            ))}
+          </Inline>
+        )}
+      </Stack>
+
+      {/* 行の長さは ContentBlock が決め、見た目は prose.css が持ちます。
+          両方が幅を持つと基準が 2 か所に増えて必ずずれます。 */}
+      <ContentBlock width="prose">
+        <div class="wt-prose">
+          <Content />
+        </div>
+      </ContentBlock>
+
+      <p class="text-sm">
+        <a href="/blog" class="text-primary underline underline-offset-2">
+          ← 記事一覧へ
+        </a>
+      </p>
+    </Stack>
+  </PageBlock>
+
+  <SiteFooter
+    brand={SITE.name}
+    description={SITE.description}
+    groups={FOOTER_GROUPS}
+    note="© 2026 Studio Nasu — MIT"
+    width="narrow"
+  />
+</Base>

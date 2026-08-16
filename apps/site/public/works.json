@@ -1,0 +1,6 @@
+[
+  { "id": 1, "title": "レースゲームのプロトタイプ", "stack": "Unity / C#", "year": 2026 },
+  { "id": 2, "title": "口頭作文の練習ツール", "stack": "TypeScript / Web Speech", "year": 2026 },
+  { "id": 3, "title": "Kaggle パイプライン", "stack": "Python / LightGBM", "year": 2025 },
+  { "id": 4, "title": "WebTemplate", "stack": "React / Astro / Tailwind", "year": 2026 }
+]

@@ -1,0 +1,32 @@
+{
+  "name": "webtemplate",
+  "private": true,
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "pnpm --filter playground dev",
+    "dev:site": "pnpm --filter site dev",
+    "build": "pnpm -r build && pnpm registry:build && pnpm create:template",
+    "registry:build": "node scripts/build-registry.mjs",
+    "verify": "node scripts/verify.mjs",
+    "check": "node registry/nasu/scripts/check-responsive.mjs",
+    "pack": "node scripts/pack.mjs",
+    "create:template": "node scripts/build-create-template.mjs",
+    "verify:create": "node scripts/verify-create.mjs --full"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.1",
+    "playwright": "^1.62.1",
+    "typescript": "^5.9.3"
+  }
+}

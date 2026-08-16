@@ -1,0 +1,43 @@
+---
+import "../styles/global.css";
+import { themeInitScript } from "@/components/ui/theme-provider";
+import Seo from "../components/Seo.astro";
+import { SITE } from "../site.config";
+import type { MetaInput } from "@/lib/seo";
+
+interface Props extends Omit<MetaInput, "site" | "siteName"> {
+  /** 既定のトンマナ。ページ単位で変えられます。 */
+  theme?: "neutral" | "warm" | "editorial" | "vivid";
+}
+
+const { theme = "warm", ...seo } = Astro.props;
+---
+
+<!doctype html>
+<html lang={SITE.locale} data-theme={theme}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    {/* title / description / canonical / OGP / JSON-LD をまとめて出します。
+        1 ページずつ手で書くと、必ずどこかで title が使い回されます。 */}
+    <Seo
+      {...seo}
+      siteName={SITE.name}
+      path={seo.path ?? Astro.url.pathname}
+      author={seo.author ?? SITE.author}
+      image={seo.image ?? SITE.ogImage}
+      locale={SITE.locale}
+    />
+
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+
+    {/* 保存済みのテーマを描画前に適用してちらつきを防ぐ。
+        処理の定義は theme-provider.tsx にしかありません（二重管理を避けるため）。 */}
+    <script is:inline set:html={themeInitScript} />
+  </head>
+
+  <body class="min-h-dvh bg-bg text-fg">
+    <slot />
+  </body>
+</html>

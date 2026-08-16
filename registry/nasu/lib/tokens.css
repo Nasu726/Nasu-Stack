@@ -1,0 +1,450 @@
+/**
+ * WebTemplate — tokens.css（土台）
+ * ================================================================
+ * ここには「テーマに依らない構造」だけが入っています。
+ *
+ *   - 余白スケール（9 段階）とページ幅
+ *   - レイアウト部品が使うユーティリティ（gap-md / p-lg / wt-*）
+ *   - 端末幅で壊れないための base CSS
+ *   - 既定テーマ（neutral）の値
+ *   - CSS 変数を Tailwind のクラスへ結び付ける対応表
+ *
+ * このファイル単体で完結して動きます。
+ * テーマを増やしたいときだけ themes.css を追加で読み込んでください。
+ *
+ * ----------------------------------------------------------------
+ * 自分のテーマを作るには
+ * ----------------------------------------------------------------
+ * 下の :root と同じ変数を、別のセレクタで上書きするだけです。
+ *
+ *   [data-theme="mybrand"] {
+ *     --bg: oklch(0.99 0 0);
+ *     --fg: oklch(0.2 0 0);
+ *     --primary: oklch(0.55 0.2 150);
+ *     --primary-fg: oklch(0.99 0 0);
+ *     ...（下の一覧と同じ 25 個）
+ *     --radius: 0.5rem;
+ *     --font-display: "Your Font", serif;
+ *   }
+ *   [data-theme="mybrand"].dark { ...暗い版... }
+ *
+ * 余白や幅もテーマの一部として上書きできます。
+ *   [data-theme="mybrand"] { --space-3xl: 8rem; }
+ */
+
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   既定テーマ（neutral）
+   ------------------------------------------------------------
+   癖がなく、業務アプリ／管理画面向き。
+   ここに並ぶ変数が「テーマが定義すべきもの」の一覧です。
+   ============================================================ */
+:root,
+[data-theme="neutral"] {
+  --bg: oklch(0.995 0 0);
+  --fg: oklch(0.21 0.006 285);
+  --card: oklch(1 0 0);
+  --card-fg: oklch(0.21 0.006 285);
+  --muted: oklch(0.968 0.002 285);
+  --muted-fg: oklch(0.53 0.013 285);
+  --primary: oklch(0.49 0.16 264);
+  --primary-fg: oklch(0.99 0 0);
+  --accent: oklch(0.955 0.012 264);
+  --accent-fg: oklch(0.32 0.06 264);
+  --danger: oklch(0.55 0.19 27);
+  --danger-fg: oklch(0.99 0 0);
+  --success: oklch(0.55 0.13 155);
+  --success-fg: oklch(0.99 0 0);
+  --warning: oklch(0.72 0.15 75);
+  --warning-fg: oklch(0.22 0.04 75);
+  --border: oklch(0.91 0.004 285);
+  --input: oklch(0.91 0.004 285);
+  --ring: oklch(0.49 0.16 264);
+
+  --radius: 0.625rem;
+  --shadow-color: 0deg 0% 20%;
+  --shadow-strength: 0.06;
+  --font-sans: ui-sans-serif, system-ui, "Hiragino Sans", "Noto Sans JP",
+    sans-serif;
+  --font-display: var(--font-sans);
+  --tracking-display: -0.02em;
+  --weight-display: 700;
+}
+
+.dark,
+[data-theme="neutral"].dark {
+  --bg: oklch(0.17 0.005 285);
+  --fg: oklch(0.97 0.001 285);
+  --card: oklch(0.215 0.006 285);
+  --card-fg: oklch(0.97 0.001 285);
+  --muted: oklch(0.27 0.007 285);
+  --muted-fg: oklch(0.7 0.012 285);
+  --primary: oklch(0.68 0.15 264);
+  --primary-fg: oklch(0.17 0.02 264);
+  --accent: oklch(0.29 0.03 264);
+  --accent-fg: oklch(0.9 0.04 264);
+  --danger: oklch(0.63 0.18 27);
+  --danger-fg: oklch(0.15 0.03 27);
+  --success: oklch(0.68 0.14 155);
+  --success-fg: oklch(0.16 0.03 155);
+  --warning: oklch(0.78 0.14 75);
+  --warning-fg: oklch(0.2 0.04 75);
+  --border: oklch(0.31 0.008 285);
+  --input: oklch(0.33 0.008 285);
+  --ring: oklch(0.68 0.15 264);
+  --shadow-color: 0deg 0% 0%;
+  --shadow-strength: 0.3;
+}
+
+/* ============================================================
+   余白スケールとページ幅
+   ============================================================ */
+/*
+ * `static` が必須です。既定の @theme は「CSS 内で使われている変数」しか
+ * 出力しないため、インライン style から var(--space-3xl) を参照する形だと
+ * Tailwind から見て未使用と判断され、変数ごと消えます（実際に踏みました）。
+ */
+@theme static {
+  --space-none: 0px;
+  --space-2xs: 0.25rem; /*  4px */
+  --space-xs: 0.5rem; /*  8px */
+  --space-sm: 0.75rem; /* 12px */
+  --space-md: 1rem; /* 16px */
+  --space-lg: 1.5rem; /* 24px */
+  --space-xl: 2.5rem; /* 40px */
+  --space-2xl: 4rem; /* 64px */
+  --space-3xl: 6rem; /* 96px */
+}
+
+:root {
+  /* ページ幅。prose だけ em 単位なので、文字サイズに追従します。
+     和文は 1 文字がほぼ 1em なので、40em ≒ 40 字/行。読みやすい範囲です。 */
+  --width-prose: 40em; /* 本文（文字サイズ追従） */
+  --width-narrow: 44rem; /* 読み物向け */
+  --width-content: 64rem; /* 標準 */
+  --width-wide: 80rem; /* 広め */
+
+  /**
+   * 画面上端に貼り付くヘッダの高さ。
+   *
+   * これを 1 か所に持たせないと、**アンカーリンクが必ず壊れます。**
+   * `#contact` へ飛ぶとブラウザは見出しを画面の一番上に合わせるので、
+   * 貼り付いたヘッダの真下、つまり見えない位置に来ます。
+   * 実測でも 64px のヘッダで見出しが 64px ぶん完全に隠れました。
+   *
+   * `SiteHeader` はこの値を自分の高さに使い、`html` はこの値を
+   * `scroll-padding-top` に使います。**同じ数字を 2 か所が共有する**ので、
+   * ヘッダを高くしてもアンカーは自動でついてきます。
+   */
+  --header-h: 3.5rem;
+}
+
+/**
+ * 余白のユーティリティ。
+ *
+ * ここを `--spacing-md` のような Tailwind 標準の名前空間に入れてはいけません。
+ * `sm` / `md` / `lg` は `max-w-sm` などが使う t シャツサイズと衝突し、
+ * `max-w-sm` が 24rem ではなく 0.75rem になってしまいます（実際に踏みました）。
+ * 独自ユーティリティとして定義することで、標準のクラスを一切壊しません。
+ */
+@utility gap-* {
+  gap: --value(--space-*);
+}
+@utility p-* {
+  padding: --value(--space-*);
+}
+@utility px-* {
+  padding-inline: --value(--space-*);
+}
+@utility py-* {
+  padding-block: --value(--space-*);
+}
+
+/* ============================================================
+   レイアウト部品の内部実装
+   ------------------------------------------------------------
+   段階の値（"lg"）でも任意の値（"13px"）でも、同じ仕組みで扱うための土台。
+   コンポーネントは CSS 変数を書き込むだけで、
+   段階 / 任意 / 画面幅ごとの指定が全部ここで解決されます。
+
+   utilities レイヤーはこの後に来るので、利用者が className="p-lg" や
+   className="gap-[13px]" を足せば、いつでも上書きできます。
+   ============================================================ */
+@layer components {
+  .wt-gap {
+    gap: var(--wt-gap, 0px);
+  }
+  .wt-p {
+    padding: var(--wt-p, 0px);
+  }
+  .wt-px {
+    padding-inline: var(--wt-px, 0px);
+  }
+  .wt-py {
+    padding-block: var(--wt-py, 0px);
+  }
+  .wt-cols {
+    grid-template-columns: var(--wt-cols, repeat(1, minmax(0, 1fr)));
+  }
+  .wt-maxw {
+    max-width: var(--wt-maxw, none);
+  }
+
+  /* 段組の 1 列。畳んでいる間は必ず全幅、開いたら指定幅。 */
+  .wt-col {
+    min-width: 0;
+    flex: 1 1 0%;
+  }
+  .wt-col--sized {
+    flex: none;
+    width: 100%;
+  }
+  .wt-col--sized.wt-col--always {
+    width: var(--wt-w, auto);
+  }
+
+  @media (min-width: 768px) {
+    .wt-gap {
+      gap: var(--wt-gap-t, var(--wt-gap, 0px));
+    }
+    .wt-p {
+      padding: var(--wt-p-t, var(--wt-p, 0px));
+    }
+    .wt-px {
+      padding-inline: var(--wt-px-t, var(--wt-px, 0px));
+    }
+    .wt-py {
+      padding-block: var(--wt-py-t, var(--wt-py, 0px));
+    }
+    .wt-cols {
+      grid-template-columns: var(
+        --wt-cols-t,
+        var(--wt-cols, repeat(1, minmax(0, 1fr)))
+      );
+    }
+    .wt-col--sized.wt-col--at-tablet {
+      width: var(--wt-w, auto);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .wt-gap {
+      gap: var(--wt-gap-d, var(--wt-gap-t, var(--wt-gap, 0px)));
+    }
+    .wt-p {
+      padding: var(--wt-p-d, var(--wt-p-t, var(--wt-p, 0px)));
+    }
+    .wt-px {
+      padding-inline: var(--wt-px-d, var(--wt-px-t, var(--wt-px, 0px)));
+    }
+    .wt-py {
+      padding-block: var(--wt-py-d, var(--wt-py-t, var(--wt-py, 0px)));
+    }
+    .wt-cols {
+      grid-template-columns: var(
+        --wt-cols-d,
+        var(--wt-cols-t, var(--wt-cols, repeat(1, minmax(0, 1fr))))
+      );
+    }
+    .wt-col--sized.wt-col--at-desktop {
+      width: var(--wt-w, auto);
+    }
+  }
+}
+
+/* ============================================================
+   CSS 変数と Tailwind クラスの対応表
+   ------------------------------------------------------------
+   テーマが定義した --bg などを bg-bg / text-fg のように使えるようにします。
+   ============================================================ */
+@theme inline {
+  --container-narrow: var(--width-narrow);
+  --container-content: var(--width-content);
+  --container-wide: var(--width-wide);
+
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-card: var(--card);
+  --color-card-fg: var(--card-fg);
+  --color-muted: var(--muted);
+  --color-muted-fg: var(--muted-fg);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-danger: var(--danger);
+  --color-danger-fg: var(--danger-fg);
+  --color-success: var(--success);
+  --color-success-fg: var(--success-fg);
+  --color-warning: var(--warning);
+  --color-warning-fg: var(--warning-fg);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
+
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+
+  --shadow-e1: 0 1px 2px hsl(var(--shadow-color) / var(--shadow-strength));
+  --shadow-e2:
+    0 2px 4px hsl(var(--shadow-color) / var(--shadow-strength)),
+    0 1px 2px hsl(var(--shadow-color) / calc(var(--shadow-strength) * 0.7));
+  --shadow-e3:
+    0 8px 20px hsl(var(--shadow-color) / var(--shadow-strength)),
+    0 2px 6px hsl(var(--shadow-color) / calc(var(--shadow-strength) * 0.6));
+}
+
+/* ============================================================
+   端末幅で壊れないための土台
+   ------------------------------------------------------------
+   実際のサイトがスマホで崩れる原因は、ほぼ次の 4 つです。
+   利用者が overflow-wrap を知らなくても壊れないように、ここで潰します。
+   ============================================================ */
+@layer base {
+  /* 0. アンカーリンクが貼り付いたヘッダの下に潜り込まないようにする。
+        `scroll-margin-top` を見出しひとつずつに付ける手もありますが、
+        付け忘れた見出しだけ壊れます。スクロールする側（html）に
+        一度だけ書くほうが、**忘れようがない**ぶん確実です。 */
+  html {
+    scroll-padding-top: calc(var(--header-h) + var(--space-sm, 0.75rem));
+
+    /* スクロールバーのぶんの幅を常に確保しておきます。
+       ダイアログを開くと背面のスクロールを止める（overflow: hidden）ため、
+       確保していないとスクロールバーが消えた幅だけ**本文が横にずれます**。
+       開く/閉じるのたびに画面が揺れる、あの現象です。 */
+    scrollbar-gutter: stable;
+  }
+
+  /* 1. 折り返せない長い文字列（URL・ID・英単語の羅列）
+        既定の overflow-wrap: normal では途中で折れず、画面外へ突き抜けます。 */
+  body {
+    overflow-wrap: break-word;
+  }
+
+  /* 2. コードは折り返さず、その要素の中だけを横スクロールさせる */
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+    overflow-wrap: normal;
+  }
+  pre code {
+    overflow-wrap: normal;
+  }
+
+  /* 3. 実寸の大きいメディアを親の幅に収める */
+  img,
+  video,
+  svg,
+  canvas,
+  iframe,
+  embed,
+  object {
+    max-width: 100%;
+  }
+  img,
+  video {
+    height: auto;
+  }
+
+  /* 4. 指で押す端末では、触れる要素が小さすぎないようにする
+        （WCAG 2.1 AA は 24px、実用上は 44px 前後が快適） */
+  @media (pointer: coarse) {
+    button,
+    [role="button"],
+    select,
+    summary,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    textarea {
+      min-block-size: 2.75rem;
+    }
+  }
+}
+
+/* flex / grid の子は既定で min-width:auto のため、中身が縮まないと
+   親がいくら縮んでも子が縮みません。レイアウト部品の子だけ解除します。 */
+@layer components {
+  .wt-gap > * {
+    min-width: 0;
+  }
+
+  /* モーダルの背景。::backdrop は別の擬似要素ツリーなので、
+     テーマ変数が届くかは実測で確かめています（届きます）。 */
+  .wt-dialog::backdrop {
+    background: oklch(0 0 0 / 0.45);
+    backdrop-filter: blur(2px);
+  }
+
+  /* 折り返さない Inline。子を潰して読めなくするより、横スクロールさせる。
+     min-width の解除で自然な幅を保ち、はみ出した分はこの中でスクロールします。 */
+  .wt-nowrap {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+  .wt-nowrap > * {
+    min-width: auto;
+    flex-shrink: 0;
+  }
+
+  /* <summary> の既定マーカー（▶）を消します。
+     Tailwind の marker: では消せない環境があるので、両方書きます。
+     消しっぱなしにすると「開けることが見えない」ので、
+     Disclosure は必ず自前の矢印を出しています。 */
+  .wt-summary {
+    list-style: none;
+  }
+  .wt-summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: var(--tracking-display);
+    font-weight: var(--weight-display);
+  }
+
+  /* キーボード操作時だけフォーカスリングを出す */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+

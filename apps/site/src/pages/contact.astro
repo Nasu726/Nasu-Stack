@@ -1,0 +1,71 @@
+---
+/**
+ * お問い合わせの雛型。
+ *
+ * フォームだけが island（React）です。ページの残りは静的 HTML なので、
+ * JavaScript を待たずに読めます。
+ *
+ * **送信先はまだ配線していません。** 「で、どこに送るの？」は v0.8 の宿題です。
+ * いまは ContactForm の中で偽の API を呼んでいます。
+ */
+import Base from "../layouts/Base.astro";
+import { SITE } from "../site.config";
+import { NAV, FOOTER_GROUPS } from "../lib/nav";
+import { ContactForm } from "../components/ContactForm";
+import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { SiteFooter } from "@/components/ui/site-footer";
+import { PageBlock, Stack, Columns, Column, Section } from "@/components/ui/layout";
+---
+
+<Base
+  title="お問い合わせ"
+  description={`${SITE.name} へのお問い合わせはこちらから。`}
+>
+  <SkipLink />
+  <SiteHeader
+    brand={SITE.name}
+    brandHref="/"
+    items={NAV}
+    currentPath={Astro.url.pathname}
+  />
+
+  <PageBlock width="content" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+    <Stack space="xl">
+      <Stack space="sm">
+        <h1 class="text-3xl">お問い合わせ</h1>
+        <p class="max-w-prose text-sm leading-relaxed text-muted-fg">
+          お仕事のご相談、不具合の報告、その他なんでもどうぞ。
+          2 営業日以内にお返事します。
+        </p>
+      </Stack>
+
+      <Columns space="xl" collapseBelow="tablet">
+        <Column width="2/3">
+          <div class="max-w-md">
+            <ContactForm client:load />
+          </div>
+        </Column>
+        <Column>
+          <Section space="sm">
+            <h2 class="text-base font-semibold">お返事について</h2>
+            <p class="text-sm leading-relaxed text-muted-fg">
+              入力いただいた内容は、お問い合わせへの回答にのみ使います。
+              送信できないときは、
+              <a href="/blog/" class="text-primary underline underline-offset-2">
+                ブログ
+              </a>
+              の連絡先からもご連絡いただけます。
+            </p>
+          </Section>
+        </Column>
+      </Columns>
+    </Stack>
+  </PageBlock>
+
+  <SiteFooter
+    brand={SITE.name}
+    description={SITE.description}
+    groups={FOOTER_GROUPS}
+    note="© 2026 Studio Nasu — MIT"
+  />
+</Base>
