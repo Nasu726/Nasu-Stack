@@ -22,7 +22,9 @@ import { PageBlock } from "@/components/ui/layout";
  *   - `<footer>` は landmark なので、読み上げが「フッター」と言って飛べる
  *   - リンクの群れには見出しが要る（`<h2>` + `aria-labelledby`）。
  *     無いと「リンク 20 個」がのっぺり並ぶだけになる
- *   - リンクの当たり判定は 44px（`tokens.css` が保証するのは指の端末だけ）
+ *   - リンクの当たり判定は `wt-tap`（高さ 44px / 幅 24px 以上）。
+ *     **高さだけでは足りません。** `RSS` のような短いラベルは幅が 23px にしかならず、
+ *     しかもフォント次第なので Linux の CI では緑のまま通ります（v0.9a で実測）
  *
  * `.astro` から使うので、`groups` は **JSON になる値だけ**で組んでいます。
  */
@@ -66,7 +68,7 @@ export function SiteFooter({
             {brand && (
               <a
                 href={brandHref}
-                className="inline-flex min-h-11 items-center font-display text-base hover:text-primary"
+                className="inline-flex wt-tap items-center font-display text-base hover:text-primary"
               >
                 {brand}
               </a>
@@ -112,7 +114,7 @@ function FooterColumn({ group }: { group: FooterGroup }) {
               {...(item.external
                 ? { target: "_blank", rel: "noreferrer noopener" }
                 : {})}
-              className="inline-flex min-h-11 items-center text-sm text-muted-fg hover:text-fg"
+              className="inline-flex wt-tap items-center text-sm text-muted-fg hover:text-fg"
             >
               {item.label}
             </a>

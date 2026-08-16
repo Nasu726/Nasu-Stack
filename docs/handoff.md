@@ -92,9 +92,9 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
 
 ## 6. まだ確認できていないこと
 
-- **Windows の実機。** 開発用スクリプト 3 か所を対応しましたが、コードを
-  読んだだけです（該当箇所に `⚠️ 要確認` と書いてあります）。配布される
-  38 ファイルには OS 依存はありません
+- ~~**Windows の実機。**~~ v0.9a で確認しました。`pnpm verify` 19 工程 /
+  `pnpm verify:create` 29 判定が緑です。**コードを読んで書いた対応のうち
+  2 つは実際には間違っていました**（詳細は `docs/result-v09a.md`）
 - **`npx shadcn add` の実インストール。** レジストリを静的ホスティング
   していないので、まだ本物の経路で試せていません
 - **静的ホスティング上での 404 の扱い**

@@ -1,9 +1,9 @@
 /**
  * 配布用アーカイブを作ります: node scripts/pack.mjs
  *
- * ⚠️ 要確認: `tar` を外部コマンドとして呼んでいます。
- * Windows 10 以降には `tar.exe`（bsdtar）が同梱されているので概ね動くはずですが、
- * **実機で確かめていません。**
+ * `tar` を外部コマンドとして呼んでいます。Windows 11 の実機で確認しました
+ * （bsdtar 3.8.4 / `C:\WINDOWS\system32\tar.exe`。`--exclude` も効きます）。
+ * Windows 10 1803 より前には同梱されていないので、そこでは動きません。
  */
 import { execFileSync } from "node:child_process";
 import path from "node:path";

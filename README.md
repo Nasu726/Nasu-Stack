@@ -467,11 +467,14 @@ Astro 側のページ一覧は **sitemap.xml から取ります**（手で並べ
 
 | | |
 |---|---|
-| **配布物（利用者が受け取る 33 ファイル）** | OS 非依存。Node 18 以上 |
-| **このリポジトリの開発用スクリプト** | Linux / macOS で動作確認済み。**Windows は未検証** |
+| **配布物（利用者が受け取る 38 ファイル）** | OS 非依存。Node 18 以上 |
+| **このリポジトリの開発用スクリプト** | Linux / macOS / **Windows 11** で動作確認済み |
 
-Windows まわりは `verify.mjs` と `pack.mjs` にコードだけ入れてあり、
-該当箇所に `⚠️ 要確認` と書いてあります。実機で確かめたら外してください。
+Windows は v0.9a で実機確認しました（Windows 11 / Node 24.13 / pnpm 10.28）。
+`pnpm verify` 19 工程と `pnpm verify:create` 29 判定が緑です。
+子プロセスの起動と停止は [`scripts/_proc.mjs`](scripts/_proc.mjs) が唯一の定義で、
+**なぜ OS ごとに違うのかはそこに書いてあります**（`.cmd` は shell 無しで
+spawn できない / Windows にプロセスグループが無い）。
 
 GitHub Actions で push・PR・週 1 の定期実行にかけています。
 Renovate の依存更新 PR も、これが緑なら中身を見ずに上げられます。

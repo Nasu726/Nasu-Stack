@@ -123,7 +123,7 @@ export function CheckboxField({
       <label
         htmlFor={f.id}
         className={cn(
-          "flex min-h-11 cursor-pointer items-center gap-2 text-sm",
+          "flex wt-tap cursor-pointer items-center gap-2 text-sm",
           f.disabled && "opacity-60",
           className,
         )}
@@ -257,7 +257,7 @@ function Choices({
               key={o.value}
               htmlFor={id}
               className={cn(
-                "flex min-h-11 cursor-pointer items-center gap-2 text-sm",
+                "flex wt-tap cursor-pointer items-center gap-2 text-sm",
                 o.disabled && "cursor-not-allowed opacity-60",
               )}
             >

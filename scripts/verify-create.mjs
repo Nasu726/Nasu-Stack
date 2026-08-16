@@ -13,6 +13,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pnpm, stopTree } from "./_proc.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(root, "packages", "create-webtemplate", "index.mjs");
@@ -150,10 +151,16 @@ if (!FULL) {
   log("install / build / 実ブラウザ の検査は --full を付けたときだけ走ります");
   log("（pnpm verify:create で実行されます）");
 } else {
-  const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+  // pnpm の起動方法は scripts/_pnpm.mjs が唯一の定義です（理由もあちら）。
   const run = (dir, args) => {
+    const p = pnpm(args);
     try {
-      execFileSync(pnpm, args, { cwd: dir, stdio: "pipe", encoding: "utf8" });
+      execFileSync(p.cmd, p.args, {
+        cwd: dir,
+        stdio: "pipe",
+        encoding: "utf8",
+        ...p.options,
+      });
       return { ok: true };
     } catch (e) {
       return { ok: false, out: (String(e.stdout ?? "") + String(e.stderr ?? "")).slice(-400) };
@@ -178,11 +185,21 @@ if (!FULL) {
     if (!b.ok) continue;
 
     // 配信して実ブラウザで見ます
-    const server = spawn(
-      pnpm,
-      ["exec", kind === "astro" ? "astro" : "vite", "preview", "--port", String(port), "--host", "127.0.0.1"],
-      { cwd: dir, stdio: "ignore", detached: process.platform !== "win32" },
-    );
+    const s = pnpm([
+      "exec",
+      kind === "astro" ? "astro" : "vite",
+      "preview",
+      "--port",
+      String(port),
+      "--host",
+      "127.0.0.1",
+    ]);
+    const server = spawn(s.cmd, s.args, {
+      cwd: dir,
+      stdio: "ignore",
+      detached: process.platform !== "win32",
+      ...s.options,
+    });
     let up = false;
     for (let n = 0; n < 40; n++) {
       await new Promise((r) => setTimeout(r, 300));
@@ -205,18 +222,22 @@ if (!FULL) {
       must(`    ${kind}: 画像が場所を取っている`, img.problems === 0, img.problems ? img.text : "");
     }
 
-    try {
-      if (process.platform === "win32") server.kill();
-      else process.kill(-server.pid);
-    } catch {
-      /* もう落ちている */
-    }
+    stopTree(server);
   }
 }
 
 /* ================================================================ */
 
-fs.rmSync(work, { recursive: true, force: true });
+/* 後片付け。**失敗しても検査は落としません。**
+   ここで例外が飛ぶと、判定が全部緑なのに終了コードだけ 1 になり、
+   一覧のどこにも原因が出ません（v0.9a で実際にそうなりました）。
+   Windows は終了直後のプロセスがまだファイルを掴んでいることがあるので、
+   `rmSync` の再試行（Node が用意しています）に任せます。 */
+try {
+  fs.rmSync(work, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+} catch (e) {
+  console.log(`· ⚠️ 作業ディレクトリを消せませんでした (${work}): ${String(e).slice(0, 160)}`);
+}
 
 const failed = checks.filter((c) => !c.ok);
 console.log("");

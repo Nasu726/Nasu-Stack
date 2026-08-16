@@ -135,7 +135,8 @@
       "registryDependencies": [
         "@nasu/layout",
         "@nasu/spinner",
-        "@nasu/utils"
+        "@nasu/utils",
+        "@nasu/tokens"
       ],
       "files": [
         {
@@ -241,7 +242,8 @@
       "description": "モーダルとシート。フォーカスの閉じ込め・Esc・背面のスクロール停止つき。",
       "registryDependencies": [
         "@nasu/layout",
-        "@nasu/utils"
+        "@nasu/utils",
+        "@nasu/tokens"
       ],
       "files": [
         {
@@ -317,7 +319,8 @@
       "registryDependencies": [
         "@nasu/async-form",
         "@nasu/layout",
-        "@nasu/utils"
+        "@nasu/utils",
+        "@nasu/tokens"
       ],
       "files": [
         {
@@ -386,7 +389,8 @@
       "description": "切り替えて見せる。矢印キー・roving tabindex・はみ出し時の横スクロールつき。",
       "registryDependencies": [
         "@nasu/scrollable",
-        "@nasu/utils"
+        "@nasu/utils",
+        "@nasu/tokens"
       ],
       "files": [
         {
@@ -434,7 +438,8 @@
       "description": "命令のメニューと、リンクの下ろし物。role を取り違えないよう別部品にしています。",
       "registryDependencies": [
         "@nasu/use-popover",
-        "@nasu/utils"
+        "@nasu/utils",
+        "@nasu/tokens"
       ],
       "files": [
         {
@@ -529,7 +534,8 @@
       "description": "ページ下端。リンク群に見出しを付け、当たり判定を 44px 確保します。",
       "registryDependencies": [
         "@nasu/layout",
-        "@nasu/utils"
+        "@nasu/utils",
+        "@nasu/tokens"
       ],
       "files": [
         {
@@ -583,7 +589,8 @@
         "@nasu/action-button",
         "@nasu/layout",
         "@nasu/utils",
-        "@nasu/action"
+        "@nasu/action",
+        "@nasu/tokens"
       ],
       "files": [
         {

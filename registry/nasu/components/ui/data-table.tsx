@@ -649,7 +649,7 @@ function BoxLabel({
   return (
     <label
       className={cn(
-        "flex min-h-11 cursor-pointer items-center text-xs text-muted-fg",
+        "flex wt-tap cursor-pointer items-center text-xs text-muted-fg",
         // 文字が無いときは幅が四角のぶん（20px）しか無いので広げます。
         // `w-full` は効きません。表の列幅は中身から決まるので、
         // 中身が「親の 100%」と言うと循環して結局 20px のままになります。

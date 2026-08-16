@@ -141,7 +141,7 @@ export function SiteHeader({
                 // 文字の高さのままだと押しづらいので、ここでも 44px 確保します
                 <a
                   href={brandHref}
-                  className="inline-flex min-h-11 items-center rounded-md hover:text-primary"
+                  className="inline-flex wt-tap items-center rounded-md hover:text-primary"
                 >
                   {brand}
                 </a>
@@ -241,7 +241,7 @@ export function NavLink({
         // 文字だけだと高さが 20px 前後になり、指で押せません。
         // tokens.css が 44px を保証するのは指で触る端末だけなので、
         // マウスの端末のためにここでも確保します。
-        "inline-flex min-h-11 items-center rounded-md px-3 text-sm transition-colors",
+        "inline-flex wt-tap items-center rounded-md px-3 text-sm transition-colors",
         block && "w-full",
         current
           ? "bg-muted font-medium text-fg"
@@ -277,7 +277,7 @@ export function SkipLink({
       className={cn(
         "sr-only focus:not-sr-only",
         "focus:fixed focus:left-4 focus:top-4 focus:z-50",
-        "focus:inline-flex focus:min-h-11 focus:items-center focus:rounded-md",
+        "focus:inline-flex focus:wt-tap focus:items-center focus:rounded-md",
         "focus:bg-primary focus:px-4 focus:text-sm focus:font-medium focus:text-primary-fg",
         "focus:shadow-e3 focus:outline-2 focus:outline-offset-2 focus:outline-ring",
       )}

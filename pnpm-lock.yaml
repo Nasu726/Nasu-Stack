@@ -114,6 +114,8 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/create-webtemplate: {}
+
 packages:
 
   '@astrojs/check@0.9.10':
