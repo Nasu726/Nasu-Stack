@@ -572,11 +572,39 @@ flex の子は既定で `min-width: auto` なので縮めません。`min-w-0` �
 「他人のマシンでコードを実行する側」になります。順番を逆にすると、
 開けてから塞ぐことになります。
 
-- [x] **Windows の実機で緑にする**（`pnpm verify` 19 / `verify:create` 29）
-- [ ] 配布経路の防御（Actions の権限と SHA 固定 / 依存の待機 / 入口の名前）
-- [ ] レジストリを GitHub Pages に出す
-- [ ] `npx shadcn add` を**本物の CLI で**通す
-- [ ] 404 のステータスを実測する
+- [x] **Windows の実機で緑にする**（`pnpm verify` 20 / `verify:create` 29）
+- [x] 配布経路の防御（権限 / SHA 固定 / 依存の待機 / postinstall の許可制）
+- [x] レジストリと入口を GitHub Pages に出す仕組み（`pages.yml`）
+- [x] `npx shadcn add` を**本物の CLI で**通す（`verify-install-real.mjs`）
+- [ ] **公開する**（Pages の有効化と ruleset は [docs/security.md](docs/security.md) §3）
+- [ ] 404 のステータスを実測する（公開後に `verify-published.mjs` が測ります）
+- [ ] 作者自身がサイトを 1 つ作って使い心地を確かめる
+
+### 入口を npm に置かない
+
+`npx create-webtemplate` と案内するには npm への publish が要ります。
+**publish しません。** 代わりに tarball の URL を配ります。
+
+```bash
+npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site
+```
+
+npm は URL の tarball をそのまま受け取れます（実測）。
+`npx github:Nasu726/WebTemplate` は**使えません** — リポジトリ直下に `bin` が無く、
+`template/` は commit していない生成物なので空のまま配られます。
+
+### `@nasu/…` は `registries` の宣言が要る
+
+本物の CLI を通して分かりました。利用者の `components.json` に
+
+```jsonc
+{ "registries": { "@nasu": "https://…/r/{name}.json" } }
+```
+
+が無いと `Unknown registry "@nasu"` で止まります。
+**URL を直に `add` する形では、依存を辿るところで失敗します。**
+再現側の検査（`verify-install.mjs`）はこの一手を知らなかったので、
+**ずっと緑のままでした。** 再現と本物は役割が違うので、両方置いています。
 
 ### Windows で分かったこと
 

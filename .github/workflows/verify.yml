@@ -8,6 +8,20 @@ on:
   schedule:
     - cron: "0 0 * * 1"
   workflow_dispatch:
+  # pages.yml から呼び出せるようにする。
+  # **配るものは、検査を通ったものだけ**にするためです。
+  workflow_call:
+
+# ------------------------------------------------------------------
+# 既定の権限を落とす
+# ------------------------------------------------------------------
+# 書かないとリポジトリの既定を継承します。既定が read-write のままだと、
+# 依存やアクションのどれか 1 つが乗っ取られたときに、
+# GITHUB_TOKEN でこのリポジトリ自体を書き換えられます。
+# この検査は読むだけなので contents: read で足ります。
+# ------------------------------------------------------------------
+permissions:
+  contents: read
 
 jobs:
   verify:
@@ -15,11 +29,22 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      # ----------------------------------------------------------------
+      # アクションは commit SHA で固定します
+      # ----------------------------------------------------------------
+      # `@v4` はタグで、**タグは動きます。** 上流が乗っ取られてタグを
+      # 付け替えられたら、こちらは何も変えていないのに次の CI から
+      # 別のコードが走ります。しかも CI は他人のコードを
+      # 書き込み権限のあるトークンの隣で実行する場所です。
+      #
+      # 読めなくなるので、対応するタグをコメントに残します。
+      # 更新は Renovate に追随させます（v0.9b で配線）。
+      # ----------------------------------------------------------------
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: pnpm
@@ -36,7 +61,7 @@ jobs:
 
       - name: 失敗時にスクリーンショットを残す
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: screenshots
           # 置き場は scripts/_browser.mjs の SHOTS_DIR と同じ .shots です。

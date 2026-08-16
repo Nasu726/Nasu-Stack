@@ -58,11 +58,21 @@ export function pnpm(args) {
 
   // 退路: `pnpm verify` ではなく `node scripts/verify.mjs` と直に叩かれた場合。
   // PATH の pnpm を使います。Windows ではバッチなので shell が要ります。
-  return {
-    cmd: isWindows ? "pnpm.cmd" : "pnpm",
-    args,
-    options: isWindows ? { shell: true } : {},
-  };
+  if (isWindows) {
+    /* shell を通すと、引数は**連結されるだけでエスケープされません。**
+       空白や `&` が入った文字列を渡した瞬間に、意図と違うコマンドになります。
+       ここで止めます。**黙って通すのが一番危険です。** */
+    const bad = args.find((a) => /[\s&|<>^"']/.test(String(a)));
+    if (bad !== undefined) {
+      throw new Error(
+        `shell 経由では安全に渡せない引数があります: ${JSON.stringify(bad)}\n` +
+          `  このスクリプトは pnpm 経由で実行してください（例: pnpm verify）。\n` +
+          `  pnpm run の中でなら npm_execpath が入るので、shell を通しません。`,
+      );
+    }
+    return { cmd: "pnpm.cmd", args, options: { shell: true } };
+  }
+  return { cmd: "pnpm", args, options: {} };
 }
 
 /**

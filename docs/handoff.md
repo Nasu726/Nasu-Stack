@@ -30,6 +30,8 @@
 2. **手を動かす前に計画を書く。** 規模が大きく、1 つの変更が広範囲を壊す
 3. **慎重に進める。** 直したら必ず `pnpm verify` を通してから次へ行く
 4. 説明は日本語。コメントは「何をしているか」ではなく **「なぜそうしたか」** を書く
+5. **配布に関わる設定を触るときは [`docs/security.md`](security.md) を読む。**
+   公開した時点で、このリポジトリは他人のマシンでコードを実行する側になります
 
 ---
 
@@ -50,8 +52,17 @@ root ではないので `/home/claude/...` に書けない」というもので�
 
 ```bash
 pnpm install
-pnpm verify           # 19 工程。型・ビルド・配布物・実ブラウザ 271 判定
+pnpm verify           # 20 工程。型・ビルド・配布物・実ブラウザ
 pnpm verify:create    # 入口の検査 29 判定（--full で install → build → 配信まで）
+pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
+```
+
+公開したものを外から確かめる検査もあります。手元で試すときは
+`public/` を配ってから同じものを回します。
+
+```bash
+node scripts/serve-registry.mjs 5055
+node scripts/verify-published.mjs http://127.0.0.1:5055
 ```
 
 **`pnpm verify` が緑でないまま次の作業に進まないでください。** この
@@ -92,12 +103,16 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
 
 ## 6. まだ確認できていないこと
 
-- ~~**Windows の実機。**~~ v0.9a で確認しました。`pnpm verify` 19 工程 /
+- ~~**Windows の実機。**~~ v0.9a で確認しました。`pnpm verify` 20 工程 /
   `pnpm verify:create` 29 判定が緑です。**コードを読んで書いた対応のうち
   2 つは実際には間違っていました**（詳細は `docs/result-v09a.md`）
-- **`npx shadcn add` の実インストール。** レジストリを静的ホスティング
-  していないので、まだ本物の経路で試せていません
-- **静的ホスティング上での 404 の扱い**
+- ~~**`npx shadcn add` の実インストール。**~~ v0.9a で本物の CLI を通しました。
+  **利用者の `components.json` に `registries` の宣言が要ります**（無いと
+  `Unknown registry "@nasu"` で止まります）。`scripts/verify-install-real.mjs`
+  が毎回確かめます
+- **静的ホスティング上での 404 の扱い。** まだ公開していないので測れません。
+  公開したら `scripts/verify-published.mjs` が自動で測ります
+- **作者自身の使い心地。** サイトを 1 つ作って通すまで公開しません
 
 ---
 

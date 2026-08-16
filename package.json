@@ -10,6 +10,7 @@
     "dev:site": "pnpm --filter site dev",
     "build": "pnpm -r build && pnpm registry:build && pnpm create:template",
     "registry:build": "node scripts/build-registry.mjs",
+    "pages:build": "node scripts/build-pages.mjs",
     "verify": "node scripts/verify.mjs",
     "check": "node registry/nasu/scripts/check-responsive.mjs",
     "pack": "node scripts/pack.mjs",
@@ -27,6 +28,7 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
     "playwright": "^1.62.1",
+    "shadcn": "^4.17.0",
     "typescript": "^5.9.3"
   }
 }

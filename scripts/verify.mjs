@@ -98,6 +98,12 @@ step("入口: create-webtemplate", "node", ["scripts/verify-create.mjs"]);
 step("利用者プロジェクトへ展開して型検査", "node", [
   "scripts/verify-install.mjs",
 ]);
+// 上は「CLI と同じ解決規則の再現」です。再現である以上、こちらの
+// 思い込みがそのまま検査に入ります。**本物の CLI も通します。**
+// ネットワークが無い環境では、理由を印字して明示的に飛ばします。
+step("本物の shadcn CLI で入れる", "node", [
+  "scripts/verify-install-real.mjs",
+]);
 
 /* ---- 4: 実ブラウザ検証 -------------------------------------------- */
 

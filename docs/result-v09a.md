@@ -131,3 +131,166 @@ import 文からは辿れない依存なので、人の目では見つかりま�
 `handoff.md` も 19 と書いています。`overview.md` だけ 18 のままでした
 （`環境に張り付いた絶対パス` を足したときに数えなおしていません）。直しました。
 過去の `result-*.md` と `ROADMAP.md` の記述は**その時点の記録**なので触りません。
+
+---
+
+## Phase 1 — 配布経路の防御
+
+公開より先に打ちました。**順番を逆にすると、開けてから塞ぐことになります。**
+
+詳細と、GitHub の設定側で必要な手順は [security.md](security.md) にまとめました。
+ここには「何を決めたか」だけ書きます。
+
+### 入口を npm に置かない
+
+`npx create-webtemplate my-site` と案内するには npm への publish が要ります。
+**publish しません**（個人的なプロジェクトとして続けるので、継続的な保守を
+約束できないため）。代わりに tarball の URL を配ります。
+
+```bash
+npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site
+```
+
+npm が URL の tarball をそのまま受け取れることを実測しました
+（ローカルに配って `npx` し、`my-site` が生成されるところまで確認）。
+
+pip の `git+https://…` に相当する形も検討しましたが、**この構成では使えません。**
+
+| 形 | 可否 |
+|---|---|
+| `npx github:Nasu726/WebTemplate` | ✗ リポジトリ直下に `bin` が無い（CLI は `packages/` の下） |
+| 〃（`template/` を含む） | ✗ `template/` は生成物で commit していない。空のまま配られる |
+| `npx https://…/create-webtemplate.tgz` | **✓ 実測で成功** |
+
+この選び方は面倒を避ける以上の意味があります。**npm アカウントという
+攻撃面が増えません。** ただし `create-webtemplate` という名前は npm で
+空いたままです。第三者が取れば、その名前を打った人には他人のコードが動きます。
+こちらから防ぐ手は無く、**README にその形を書かないこと**だけが対処です。
+
+### CI
+
+- ワークフローの `permissions` を明示（`verify.yml` は `contents: read` だけ）
+- アクションを commit SHA で固定。**タグは動きます**
+- **固定は対で必要です。** 追随する仕組み（Renovate）が無いと、
+  「勝手に変わらない」代わりに「勝手に直らない」状態になります（v0.9b）
+
+### 依存
+
+- `minimumReleaseAge: 4320`（3 日）。`--frozen-lockfile` が守らない
+  「lockfile を書き換える瞬間」を埋めます
+- `allowBuilds` で postinstall を名指しの許可制に
+
+`allowBuilds` は**効いているかを確かめました**（`true` にすると esbuild の
+postinstall が実際に走り、`false` で走らない）。設定は書いただけでは
+効いているか分かりません。なお旧来の `onlyBuiltDependencies` /
+`ignoredBuiltDependencies` は **pnpm 11 で削除されます**。
+依存更新で pnpm が上がった日に黙って効かなくなるので、新しい名前で書いています。
+
+---
+
+## Phase 2 — 公開の組み立て
+
+### 手順を YAML に書かない
+
+`public/` の組み立ては [`scripts/build-pages.mjs`](../scripts/build-pages.mjs) に、
+公開後の確認は [`scripts/verify-published.mjs`](../scripts/verify-published.mjs) に
+置きました。ワークフローはそれを呼ぶだけです。
+
+YAML に `run: |` で並べると、**手元で同じものを試せません。**
+「CI でだけ落ちる」ものを push を繰り返して直すことになります。
+実際この 2 本は、`serve-registry.mjs` で配って手元で 9 判定を通してあります。
+
+### 出しているもの
+
+```
+public/r/<name>.json            レジストリ（38 項目）
+public/r/index.json             一覧
+public/create-webtemplate.tgz   入口の CLI
+public/create-webtemplate.tgz.sha256
+public/index.html               入口の案内（v0.9b でドキュメントサイトに）
+public/404.html
+```
+
+`.gitignore` を `public/r/` から **`public/` 全体**に広げました。
+生成物を commit すると「原本と配布物の 2 か所」になります。
+
+### 途中で踏んだもの
+
+**1. `npm.cmd` を shell 経由で呼びかけました。** Phase 0 で自分が直した穴を
+そのまま持ち込んでいます。`_proc.mjs` の `pnpm()` に寄せて解決しました。
+
+**2. 引数にパスを載せていました。** `--pack-destination <path>` は、
+退路（shell 経由）ではエスケープされません。**リポジトリの置き場に空白が
+入っているだけで壊れます**（`C:\Users\John Doe\…` は珍しくありません）。
+出た場所から移す形に変え、渡す文字列を 1 つも増やさないようにしました。
+あわせて `_proc.mjs` の退路に番人を置き、危ない引数が来たら例外にします。
+
+**3. `pnpm pack` は絶対パスを印字します**（npm はファイル名だけ）。
+`path.join` で連結すると `public\C:\Users\…` になります。
+
+---
+
+## Phase 3 — 本物の `npx shadcn add` を通した
+
+handoff §6 の「未検証」2 つ目。**計画で予想した地雷が、そのまま出ました。**
+
+```
+Unknown registry "@nasu". Make sure it is defined under "registries"
+```
+
+`registryDependencies` に `@nasu/action` と書く形は、利用者の
+`components.json` に `registries` の宣言があって初めて解決されます。
+
+```jsonc
+{ "registries": { "@nasu": "https://…/r/{name}.json" } }
+```
+
+これを入れたら通りました。`@nasu/action-button` 1 つで **10 ファイル**が
+依存ごと展開されます（`tokens.css` が付いてくるのは、Phase 0 で足した
+宣言が効いているからです）。
+
+**URL を直に指定する形は使えません。** その部品 1 つは入りますが、
+依存を辿るところで同じ理由で止まります。README を書き換えました。
+
+### 再現側の検査は残します
+
+[`verify-install.mjs`](../scripts/verify-install.mjs)（CLI と同じ解決規則の再現）は
+消していません。オフラインで回るので速く、確実に走ります。
+
+**ただし再現である以上、こちらの思い込みがそのまま検査に入ります。**
+`registries` の一手を知らなかったので、**ずっと緑のままでした。**
+役割が違うので両方置きます。
+
+### [`verify-install-real.mjs`](../scripts/verify-install-real.mjs)
+
+`public/` を手元で配り、**本物の CLI** で 38 項目すべてを入れて型検査します。
+公開先が生きているかに依存させません（公開先そのものの確認は
+`verify-published.mjs` の仕事です）。
+
+`shadcn` は devDependency に固定しました。`npx shadcn@latest` だと
+**毎回「その時点で publish されているもの」を実行する**ことになり、
+`minimumReleaseAge` と lockfile を素通りします。
+
+判定 5 件。うち 1 つは **わざと壊す側**です。`registries` を消した
+プロジェクトで同じことをして、ちゃんと失敗することを確かめています。
+ここが通ってしまうなら、他の 4 つは何も見ていません。
+
+---
+
+## いまの数字
+
+| | v0.8b | v0.9a |
+|---|---|---|
+| `pnpm verify` の工程 | 19 | **20** |
+| `pnpm verify:create` | 29 判定 | 29 判定 |
+| 公開物の検査 | 無し | **9 判定**（`verify-published.mjs`） |
+| 本物の CLI | 未実施 | **5 判定** |
+| 検査対象 OS | Linux / macOS | + **Windows 11** |
+
+## まだ確かめていないこと
+
+- **公開先での実測。** 404 のステータスも content-type も、
+  出してからでないと分かりません。`verify-published.mjs` が
+  デプロイ直後に走るようにしてあります
+- **利用者としての使い心地。** 作者自身が 1 つサイトを作って通すまで、
+  公開はしません

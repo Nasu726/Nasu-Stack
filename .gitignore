@@ -1,11 +1,15 @@
 node_modules/
 dist/
 .astro/
-public/r/
+# public/ は丸ごと生成物です（scripts/build-pages.mjs が作ります）。
+# commit すると「原本と配布物の 2 か所」になり、片方だけ古くなります。
+public/
 *.log
 .DS_Store
 
 .verify-install/
+.verify-install-real/
+.verify-install-real-broken/
 packages/create-webtemplate/template/
 
 # 検査中に撮る画面の記録。診断用なので commit しません。
