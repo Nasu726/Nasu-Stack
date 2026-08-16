@@ -7,3 +7,7 @@ public/r/
 
 .verify-install/
 packages/create-webtemplate/template/
+
+# 検査中に撮る画面の記録。診断用なので commit しません。
+# 置き場は scripts/_browser.mjs の SHOTS_DIR が決めます。
+.shots/

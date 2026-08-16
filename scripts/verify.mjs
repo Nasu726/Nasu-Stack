@@ -77,6 +77,10 @@ step("ビルド (カタログ)", "pnpm", ["--filter", "playground", "build"]);
 step("ビルド (Astro サイト)", "pnpm", ["--filter", "site", "build"]);
 step("レジストリ生成", "node", ["scripts/build-registry.mjs"]);
 step("配布の依存漏れ", "node", ["scripts/check-registry-deps.mjs"]);
+// 手元でしか通らない絶対パスを探します。ブラウザを立てる前に置いてあるのは、
+// この種の間違いが「判定は全部通っているのにスクリプトが死ぬ」という
+// 分かりにくい落ち方をするからです。先に名指しで落とします。
+step("環境に張り付いた絶対パス", "node", ["scripts/check-portability.mjs"]);
 // 純粋な関数の単体検査。ブラウザを立てないので速く、
 // `&` ひとつでフィードが壊れる類の間違いはここでしか捕まえられません。
 step("単体: SEO / フィードの組み立て", "node", ["scripts/verify-seo-unit.mjs"]);

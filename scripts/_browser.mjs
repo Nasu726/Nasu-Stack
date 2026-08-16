@@ -5,9 +5,50 @@
  * ここに 1 つだけ置きます。片方だけ直してもう片方が古いまま、を防ぐためです。
  */
 import { chromium } from "playwright";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { TAB_KEYS } from "../apps/playground/src/tabs.mjs";
 
 export const BASE = process.env.PLAYGROUND_URL || "http://127.0.0.1:4173";
+
+/* ------------------------------------------------------------------
+ * スクリーンショットの置き場
+ * ------------------------------------------------------------------
+ * **絶対パスを書いてはいけません。**
+ * ここには一度 `/home/claude/shots/...` と書いてあり、手元では通るのに
+ * GitHub Actions で落ちました。runner の実行ユーザは root ではなく、
+ * `/home` は root の 755 なので `/home/claude` を作れません（EACCES）。
+ * Playwright の `screenshot({ path })` は親ディレクトリを掘ってから
+ * 書くので、そこで例外になり、**判定を 1 つも落としていないのに
+ * スクリプトが死にます。** 原因が分かりにくい壊れ方でした。
+ *
+ * リポジトリからの相対にしておけば、どの環境でも書けます。
+ * ---------------------------------------------------------------- */
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+export const SHOTS_DIR = process.env.WT_SHOTS_DIR
+  ? path.resolve(process.env.WT_SHOTS_DIR)
+  : path.join(ROOT, ".shots");
+
+/**
+ * スクリーンショットを撮ります。
+ *
+ * **失敗しても検査は止めません。** これは診断用の記録であって、
+ * 判定ではありません。書けなかったからといって、通っている判定を
+ * 巻き添えにして落とすのは、原因の分からない赤を増やすだけです。
+ * 代わりに理由を必ず出します（黙って撮らないのが一番困ります）。
+ */
+export async function shot(page, name, opts = {}) {
+  const file = path.join(SHOTS_DIR, `${name}.png`);
+  try {
+    fs.mkdirSync(SHOTS_DIR, { recursive: true });
+    await page.screenshot({ path: file, fullPage: false, ...opts });
+    return file;
+  } catch (e) {
+    console.log(`· ⚠️ 画面の記録を保存できませんでした (${file}): ${String(e).slice(0, 160)}`);
+    return null;
+  }
+}
 
 /**
  * カタログのタブ。**定義はカタログ側の 1 か所にしかありません。**

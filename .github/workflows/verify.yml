@@ -39,8 +39,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
+          # 置き場は scripts/_browser.mjs の SHOTS_DIR と同じ .shots です。
+          # ここに別の場所を書くと、失敗したときだけ「記録が無い」ことに
+          # 気づくことになります（実際そうなっていました）。
           path: |
+            .shots
             apps/*/dist
-            /home/runner/shots
           if-no-files-found: ignore
           retention-days: 7

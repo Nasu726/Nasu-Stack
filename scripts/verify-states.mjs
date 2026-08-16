@@ -1,7 +1,7 @@
 /**
  * v0.1（非同期の状態）の実ブラウザ検証。
  */
-import { launch, log } from "./_browser.mjs";
+import { launch, log, shot } from "./_browser.mjs";
 
 const { errors, openTab, finish, must, mustEq } = await launch();
 // タブはボタンのクリックではなく URL で開きます。
@@ -70,10 +70,7 @@ must(
 );
 log("   中身:", JSON.stringify(fieldErrors));
 
-await page.screenshot({
-  path: "/home/claude/shots/states-form-errors.png",
-  fullPage: false,
-});
+await shot(page, "states-form-errors");
 
 /* 5. 打ち直すとエラーが消える ------------------------------------ */
 await page.fill('input[name="password"]', "longenoughpassword");
