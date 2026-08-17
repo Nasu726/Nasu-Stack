@@ -264,7 +264,7 @@ if (!FULL) {
   log("install / build / 実ブラウザ の検査は --full を付けたときだけ走ります");
   log("（pnpm verify:create で実行されます）");
 } else {
-  // pnpm の起動方法は scripts/_pnpm.mjs が唯一の定義です（理由もあちら）。
+  // pnpm の起動方法は scripts/_proc.mjs が唯一の定義です（理由もあちら）。
   const run = (dir, args) => {
     const p = pnpm(args);
     try {
@@ -340,6 +340,24 @@ if (!FULL) {
     must(`8. ${kind}: pnpm install が通る`, i.ok, i.out ?? "");
     if (!i.ok) continue;
 
+    /* --- 8.2. 配っている依存に、既知の脆弱性が無いか ----------------
+       **これが無いと、古いまま配り続けます。**
+       v0.9a の時点で astro が 2 メジャー遅れ、XSS / SSRF の勧告 8 件を
+       抱えたまま生成物に入っていました。利用者が `npm install` した
+       瞬間に警告が出ますが、**こちらは何も知らないままです。**
+       版を固定するなら、追随する仕組みと対で持つ必要があります。 */
+    {
+      const a = run(dir, ["audit", "--audit-level", "high", "--prod"]);
+      if (a.ok) {
+        must(`8.2 ${kind}: 配る依存に high 以上の脆弱性が無い`, true);
+      } else if (/ERR_PNPM_AUDIT|ENOTFOUND|ECONNREFUSED|fetch failed/i.test(a.out ?? "")) {
+        // 黙って通すと「調べたつもり」になります。理由を出して飛ばします。
+        log(`${kind}: 脆弱性の照会に行けませんでした。この判定は飛ばします`);
+      } else {
+        must(`8.2 ${kind}: 配る依存に high 以上の脆弱性が無い`, false, a.out ?? "");
+      }
+    }
+
     /* --- 8.5. 生成物に、本物の CLI で部品を足せるか -----------------
        **これがいちばん強い判定です。** 「生成できた」「ビルドが通る」まで
        全部緑でも、利用者が README のとおりに部品を足そうとした瞬間に
@@ -378,22 +396,24 @@ if (!FULL) {
     must(`10. ${kind}: ビルドが通る`, b.ok, b.out ?? "");
     if (!b.ok) continue;
 
-    // 配信して実ブラウザで見ます
-    const s = pnpm([
-      "exec",
-      kind === "astro" ? "astro" : "vite",
-      "preview",
-      "--port",
-      String(port),
-      "--host",
-      "127.0.0.1",
-    ]);
-    const server = spawn(s.cmd, s.args, {
-      cwd: dir,
-      stdio: "ignore",
-      detached: process.platform !== "win32",
-      ...s.options,
-    });
+    /* 配信は **自分で立てた素の静的サーバ**でやります。
+       ----------------------------------------------------------------
+       astro 7 の `astro preview` はデーモンです。自分を子として起動し直し、
+       親はすぐ終了し、ポートが埋まっていると**黙って別の番号へ逃げます。**
+       こちらが握る PID は既に死んでいるので止められず、残骸が次の実行で
+       「消えたディレクトリを配るサーバ」として判定に当たります。
+
+       見たいのは「ビルドした中身が正しく出るか」なので、静的な出力を
+       自分で配れば足ります（理由は scripts/_static.mjs）。
+       代わりに、利用者が打つ `npm run preview` 自体は検査しません。 */
+    const dist = path.join(dir, "dist");
+    const server = spawn(
+      process.execPath,
+      [path.join(root, "scripts/serve-static.mjs"), dist, String(port),
+        ...(kind === "vite" ? ["--spa"] : [])],
+      { cwd: root, stdio: "ignore", detached: process.platform !== "win32" },
+    );
+
     let up = false;
     for (let n = 0; n < 40; n++) {
       await new Promise((r) => setTimeout(r, 300));

@@ -22,6 +22,7 @@ import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 import { pnpm, stopTree } from "./_proc.mjs";
 
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CHROMIUM = process.env.CHROMIUM_PATH || "";
 
@@ -30,16 +31,16 @@ const CHROMIUM = process.env.CHROMIUM_PATH || "";
  * ------------------------------------------------------------------
  * Windows 11 / node 24.13 / pnpm 10.28 の実機で確認しました（v0.9a）。
  *
- * 1. pnpm の起動は `scripts/_pnpm.mjs` に寄せてあります。
+ * 1. pnpm の起動は `scripts/_proc.mjs` に寄せてあります。
  *    **なぜ 1 行で済まないのかは、あちらのコメントに書きました。**
  *    ここに書き写すと、片方だけ直してもう片方が古いまま残ります。
- * 2. `process.kill(-pid)` の負の値は「プロセスグループ」の意味で、
- *    POSIX にしかありません。Windows では taskkill を使います。
+ * 2. 検査用のサーバは **自分で立てます**（scripts/_static.mjs）。
+ *    道具の preview はデーモンになったり子を切り離したりするので、
+ *    止め方が OS ごとに違う問題を丸ごと避けられます。
  *
  * 配布物（利用者が受け取る 38 ファイル）には OS 依存はありません。
  * ここは開発用スクリプトの話です。
  * ---------------------------------------------------------------- */
-const isWindows = process.platform === "win32";
 
 const results = [];
 let failed = false;
@@ -107,36 +108,48 @@ step("本物の shadcn CLI で入れる", "node", [
 
 /* ---- 4: 実ブラウザ検証 -------------------------------------------- */
 
-const servers = [];
-function serve(filter, cmd, args, port) {
-  const s = pnpm(["--filter", filter, "exec", cmd, ...args]);
-  const p = spawn(s.cmd, s.args, {
-    cwd: root,
-    stdio: "ignore",
-    // detached は POSIX でプロセスグループを作るためのものです。
-    // Windows では意味が違うので付けません（下の停止処理も分岐します）。
-    detached: !isWindows,
-    ...s.options,
-  });
-  servers.push(p);
-  return port;
+/* ビルド済みの中身は**自分で、別プロセスとして配ります。**
+   - 道具の preview を使わない理由 … scripts/_static.mjs
+   - 同じプロセスに置けない理由 … scripts/serve-static.mjs
+     （step() は spawnSync なので、子が走る間は応答できません）
+   相手は自分で書いた素の node なので、kill() で確実に止まります。 */
+function serve(dir, port, ...flags) {
+  return spawn(
+    process.execPath,
+    [path.join(root, "scripts/serve-static.mjs"), path.join(root, dir), String(port), ...flags],
+    { cwd: root, stdio: "ignore", detached: process.platform !== "win32" },
+  );
 }
-
-serve("playground", "vite", ["preview", "--port", "4173", "--host", "127.0.0.1"], 4173);
-serve("site", "astro", ["preview", "--port", "4321", "--host", "127.0.0.1"], 4321);
+const servers = [
+  serve("apps/playground/dist", 4173, "--spa"),
+  serve("apps/site/dist", 4321),
+];
 
 process.stdout.write("\nプレビューサーバの起動を待っています…\n");
-for (let i = 0; i < 40; i++) {
+const PREVIEWS = ["http://127.0.0.1:4173/", "http://127.0.0.1:4321/"];
+let ready = [];
+for (let i = 0; i < 20; i++) {
   await sleep(500);
-  const ok = await Promise.all(
-    ["http://127.0.0.1:4173/", "http://127.0.0.1:4321/"].map((u) =>
-      fetch(u).then(
-        (r) => r.ok,
-        () => false,
-      ),
-    ),
+  ready = await Promise.all(
+    PREVIEWS.map((u) => fetch(u).then((r) => r.ok, () => false)),
   );
-  if (ok.every(Boolean)) break;
+  if (ready.every(Boolean)) break;
+}
+
+/* **立たなかったら、そこで落とします。**
+   以前はそのまま先へ進んでいました。すると実ブラウザの工程が
+   8 つまとめて「接続できません」で赤くなり、**一覧のどこにも
+   「サーバが立たなかった」とは出ません。** 原因を探して 8 本の
+   スタックを読むことになります。名指しで 1 行落とすほうが速い。
+
+   実際 astro 7 で preview がデーモンになったとき、この形で 8 工程が
+   まとめて赤くなり、原因の切り分けに時間を取られました。 */
+if (!ready.every(Boolean)) {
+  const dead = PREVIEWS.filter((_, i) => !ready[i]);
+  console.error(`\n✗ プレビューサーバが立ちませんでした: ${dead.join(" / ")}`);
+  console.error("  ポートが埋まっていないか、ビルドが済んでいるかを見てください。");
+  results.push({ name: "プレビューサーバの起動", ok: false });
+  failed = true;
 }
 
 step("実ブラウザ: 非同期の状態", "node", ["scripts/verify-states.mjs"]);
@@ -186,7 +199,8 @@ step("実ブラウザ: 端末幅の崩れ", "node", [
   ...SITE_PAGES,
 ]);
 
-for (const p of servers) stopTree(p);
+// 素の node なので、これで確実に止まります（デーモン化も再起動もしません）。
+for (const s of servers) stopTree(s);
 
 /* ---- まとめ -------------------------------------------------------- */
 

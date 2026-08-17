@@ -101,6 +101,54 @@ export function pnpm(args) {
  * `verify-create.mjs` は `kill()` のままでした。**同じ概念が 2 実装あって、
  * 片方だけ間違っている**——このリポジトリのバグの型そのものです。
  */
+/**
+ * そのポートで待っているプロセスを止めます。
+ *
+ * ----------------------------------------------------------------
+ * なぜ stopTree() だけでは足りないのか
+ * ----------------------------------------------------------------
+ * **道具によっては、自分を子プロセスとして起動し直します。**
+ * astro 7 の `preview` がそれで、親はすぐ終了し、実際に配信しているのは
+ * 孤児になった子です（コマンドラインに覚えのない `--json` が付いています）。
+ *
+ * こちらが握っている PID は既に死んでいるので、`taskkill /T` を撃っても
+ * 何も起きません。**プロセスの親子関係に頼れない相手がいます。**
+ *
+ * 止め損なうと、次の実行がこうなります。
+ *
+ *   - ポートが埋まっているので、道具が勝手に次の番号へずれる
+ *   - こちらは気づかず、**前回の残骸に判定を当てる**
+ *   - その残骸は消えたディレクトリを配っているので、理由の分からない赤が出る
+ *
+ * v0.9a で実際に踏みました。ポートは分かっているので、そこから辿ります。
+ */
+export function stopPort(port) {
+  try {
+    if (isWindows) {
+      const out = spawnSync("netstat", ["-ano", "-p", "TCP"], { encoding: "utf8" }).stdout ?? "";
+      for (const line of out.split(/\r?\n/)) {
+        if (!/LISTENING/.test(line)) continue;
+        if (!new RegExp(`[:.]${port}\\s`).test(line)) continue;
+        const pid = line.trim().split(/\s+/).pop();
+        if (pid && pid !== "0") spawnSync("taskkill", ["/pid", pid, "/T", "/F"], { stdio: "ignore" });
+      }
+    } else {
+      const out = spawnSync("lsof", ["-t", `-i`, `tcp:${port}`, "-s", "TCP:LISTEN"], {
+        encoding: "utf8",
+      }).stdout ?? "";
+      for (const pid of out.split(/\s+/).filter(Boolean)) {
+        try {
+          process.kill(Number(pid), "SIGKILL");
+        } catch {
+          /* もう落ちている */
+        }
+      }
+    }
+  } catch {
+    /* 止められなくても検査は続けます。次の実行の入口で気づけます */
+  }
+}
+
 export function stopTree(child) {
   if (!child?.pid) return;
   try {

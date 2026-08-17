@@ -4,7 +4,7 @@
  * ここで測るのは、**目で見ても気づけないもの**です。
  * キーボードだけで操作したときの挙動と、隠れた場所に潜り込む見出し。
  */
-import { launch, log, BASE } from "./_browser.mjs";
+import { launch, log, BASE, isPainted } from "./_browser.mjs";
 
 const { openTab, finish, must, mustEq } = await launch();
 
@@ -51,6 +51,7 @@ const active = (page) =>
   await page.getByRole("button", { name: "中央に出す" }).click();
   await page.waitForTimeout(300);
 
+
   const opened = await page.evaluate(() => {
     const d = document.querySelector("dialog[open]");
     return {
@@ -61,7 +62,7 @@ const active = (page) =>
     };
   });
   must("2. showModal で開いている（open 属性ではない）", opened.modal, JSON.stringify(opened));
-  must("   ::backdrop に色が付く", /rgba?\(/.test(opened.backdrop));
+  must("   ::backdrop に色が付く", isPainted(opened.backdrop), opened.backdrop);
   mustEq("   背面のスクロールを止めている", opened.htmlOverflow, "hidden");
 
   // 背面が本当に動かないか。
