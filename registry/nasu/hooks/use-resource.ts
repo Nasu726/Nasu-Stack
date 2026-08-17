@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  callSafely,
   type Action,
   type ActionContext,
   ActionError,
@@ -84,14 +85,22 @@ export function useResource<TOutput>(
       setState((s) => ({ ...s, status: "pending", error: undefined }));
 
       let lastError: ActionError | undefined;
+      let succeeded = false;
+      let result: TOutput | undefined;
+
+      /* retry の境界は **loader だけ** です。
+         callback をここに入れると、onSuccess が投げたときに
+         「取得に失敗した」と解釈して読み直します。取得は GET なので
+         useAction ほどの実害はありませんが、契約として不自然です
+         （同じ方針を useAction と揃えます。理由はあちらのコメント）。 */
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
         try {
           const ctx: ActionContext = { signal: controller.signal };
           const data = await loaderRef.current(undefined as void, ctx);
           if (cancelled || controller.signal.aborted) return;
-          setState({ status: "success", data, error: undefined });
-          optionsRef.current.onSuccess?.(data);
-          return;
+          succeeded = true;
+          result = data;
+          break;
         } catch (raw) {
           if (cancelled || controller.signal.aborted) return;
           lastError = toActionError(raw);
@@ -103,11 +112,21 @@ export function useResource<TOutput>(
       }
 
       if (cancelled) return;
+
+      if (succeeded) {
+        setState({ status: "success", data: result, error: undefined });
+        callSafely(() => optionsRef.current.onSuccess?.(result as TOutput), "onSuccess");
+        return;
+      }
+
       setState((s) => ({ ...s, status: "error", error: lastError }));
       if (lastError) {
         // AsyncBoundary が画面内にエラーと再試行を出すので、
         // 取得失敗は既定では通知を出しません（二重表示を避けるため）。
-        if (optionsRef.current.onError) optionsRef.current.onError(lastError);
+        callSafely(
+          () => optionsRef.current.onError?.(lastError as ActionError),
+          "onError",
+        );
       }
     })();
 

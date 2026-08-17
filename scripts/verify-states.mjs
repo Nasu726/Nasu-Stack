@@ -9,7 +9,15 @@ const { errors, openTab, finish, must, mustEq } = await launch();
 // role="tab" にした瞬間に見つからなくなりました。URL なら壊れません。
 const page = await openTab("state", { width: 900, height: 900 });
 page.on("console", (m) => {
-  if (m.type() === "error") errors.push(m.text());
+  if (m.type() !== "error") return;
+  /* カタログの「callback が投げる」は**わざと投げています。**
+     useAction が握り潰さずに console へ出すのが正しい振る舞いなので、
+     これは異常ではありません。
+
+     **全部を無視してはいけません。** ここで丸ごと捨てると、本物の
+     例外まで見えなくなります。意図したもの 1 種類だけを名指しで外します。 */
+  if (m.text().includes("[action] onSuccess が例外を投げました")) return;
+  errors.push(m.text());
 });
 
 /* 1. 成功パス --------------------------------------------------- */
@@ -60,6 +68,40 @@ must("終わると success 表示に変わる", /保存しました/.test(succes
     `実測 ${seen.bg} / 期待 ${seen.want}`,
   );
   await page.mouse.move(0, 0);
+}
+
+/* 1.6. callback が投げても、成功済みの action を retry しない ---------
+   ----------------------------------------------------------------
+   action は成功し、**サーバ側の副作用はもう起きています。**
+   その後 onSuccess が投げたとき、それを「action の失敗」と解釈して
+   retry すると、決済もメールも登録も削除も 2 回走ります。
+
+   retry の境界と callback の境界は別物です。
+   ここは「押せたか」ではなく **action が何回呼ばれたか** を見ます。 */
+{
+  const calls = () =>
+    page.getByTestId("calls-cb").textContent().then((t) => Number(t.match(/\d+/)?.[0] ?? -1));
+  await page.getByTestId("calls-cb").locator("xpath=../..").getByRole("button").click();
+  // retry=3 / retryDelay=50 なので、繰り返すならこの間に終わります
+  await page.waitForTimeout(1500);
+  const n = await calls();
+  must("callback が投げても action は 1 回だけ", n === 1, `${n} 回`);
+}
+
+/* 1.7. 遅い guard を連打しても、action は 1 回だけ -------------------
+   ----------------------------------------------------------------
+   `await guard(...)` の**後**に鍵をかけていると、待っている間に
+   後続の呼び出しが全部その隙間を通り抜けます。
+   下の「5 回連打」の判定は guard の無い経路を見ているので、
+   **この race を見ていません。** 別に置きます。 */
+{
+  const btn = page.getByTestId("calls-guard").locator("xpath=../..").getByRole("button");
+  // guard は 150ms 待つ。その間に押し切ります。
+  for (let i = 0; i < 5; i++) await btn.click({ force: true, timeout: 1000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  const t = await page.getByTestId("calls-guard").textContent();
+  const n = Number(t.match(/\d+/)?.[0] ?? -1);
+  must("遅い guard を 5 回連打しても action は 1 回だけ", n === 1, `${n} 回`);
 }
 
 /* 2. 二重送信の防止 ---------------------------------------------
