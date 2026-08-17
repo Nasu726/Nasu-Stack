@@ -12,18 +12,33 @@ const NAV = [{ href: "/", label: "ホーム" }];
   <SkipLink />
   <SiteHeader brand={SITE.name} brandHref="/" items={NAV} currentPath={Astro.url.pathname} />
 
-  <PageBlock width="content" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+  {/*
+    幅の指定は **PageBlock だけ**が持ちます。
+    ここを width="content"（広め）にして、中の <p> に max-w-prose を付けると、
+    見出しは器いっぱいまで伸びるのに本文だけ半分で止まり、
+    画面を広げたときに右側が大きく空きます（実測: 器の右端 1465px に対して
+    本文の右端が 947px）。**1 本の柱で幅を決めます。**
+
+    prose は em 単位（40em）なので、文字サイズに合わせて幅が変わります。
+    **中の文字を小さくするときは注意してください。** 器が 640px のままで
+    14px の文字を流すと 1 行が 45em を超え、和文には長すぎます
+    （`npm run check` が数値で教えてくれます）。
+  */}
+  <PageBlock width="prose" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
     <Stack space="3xl">
       <Section space="md">
         <h1 class="text-3xl leading-tight">ここから始めます</h1>
-        <p class="max-w-prose text-sm leading-relaxed text-muted-fg">
-          このページは静的な HTML です。JavaScript は 1 バイトも読み込んでいません。
-          動く部分が必要になったら、その部分だけ React の island にしてください。
+        <p class="text-base leading-relaxed">
+          サイトの土台はもうできています。あとは中身を自分のものに書き換えるだけです。
+        </p>
+        <p class="leading-relaxed text-muted-fg">
+          このページのファイルは <code class="text-fg">src/pages/index.astro</code> です。
+          開いて書き換えると、ブラウザにすぐ反映されます。
         </p>
         <Inline space="sm">
           <a
             href="https://github.com/Nasu726/WebTemplate"
-            class="inline-flex min-h-11 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-fg"
+            class="inline-flex wt-tap items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-fg"
           >
             部品の一覧を見る
           </a>
@@ -31,13 +46,52 @@ const NAV = [{ href: "/", label: "ホーム" }];
       </Section>
 
       <Section space="md">
-        <h2 class="text-2xl">次にやること</h2>
-        <ol class="flex max-w-prose flex-col gap-xs text-sm leading-relaxed text-muted-fg">
-          <li>1. <code class="text-fg">src/site.config.ts</code> のサイト名と説明を書き換える</li>
-          <li>2. <code class="text-fg">astro.config.mjs</code> の <code class="text-fg">site</code> を公開先のドメインにする</li>
-          <li>3. このページ（<code class="text-fg">src/pages/index.astro</code>）を書き換える</li>
-          <li>4. 部品が足りなくなったら <code class="text-fg">npx shadcn add</code> で足す</li>
+        <h2 class="text-2xl">やることは 4 つ</h2>
+        <ol class="flex flex-col gap-sm leading-relaxed">
+          <li>
+            <strong class="text-fg">1. サイトの名前を決める</strong><br />
+            <span class="text-muted-fg">
+              <code class="text-fg">src/site.config.ts</code> を開いて、名前と説明を書き換えます。
+              ヘッダの表示も、検索結果に出る説明文も、ここ 1 か所から作られます。
+            </span>
+          </li>
+          <li>
+            <strong class="text-fg">2. 公開先のアドレスを書く</strong><br />
+            <span class="text-muted-fg">
+              <code class="text-fg">astro.config.mjs</code> の <code class="text-fg">site</code> です。
+              まだ決まっていなければ後回しで構いません。
+              これを書くと、検索エンジンに渡す一覧（sitemap）や購読用のフィードが正しいアドレスになります。
+            </span>
+          </li>
+          <li>
+            <strong class="text-fg">3. このページを書き換える</strong><br />
+            <span class="text-muted-fg">
+              <code class="text-fg">src/pages/index.astro</code> です。
+              <code class="text-fg">src/pages/</code> にファイルを足すと、そのままページが増えます
+              （<code class="text-fg">about.astro</code> なら <code class="text-fg">/about/</code>）。
+            </span>
+          </li>
+          <li>
+            <strong class="text-fg">4. 足りない部品を足す</strong><br />
+            <span class="text-muted-fg">
+              表・タブ・通知などは、必要になってから足します。
+              手順は <code class="text-fg">HowToUse.md</code> に書いてあります。
+            </span>
+          </li>
         </ol>
+      </Section>
+
+      <Section space="md">
+        <h2 class="text-2xl">このページの作りについて</h2>
+        <p class="leading-relaxed text-muted-fg">
+          このページは、あらかじめ組み立て済みの HTML をそのまま返しています。
+          ブラウザは受け取ってすぐ表示できるので、開くのが速く、検索エンジンにも読まれやすくなります。
+        </p>
+        <p class="leading-relaxed text-muted-fg">
+          ボタンや入力欄のように「押したら動く」ものが必要になったら、
+          その部分だけを動く部品にできます（<code class="text-fg">HowToUse.md</code> に例があります）。
+          ページ全体を動く作りにしなくてよいので、表示の速さを保ったまま必要なところだけ足せます。
+        </p>
       </Section>
     </Stack>
   </PageBlock>

@@ -58,7 +58,7 @@
 ```bash
 pnpm install
 pnpm verify           # 20 工程。型・ビルド・配布物・実ブラウザ
-pnpm verify:create    # 入口の検査 38 判定。生成物に本物の CLI で部品を足すところまで
+pnpm verify:create    # 入口の検査 47 判定。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 ```
 
@@ -102,14 +102,20 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
   読み込みを止めてから、はみ出しは実際にホイールを回してから測ります。
   推測で書いた検査は、**通っているように見えて何も見ていません**
 - **判定を足しただけでは、落ちるかどうか分かりません。** わざと壊して
-  赤くなることを確かめてください。実際それで検査側の穴が見つかりました
+  赤くなることを確かめてください。実際それで検査側の穴が見つかりました。
+  v0.9a では、判定を書いてわざと壊しても**緑のまま通りました**——
+  カタログ側に「その不具合が出る条件のボタン」が無かったためです
+- **狭い側だけ見ていると気づけません。** 端末幅の検査は 1024px までです。
+  器を広くして中の本文にだけ幅を付けた画面は、**全部緑のまま通ります**
+- **利用者として一度使ってみてください。** 部品側の検査が全部緑でも、
+  生成物を触ると詰まります。v0.9a では 3 件 + 報告 7 件が出ました
 
 ---
 
 ## 6. まだ確認できていないこと
 
 - ~~**Windows の実機。**~~ v0.9a で確認しました。`pnpm verify` 20 工程 /
-  `pnpm verify:create` 29 判定が緑です。**コードを読んで書いた対応のうち
+  `pnpm verify:create` 47 判定が緑です。**コードを読んで書いた対応のうち
   2 つは実際には間違っていました**（詳細は `docs/result-v09a.md`）
 - ~~**`npx shadcn add` の実インストール。**~~ v0.9a で本物の CLI を通しました。
   **利用者の `components.json` に `registries` の宣言が要ります**（無いと
@@ -117,8 +123,8 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
   が毎回確かめます
 - **静的ホスティング上での 404 の扱い。** まだ公開していないので測れません。
   公開したら `scripts/verify-published.mjs` が自動で測ります
-- **作者自身の使い心地。** 一度触って 3 件直しました（`docs/result-v09a.md` の Phase 4）。
-  実際にサイトを 1 つ作り切るまで公開しません
+- **作者自身の使い心地。** 2 回触って 3 件 + 報告 7 件を直しました
+  （`docs/result-v09a.md` の Phase 4・5）。実際にサイトを 1 つ作り切るまで公開しません
 
 ---
 
@@ -127,7 +133,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
 ### v0.9a の残り（公開まで）
 
 1. **作者がサイトを 1 つ作り切る。** 使い心地を確かめるまで公開しません。
-   一度触った時点で 3 件見つかっています（`docs/result-v09a.md` の Phase 4）
+   これまでに 3 件 + 報告 7 件が出ています（`docs/result-v09a.md` の Phase 4・5）
 2. **`main` へマージ** → `pages.yml` が走って初めて公開されます
 3. **404 のステータスを実測** — `verify-published.mjs` がデプロイ直後に測ります
 

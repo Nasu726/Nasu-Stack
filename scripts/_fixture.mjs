@@ -16,6 +16,10 @@ import path from "node:path";
 /**
  * 利用者側の `components.json` が生成する、標準的な alias に合わせた tsconfig。
  * `@/*` → `./src/*` です。
+ *
+ * **`baseUrl` は書きません。** TypeScript 7.0 で機能しなくなる予定で、
+ * 5.x でも警告が出ます。`paths` の値を `./` で始めれば tsconfig の場所からの
+ * 相対として解決されるので、`baseUrl` は要りません。
  */
 export const tsconfig = {
   compilerOptions: {
@@ -27,7 +31,6 @@ export const tsconfig = {
     strict: true,
     noEmit: true,
     skipLibCheck: true,
-    baseUrl: ".",
     paths: { "@/*": ["./src/*"] },
   },
   include: ["src/**/*.ts", "src/**/*.tsx"],

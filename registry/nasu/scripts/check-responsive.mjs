@@ -10,7 +10,40 @@
  *
  * 必要: npm i -D playwright && npx playwright install chromium
  */
-import { chromium } from "playwright";
+
+/**
+ * playwright は**使うときに読み込みます。**
+ *
+ * これは「あると便利な検査」であって、サイトを作るのに要るものではありません。
+ * だから最初から依存には入れていません（実ブラウザは 100MB 以上あります）。
+ *
+ * 入っていないときに `ERR_MODULE_NOT_FOUND` のスタックだけ出しても、
+ * **何をすればいいのか分かりません。** 初めての人には「壊れた」と映ります。
+ * 手順をそのまま出します。
+ */
+let chromium;
+async function loadChromium() {
+  if (chromium) return chromium;
+  try {
+    ({ chromium } = await import("playwright"));
+    return chromium;
+  } catch {
+    console.error(
+      [
+        "",
+        "この検査には playwright（実ブラウザ）が要ります。まだ入っていません。",
+        "",
+        "  npm i -D playwright",
+        "  npx playwright install chromium",
+        "",
+        "サイトを作るのに必須ではありません。崩れを目視ではなく数値で",
+        "確かめたくなったときに入れてください。",
+        "",
+      ].join("\n"),
+    );
+    process.exit(2);
+  }
+}
 
 const WIDTHS = [
   { w: 320, label: "320 (小さいスマホ)" },
@@ -239,7 +272,7 @@ export function inspect(viewportWidth) {
  * 利用者が遅い回線で見るのと同じ状態です。
  */
 export async function checkImageSizing(urls, { width = 375 } = {}) {
-  const browser = await chromium.launch({
+  const browser = await (await loadChromium()).launch({
     executablePath: process.env.CHROMIUM_PATH || undefined,
   });
   const report = [];
@@ -335,7 +368,7 @@ export function formatImageReport(report) {
 
 export async function checkUrls(urls, { widths = WIDTHS } = {}) {
   // CI などで Chromium の場所が固定されている場合に差し替えられるようにする
-  const browser = await chromium.launch({
+  const browser = await (await loadChromium()).launch({
     executablePath: process.env.CHROMIUM_PATH || undefined,
   });
   const report = [];

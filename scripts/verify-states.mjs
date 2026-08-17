@@ -25,6 +25,43 @@ const successText = await page
   .textContent();
 must("終わると success 表示に変わる", /保存しました/.test(successText ?? ""), successText?.trim());
 
+/* 1.5. 成功したまま、ポインタが乗っていても色が残るか ---------------
+   **押したあと、マウスはボタンの上に残ります。** つまり成功の見た目は、
+   ほぼ必ず hover と同時に出ます。variant 側は `hover:bg-muted` などを
+   持っているので、成功色を背景だけ差し替えると hover が上書きし、
+   **ほぼ白の文字が薄い背景に溶けて読めなくなります。**
+   実測で 0.968（薄い灰）まで飛びました。利用者からの報告で見つけています。 */
+{
+  /* **既定（primary）のボタンでは検出できません。** primary の hover は
+     brightness なので背景色そのものは変わらず、壊れていても緑のまま通ります。
+     実際、最初にこの判定を primary に当てて書いたら、わざと壊しても
+     赤くなりませんでした。背景を差し替える hover を持つ outline を見ます。 */
+  const btn = page.getByRole("button", { name: /控えめに実行|できました/ });
+  await btn.click();
+  await page.waitForTimeout(1200);
+  await btn.hover();
+  await page.waitForTimeout(150);
+  const seen = await btn.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    const want = getComputedStyle(document.documentElement)
+      .getPropertyValue("--success")
+      .trim();
+    // 比較用に、同じ色を一度ブラウザに解釈させて表記を揃えます
+    const probe = document.createElement("span");
+    probe.style.backgroundColor = want;
+    document.body.appendChild(probe);
+    const normalized = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return { bg: cs.backgroundColor, want: normalized };
+  });
+  must(
+    "成功したボタンは、ポインタが乗っても成功色のまま",
+    seen.bg === seen.want,
+    `実測 ${seen.bg} / 期待 ${seen.want}`,
+  );
+  await page.mouse.move(0, 0);
+}
+
 /* 2. 二重送信の防止 ---------------------------------------------
    「押せない」ことではなく「連打しても 1 回しか実行されない」ことを見る。 */
 await page.waitForTimeout(2200); // idle へ戻る

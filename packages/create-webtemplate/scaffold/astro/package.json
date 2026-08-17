@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check && node scripts/check-responsive.mjs http://localhost:4321/"
+    "check": "astro check && node src/scripts/check-responsive.mjs http://localhost:4321/"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",
