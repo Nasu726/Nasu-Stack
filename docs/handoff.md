@@ -38,12 +38,17 @@
 ## 3. いまどこまで来ているか
 
 - `main` … README のみ
-- `claude/build-v0.1-v0.8` … v0.1〜v0.8 の 19 コミット + CI 修正 1 コミット
-- PR が開いていて、`.github/workflows/verify.yml` が回っています
+- `claude/build-v0.1-v0.8` … v0.1〜v0.8。PR が開いています
+- `claude/v0.9` … **v0.9a（配布）。ここが最新です。** PR が開いています
 
-**CI の 1 回目は落ちました。** 原因と直し方は `fix(ci):` のコミットメッセージに
-書いてあります。要約すると「開発コンテナは root だから通るが、CI の runner は
-root ではないので `/home/claude/...` に書けない」というものでした。同じ間違いは
+**まだ公開していません。** `pages.yml` は `main` への push でしか動かないので、
+マージするまで何も配られません。公開前にやることは
+[`docs/security.md`](security.md) §3 と `ROADMAP.md` の v0.9a にあります。
+
+### 過去の CI の失敗（記録）
+
+1 回目は「開発コンテナは root だから通るが、CI の runner は root ではないので
+`/home/claude/...` に書けない」でした。同じ間違いは
 `scripts/check-portability.mjs` が機械で捕まえます。
 
 ---
@@ -53,7 +58,7 @@ root ではないので `/home/claude/...` に書けない」というもので�
 ```bash
 pnpm install
 pnpm verify           # 20 工程。型・ビルド・配布物・実ブラウザ
-pnpm verify:create    # 入口の検査 29 判定（--full で install → build → 配信まで）
+pnpm verify:create    # 入口の検査 38 判定。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 ```
 
@@ -112,20 +117,30 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
   が毎回確かめます
 - **静的ホスティング上での 404 の扱い。** まだ公開していないので測れません。
   公開したら `scripts/verify-published.mjs` が自動で測ります
-- **作者自身の使い心地。** サイトを 1 つ作って通すまで公開しません
+- **作者自身の使い心地。** 一度触って 3 件直しました（`docs/result-v09a.md` の Phase 4）。
+  実際にサイトを 1 つ作り切るまで公開しません
 
 ---
 
-## 7. 次にやること（v0.9）
+## 7. 次にやること
 
-1. **レジストリの静的ホスティング** — `public/r/*.json` を Cloudflare Pages か
-   GitHub Pages に出し、`npx shadcn add https://…/r/button.json` が実際に
-   通る状態にする。上の「未確認」の 2 つ目と 3 つ目はこれができて初めて
-   確かめられます
-2. **カタログをドキュメントサイトにする** — いまの `apps/playground` は
-   開発用の確認画面です。利用者が見て選べる形にする
-3. **CI で実インストールを検証** — 1 の完了が前提
-4. **Renovate を動かす** — `renovate.json` は置いてあるだけです
+### v0.9a の残り（公開まで）
+
+1. **作者がサイトを 1 つ作り切る。** 使い心地を確かめるまで公開しません。
+   一度触った時点で 3 件見つかっています（`docs/result-v09a.md` の Phase 4）
+2. **`main` へマージ** → `pages.yml` が走って初めて公開されます
+3. **404 のステータスを実測** — `verify-published.mjs` がデプロイ直後に測ります
+
+### v0.9b（未着手）
+
+1. **カタログをドキュメントサイトにする** — いまの `apps/playground` は
+   開発用の確認画面です。利用者が見て選べる形にする。
+   各部品の `add` コマンドは **`registry.json` から生成**すること（手で書かない）
+2. **Renovate を動かす** — `renovate.json` は置いてあるだけです。
+   **アクションを SHA で固定したので、これは対で必要です。**
+   追随する仕組みが無いと「勝手に変わらない」代わりに「勝手に直らない」状態になります
+3. GitHub Pages の project site はサブパス配信なので、
+   カタログを載せるなら Vite の `base` を `/WebTemplate/` にする必要があります
 
 積み残し（急がないもの): ダッシュボードの雛型（React 側）、`Field` の
 その場検証、`DataTable` の列の表示切り替え、一括操作の進捗表示。

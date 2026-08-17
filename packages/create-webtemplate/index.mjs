@@ -103,6 +103,22 @@ export function scaffold(kind, dest, projectName) {
   return true;
 }
 
+/**
+ * 部品を足すときに使うレジストリの URL。
+ *
+ * **書き写しません。** 一緒に配る components.json から読みます。
+ * 2 か所に書くと、公開先を変えた日に README だけ古い URL を指します。
+ * 壊れるのはこちらの手元ではなく、利用者が打った瞬間なので気づけません。
+ */
+function registryUrl(kind) {
+  try {
+    const p = path.join(TEMPLATES, kind, "components.json");
+    return JSON.parse(fs.readFileSync(p, "utf8")).registries?.["@nasu"] ?? "";
+  } catch {
+    return "";
+  }
+}
+
 function readme(kind, name) {
   const dev = kind === "astro" ? "http://localhost:4321" : "http://localhost:5173";
   return `# ${name}
@@ -120,7 +136,7 @@ npm run dev      # ${dev}
 
 1. ${kind === "astro" ? "`src/site.config.ts` と `astro.config.mjs` の `site`" : "`index.html` の title"} を書き換える
 2. ${kind === "astro" ? "`src/pages/index.astro`" : "`src/App.tsx`"} を書き換える
-3. 部品が足りなくなったら足す
+3. 部品が足りなくなったら足す（下を見てください）
 
 ## 覚えることは 2 つだけ
 
@@ -135,8 +151,36 @@ npm run dev      # ${dev}
 部品が持っています。
 
 \`\`\`tsx
-<Button action={async () => api.save(値)}>保存する</Button>
+import { ActionButton } from "@/components/ui/action-button";
+
+<ActionButton action={async () => api.save(値)}>保存する</ActionButton>
 \`\`\`
+
+押している間のスピナー、連打の防止、失敗時の表示と押し直し、
+成功時のチェックマーク——全部この 1 行に入っています。
+
+## 部品を足す
+
+最初から入っているのは、よく使うものだけです。表・タブ・通知などは
+必要になったときに足します。**設定は済んでいるので、コマンド 1 つです。**
+
+\`\`\`bash
+npx shadcn@latest add @nasu/data-table
+\`\`\`
+
+依存する部品も一緒に入ります。入る先は \`src/components/ui/\` です。
+**入った後のコードはあなたのものです。** 好きに書き換えてください
+（そのために npm パッケージではなくコピーで配っています）。
+
+> **「すでにあります。上書きしますか？」と聞かれます。**
+> \`action.ts\` のように最初から入っているファイルが、新しい部品の依存にも
+> なっているためです。**そのまま Enter（N）で構いません。**
+> あなたが書き換えたコードを守るための確認です。
+
+足せるものの一覧は ${registryUrl(kind).replace("/r/{name}.json", "/")} にあります。
+
+> \`@nasu\` がどこを指すかは \`components.json\` の \`registries\` に書いてあります。
+> 公開先を自分のものに変えたいときは、そこだけ書き換えてください。
 
 ## 崩れていないか確かめる
 

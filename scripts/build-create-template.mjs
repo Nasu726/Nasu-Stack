@@ -19,6 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { REGISTRY_URL } from "./_site.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const registryRoot = path.join(root, "registry", "nasu");
@@ -106,6 +107,61 @@ function copyScaffold(kind, dest) {
   fs.cpSync(from, dest, { recursive: true });
 }
 
+/**
+ * shadcn CLI の設定を置きます。
+ *
+ * ----------------------------------------------------------------
+ * なぜ最初から入れるのか
+ * ----------------------------------------------------------------
+ * 生成した README は「部品が足りなくなったら足す」と書いています。
+ * **v0.9a まで、その手段がありませんでした。**
+ *
+ * `components.json` が無いと shadcn CLI は
+ * 「作りますか？」と対話で聞いてきます。作らせても `registries` が
+ * 入らないので、次は `Unknown registry "@nasu"` で止まります。
+ * つまり案内どおりに進んだ人が、**2 回続けて詰まります。**
+ *
+ * 実際に生成物を触って初めて気づきました。部品側の検査は全部緑でした。
+ *
+ * ----------------------------------------------------------------
+ * 中身
+ * ----------------------------------------------------------------
+ * `registries` の宣言が要です。`@nasu/action` のような名前空間は、
+ * これが無いと解決できません。URL は scripts/_site.mjs が唯一の定義です。
+ */
+function writeComponentsJson(kind, dest) {
+  const config = {
+    $schema: "https://ui.shadcn.com/schema.json",
+    style: "new-york",
+    // Astro でも React の島として動かすので、どちらも RSC ではありません。
+    rsc: false,
+    tsx: true,
+    registries: { "@nasu": REGISTRY_URL },
+    tailwind: {
+      config: "",
+      // 足場の CSS の入口。tokens / themes / prose をここから読んでいます。
+      css: "src/styles/global.css",
+      baseColor: "neutral",
+      // 色はトンマナ側（tokens.css）が持ちます。shadcn には触らせません。
+      cssVariables: true,
+    },
+    // 足場の tsconfig が "@/*" → "src/*" にしてあります。合わせます。
+    aliases: {
+      components: "@/components",
+      utils: "@/lib/utils",
+      ui: "@/components/ui",
+      lib: "@/lib",
+      hooks: "@/hooks",
+    },
+    iconLibrary: "lucide",
+  };
+  fs.writeFileSync(
+    path.join(dest, "components.json"),
+    JSON.stringify(config, null, 2) + "\n",
+    "utf8",
+  );
+}
+
 fs.rmSync(out, { recursive: true, force: true });
 
 const report = [];
@@ -113,6 +169,7 @@ for (const kind of ["astro", "vite"]) {
   const dest = path.join(out, kind);
   fs.mkdirSync(dest, { recursive: true });
   copyScaffold(kind, dest);
+  writeComponentsJson(kind, dest);
   const r = copyItems([...STARTER.common, ...STARTER[kind]], path.join(dest, "src"));
   report.push({ kind, ...r });
 }

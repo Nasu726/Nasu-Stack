@@ -26,6 +26,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { pnpm } from "./_proc.mjs";
+import { PUBLIC_BASE, REGISTRY_URL, TARBALL_URL } from "./_site.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pub = path.join(root, "public");
@@ -127,11 +128,14 @@ fs.writeFileSync(
 <p>Web サイトを作るときに毎回同じところで手間がかかる部分を、部品側で引き受ける土台です。</p>
 
 <h2>新しく作る</h2>
-<pre><code>npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site</code></pre>
+<pre><code>npx ${TARBALL_URL} my-site</code></pre>
 <p><a href="./create-webtemplate.tgz.sha256">SHA-256</a> を並べて置いてあります。打つ前に照合できます。</p>
+<p>できたプロジェクトには <code>components.json</code> が入っているので、部品はそのまま足せます。</p>
 
 <h2>いまあるプロジェクトに部品だけ入れる</h2>
-<pre><code>npx shadcn@latest add https://nasu726.github.io/WebTemplate/r/action-button.json</code></pre>
+<p>先に <code>components.json</code> へ 1 行足してください。これが無いと部品の依存を辿れません。</p>
+<pre><code>{ "registries": { "@nasu": "${REGISTRY_URL}" } }</code></pre>
+<pre><code>npx shadcn@latest add @nasu/action-button</code></pre>
 
 <h2>配っている部品（${items.length}）</h2>
 <ul>
@@ -154,7 +158,7 @@ fs.writeFileSync(
     "見つかりませんでした — WebTemplate",
     `<h1>見つかりませんでした</h1>
 <p>その URL には何もありません。</p>
-<p><a href="/WebTemplate/">入口へ戻る</a></p>`,
+<p><a href="${new URL(PUBLIC_BASE).pathname}/">入口へ戻る</a></p>`,
   ),
   "utf8",
 );

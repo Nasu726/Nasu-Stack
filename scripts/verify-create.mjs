@@ -146,6 +146,78 @@ const create = (name, args = []) => {
   must("   registry の target が相対のまま", bad.length === 0, bad.map((b) => b.target).join(", "));
 }
 
+/* ===== 7.5. 生成物で「部品を足す」が本当にできるか ================ */
+/**
+ * README は「部品が足りなくなったら足す」と書いています。
+ * **v0.9a まで、その手段が入っていませんでした。**
+ *
+ * `components.json` が無いと shadcn CLI は対話で聞いてきて止まり、
+ * 作らせても `registries` が無いので `Unknown registry "@nasu"` になります。
+ * 案内どおりに進んだ人が 2 回続けて詰まる状態でした。
+ *
+ * **部品側の検査は全部緑でした。** 生成物を実際に触るまで気づけません。
+ * だからここで機械に見せます。
+ */
+for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
+  const p = path.join(work, name, "components.json");
+  if (!fs.existsSync(p)) {
+    must(`7.5 ${kind}: components.json がある`, false, "ファイルが無い");
+    continue;
+  }
+  const cj = JSON.parse(fs.readFileSync(p, "utf8"));
+  must(`7.5 ${kind}: components.json がある`, true);
+  must(
+    `    ${kind}: @nasu の registries が宣言されている`,
+    typeof cj.registries?.["@nasu"] === "string" &&
+      cj.registries["@nasu"].includes("{name}"),
+    cj.registries?.["@nasu"] ?? "(無し)",
+  );
+  // alias が tsconfig と食い違うと、入った直後にビルドが落ちます。
+  const ts = JSON.parse(fs.readFileSync(path.join(work, name, "tsconfig.json"), "utf8"));
+  const aliasOk = ts.compilerOptions?.paths?.["@/*"]?.[0] === "src/*" &&
+    cj.aliases?.ui === "@/components/ui";
+  must(`    ${kind}: alias が tsconfig と揃っている`, aliasOk, cj.aliases?.ui ?? "");
+}
+
+/* ===== 7.6. README が存在しない部品を教えていないか =============== */
+/**
+ * v0.8b で足場のコードから `<Button action={…}>` を直しましたが、
+ * **README の例が取り残されていました。** 初心者が最初にコピーする行が
+ * それでした（`Button` は実在しますが `action` を受け取りません。
+ * `action` を渡せるのは `ActionButton` です）。
+ *
+ * **この検査は名前の存在しか見ません。** つまり上の間違いは捕まえられません。
+ * 捕まえられるのは「部品を消した / 改名したのに README が残っている」場合だけです。
+ *
+ * props まで見るには README のコード例を型検査に掛ける必要がありますが、
+ * 例には `…` のような省略が入っていて、そのままではコンパイルできません。
+ * **できないことを、できるつもりで書かない**ために、ここに限界を残します。
+ */
+{
+  /* 名前は**ファイル名からではなく export から**取ります。
+     1 つのファイルが複数の部品を出すことがあるからです
+     （`layout.tsx` は Stack / Inline / Columns … を全部持っています）。
+     ファイル名から導く実装では `Stack` を「知らない部品」と誤判定しました。 */
+  const known = new Set();
+  for (const f of JSON.parse(
+    fs.readFileSync(path.join(root, "registry.json"), "utf8"),
+  ).items.flatMap((i) => i.files ?? [])) {
+    if (!/\.tsx?$/.test(f.path)) continue;
+    const src = fs.readFileSync(path.join(root, f.path), "utf8");
+    for (const m of src.matchAll(/export\s+(?:function|const|class)\s+([A-Z][A-Za-z0-9]*)/g)) {
+      known.add(m[1]);
+    }
+  }
+  const readme = fs.readFileSync(path.join(work, "my-site", "README.md"), "utf8");
+  const used = [...readme.matchAll(/<([A-Z][A-Za-z0-9]*)\b/g)].map((m) => m[1]);
+  const unknown = [...new Set(used)].filter((n) => !known.has(n));
+  must(
+    "7.6 README の例が、実在する名前だけを使っている（props は見ません）",
+    unknown.length === 0,
+    unknown.join(", "),
+  );
+}
+
 /* ===== 8〜12. 生成物が本当に動くか（--full のときだけ） ========= */
 if (!FULL) {
   log("install / build / 実ブラウザ の検査は --full を付けたときだけ走ります");
@@ -167,6 +239,56 @@ if (!FULL) {
     }
   };
 
+  /**
+   * shadcn CLI は**このリポジトリに固定した版**を直接動かします。
+   * `pnpm dlx shadcn@latest` にすると、毎回「その時点で publish されている
+   * もの」を実行することになり、minimumReleaseAge と lockfile を素通りします。
+   */
+  const shadcn = (dir, args) => {
+    try {
+      execFileSync(
+        process.execPath,
+        [path.join(root, "node_modules", "shadcn", "dist", "index.js"), ...args],
+        { cwd: dir, stdio: "pipe", encoding: "utf8" },
+      );
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, out: (String(e.stdout ?? "") + String(e.stderr ?? "")).slice(-400) };
+    }
+  };
+
+  /* レジストリを配ります。公開先ではなく手元の public/ を使うのは、
+     この判定を「公開先が生きているか」に依存させないためです。 */
+  let registryServer = null;
+  let registryPort = 0;
+  if (fs.existsSync(path.join(root, "public", "r", "index.json"))) {
+    registryPort = 5088;
+    registryServer = spawn(
+      process.execPath,
+      [path.join(root, "scripts/serve-registry.mjs"), String(registryPort)],
+      { stdio: "ignore", detached: process.platform !== "win32" },
+    );
+    let ok = false;
+    for (let n = 0; n < 40; n++) {
+      await new Promise((r) => setTimeout(r, 250));
+      ok = await fetch(`http://127.0.0.1:${registryPort}/r/index.json`).then(
+        (r) => r.ok,
+        () => false,
+      );
+      if (ok) break;
+    }
+    if (!ok) {
+      log("レジストリを配れませんでした。「部品を足せる」の判定は飛ばします");
+      stopTree(registryServer);
+      registryServer = null;
+      registryPort = 0;
+    }
+  } else {
+    // 黙って飛ばすと「確かめたつもり」になります。理由を必ず出します。
+    log("public/r がありません。先に `pnpm registry:build` を走らせてください");
+    log("（「部品を足せる」の判定は飛ばします）");
+  }
+
   for (const [name, kind, port, buildArgs, checkArgs] of [
     ["my-site", "astro", 4598, ["exec", "astro", "build"], ["exec", "astro", "check"]],
     ["my-app", "vite", 4599, ["exec", "vite", "build"], ["exec", "tsc", "--noEmit"]],
@@ -176,6 +298,37 @@ if (!FULL) {
     const i = run(dir, ["install", "--ignore-workspace"]);
     must(`8. ${kind}: pnpm install が通る`, i.ok, i.out ?? "");
     if (!i.ok) continue;
+
+    /* --- 8.5. 生成物に、本物の CLI で部品を足せるか -----------------
+       **これがいちばん強い判定です。** 「生成できた」「ビルドが通る」まで
+       全部緑でも、利用者が README のとおりに部品を足そうとした瞬間に
+       詰まる状態がありえます（v0.9a で実際にそうでした）。
+       上の 7.5 は設定の形を見るだけなので、**通ることは確かめられません。**
+
+       レジストリは手元の public/ を配って使います。公開先が生きているかに
+       この判定を依存させないためです。 */
+    if (registryPort) {
+      const cj = JSON.parse(fs.readFileSync(path.join(dir, "components.json"), "utf8"));
+      cj.registries["@nasu"] = `http://127.0.0.1:${registryPort}/r/{name}.json`;
+      fs.writeFileSync(path.join(dir, "components.json"), JSON.stringify(cj, null, 2));
+
+      // 最初から入っていない部品を選びます。入っているものだと、
+      // 「足せた」のか「元からあった」のか区別できません。
+      /* `--overwrite` を付けます。生成物には action.ts などが既にあるので、
+         CLI が 1 つずつ「上書きしますか？」と**対話で**聞いてきます。
+         `--yes` はこの確認を覆いません。非対話で走らせると、
+         **終了コード 0 のまま何も書かずに終わります**（v0.9a で踏みました）。
+
+         利用者は N（既定）のままで構いません。自分が書き換えたコードを
+         守るための確認です。ここは使い捨ての作業ディレクトリなので上書きします。 */
+      const before = fs.existsSync(path.join(dir, "src/components/ui/data-table.tsx"));
+      const a = shadcn(dir, ["add", "@nasu/data-table", "--yes", "--overwrite"]);
+      const after = fs.existsSync(path.join(dir, "src/components/ui/data-table.tsx"));
+      must(`8.5 ${kind}: 本物の CLI で部品を足せる`, a.ok && !before && after,
+        a.ok ? `before=${before} after=${after}` : (a.out ?? ""));
+    } else {
+      log(`${kind}: レジストリを配れていないので「部品を足せる」は飛ばします`);
+    }
 
     const t = run(dir, checkArgs);
     must(`9. ${kind}: 型検査が通る`, t.ok, t.out ?? "");
@@ -224,6 +377,8 @@ if (!FULL) {
 
     stopTree(server);
   }
+
+  stopTree(registryServer);
 }
 
 /* ================================================================ */
