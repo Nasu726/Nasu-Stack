@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { PageBlock } from "@/components/ui/layout";
+import { withBase } from "@/lib/base";
 
 /**
  * SiteFooter — ページの下端
@@ -67,7 +68,7 @@ export function SiteFooter({
           <div className="flex min-w-0 flex-col gap-2xs">
             {brand && (
               <a
-                href={brandHref}
+                href={withBase(brandHref)}
                 className="inline-flex wt-tap items-center font-display text-base hover:text-primary"
               >
                 {brand}
@@ -110,7 +111,8 @@ function FooterColumn({ group }: { group: FooterGroup }) {
         {group.items.map((item) => (
           <li key={item.href}>
             <a
-              href={item.href}
+              // base は部品側で付けます（理由は @/lib/base）
+              href={withBase(item.href)}
               {...(item.external
                 ? { target: "_blank", rel: "noreferrer noopener" }
                 : {})}

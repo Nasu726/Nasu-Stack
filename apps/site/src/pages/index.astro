@@ -16,6 +16,7 @@ import { PageBlock, Section, Stack } from "@/components/ui/layout";
 // 狭い画面のメニューは <details> なので JavaScript 無しで開閉します。
 // ナビとフッタの定義は 1 か所（src/lib/nav.ts）にまとめています。
 // ページごとに書くと「新しいページを足したのにヘッダから辿れない」が起きます。
+import { withBase } from "@/lib/base";
 ---
 
 <Base
@@ -54,9 +55,14 @@ import { PageBlock, Section, Stack } from "@/components/ui/layout";
           関数の代わりに <code>{"{ url, method }"}</code> を渡しています。
           .astro から props は JSON 化されるため、この形なら島に渡せます。
         </p>
+        {/* **base は自分で付けます。** 下の `url` は props に渡す文字列であって、
+            道具が書き換える対象ではありません。付け忘れると、サブパスに
+            公開した瞬間にデータだけ 404 になります。**HTML には出ないので、
+            リンクを辿る検査でも見つかりません**（実ブラウザで開いて、
+            飛んだ要求を見る必要があります）。 */}
         <DataList
           client:load
-          loader={{ url: "/works.json", method: "GET" }}
+          loader={{ url: withBase("/works.json"), method: "GET" }}
           columns={[
             { key: "title", primary: true },
             { key: "stack", badge: true },

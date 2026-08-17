@@ -117,34 +117,120 @@ try {
   must("入口の tarball を確かめられた", false, String(e).slice(0, 120));
 }
 
-/* --- 3.5. カタログとデモが見えるか ----------------------------------
+/* --- 3.5. サイト内のリンクが本当に辿れるか --------------------------
    ----------------------------------------------------------------
-   **HTML が 200 で返るだけでは足りません。** サブパス配信で `base` が
-   合っていないと、HTML は取れるのに **JS と CSS が 404 になり真っ白**に
-   なります。deploy 自体は成功するので、いちばん気づきにくい壊れ方です。
+   **v0.9b の判定は `.js` と `.css` しか見ていませんでした。**
+   その 2 つはバンドラが base 付きで出すので、**最初から壊れていない
+   部分だけを確かめていた**ことになります。手書きのリンクは一度も
+   見ていませんでした。
 
-   だから HTML の中から資材の URL を拾って、それも実際に取りに行きます。 */
-for (const [name, sub] of [["カタログ", "catalog"], ["デモ", "demo"]]) {
-  try {
-    const res = await fetch(`${base}/${sub}/`);
-    const html = res.ok ? await res.text() : "";
-    must(`${name}（/${sub}/）が 200 で取れる`, res.ok, `HTTP ${res.status}`);
+   実際、公開したデモは全部のページ間リンクが 404 でした
+   （`/WebTemplate/demo/about/` にあるのに `/about/` を指していた）。
+   判定は緑のままです。
 
-    const refs = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)].map((m) => m[1]);
-    const missing = [];
-    for (const r of refs.slice(0, 12)) {
-      const url = r.startsWith("http") ? r : new URL(r, `${base}/${sub}/`).href;
-      const ok = await fetch(url).then((x) => x.ok, () => false);
-      if (!ok) missing.push(r);
+   **拡張子で絞りません。** ページに出てくる同一サイトの参照を全部辿ります。
+   さらに、HTML に現れない要求（`fetch` されるデータ）は
+   **実ブラウザで開いて拾います**。works.json はまさにそれで、
+   HTML を読むだけでは永久に見つかりません。
+   ---------------------------------------------------------------- */
+async function crawl(entry, label) {
+  const origin = new URL(entry).origin;
+  const seen = new Set();
+  const broken = [];
+  const queue = [entry];
+  /** 辿る上限。無限に広がらないための歯止めです（超えたら印字します）。 */
+  const LIMIT = 40;
+
+  while (queue.length && seen.size < LIMIT) {
+    const url = queue.shift();
+    if (seen.has(url)) continue;
+    seen.add(url);
+
+    let res;
+    try {
+      res = await fetch(url);
+    } catch (e) {
+      broken.push(`${url} → ${String(e).slice(0, 40)}`);
+      continue;
     }
-    must(
-      `    ${name}の JS / CSS が取れる（base の食い違いが無い）`,
-      refs.length > 0 && missing.length === 0,
-      missing.length ? `404: ${missing.slice(0, 2).join(", ")}` : `${refs.length} 件`,
-    );
-  } catch (e) {
-    must(`${name}（/${sub}/）が見える`, false, String(e).slice(0, 120));
+    if (!res.ok) {
+      broken.push(`${url} → HTTP ${res.status}`);
+      continue;
+    }
+
+    const type = res.headers.get("content-type") ?? "";
+    if (!type.includes("html")) continue;
+    const html = await res.text();
+
+    for (const m of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
+      const raw = m[1];
+      // 外部・アンカー・mailto などは辿りません（こちらの責任範囲ではない）
+      if (/^(https?:)?\/\//.test(raw) && !raw.startsWith(origin)) continue;
+      if (/^(#|mailto:|tel:|data:|javascript:)/.test(raw)) continue;
+      let abs;
+      try {
+        abs = new URL(raw, url).href;
+      } catch {
+        continue;
+      }
+      if (!abs.startsWith(origin)) continue;
+      if (!seen.has(abs)) queue.push(abs);
+    }
   }
+
+  if (seen.size >= LIMIT) log(`${label}: ${LIMIT} 件で打ち切りました（全部は見ていません）`);
+  return { visited: seen.size, broken };
+}
+
+for (const [name, sub] of [["カタログ", "catalog"], ["デモ", "demo"]]) {
+  const entry = `${base}/${sub}/`;
+  const res = await fetch(entry).catch(() => null);
+  must(`${name}（/${sub}/）が 200 で取れる`, !!res?.ok, `HTTP ${res?.status ?? "接続できず"}`);
+  if (!res?.ok) continue;
+
+  const { visited, broken } = await crawl(entry, name);
+  must(
+    `    ${name}: サイト内の参照が全部辿れる（${visited} 件）`,
+    broken.length === 0,
+    broken.slice(0, 3).join(" / "),
+  );
+}
+
+/* --- 3.6. ページを開いたときに飛ぶ要求 -------------------------------
+   **HTML に出てこない URL があります。** `loader={{ url: "/works.json" }}`
+   のように、島が動き出してから fetch されるものです。
+   HTML を読むだけの検査では、これは永久に見つかりません。
+
+   実際にブラウザで開いて、**失敗した要求を拾います。** */
+try {
+  const { chromium } = await import("playwright");
+  const browser = await chromium.launch({
+    executablePath: process.env.CHROMIUM_PATH || undefined,
+  });
+  try {
+    for (const [name, sub] of [["カタログ", "catalog"], ["デモ", "demo"]]) {
+      const page = await browser.newPage();
+      const failed = [];
+      page.on("response", (r) => {
+        if (r.status() >= 400) failed.push(`${r.url()} → HTTP ${r.status()}`);
+      });
+      page.on("requestfailed", (r) => failed.push(`${r.url()} → ${r.failure()?.errorText}`));
+      await page.goto(`${base}/${sub}/`, { waitUntil: "networkidle", timeout: 30000 });
+      // 島が動き出してから飛ぶものがあるので、少し待ちます
+      await page.waitForTimeout(1500);
+      await page.close();
+      must(
+        `    ${name}: 開いたときに失敗する要求が無い`,
+        failed.length === 0,
+        failed.slice(0, 3).join(" / "),
+      );
+    }
+  } finally {
+    await browser.close();
+  }
+} catch (e) {
+  // 黙って飛ばすと「確かめたつもり」になります。理由を出します。
+  log(`実ブラウザでの確認を飛ばしました: ${String(e).slice(0, 120)}`);
 }
 
 /* --- 4. 存在しない URL のステータス --------------------------------- */

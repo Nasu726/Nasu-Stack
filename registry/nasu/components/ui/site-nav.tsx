@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { PageBlock } from "@/components/ui/layout";
+import { withBase } from "@/lib/base";
 
 /**
  * SiteNav — サイトのヘッダとナビゲーション
@@ -87,7 +88,12 @@ export interface SiteHeaderProps {
 function isCurrent(href: string, currentPath?: string) {
   if (!currentPath) return false;
   const norm = (s: string) => (s.length > 1 ? s.replace(/\/$/, "") : s);
-  return norm(href) === norm(currentPath);
+  /* **比べる前に base を付けます。** `currentPath` は
+     `Astro.url.pathname` で、公開先の階層を含んでいます（`/my-site/about/`）。
+     一方 `href` は利用者が書いた `/about/` です。そのまま比べると、
+     サブパスに公開した瞬間に「いまここ」が一度も一致しなくなります
+     （色も aria-current も出ません）。 */
+  return norm(withBase(href)) === norm(currentPath);
 }
 
 export function SiteHeader({
@@ -140,7 +146,7 @@ export function SiteHeader({
               {brandHref ? (
                 // 文字の高さのままだと押しづらいので、ここでも 44px 確保します
                 <a
-                  href={brandHref}
+                  href={withBase(brandHref)}
                   className="inline-flex wt-tap items-center rounded-md hover:text-primary"
                 >
                   {brand}
@@ -229,7 +235,10 @@ export function NavLink({
 }) {
   return (
     <a
-      href={item.href}
+      /* **base は部品側で付けます。** 利用者は `/about/` と書けば済みます。
+         書き忘れても手元では壊れないので、覚えてもらう形にすると必ず漏れます
+         （理由は @/lib/base のコメント）。 */
+      href={withBase(item.href)}
       onClick={onClick}
       // 「いまここ」を伝える正式な方法です。色だけで示すと、
       // 読み上げの利用者と、色を見分けにくい人には届きません。

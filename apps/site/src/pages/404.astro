@@ -7,6 +7,7 @@ import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { PageBlock, Stack, Inline } from "@/components/ui/layout";
 
 
+import { withBase } from "@/lib/base";
 ---
 
 {/* 見つからないページは検索結果に載せません */}
@@ -28,13 +29,13 @@ import { PageBlock, Stack, Inline } from "@/components/ui/layout";
       </p>
       <Inline space="sm">
         <a
-          href="/"
+          href={withBase("/")}
           class="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-fg"
         >
           ホームへ
         </a>
         <a
-          href="/blog"
+          href={withBase("/blog/")}
           class="inline-flex min-h-11 items-center rounded-md border border-border px-4 text-sm"
         >
           記事一覧へ
