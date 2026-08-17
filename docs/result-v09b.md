@@ -216,6 +216,25 @@ percent-encoding が 1 回来るとプロセスごと落ちます。400 を返�
 
 ---
 
+### sharp の脆弱性（Dependabot からの報告）
+
+Dependabot alerts を有効化した直後に high が 1 件届きました。
+`sharp@0.34.5`（0.34 系に修正版は無し）。
+
+`sharp` は astro の optionalDependency です。このリポジトリも生成物も
+`passthroughImageService()` を使っていて **sharp を一度も呼びません。**
+それでも入っている以上は供給連鎖の一部なので、`^0.35.3` に寄せました。
+
+- リポジトリ … `pnpm-workspace.yaml` の `overrides`
+- 生成物 … astro の scaffold の `overrides`（npm）
+
+**両方直す必要がありました。** リポジトリだけ直しても、利用者が
+`npm install` した瞬間に同じものが入ります。生成物で実測して
+`found 0 vulnerabilities` と 0.35.3 を確認しています。
+
+**これが Dependabot を入れた理由そのものです。** Renovate は版を上げる
+仕組みで、脆弱性を知らせる仕組みではありません。役割が違います。
+
 ## 数字
 
 | | v0.9a | v0.9b |
