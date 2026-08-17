@@ -482,8 +482,31 @@ node src/scripts/check-responsive.mjs ${preview}/
 \`npm run build\` で \`dist/\` ができます。**この中身がサイトの全部です。**
 ${astro ? "静的" : "静的"}なファイルの集まりなので、置くだけで公開できます。
 
-無料で使える置き場所の例: Cloudflare Pages / GitHub Pages / Netlify / Vercel。
+無料で使える置き場所の例: Cloudflare Pages / Netlify / Vercel。
 どれも「GitHub のリポジトリを繋ぐと、push するたびに自動で公開される」形にできます。
+**この 3 つは、アドレスの一番上（\`https://あなたの名前.pages.dev/\`）に置かれます。**
+それなら追加の設定は要りません。
+
+### GitHub Pages に置くときだけ、1 つ設定が要ります
+
+GitHub Pages はリポジトリ名がアドレスに入ります。
+
+\`\`\`
+https://あなたの名前.github.io/リポジトリ名/
+\`\`\`
+
+**この形だと、設定を足さないと真っ白な画面になります。** ページの HTML は
+出るのに、見た目と動きを作っているファイルの置き場所がずれて、
+全部 404 になるためです。公開そのものは成功するので、いちばん気づきにくい形です。
+
+${astro ? "\`astro.config.mjs\`" : "\`vite.config.ts\`"} に 1 行足してください。
+
+\`\`\`js
+${astro ? `site: "https://あなたの名前.github.io",
+base: "/リポジトリ名/",` : `base: "/リポジトリ名/",`}
+\`\`\`
+
+（WebTemplate 自身も GitHub Pages で公開していて、同じ設定をしています）
 
 ${astro ? `公開先が決まったら、\`astro.config.mjs\` の \`site\` をそのアドレスにしてください。
 検索エンジンに渡すページ一覧（\`sitemap.xml\`）と購読用のフィード（\`rss.xml\`）が、

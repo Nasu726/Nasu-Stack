@@ -98,7 +98,40 @@ fs.writeFileSync(`${tgz}.sha256`, `${sha}  create-webtemplate.tgz\n`, "utf8");
 log(`入口: create-webtemplate.tgz (${(fs.statSync(tgz).size / 1024) | 0} KB)`);
 log(`sha256: ${sha}`);
 
-/* --- 3. ページ ------------------------------------------------------ */
+/* --- 3. カタログとデモ ---------------------------------------------
+ * ----------------------------------------------------------------
+ * **v0.9a まで、どちらも一度も公開されていませんでした。**
+ * 公開されていたのはレジストリの JSON と tarball とリンク一覧だけで、
+ * 利用者は「何がもらえるのか」を打つ前に判断できませんでした。
+ *
+ * サブパス配信なので `base` を渡してビルドし直します。
+ * `base` が合っていないと HTML は出るのに JS と CSS が 404 になり、
+ * **真っ白な画面**になります（deploy 自体は成功するので気づきにくい）。
+ * ---------------------------------------------------------------- */
+const basePath = new URL(PUBLIC_BASE).pathname.replace(/\/$/, "");
+
+function buildApp(filter, dir, dest, extraEnv) {
+  const b = pnpm(["--filter", filter, "build"]);
+  execFileSync(b.cmd, b.args, {
+    cwd: root,
+    stdio: "inherit",
+    env: { ...process.env, ...extraEnv },
+    ...b.options,
+  });
+  fs.cpSync(path.join(root, dir), path.join(pub, dest), { recursive: true });
+  log(`${dest}/ … ${filter} を base=${extraEnv.PUBLIC_BASE} で組み立てました`);
+}
+
+buildApp("playground", "apps/playground/dist", "catalog", {
+  PUBLIC_BASE: `${basePath}/catalog/`,
+});
+buildApp("site", "apps/site/dist", "demo", {
+  PUBLIC_BASE: `${basePath}/demo/`,
+  // 絶対 URL（canonical / OGP / sitemap）の起点も公開先に合わせます
+  PUBLIC_SITE: PUBLIC_BASE,
+});
+
+/* --- 4. ページ ------------------------------------------------------ */
 const items = JSON.parse(
   fs.readFileSync(path.join(pub, "r", "index.json"), "utf8"),
 ).items;
@@ -142,6 +175,12 @@ fs.writeFileSync(
 <p>先に <code>components.json</code> へ 1 行足してください。これが無いと部品の依存を辿れません。</p>
 <pre><code>{ "registries": { "@nasu": "${REGISTRY_URL}" } }</code></pre>
 <pre><code>npx shadcn@${SHADCN} add @nasu/action-button</code></pre>
+
+<h2>見る</h2>
+<ul>
+  <li><a href="./catalog/">部品のカタログ</a> — ${items.length} 個の部品を、実際に触って確かめられます</li>
+  <li><a href="./demo/">デモサイト</a> — この部品で組んだサイトがどう見えるか（ブログ・LP・問い合わせ）</li>
+</ul>
 
 <h2>配っている部品（${items.length}）</h2>
 <ul>

@@ -39,11 +39,17 @@
 
 - `main` … README のみ
 - `claude/build-v0.1-v0.8` … v0.1〜v0.8。PR が開いています
-- `claude/v0.9` … **v0.9a（配布）。ここが最新です。** PR が開いています
+- `claude/v0.9` … v0.9a（配布）。**main にマージ済み**
+- `claude/v0.9b` … **v0.9b（実害の修正と検査の作り直し）。ここが最新です**
 
-**まだ公開していません。** `pages.yml` は `main` への push でしか動かないので、
-マージするまで何も配られません。公開前にやることは
-[`docs/security.md`](security.md) §3 と `ROADMAP.md` の v0.9a にあります。
+**公開済みです。** https://nasu726.github.io/WebTemplate/
+（`/catalog/` に部品のカタログ、`/demo/` にデモサイト、`/r/*.json` にレジストリ）
+
+外部 AI から公開停止（HOLD）を含むレビューを受けました。全文は
+[`docs/review-external-v09a.md`](review-external-v09a.md)、こちらの検証結果と
+対応方針は [`docs/plan-v09b.md`](plan-v09b.md) にあります。
+**最重要の P0 判定は誤報でした**が、その背後の指摘（利用者の経路が
+リリース判定の外にある）は正しく、v0.9b で直しています。
 
 ### 過去の CI の失敗（記録）
 
@@ -57,8 +63,8 @@
 
 ```bash
 pnpm install
-pnpm verify           # 20 工程。型・ビルド・配布物・実ブラウザ
-pnpm verify:create    # 入口の検査 49 判定。生成物に本物の CLI で部品を足すところまで
+pnpm verify           # 22 工程（独立したものは並列。約 170 秒）。型・ビルド・配布物・実ブラウザ
+pnpm verify:create    # 入口の検査 56 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 ```
 

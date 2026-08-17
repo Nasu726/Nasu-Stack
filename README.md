@@ -6,6 +6,9 @@
 npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site
 ```
 
+**先に見る:** [部品のカタログ](https://nasu726.github.io/WebTemplate/catalog/)（38 個を実際に触れます） /
+[デモサイト](https://nasu726.github.io/WebTemplate/demo/)（この部品で組んだサイト）
+
 全体像と設計の理由は [docs/overview.md](docs/overview.md) にまとめてあります。
 
 > **npm には publish していません。** 個人的なプロジェクトとして続けるので、
@@ -260,13 +263,17 @@ npm run check -- http://localhost:5173
 ```
 
 ```bash
-npx shadcn@latest add @nasu/action-button
+npx shadcn@4.17.0 add @nasu/action-button
 ```
+
+> **版を固定しているのはわざとです。** 最新版をそのまま実行すると、
+> lockfile も待機期間も素通りします。ここに書いてあるのは、こちらの検査が
+> 実際に通した版です（`package.json` の devDependencies が唯一の定義）。
 
 依存する `use-action` / `spinner` / `utils` / `tokens` は自動で一緒に入ります
 （`action-button` なら 10 ファイル）。
 
-URL を直に指定する形（`npx shadcn@latest add https://…/r/action-button.json`）
+URL を直に指定する形（`npx shadcn@4.17.0 add https://…/r/action-button.json`）
 でも**その部品 1 つは**入りますが、**依存を辿るところで失敗します。**
 `registries` の宣言が必要なのはそのためです。
 
