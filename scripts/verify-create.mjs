@@ -13,7 +13,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { pnpm, stopTree } from "./_proc.mjs";
+import { npm, pnpm, stopTree } from "./_proc.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(root, "packages", "create-webtemplate", "index.mjs");
@@ -310,9 +310,12 @@ if (!FULL) {
   log("install / build / 実ブラウザ の検査は --full を付けたときだけ走ります");
   log("（pnpm verify:create で実行されます）");
 } else {
-  // pnpm の起動方法は scripts/_proc.mjs が唯一の定義です（理由もあちら）。
+  /* **利用者が打つのは npm です。** 生成物の README も CLI の出力も
+     `npm install` と書いています。pnpm で確かめても、その経路を
+     確かめたことになりません（外部レビュー P1-06b）。
+     起動の仕方は scripts/_proc.mjs が唯一の定義です。 */
   const run = (dir, args) => {
-    const p = pnpm(args);
+    const p = npm(args);
     try {
       execFileSync(p.cmd, p.args, {
         cwd: dir,
@@ -377,13 +380,16 @@ if (!FULL) {
   }
 
   for (const [name, kind, port, buildArgs, checkArgs] of [
-    ["my-site", "astro", 4598, ["exec", "astro", "build"], ["exec", "astro", "check"]],
-    ["my-app", "vite", 4599, ["exec", "vite", "build"], ["exec", "tsc", "--noEmit"]],
+    // build は `npm run build`（利用者が打つ形）。型検査は npm exec で直に。
+    ["my-site", "astro", 4598, ["run", "build"], ["exec", "--", "astro", "check"]],
+    ["my-app", "vite", 4599, ["run", "build"], ["exec", "--", "tsc", "--noEmit"]],
   ]) {
     const dir = path.join(work, name);
-    log(`${kind}: pnpm install …`);
-    const i = run(dir, ["install", "--ignore-workspace"]);
-    must(`8. ${kind}: pnpm install が通る`, i.ok, i.out ?? "");
+    log(`${kind}: npm install …`);
+    // 利用者が打つのと同じ 1 行。--ignore-workspace のような
+    // こちら側の都合は入れません。
+    const i = run(dir, ["install"]);
+    must(`8. ${kind}: npm install が通る`, i.ok, i.out ?? "");
     if (!i.ok) continue;
 
     /* --- 8.2. 配っている依存に、既知の脆弱性が無いか ----------------
@@ -393,10 +399,10 @@ if (!FULL) {
        瞬間に警告が出ますが、**こちらは何も知らないままです。**
        版を固定するなら、追随する仕組みと対で持つ必要があります。 */
     {
-      const a = run(dir, ["audit", "--audit-level", "high", "--prod"]);
+      const a = run(dir, ["audit", "--audit-level", "high", "--omit", "dev"]);
       if (a.ok) {
         must(`8.2 ${kind}: 配る依存に high 以上の脆弱性が無い`, true);
-      } else if (/ERR_PNPM_AUDIT|ENOTFOUND|ECONNREFUSED|fetch failed/i.test(a.out ?? "")) {
+      } else if (/ENOTFOUND|ECONNREFUSED|fetch failed|ENETUNREACH|EAI_AGAIN/i.test(a.out ?? "")) {
         // 黙って通すと「調べたつもり」になります。理由を出して飛ばします。
         log(`${kind}: 脆弱性の照会に行けませんでした。この判定は飛ばします`);
       } else {

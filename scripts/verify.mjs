@@ -93,6 +93,11 @@ step("環境に張り付いた絶対パス", "node", ["scripts/check-portability
 // 危険なコマンドが復活していないか。**README を直してもコードに残ります。**
 // とくに CLI のエラーメッセージは、詰まっている人が一番信じる場所です。
 step("書いてはいけない文字列", "node", ["scripts/check-forbidden.mjs"]);
+/* 宣言した依存が本当に npm から取れるか。**手元の node_modules を見ません。**
+   外部レビューで「astro の版が存在しない」と公開停止の判定を受けたとき、
+   誤報だったにも関わらず**こちらは機械で否定できませんでした。**
+   気づくのは、まっさらな環境の利用者が install で止まったときです。 */
+step("生成物の依存が registry で解決できる", "node", ["scripts/check-scaffold-deps.mjs"]);
 // 純粋な関数の単体検査。ブラウザを立てないので速く、
 // `&` ひとつでフィードが壊れる類の間違いはここでしか捕まえられません。
 step("単体: SEO / フィードの組み立て", "node", ["scripts/verify-seo-unit.mjs"]);

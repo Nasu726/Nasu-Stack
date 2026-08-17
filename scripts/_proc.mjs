@@ -36,6 +36,8 @@
  * `check-portability.mjs` と同じ種類の間違いです。
  * ---------------------------------------------------------------- */
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import process from "node:process";
 
 const isWindows = process.platform === "win32";
@@ -76,31 +78,51 @@ export function pnpm(args) {
 }
 
 /**
- * 立てたサーバを、**子や孫ごと**止めます。
+ * npm の呼び出しを組み立てます。**利用者が打つのは npm です。**
  *
  * ----------------------------------------------------------------
- * なぜ `child.kill()` では足りないのか
+ * なぜ pnpm で代用してはいけないのか
  * ----------------------------------------------------------------
- * `pnpm exec vite preview` は 2 段になっています（pnpm → vite）。
- * `child.kill()` が殺すのは**直下の 1 つだけ**なので、
- * 実際に配信している孫が生き残ります。
+ * 生成物の README も CLI の出力も `npm install` と書いています。
+ * それなのに検査は pnpm で回していました。**別の道具を確かめても、
+ * 利用者の経路を確かめたことにはなりません。**
  *
- * POSIX では `detached: true` でプロセスグループを作り、
- * 負の PID（= グループ全体）へ送ることで解決できます。
- * **Windows にプロセスグループはありません。** `taskkill /T` で
- * ツリーを辿ってもらう必要があります。
+ * 依存の解決も、peer の扱いも、lockfile の作り方も違います。
+ * 外部レビューで「利用者が最初に踏む経路が CI の盲点になっている」と
+ * 指摘されたのは、まさにこの差のことでした（P1-06b）。
  *
- * 止め損なうと、次がこうなります。
- *
- *   - 生き残ったサーバが temp のファイルを掴んだままになり、
- *     後片付けの `rmSync` が **EPERM** で落ちる（Windows はファイルを掴む）
- *   - 判定はすべて緑なのに、終了コードだけ 1 になる。
- *     **原因が判定の一覧に出てこない**ので、いちばん分かりにくい落ち方です
- *
- * v0.9a で実際に踏みました。`verify.mjs` は taskkill を使っていて正しく、
- * `verify-create.mjs` は `kill()` のままでした。**同じ概念が 2 実装あって、
- * 片方だけ間違っている**——このリポジトリのバグの型そのものです。
+ * ----------------------------------------------------------------
+ * 起動の仕方
+ * ----------------------------------------------------------------
+ * Windows の `npm` は `npm.cmd`（バッチ）なので、pnpm と同じ穴があります
+ * （上の pnpm() のコメント参照）。npm は node の隣に JS の実体があるので、
+ * それを直接動かします。バッチを経由しないので shell が要りません。
  */
+export function npm(args) {
+  const selfJs = path.join(
+    path.dirname(process.execPath),
+    "node_modules",
+    "npm",
+    "bin",
+    "npm-cli.js",
+  );
+  if (existsSync(selfJs)) {
+    return { cmd: process.execPath, args: [selfJs, ...args], options: {} };
+  }
+
+  // 退路。理由と危険は pnpm() 側と同じです。
+  if (isWindows) {
+    const bad = args.find((a) => /[\s&|<>^"']/.test(String(a)));
+    if (bad !== undefined) {
+      throw new Error(
+        `shell 経由では安全に渡せない引数があります: ${JSON.stringify(bad)}`,
+      );
+    }
+    return { cmd: "npm.cmd", args, options: { shell: true } };
+  }
+  return { cmd: "npm", args, options: {} };
+}
+
 /**
  * そのポートで待っているプロセスを止めます。
  *
@@ -149,6 +171,32 @@ export function stopPort(port) {
   }
 }
 
+/**
+ * 立てたサーバを、**子や孫ごと**止めます。
+ *
+ * ----------------------------------------------------------------
+ * なぜ `child.kill()` では足りないのか
+ * ----------------------------------------------------------------
+ * `pnpm exec vite preview` は 2 段になっています（pnpm → vite）。
+ * `child.kill()` が殺すのは**直下の 1 つだけ**なので、
+ * 実際に配信している孫が生き残ります。
+ *
+ * POSIX では `detached: true` でプロセスグループを作り、
+ * 負の PID（= グループ全体）へ送ることで解決できます。
+ * **Windows にプロセスグループはありません。** `taskkill /T` で
+ * ツリーを辿ってもらう必要があります。
+ *
+ * 止め損なうと、次がこうなります。
+ *
+ *   - 生き残ったサーバが temp のファイルを掴んだままになり、
+ *     後片付けの `rmSync` が **EPERM** で落ちる（Windows はファイルを掴む）
+ *   - 判定はすべて緑なのに、終了コードだけ 1 になる。
+ *     **原因が判定の一覧に出てこない**ので、いちばん分かりにくい落ち方です
+ *
+ * v0.9a で実際に踏みました。`verify.mjs` は taskkill を使っていて正しく、
+ * `verify-create.mjs` は `kill()` のままでした。**同じ概念が 2 実装あって、
+ * 片方だけ間違っている**——このリポジトリのバグの型そのものです。
+ */
 export function stopTree(child) {
   if (!child?.pid) return;
   try {
