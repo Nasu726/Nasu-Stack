@@ -5,7 +5,7 @@
  *   node scripts/build-registry.mjs
  *
  * 生成物をどこかに静的ホスティングすれば、利用者は
- *   npx shadcn@latest add https://<host>/r/action-button.json
+ *   npx shadcn@<検証済みの版> add @nasu/action-button
  * でインストールできます。
  */
 import { readFile, writeFile, mkdir, rm } from "node:fs/promises";

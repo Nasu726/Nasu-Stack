@@ -90,6 +90,9 @@ step("配布の依存漏れ", "node", ["scripts/check-registry-deps.mjs"]);
 // この種の間違いが「判定は全部通っているのにスクリプトが死ぬ」という
 // 分かりにくい落ち方をするからです。先に名指しで落とします。
 step("環境に張り付いた絶対パス", "node", ["scripts/check-portability.mjs"]);
+// 危険なコマンドが復活していないか。**README を直してもコードに残ります。**
+// とくに CLI のエラーメッセージは、詰まっている人が一番信じる場所です。
+step("書いてはいけない文字列", "node", ["scripts/check-forbidden.mjs"]);
 // 純粋な関数の単体検査。ブラウザを立てないので速く、
 // `&` ひとつでフィードが壊れる類の間違いはここでしか捕まえられません。
 step("単体: SEO / フィードの組み立て", "node", ["scripts/verify-seo-unit.mjs"]);

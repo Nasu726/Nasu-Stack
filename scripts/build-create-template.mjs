@@ -108,6 +108,26 @@ function copyScaffold(kind, dest) {
 }
 
 /**
+ * 検証済みの道具の版を、生成物に書き残します。
+ *
+ * ----------------------------------------------------------------
+ * なぜ `@latest` を案内しないのか
+ * ----------------------------------------------------------------
+ * 生成物の HowToUse は最新版をそのまま実行する形で書いていました。
+ * 一方こちらの検査は、**わざと latest を避けて**リポジトリに固定した版を
+ * 使っています（lockfile と minimumReleaseAge を素通りするため）。
+ *
+ * **検査側が避けている危険を、利用者にそのまま渡していました。**
+ * こちらが確かめた版を、そのまま利用者にも使ってもらいます。
+ *
+ * 版は package.json の devDependencies から取ります。**書き写しません。**
+ */
+function testedShadcnVersion() {
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+  return (pkg.devDependencies?.shadcn ?? "").replace(/^[\^~]/, "");
+}
+
+/**
  * shadcn CLI の設定を置きます。
  *
  * ----------------------------------------------------------------
@@ -170,6 +190,14 @@ for (const kind of ["astro", "vite"]) {
   fs.mkdirSync(dest, { recursive: true });
   copyScaffold(kind, dest);
   writeComponentsJson(kind, dest);
+  /* 生成物の package.json に、検証済みの版を残します。
+     利用者が「何で試された構成なのか」を後から見られます。 */
+  {
+    const p = path.join(dest, "package.json");
+    const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
+    pkg.webtemplate = { shadcn: testedShadcnVersion() };
+    fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+  }
   const r = copyItems([...STARTER.common, ...STARTER[kind]], path.join(dest, "src"));
   report.push({ kind, ...r });
 }

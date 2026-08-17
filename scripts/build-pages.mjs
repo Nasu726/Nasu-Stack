@@ -32,6 +32,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pub = path.join(root, "public");
 const cli = path.join(root, "packages", "create-webtemplate");
 
+/** 検証済みの shadcn の版。最新版は案内しません（理由は build-create-template.mjs）。 */
+const SHADCN = (
+  JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"))
+    .devDependencies?.shadcn ?? ""
+).replace(/^[\^~]/, "");
+
 const run = (args, cwd = root) =>
   execFileSync(process.execPath, args, { cwd, stdio: "inherit" });
 const log = (...a) => console.log("·", ...a);
@@ -135,7 +141,7 @@ fs.writeFileSync(
 <h2>いまあるプロジェクトに部品だけ入れる</h2>
 <p>先に <code>components.json</code> へ 1 行足してください。これが無いと部品の依存を辿れません。</p>
 <pre><code>{ "registries": { "@nasu": "${REGISTRY_URL}" } }</code></pre>
-<pre><code>npx shadcn@latest add @nasu/action-button</code></pre>
+<pre><code>npx shadcn@${SHADCN} add @nasu/action-button</code></pre>
 
 <h2>配っている部品（${items.length}）</h2>
 <ul>

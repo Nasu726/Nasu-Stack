@@ -202,6 +202,52 @@ for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
   must(`    ${kind}: README から HowToUse.md へ辿れる`, readme.includes("HowToUse.md"));
 }
 
+/* ===== 7.42. 秘密の値が commit されない形になっているか ============ */
+/**
+ * このテンプレートはフォームの送信先など環境変数を扱う導線を持っています。
+ * **初めての人ほど `git add .` を打ちます。** 一度 git の履歴に入った鍵は、
+ * ファイルを消しても消えません。作り直しが必要になります。
+ */
+for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
+  const gi = fs.readFileSync(path.join(work, name, ".gitignore"), "utf8");
+  const ok = /^\.env$/m.test(gi) && /^\.env\.\*$/m.test(gi) && /^!\.env\.example$/m.test(gi);
+  must(`7.42 ${kind}: .gitignore が .env を無視する`, ok, ok ? "" : gi.slice(0, 80));
+  must(
+    `     ${kind}: .env.example がある`,
+    fs.existsSync(path.join(work, name, ".env.example")),
+  );
+  // 生成物が要求する Node を、機械が読める形でも書いておく
+  const pkg = JSON.parse(fs.readFileSync(path.join(work, name, "package.json"), "utf8"));
+  must(
+    `     ${kind}: engines.node が宣言されている`,
+    typeof pkg.engines?.node === "string" && pkg.engines.node.includes("22.12"),
+    pkg.engines?.node ?? "(無し)",
+  );
+}
+
+/* ===== 7.43. 文書のトークンが実装と一致するか ====================== */
+/**
+ * v0.9a の HowToUse には `3xs` と書いてありました。**実在しません**
+ * （実体は `none`）。文書が実装と食い違うと、初心者は「書いたのに効かない」を
+ * 踏みます。**エラーにならないので、いちばん切り分けにくい種類です。**
+ */
+{
+  const css = fs.readFileSync(
+    path.join(work, "my-site", "src", "styles", "tokens.css"),
+    "utf8",
+  );
+  const real = new Set([...css.matchAll(/--space-([a-z0-9]+):/g)].map((m) => m[1]));
+  const md = fs.readFileSync(path.join(work, "my-site", "HowToUse.md"), "utf8");
+  const line = md.split(/\r?\n/).find((l) => l.startsWith("小さいほうから")) ?? "";
+  const documented = [...line.matchAll(/`([a-z0-9]+)`/g)].map((m) => m[1]);
+  const unknown = documented.filter((t) => !real.has(t));
+  must(
+    "7.43 HowToUse の余白トークンが実装と一致する",
+    documented.length > 0 && unknown.length === 0,
+    unknown.length ? `実装に無い: ${unknown.join(", ")}` : `${documented.length} 個`,
+  );
+}
+
 /* ===== 7.45. package.json の scripts が実在するファイルを指すか ==== */
 /**
  * `npm run check` は `scripts/check-responsive.mjs` を指していましたが、
