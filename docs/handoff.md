@@ -39,11 +39,17 @@
 
 - `main` … README のみ
 - `claude/build-v0.1-v0.8` … v0.1〜v0.8。PR が開いています
-- `claude/v0.9` … **v0.9a（配布）。ここが最新です。** PR が開いています
+- `claude/v0.9` … v0.9a（配布）。**main にマージ済み**
+- `claude/v0.9b` … **v0.9b（実害の修正と検査の作り直し）。ここが最新です**
 
-**まだ公開していません。** `pages.yml` は `main` への push でしか動かないので、
-マージするまで何も配られません。公開前にやることは
-[`docs/security.md`](security.md) §3 と `ROADMAP.md` の v0.9a にあります。
+**公開済みです。** https://nasu726.github.io/WebTemplate/
+（`/catalog/` に部品のカタログ、`/demo/` にデモサイト、`/r/*.json` にレジストリ）
+
+外部 AI から公開停止（HOLD）を含むレビューを受けました。全文は
+[`docs/review-external-v09a.md`](review-external-v09a.md)、こちらの検証結果と
+対応方針は [`docs/plan-v09b.md`](plan-v09b.md) にあります。
+**最重要の P0 判定は誤報でした**が、その背後の指摘（利用者の経路が
+リリース判定の外にある）は正しく、v0.9b で直しています。
 
 ### 過去の CI の失敗（記録）
 
@@ -57,8 +63,8 @@
 
 ```bash
 pnpm install
-pnpm verify           # 20 工程。型・ビルド・配布物・実ブラウザ
-pnpm verify:create    # 入口の検査 49 判定。生成物に本物の CLI で部品を足すところまで
+pnpm verify           # 22 工程（独立したものは並列。約 170 秒）。型・ビルド・配布物・実ブラウザ
+pnpm verify:create    # 入口の検査 56 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 ```
 
@@ -109,6 +115,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
   器を広くして中の本文にだけ幅を付けた画面は、**全部緑のまま通ります**
 - **利用者として一度使ってみてください。** 部品側の検査が全部緑でも、
   生成物を触ると詰まります。v0.9a では 3 件 + 報告 12 件が出ました
+- **利用者が打つ道具で検査してください。** 生成物の README は `npm install` と
+  書いているのに、検査は pnpm で回していました。**別の道具を確かめても、
+  利用者の経路を確かめたことになりません**（v0.9b で直しました）
+- **手元の node_modules を見ないでください。** 宣言した依存が間違っていても
+  手元では気づけません。registry へ実際に問い合わせます
 - **検査に、色や文字の「表記」を書かないでください。** `/rgba?\(/` のような
   判定は、道具の版が上がった日に**部品は無事なのに赤くなります**。
   直すところが無いのに赤いのは、いちばん質の悪い赤です

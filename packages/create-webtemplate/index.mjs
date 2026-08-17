@@ -3,19 +3,65 @@
  * create-webtemplate — 動くところから始める
  * ================================================================
  *
- *   npx create-webtemplate my-site
- *   npx create-webtemplate my-site --template astro --yes
+ *   npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site
+ *   npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site --template astro --yes
  *
  * 部品をいくら揃えても、**始められなければ届きません。**
  * ここが「誰でも簡単に作れる」への最後の一段です。
+ *
+ * ----------------------------------------------------------------
+ * 短い形は、どこにも書きません
+ * ----------------------------------------------------------------
+ * npm には publish していないので、`create-webtemplate` という名前は
+ * **空いています。**
+ * 第三者が取れば、その名前を打った人には他人のコードが動きます。
+ * **とくにまずいのは、エラー時に CLI 自身が危険なコマンドを教えることです。**
+ * README が安全でも、詰まった人はエラーメッセージの方を信じます。
+ * 機械で見張っています（scripts/check-forbidden.mjs）。
  */
 import fs from "node:fs";
 import path from "node:path";
+import process from "node:process";
 import readline from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATES = path.join(here, "template");
+
+/**
+ * 生成物が要求する Node のバージョン。**ここが唯一の定義です。**
+ *
+ * astro 7 が `>=22.12.0`、vite 8 が `^20.19.0 || >=22.12.0` を要求します。
+ * 両方に通る下限は 22.12.0 です。
+ *
+ * **CLI だけ動いて、作ったものが動かないのが最悪の形**なので、
+ * 生成する前に見ます。生成してから `npm install` で
+ * EBADENGINE を見せられても、Web が初めての人には切り分けられません。
+ */
+export const MIN_NODE = "22.12.0";
+
+const cmp = (a, b) => {
+  const pa = String(a).replace(/^v/, "").split(".").map(Number);
+  const pb = String(b).split(".").map(Number);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] ?? 0) !== (pb[i] ?? 0)) return (pa[i] ?? 0) - (pb[i] ?? 0);
+  }
+  return 0;
+};
+
+/** 足りなければ理由と直し方を出して止めます。 */
+export function checkNodeVersion(current = process.version) {
+  if (cmp(current, MIN_NODE) >= 0) return null;
+  return [
+    `Node.js が古いため、作ったものが動きません。`,
+    ``,
+    `  いま: ${current}`,
+    `  必要: v${MIN_NODE} 以上`,
+    ``,
+    `  https://nodejs.org/ から新しいものを入れてください。`,
+    `  （nvm を使っているなら: nvm install ${MIN_NODE} && nvm use ${MIN_NODE}）`,
+  ].join("\n");
+}
 
 const KINDS = [
   {
@@ -94,10 +140,48 @@ export function scaffold(kind, dest, projectName) {
 
   // .gitignore はテンプレートに置けません（npm publish で消えるため）。
   // ここで書き出します。
+  /* **`.env` を必ず無視します。**
+     このテンプレートはフォームの送信先など環境変数を扱う導線を持っています。
+     `git add .` で秘密の値が public リポジトリに入ると、ファイルを消しても
+     履歴からは消えません。**鍵の作り直しが必要になります。**
+     初めての人ほど `git add .` を打ちます。 */
   fs.writeFileSync(
     path.join(dest, ".gitignore"),
-    ["node_modules/", "dist/", ".astro/", ".DS_Store", "*.local", ""].join("\n"),
+    [
+      "node_modules/",
+      "dist/",
+      ".astro/",
+      ".DS_Store",
+      "*.local",
+      "",
+      "# 秘密の値。**絶対に commit しないでください。**",
+      ".env",
+      ".env.*",
+      "!.env.example",
+      "",
+    ].join("\n"),
   );
+
+  /* 何を置く場所なのかが分かるように、見本を置きます。
+     **ファイルがあるだけで置き場所が分かります。** */
+  fs.writeFileSync(
+    path.join(dest, ".env.example"),
+    [
+      "# ここに秘密の値を書きます。使うときは .env にコピーしてください。",
+      "# .env は git に入りません（.gitignore 済み）。",
+      "#",
+      "# ⚠️ 名前が PUBLIC_ / VITE_ で始まる値は **ブラウザに配られます。**",
+      "#    誰でも見られるので、鍵やパスワードを置かないでください。",
+      "#    秘密の値はサーバ側（送信先の Worker など）に置きます。",
+      "",
+      "# 例: フォームの送信先",
+      "# PUBLIC_CONTACT_ENDPOINT=https://example.workers.dev/contact",
+      "",
+    ].join("\n"),
+  );
+
+  // nvm などが読む、この雛型が想定している Node の版。
+  fs.writeFileSync(path.join(dest, ".nvmrc"), `${MIN_NODE}\n`);
 
   fs.writeFileSync(path.join(dest, "README.md"), readme(kind, projectName));
   /* 手順は**ファイルに残します。**
@@ -105,6 +189,44 @@ export function scaffold(kind, dest, projectName) {
      「さっき何て書いてあったっけ」を、スクロールを遡って探すことになります。 */
   fs.writeFileSync(path.join(dest, "HowToUse.md"), howToUse(kind, projectName));
   return true;
+}
+
+/**
+ * 余白の段階の名前。
+ *
+ * **手で書き写しません。** 一緒に配る tokens.css から読みます。
+ * v0.9a では `3xs` と書きましたが、実在するのは `none` でした。
+ * 文書が実装と食い違うと、初心者は「書いたのに効かない」を踏みます。
+ * **エラーにならないので、いちばん切り分けにくい種類です。**
+ */
+function spaceTokens(kind) {
+  try {
+    const css = fs.readFileSync(
+      path.join(TEMPLATES, kind, "src", "styles", "tokens.css"),
+      "utf8",
+    );
+    const names = [...css.matchAll(/--space-([a-z0-9]+):/g)].map((m) => m[1]);
+    return [...new Set(names)];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 検証済みの shadcn の版。**書き写しません。**
+ *
+ * `@latest` を案内すると、利用者は「その時点で publish されているもの」を
+ * 無条件に実行します。lockfile も待機期間も素通りするので、
+ * **こちらの検査が避けている危険を、そのまま渡すことになります。**
+ * 生成物の package.json に、確かめた版を書き残してあります。
+ */
+function shadcnVersion(kind) {
+  try {
+    const p = path.join(TEMPLATES, kind, "package.json");
+    return JSON.parse(fs.readFileSync(p, "utf8")).webtemplate?.shadcn ?? "";
+  } catch {
+    return "";
+  }
 }
 
 /**
@@ -222,7 +344,7 @@ ${astro ? "`src/layouts/Base.astro`" : "`index.html`"} の \`<html>\` に書き�
 <Stack space="lg">…</Stack>
 \`\`\`
 
-小さいほうから \`3xs\` \`2xs\` \`xs\` \`sm\` \`md\` \`lg\` \`xl\` \`2xl\` \`3xl\`。
+小さいほうから ${spaceTokens(kind).map((t) => `\`${t}\``).join(" ")}。
 **段階の外の値も書けます**（\`space="13px"\`）。段階は決まりではなく、既定値です。
 
 ### 並べ方を変える
@@ -281,7 +403,7 @@ import { ActionButton } from "@/components/ui/action-button";
 表・タブ・通知・ファイル選択などは、必要になってから足します。
 
 \`\`\`bash
-npx shadcn@latest add @nasu/data-table
+npx shadcn@${shadcnVersion(kind)} add @nasu/data-table
 \`\`\`
 
 **設定は済んでいるので、これだけです。** その部品が使う他の部品も一緒に入ります。
@@ -360,8 +482,31 @@ node src/scripts/check-responsive.mjs ${preview}/
 \`npm run build\` で \`dist/\` ができます。**この中身がサイトの全部です。**
 ${astro ? "静的" : "静的"}なファイルの集まりなので、置くだけで公開できます。
 
-無料で使える置き場所の例: Cloudflare Pages / GitHub Pages / Netlify / Vercel。
+無料で使える置き場所の例: Cloudflare Pages / Netlify / Vercel。
 どれも「GitHub のリポジトリを繋ぐと、push するたびに自動で公開される」形にできます。
+**この 3 つは、アドレスの一番上（\`https://あなたの名前.pages.dev/\`）に置かれます。**
+それなら追加の設定は要りません。
+
+### GitHub Pages に置くときだけ、1 つ設定が要ります
+
+GitHub Pages はリポジトリ名がアドレスに入ります。
+
+\`\`\`
+https://あなたの名前.github.io/リポジトリ名/
+\`\`\`
+
+**この形だと、設定を足さないと真っ白な画面になります。** ページの HTML は
+出るのに、見た目と動きを作っているファイルの置き場所がずれて、
+全部 404 になるためです。公開そのものは成功するので、いちばん気づきにくい形です。
+
+${astro ? "\`astro.config.mjs\`" : "\`vite.config.ts\`"} に 1 行足してください。
+
+\`\`\`js
+${astro ? `site: "https://あなたの名前.github.io",
+base: "/リポジトリ名/",` : `base: "/リポジトリ名/",`}
+\`\`\`
+
+（WebTemplate 自身も GitHub Pages で公開していて、同じ設定をしています）
 
 ${astro ? `公開先が決まったら、\`astro.config.mjs\` の \`site\` をそのアドレスにしてください。
 検索エンジンに渡すページ一覧（\`sitemap.xml\`）と購読用のフィード（\`rss.xml\`）が、
@@ -373,7 +518,7 @@ ${astro ? `公開先が決まったら、\`astro.config.mjs\` の \`site\` を�
 
 | 症状 | 見るところ |
 |---|---|
-| \`npm run dev\` が動かない | Node.js が 18 以上か（\`node -v\`）。\`npm install\` は済んでいるか |
+| \`npm run dev\` が動かない | Node.js が **${MIN_NODE} 以上**か（\`node -v\`）。\`npm install\` は済んでいるか |
 | 画面が真っ白 | ブラウザの開発者ツール（F12）の Console に赤い文字が出ていないか |
 | 部品を足せない | ネットに繋がっているか。\`components.json\` の \`registries\` の行が消えていないか |
 | 崩れている | 上の「スマホで崩れていないか確かめる」で数値を見る |
@@ -405,6 +550,16 @@ async function main() {
   console.log("  WebTemplate — 動くところから始めます");
   console.log("");
 
+  /* **作る前に Node を見ます。**
+     CLI 自体は古い Node でも動きますが、作ったものが動きません。
+     生成してから `npm install` で EBADENGINE を見せられても、
+     Web が初めての人には「自分が何か間違えた」としか読めません。 */
+  const nodeProblem = checkNodeVersion();
+  if (nodeProblem) {
+    console.error(`  ✗ ${nodeProblem.split("\n").join("\n  ")}`);
+    process.exit(2);
+  }
+
   // 対話できない環境（CI など）でも動く必要があります
   const interactive = process.stdin.isTTY && !args.yes;
   const rl = interactive
@@ -415,7 +570,10 @@ async function main() {
   if (!name && rl) name = (await rl.question("  プロジェクト名: ")).trim();
   if (!name) {
     console.error("  ✗ プロジェクト名を指定してください");
-    console.error("    例: npx create-webtemplate my-site");
+    /* **短い形は書きません。** `create-webtemplate` という名前は npm で
+       空いており、第三者が取れば任意のコードが動きます。
+       詰まっている人はエラーメッセージを一番信じるので、ここが一番危ない。 */
+    console.error("    さっき打ったコマンドの最後に、作りたい名前を足してください");
     rl?.close();
     process.exit(2);
   }

@@ -67,7 +67,18 @@ export function serveStatic(root, port, { basePath = "", spa = false } = {}) {
   const base = basePath.replace(/\/$/, "");
 
   const server = createServer(async (req, res) => {
-    let rel = decodeURIComponent((req.url ?? "/").split("?")[0]);
+    /* **decode は try の中で行います。**
+       壊れた percent-encoding（`/%`）が 1 回来ると decodeURIComponent が
+       投げ、**サーバのプロセスごと落ちます。** 検査中に落ちると、
+       原因が「接続できません」としてしか出ないので追いにくい。
+       Copilot の指摘（v0.9b）。 */
+    let rel;
+    try {
+      rel = decodeURIComponent((req.url ?? "/").split("?")[0]);
+    } catch {
+      res.writeHead(400, { "content-type": "text/plain; charset=utf-8" });
+      return void res.end("bad request");
+    }
     if (base && rel.startsWith(base)) rel = rel.slice(base.length) || "/";
 
     const target = path.join(dir, rel);

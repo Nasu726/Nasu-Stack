@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  callSafely,
   type Action,
   type ActionContext,
   ActionError,
@@ -120,89 +121,124 @@ export function useAction<TInput = void, TOutput = unknown>(
 
   const run = React.useCallback(
     async (input: TInput): Promise<TOutput | undefined> => {
-      // --- 二重送信の防止（初心者が最も踏むバグ） ---
+      /* --- 二重送信の防止（初心者が最も踏むバグ） ---------------------
+         **鍵は guard より前にかけます。**
+         以前は `await guard(...)` の後にかけていました。guard が非同期だと、
+         待っている間に後続の呼び出しが全部その隙間を通り抜けます。
+         実測: 150ms 待つ guard を 5 回連打 → action が **5 回** 実行。
+
+         「連打しても 1 回」はこの部品の契約なので、
+         guard を含めて 1 つの操作として鍵をかけます。 */
       if (inFlightRef.current) return undefined;
+      inFlightRef.current = true;
 
       const opts = optionsRef.current;
       const dflt = defaultsRef.current;
 
-      if (opts.guard) {
-        const ok = await opts.guard(input);
-        if (!ok) return undefined;
-      }
-
-      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
-      abortRef.current?.abort();
-      const controller = new AbortController();
-      abortRef.current = controller;
-      inFlightRef.current = true;
-
-      const maxAttempts = (opts.retry ?? dflt.retry ?? 0) + 1;
+      /** action 本体が最終的に成功したか。callback の成否とは別に持ちます。 */
+      let succeeded = false;
+      let result: TOutput | undefined;
       let lastError: ActionError | undefined;
+      let aborted = false;
 
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        safeSet({ status: "pending", error: undefined, attempt });
+      try {
+        if (opts.guard) {
+          const ok = await opts.guard(input);
+          if (!ok) return undefined;
+        }
 
-        try {
-          const ctx: ActionContext = { signal: controller.signal };
-          const data = await actionRef.current(input, ctx);
+        if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+        abortRef.current?.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
 
-          if (controller.signal.aborted) {
-            inFlightRef.current = false;
-            return undefined;
-          }
+        const maxAttempts = (opts.retry ?? dflt.retry ?? 0) + 1;
 
-          inFlightRef.current = false;
-          safeSet({ status: "success", data, error: undefined });
-          // 個別指定が優先。無ければ ActionProvider の既定へ委ねる
-          if (opts.onSuccess) opts.onSuccess(data, input);
-          else dflt.onSuccess?.(data);
-          opts.onSettled?.();
+        /* ここが retry の境界です。**action 本体だけを繰り返します。**
+           callback はこの中に入れません（下のコメント参照）。 */
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          safeSet({ status: "pending", error: undefined, attempt });
 
-          const after = opts.resetAfter ?? dflt.resetAfter ?? 2000;
-          if (after > 0) {
-            resetTimerRef.current = setTimeout(() => {
+          try {
+            const ctx: ActionContext = { signal: controller.signal };
+            const data = await actionRef.current(input, ctx);
+
+            if (controller.signal.aborted) {
+              aborted = true;
+              return undefined;
+            }
+            succeeded = true;
+            result = data;
+            break;
+          } catch (raw) {
+            if (controller.signal.aborted) {
+              aborted = true;
               safeSet({ status: "idle" });
-            }, after);
-          }
-          return data;
-        } catch (raw) {
-          if (controller.signal.aborted) {
-            inFlightRef.current = false;
-            safeSet({ status: "idle" });
-            return undefined;
-          }
+              return undefined;
+            }
 
-          lastError = toActionError(raw);
+            lastError = toActionError(raw);
 
-          const isLast = attempt === maxAttempts - 1;
-          if (!isLast) {
+            const isLast = attempt === maxAttempts - 1;
+            if (isLast) break;
+
             const delay =
               typeof opts.retryDelay === "function"
                 ? opts.retryDelay(attempt)
                 : (opts.retryDelay ?? 500);
             await sleep(delay, controller.signal);
             if (controller.signal.aborted) {
-              inFlightRef.current = false;
+              aborted = true;
               safeSet({ status: "idle" });
               return undefined;
             }
-            continue;
           }
+        }
+      } finally {
+        inFlightRef.current = false;
+      }
+
+      if (aborted) return undefined;
+
+      /* --- ここから先は retry しません -------------------------------
+         **callback の例外を「action の失敗」と解釈してはいけません。**
+
+         action が成功した時点で、サーバ側の副作用（決済・メール送信・
+         登録・削除）はもう起きています。その後 onSuccess がバグで投げたとき、
+         それを失敗として retry すると **同じ副作用がもう一度走ります。**
+         実測: onSuccess が投げる + retry=3 → action が **4 回** 実行。
+
+         retry が 0 でも、「サーバでは成功しているのに画面はエラー」という
+         食い違いが残ります。だから境界を分けます。 */
+      if (succeeded) {
+        safeSet({ status: "success", data: result, error: undefined });
+        // 個別指定が優先。無ければ ActionProvider の既定へ委ねる
+        callSafely(() => {
+          if (opts.onSuccess) opts.onSuccess(result as TOutput, input);
+          else dflt.onSuccess?.(result as TOutput);
+        }, "onSuccess");
+
+        const after = opts.resetAfter ?? dflt.resetAfter ?? 2000;
+        if (after > 0) {
+          resetTimerRef.current = setTimeout(() => {
+            safeSet({ status: "idle" });
+          }, after);
+        }
+      } else {
+        safeSet({ status: "error", error: lastError });
+        if (lastError) {
+          // 個別に onError を書いていればそちら。書いていなければ
+          // ActionProvider の既定（通常は画面隅の通知）へ流す。
+          // これで「エラー処理の書き忘れ」が握り潰されなくなります。
+          callSafely(() => {
+            if (opts.onError) opts.onError(lastError as ActionError, input);
+            else dflt.onError?.(lastError as ActionError);
+          }, "onError");
         }
       }
 
-      inFlightRef.current = false;
-      safeSet({ status: "error", error: lastError });
-      if (lastError) {
-        // 個別に onError を書いていればそちら。書いていなければ
-        // ActionProvider の既定（通常は画面隅の通知）へ流す。
-        // これで「エラー処理の書き忘れ」が握り潰されなくなります。
-        if (opts.onError) opts.onError(lastError, input);
-        else dflt.onError?.(lastError);
-      }
-      opts.onSettled?.();
-      return undefined;
+      callSafely(() => opts.onSettled?.(), "onSettled");
+      return succeeded ? result : undefined;
     },
     [safeSet],
   );

@@ -33,8 +33,45 @@ jobs:
   verify:
     uses: ./.github/workflows/verify.yml
 
+  # ----------------------------------------------------------------
+  # 利用者が実際に踏む経路を、公開の前に通します
+  # ----------------------------------------------------------------
+  # `verify` だけでは足りません。生成物の `npm install` → `npm run build`
+  # → 実ブラウザ → 部品の追加は `verify:create` にしかなく、そこが
+  # **リリース判定の外にありました。**
+  #
+  # 外部レビューの指摘（P1-06）そのものです。緑の CI が意味していたのは
+  # 「部品は動く」であって「利用者が始められる」ではありませんでした。
+  # ----------------------------------------------------------------
+  verify-create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          # 生成物が要求する下限。**ここで確かめないと意味がありません。**
+          # 案内より新しい版でだけ通る状態になっていても気づけません。
+          node-version: 22.12.0
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Chromium を用意
+        run: pnpm exec playwright install --with-deps chromium
+
+      # レジストリは「本物の CLI で部品を足せるか」の判定が使います
+      - name: レジストリを生成
+        run: pnpm registry:build
+
+      - name: 生成物を npm で install / build / 実ブラウザ
+        run: pnpm verify:create
+
   build:
-    needs: verify
+    needs: [verify, verify-create]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

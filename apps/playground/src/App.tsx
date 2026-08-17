@@ -222,8 +222,72 @@ function ButtonSection() {
             削除する
           </ActionButton>
         </Labeled>
+
+        {/* 下の 2 つは**検査のために置いてあります。**
+            どちらも「action が何回呼ばれたか」を画面に出します。
+            見た目のデモではないので、数だけ読めれば十分です。 */}
+        <Labeled label="callback が投げる">
+          <CallCounted
+            id="cb"
+            retry={3}
+            // action は成功する。**その後の onSuccess が投げる。**
+            // 成功済みの副作用を retry で繰り返してはいけない。
+            onSuccess={() => {
+              throw new Error("callback がわざと失敗します");
+            }}
+          />
+        </Labeled>
+
+        <Labeled label="guard が遅い">
+          <CallCounted
+            id="guard"
+            // 非同期の guard。await している間に鍵がかかっていないと、
+            // 連打が全部その隙間を通り抜ける。
+            guard={async () => {
+              await new Promise((r) => setTimeout(r, 150));
+              return true;
+            }}
+          />
+        </Labeled>
       </Inline>
     </Panel>
+  );
+}
+
+/**
+ * action が**何回呼ばれたか**を画面に出すボタン。
+ *
+ * 「押せない」ことではなく「何回実行されたか」を見るための題材です。
+ * 二重決済・二重送信は、UI がどう見えるかではなく回数の問題なので、
+ * 回数そのものを読めるようにしてあります。
+ */
+function CallCounted({
+  id,
+  ...opts
+}: {
+  id: string;
+  retry?: number;
+  guard?: (input: void) => boolean | Promise<boolean>;
+  onSuccess?: () => void;
+}) {
+  const [count, setCount] = React.useState(0);
+  return (
+    <Stack space="2xs">
+      <ActionButton
+        {...opts}
+        retryDelay={50}
+        action={async () => {
+          setCount((n) => n + 1);
+          await new Promise((r) => setTimeout(r, 30));
+          return { ok: true };
+        }}
+      >
+        実行する
+      </ActionButton>
+      <span className="text-xs text-muted-fg" data-testid={`calls-${id}`}>
+        呼ばれた回数: {count}
+      </span>
+    </Stack>
   );
 }
 

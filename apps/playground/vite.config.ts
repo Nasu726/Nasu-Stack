@@ -34,6 +34,16 @@ function injectThemeInit(): Plugin {
 }
 
 export default defineConfig({
+  /* 公開先がサブパスのときに合わせます。
+     ----------------------------------------------------------------
+     GitHub Pages の project site は `https://<user>.github.io/<repo>/` の
+     下に出ます。`base` を合わせないと、HTML は取れるのに **JS と CSS が
+     404 になり、真っ白な画面**になります。deploy 自体は成功するので、
+     「公開できたのに何も出ない」といういちばん困る壊れ方をします。
+
+     利用者にも同じ問題が出ます（HowToUse の公開手順に書きました）。
+     ここで自分が先に踏んでおくことで、実測した内容を案内に書けます。 */
+  base: process.env.PUBLIC_BASE ?? "/",
   plugins: [react(), tailwindcss(), injectThemeInit()],
   resolve: {
     alias: {

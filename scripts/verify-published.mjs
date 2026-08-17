@@ -117,6 +117,36 @@ try {
   must("入口の tarball を確かめられた", false, String(e).slice(0, 120));
 }
 
+/* --- 3.5. カタログとデモが見えるか ----------------------------------
+   ----------------------------------------------------------------
+   **HTML が 200 で返るだけでは足りません。** サブパス配信で `base` が
+   合っていないと、HTML は取れるのに **JS と CSS が 404 になり真っ白**に
+   なります。deploy 自体は成功するので、いちばん気づきにくい壊れ方です。
+
+   だから HTML の中から資材の URL を拾って、それも実際に取りに行きます。 */
+for (const [name, sub] of [["カタログ", "catalog"], ["デモ", "demo"]]) {
+  try {
+    const res = await fetch(`${base}/${sub}/`);
+    const html = res.ok ? await res.text() : "";
+    must(`${name}（/${sub}/）が 200 で取れる`, res.ok, `HTTP ${res.status}`);
+
+    const refs = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)].map((m) => m[1]);
+    const missing = [];
+    for (const r of refs.slice(0, 12)) {
+      const url = r.startsWith("http") ? r : new URL(r, `${base}/${sub}/`).href;
+      const ok = await fetch(url).then((x) => x.ok, () => false);
+      if (!ok) missing.push(r);
+    }
+    must(
+      `    ${name}の JS / CSS が取れる（base の食い違いが無い）`,
+      refs.length > 0 && missing.length === 0,
+      missing.length ? `404: ${missing.slice(0, 2).join(", ")}` : `${refs.length} 件`,
+    );
+  } catch (e) {
+    must(`${name}（/${sub}/）が見える`, false, String(e).slice(0, 120));
+  }
+}
+
 /* --- 4. 存在しない URL のステータス --------------------------------- */
 /* handoff の「未検証」3 つ目。**404.html を置いても 404 を返さない**
    ホスティングがあります。そうなると検索エンジンが存在しないページを登録します。

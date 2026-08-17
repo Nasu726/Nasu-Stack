@@ -15,7 +15,8 @@
  *
  * どれか 1 つでも落ちたら終了コード 1。CI にそのまま載せられます。
  */
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
+import os from "node:os";
 import process from "node:process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,65 +46,123 @@ const CHROMIUM = process.env.CHROMIUM_PATH || "";
 const results = [];
 let failed = false;
 
-function step(name, cmd, args, opts = {}) {
-  process.stdout.write(`\n── ${name}\n`);
+/* ------------------------------------------------------------------
+ * 工程の走らせ方
+ * ------------------------------------------------------------------
+ * 独立している工程は同時に走らせます。20 を超える工程を直列に回すと、
+ * 手元でも CI でも待ち時間が長くなり、**「とりあえず push して CI で見る」
+ * ようになります。** それは検査を書いた意味を薄めます。
+ *
+ * ただし速さのために読みやすさを捨てません。
+ *
+ *   - 出力は工程ごとに溜めて、**終わった順ではなく定義順に**出します。
+ *     混ざった出力は読めないので、速くなっても意味がありません
+ *   - 実ブラウザの工程は Chromium を 1 つずつ立てます。無制限に並べると
+ *     CI の runner（2 コア）では**かえって遅くなります**。上限を設けます
+ * ---------------------------------------------------------------- */
+
+/** 同時に走らせる数。CI の runner は 2 コアなので、そこに合わせます。 */
+const LANES = Math.max(2, Math.min(4, (os.availableParallelism?.() ?? 2)));
+
+/** 1 工程を走らせて、出力を溜めて返します。印字はしません。 */
+function runStep(name, cmd, args, opts = {}) {
   const p = cmd === "pnpm" ? pnpm(args) : { cmd, args, options: {} };
-  const r = spawnSync(p.cmd, p.args, {
-    cwd: root,
-    stdio: "inherit",
-    env: { ...process.env },
-    ...p.options,
-    ...opts,
+  return new Promise((resolve) => {
+    const child = spawn(p.cmd, p.args, {
+      cwd: root,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env },
+      ...p.options,
+      ...opts,
+    });
+    let out = "";
+    child.stdout.on("data", (d) => (out += d));
+    child.stderr.on("data", (d) => (out += d));
+    child.on("error", (e) => {
+      /* 起動そのものに失敗したときは status が来ません。
+         **理由を印字しないと ✗ の一行しか残りません。**
+         Windows で全 4 工程が EINVAL で起動できておらず、出力が空なだけの
+         「失敗」に見えていたことがあります。黙って落とさないこと。 */
+      out += `\n  起動できませんでした: ${e.message}\n`;
+      resolve({ name, ok: false, out });
+    });
+    child.on("close", (code) => resolve({ name, ok: code === 0, out }));
   });
-  /* 起動そのものに失敗したときは status が null になります。
-     **理由を印字しないと ✗ の一行しか残りません。**
-     実際 Windows で全 4 工程が EINVAL で起動できておらず、
-     出力が空なだけの「失敗」に見えていました。黙って落とさないこと。 */
-  if (r.error) console.error(`  起動できませんでした: ${r.error.message}`);
-  const ok = r.status === 0;
-  if (!ok) failed = true;
-  results.push({ name, ok });
-  return ok;
 }
 
-/* ---- 1〜3: 型検査・ビルド・配布物 ---------------------------------- */
+/** 溜めた出力を、定義順に印字します。 */
+function report(r) {
+  process.stdout.write(`\n── ${r.name}\n`);
+  if (r.out) {
+    process.stdout.write(r.out.endsWith("\n") ? r.out : `${r.out}\n`);
+  }
+  if (!r.ok) failed = true;
+  results.push({ name: r.name, ok: r.ok });
+}
 
-step("型検査 (カタログ + レジストリ)", "pnpm", [
-  "--filter",
-  "playground",
-  "exec",
-  "tsc",
-  "--noEmit",
+/**
+ * 独立した工程をまとめて走らせます。
+ * **順番は保ちます。** 渡した順に印字するので、読む側は直列と変わりません。
+ */
+async function group(steps) {
+  const queue = [...steps.entries()];
+  const done = new Array(steps.length);
+  const lanes = Array.from({ length: Math.min(LANES, steps.length) }, async () => {
+    for (;;) {
+      const next = queue.shift();
+      if (!next) return;
+      const [i, [name, cmd, args, opts]] = next;
+      done[i] = await runStep(name, cmd, args, opts);
+    }
+  });
+  await Promise.all(lanes);
+  for (const r of done) report(r);
+}
+
+/** 1 つだけ走らせます（後続がその結果に依存するとき）。 */
+async function step(name, cmd, args, opts = {}) {
+  const r = await runStep(name, cmd, args, opts);
+  report(r);
+  return r.ok;
+}
+
+/* ---- 群 1: 互いに独立。まとめて回します ---------------------------- */
+
+await group([
+  ["型検査 (カタログ + レジストリ)", "pnpm", ["--filter", "playground", "exec", "tsc", "--noEmit"]],
+  ["型検査 (Astro サイト)", "pnpm", ["--filter", "site", "exec", "astro", "check"]],
+  ["ビルド (カタログ)", "pnpm", ["--filter", "playground", "build"]],
+  ["ビルド (Astro サイト)", "pnpm", ["--filter", "site", "build"]],
+  // 手元でしか通らない絶対パス。**ブラウザを立てる前に**名指しで落とします。
+  // この種の間違いは「判定は全部通っているのにスクリプトが死ぬ」ので分かりにくい。
+  ["環境に張り付いた絶対パス", "node", ["scripts/check-portability.mjs"]],
+  // 危険なコマンドが復活していないか。**README を直してもコードに残ります。**
+  // とくに CLI のエラーメッセージは、詰まっている人が一番信じる場所です。
+  ["書いてはいけない文字列", "node", ["scripts/check-forbidden.mjs"]],
+  /* 宣言した依存が本当に npm から取れるか。**手元の node_modules を見ません。**
+     外部レビューで「astro の版が存在しない」と公開停止の判定を受けたとき、
+     誤報だったにも関わらず**こちらは機械で否定できませんでした。**
+     気づくのは、まっさらな環境の利用者が install で止まったときです。 */
+  ["生成物の依存が registry で解決できる", "node", ["scripts/check-scaffold-deps.mjs"]],
+  // 純粋な関数の単体検査。ブラウザを立てないので速く、
+  // `&` ひとつでフィードが壊れる類の間違いはここでしか捕まえられません。
+  ["単体: SEO / フィードの組み立て", "node", ["scripts/verify-seo-unit.mjs"]],
+  // 入口。生成物を install / build するところまでは重いので
+  // `pnpm verify:create` に分けています（ここは生成と検証だけ）。
+  ["入口: create-webtemplate", "node", ["scripts/verify-create.mjs"]],
 ]);
-step("型検査 (Astro サイト)", "pnpm", [
-  "--filter",
-  "site",
-  "exec",
-  "astro",
-  "check",
-]);
-step("ビルド (カタログ)", "pnpm", ["--filter", "playground", "build"]);
-step("ビルド (Astro サイト)", "pnpm", ["--filter", "site", "build"]);
-step("レジストリ生成", "node", ["scripts/build-registry.mjs"]);
-step("配布の依存漏れ", "node", ["scripts/check-registry-deps.mjs"]);
-// 手元でしか通らない絶対パスを探します。ブラウザを立てる前に置いてあるのは、
-// この種の間違いが「判定は全部通っているのにスクリプトが死ぬ」という
-// 分かりにくい落ち方をするからです。先に名指しで落とします。
-step("環境に張り付いた絶対パス", "node", ["scripts/check-portability.mjs"]);
-// 純粋な関数の単体検査。ブラウザを立てないので速く、
-// `&` ひとつでフィードが壊れる類の間違いはここでしか捕まえられません。
-step("単体: SEO / フィードの組み立て", "node", ["scripts/verify-seo-unit.mjs"]);
-// 入口。生成物を install / build するところまでは重いので
-// `pnpm verify:create` に分けています（ここは生成と検証だけ）。
-step("入口: create-webtemplate", "node", ["scripts/verify-create.mjs"]);
-step("利用者プロジェクトへ展開して型検査", "node", [
-  "scripts/verify-install.mjs",
-]);
-// 上は「CLI と同じ解決規則の再現」です。再現である以上、こちらの
-// 思い込みがそのまま検査に入ります。**本物の CLI も通します。**
-// ネットワークが無い環境では、理由を印字して明示的に飛ばします。
-step("本物の shadcn CLI で入れる", "node", [
-  "scripts/verify-install-real.mjs",
+
+/* ---- 群 2: レジストリを作ってから ---------------------------------- */
+// 下の 3 つは public/r を読むので、生成が先です。ここだけ直列。
+await step("レジストリ生成", "node", ["scripts/build-registry.mjs"]);
+
+await group([
+  ["配布の依存漏れ", "node", ["scripts/check-registry-deps.mjs"]],
+  ["利用者プロジェクトへ展開して型検査", "node", ["scripts/verify-install.mjs"]],
+  // 上は「CLI と同じ解決規則の再現」です。再現である以上、こちらの
+  // 思い込みがそのまま検査に入ります。**本物の CLI も通します。**
+  // ネットワークが無い環境では、理由を印字して明示的に飛ばします。
+  ["本物の shadcn CLI で入れる", "node", ["scripts/verify-install-real.mjs"]],
 ]);
 
 /* ---- 4: 実ブラウザ検証 -------------------------------------------- */
@@ -152,15 +211,25 @@ if (!ready.every(Boolean)) {
   failed = true;
 }
 
-step("実ブラウザ: 非同期の状態", "node", ["scripts/verify-states.mjs"]);
-step("実ブラウザ: レイアウトと通知", "node", ["scripts/verify-layout.mjs"]);
-step("実ブラウザ: 壊しにくる中身", "node", ["scripts/audit-stress.mjs"]);
-step("実ブラウザ: 部品 (v0.4)", "node", ["scripts/verify-parts.mjs"]);
-step("実ブラウザ: 入力/選択/楽観更新 (v0.5)", "node", ["scripts/verify-forms.mjs"]);
-step("実ブラウザ: ナビ/開閉/本文/画像 (v0.6)", "node", ["scripts/verify-nav.mjs"]);
-step("実ブラウザ: SEO / ブログ / フィード (v0.7)", "node", ["scripts/verify-seo.mjs"]);
-// 受け口サーバを立てて、本物の HTTP を飛ばして測ります
-step("実ブラウザ: フォームの送信先 (v0.8)", "node", ["scripts/verify-submit.mjs"]);
+/* 実ブラウザの工程。**それぞれが独立して Chromium を立てます。**
+   同時に走らせますが、上限は LANES（CI の runner は 2 コア）です。
+   無制限に並べると、切り替えのほうが重くなって遅くなります。
+
+   ここは配信済みのサーバを読むだけで、互いに書き換えません。
+   verify-submit だけは自前の受け口を 4399 に立てますが、
+   他はそのポートを使わないので衝突しません。 */
+const browserSteps = [
+  ["実ブラウザ: 非同期の状態", "node", ["scripts/verify-states.mjs"]],
+  ["実ブラウザ: レイアウトと通知", "node", ["scripts/verify-layout.mjs"]],
+  ["実ブラウザ: 壊しにくる中身", "node", ["scripts/audit-stress.mjs"]],
+  ["実ブラウザ: 部品 (v0.4)", "node", ["scripts/verify-parts.mjs"]],
+  ["実ブラウザ: 入力/選択/楽観更新 (v0.5)", "node", ["scripts/verify-forms.mjs"]],
+  ["実ブラウザ: ナビ/開閉/本文/画像 (v0.6)", "node", ["scripts/verify-nav.mjs"]],
+  ["実ブラウザ: SEO / ブログ / フィード (v0.7)", "node", ["scripts/verify-seo.mjs"]],
+  // 受け口サーバを立てて、本物の HTTP を飛ばして測ります
+  ["実ブラウザ: フォームの送信先 (v0.8)", "node", ["scripts/verify-submit.mjs"]],
+];
+
 // カタログはタブで中身が入れ替わるので、既定タブだけを見ても
 // 後から足した部品は一度も検査されません。全タブを URL で指定して回します。
 // 一覧はカタログ側の 1 か所から読みます（書き写すと必ずずれます）。
@@ -191,12 +260,17 @@ async function sitePages() {
   }
 }
 const SITE_PAGES = await sitePages();
-process.stdout.write(`\n（Astro サイトの検査対象: ${SITE_PAGES.length} ページ）\n`);
+process.stdout.write(`
+（Astro サイトの検査対象: ${SITE_PAGES.length} ページ）
+`);
 
-step("実ブラウザ: 端末幅の崩れ", "node", [
-  "registry/nasu/scripts/check-responsive.mjs",
-  ...PLAYGROUND_TABS.map((t) => `http://127.0.0.1:4173/?tab=${t}`),
-  ...SITE_PAGES,
+await group([
+  ...browserSteps,
+  ["実ブラウザ: 端末幅の崩れ", "node", [
+    "registry/nasu/scripts/check-responsive.mjs",
+    ...PLAYGROUND_TABS.map((t) => `http://127.0.0.1:4173/?tab=${t}`),
+    ...SITE_PAGES,
+  ]],
 ]);
 
 // 素の node なので、これで確実に止まります（デーモン化も再起動もしません）。

@@ -8,7 +8,11 @@ export default defineConfig({
   // 絶対 URL の起点。**これが無いと canonical も OGP も sitemap も作れません。**
   // 設定し忘れると相対パスのまま出て、静かに壊れます（Seo.astro が止めます）。
   // src/site.config.ts の SITE.url と同じ値にしてください。
-  site: "https://example.com",
+  site: process.env.PUBLIC_SITE ?? "https://example.com",
+  /* 公開先がサブパスのときに合わせます（GitHub Pages の project site）。
+     `site` だけでは足りません。**`base` が無いと資材が 404 になります。**
+     詳しくは apps/playground/vite.config.ts のコメント。 */
+  base: process.env.PUBLIC_BASE ?? "/",
   image: {
     // 実測用: sharp を入れずに寸法だけ付くか確かめる
     service: passthroughImageService(),
