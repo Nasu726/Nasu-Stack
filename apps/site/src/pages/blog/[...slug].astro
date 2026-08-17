@@ -24,6 +24,7 @@ const { Content } = await render(post);
 const d = formatDate(post.data.date);
 
 
+import { withBase } from "@/lib/base";
 ---
 
 <Base
@@ -68,7 +69,7 @@ const d = formatDate(post.data.date);
       </ContentBlock>
 
       <p class="text-sm">
-        <a href="/blog" class="text-primary underline underline-offset-2">
+        <a href={withBase("/blog/")} class="text-primary underline underline-offset-2">
           ← 記事一覧へ
         </a>
       </p>

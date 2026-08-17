@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { buildRss } from "@/lib/feed";
 import { getPublishedPosts } from "../lib/posts";
 import { SITE } from "../site.config";
+import { withBase } from "@/lib/base";
 
 /** RSS。下書きの除外は sitemap と同じ 1 つの関数に任せます。 */
 export const GET: APIRoute = async () => {
@@ -14,7 +15,7 @@ export const GET: APIRoute = async () => {
     language: SITE.locale,
     items: posts.map((p) => ({
       title: p.data.title,
-      path: `/blog/${p.id}/`,
+      path: withBase(`/blog/${p.id}/`),
       description: p.data.description,
       date: p.data.date,
     })),

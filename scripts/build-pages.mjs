@@ -127,8 +127,11 @@ buildApp("playground", "apps/playground/dist", "catalog", {
 });
 buildApp("site", "apps/site/dist", "demo", {
   PUBLIC_BASE: `${basePath}/demo/`,
-  // 絶対 URL（canonical / OGP / sitemap）の起点も公開先に合わせます
-  PUBLIC_SITE: PUBLIC_BASE,
+  /* 絶対 URL（canonical / OGP / sitemap）の起点。**origin だけ**を渡します。
+     下の階層は base の担当で、`Astro.url.pathname` に既に含まれています。
+     ここに base 込みの URL を渡すと canonical が
+     `…/WebTemplate/WebTemplate/demo/` のように二重になります（実際なりました）。 */
+  PUBLIC_SITE: new URL(PUBLIC_BASE).origin,
 });
 
 /* --- 4. ページ ------------------------------------------------------ */

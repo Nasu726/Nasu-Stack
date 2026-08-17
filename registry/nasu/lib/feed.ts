@@ -169,13 +169,25 @@ ${entries}
  * robots.txt
  * ================================================================ */
 
-export function buildRobots(site: string, { disallow = [] as string[] } = {}): string {
+export function buildRobots(
+  site: string,
+  {
+    disallow = [] as string[],
+    /**
+     * sitemap の置き場所。**サブパスに公開するなら渡してください。**
+     * 下の階層に置いたのに `/sitemap.xml` と書くと、
+     * 存在しない場所を検索エンジンに教えることになります。
+     * `withBase("/sitemap.xml")` を渡すのが確実です。
+     */
+    sitemapPath = "/sitemap.xml",
+  } = {},
+): string {
   const lines = ["User-agent: *"];
   for (const p of disallow) lines.push(`Disallow: ${p}`);
   if (disallow.length === 0) lines.push("Allow: /");
   lines.push("");
   // sitemap の場所を書いておかないと、見つけてもらえるまで時間がかかります
-  lines.push(`Sitemap: ${abs(site, "/sitemap.xml")}`);
+  lines.push(`Sitemap: ${abs(site, sitemapPath)}`);
   lines.push("");
   return lines.join("\n");
 }

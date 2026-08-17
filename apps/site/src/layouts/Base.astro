@@ -11,6 +11,7 @@ interface Props extends Omit<MetaInput, "site" | "siteName"> {
 }
 
 const { theme = "warm", ...seo } = Astro.props;
+import { withBase } from "@/lib/base";
 ---
 
 <!doctype html>
@@ -30,7 +31,7 @@ const { theme = "warm", ...seo } = Astro.props;
       locale={SITE.locale}
     />
 
-    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href={withBase("/rss.xml")} />
 
     {/* 保存済みのテーマを描画前に適用してちらつきを防ぐ。
         処理の定義は theme-provider.tsx にしかありません（二重管理を避けるため）。 */}

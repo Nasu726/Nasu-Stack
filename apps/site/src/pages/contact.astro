@@ -15,6 +15,7 @@ import { ContactForm } from "../components/ContactForm";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { PageBlock, Stack, Columns, Column, Section } from "@/components/ui/layout";
+import { withBase } from "@/lib/base";
 ---
 
 <Base
@@ -51,7 +52,7 @@ import { PageBlock, Stack, Columns, Column, Section } from "@/components/ui/layo
             <p class="text-sm leading-relaxed text-muted-fg">
               入力いただいた内容は、お問い合わせへの回答にのみ使います。
               送信できないときは、
-              <a href="/blog/" class="text-primary underline underline-offset-2">
+              <a href={withBase("/blog/")} class="text-primary underline underline-offset-2">
                 ブログ
               </a>
               の連絡先からもご連絡いただけます。

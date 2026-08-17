@@ -10,6 +10,7 @@ import { PageBlock, Stack, Inline, Divider } from "@/components/ui/layout";
 const posts = await getPublishedPosts();
 
 
+import { withBase } from "@/lib/base";
 ---
 
 <Base
@@ -43,7 +44,7 @@ const posts = await getPublishedPosts();
                     {d.text}
                   </time>
                   <h2 class="text-xl">
-                    <a href={`/blog/${post.id}/`} class="hover:text-primary">
+                    <a href={withBase(`/blog/${post.id}/`)} class="hover:text-primary">
                       {post.data.title}
                     </a>
                   </h2>

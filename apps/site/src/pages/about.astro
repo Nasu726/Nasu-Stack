@@ -27,6 +27,7 @@ const HISTORY = [
   { date: "2026-06", text: "WebTemplate の開発を開始" },
   { date: "2026-08", text: "レイアウト部品と検査の仕組みを公開" },
 ];
+import { withBase } from "@/lib/base";
 ---
 
 <Base
@@ -94,7 +95,7 @@ const HISTORY = [
           東京都調布市（この雛型では住所を伏せています）
         </address>
         <p class="text-sm">
-          <a href="/contact/" class="text-primary underline underline-offset-2">
+          <a href={withBase("/contact/")} class="text-primary underline underline-offset-2">
             お問い合わせはこちら
           </a>
         </p>

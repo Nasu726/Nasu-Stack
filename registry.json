@@ -33,6 +33,19 @@
       ]
     },
     {
+      "name": "base",
+      "type": "registry:lib",
+      "title": "公開先の階層に合わせる withBase",
+      "description": "サブパスに公開したときに、手書きのリンクが 404 にならないようにします。base が効くのは道具が出す資材だけで、あなたが書いた href=\"/about/\" には効きません。手元では再現しないので、公開して初めて壊れます。",
+      "files": [
+        {
+          "path": "registry/nasu/lib/base.ts",
+          "type": "registry:lib",
+          "target": "lib/base.ts"
+        }
+      ]
+    },
+    {
       "name": "utils",
       "type": "registry:lib",
       "title": "cn ヘルパ",
@@ -458,7 +471,8 @@
         "@nasu/layout",
         "@nasu/utils",
         "@nasu/tokens"
-      ],
+      ,
+        "@nasu/base"],
       "files": [
         {
           "path": "registry/nasu/components/ui/site-nav.tsx",
@@ -536,7 +550,8 @@
         "@nasu/layout",
         "@nasu/utils",
         "@nasu/tokens"
-      ],
+      ,
+        "@nasu/base"],
       "files": [
         {
           "path": "registry/nasu/components/ui/site-footer.tsx",
