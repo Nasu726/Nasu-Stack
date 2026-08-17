@@ -191,6 +191,21 @@ function ButtonSection() {
           <ActionButton action={api.alwaysFail}>送信する</ActionButton>
         </Labeled>
 
+        {/* variant を変えたときの成功表示。**検査対象として必要です。**
+            既定（primary）の hover は brightness なので背景色が変わらず、
+            「成功色が hover で消える」不具合を通してしまいます。
+            背景を差し替える hover を持つ outline を 1 つ置いて、
+            検査がそこを見られるようにしています。 */}
+        <Labeled label="outline">
+          <ActionButton
+            action={api.save}
+            variant="outline"
+            labels={{ success: "できました" }}
+          >
+            控えめに実行
+          </ActionButton>
+        </Labeled>
+
         <Labeled label="2回失敗→自動で3回目">
           <ActionButton action={api.flaky} retry={3} retryDelay={400}>
             同期する

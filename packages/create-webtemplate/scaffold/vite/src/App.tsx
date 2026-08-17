@@ -26,15 +26,25 @@ export function App() {
           actions={<ThemeSwitcher />}
         />
 
-        <PageBlock width="content" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+        {/*
+          幅の指定は **PageBlock だけ**が持ちます。
+          器を広くして中の <p> に max-w-prose を付けると、見出しは器いっぱいに
+          伸びるのに本文だけ半分で止まり、画面を広げたときに右側が大きく空きます。
+          **1 本の柱で幅を決めます。**
+        */}
+        <PageBlock width="prose" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
           <Stack space="3xl">
             <Section space="md">
               <h1 className="text-3xl leading-tight">
                 ここから始めます
               </h1>
-              <p className="max-w-prose text-sm leading-relaxed text-muted-fg">
-                余白は段階から選ぶだけ、非同期の状態は部品が持ちます。
-                この画面を書き換えて、自分のものにしてください。
+              <p className="text-base leading-relaxed">
+                画面の土台はもうできています。あとは中身を自分のものに書き換えるだけです。
+              </p>
+              <p className="leading-relaxed text-muted-fg">
+                この画面のファイルは <code className="text-fg">src/App.tsx</code> です。
+                開いて書き換えると、ブラウザにすぐ反映されます。
+                手順は <code className="text-fg">HowToUse.md</code> に書いてあります。
               </p>
               <Inline space="sm">
                 <Button onClick={() => setOpen(true)}>ダイアログを開く</Button>
@@ -67,9 +77,9 @@ export function App() {
                   <Field name="message" label="ひとこと" multiline rows={4} />
                 </AsyncForm>
               </div>
-              <p className="max-w-prose text-xs text-muted-fg">
-                実際の送信先へ繋ぐときは <code>createSubmit</code> を使います
-                （<code>src/lib/submit.ts</code>）。
+              <p className="leading-relaxed text-muted-fg">
+                いまは送信しても、その場で結果を返しているだけです。
+                実際に届くようにする手順は <code>HowToUse.md</code> にあります。
               </p>
             </Section>
           </Stack>

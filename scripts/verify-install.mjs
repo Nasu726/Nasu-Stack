@@ -11,6 +11,7 @@ import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { tsconfig } from "./_fixture.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const rDir = path.join(root, "public", "r");
@@ -64,28 +65,12 @@ for (const name of resolved) {
   }
 }
 
+// tsconfig の中身は scripts/_fixture.mjs が唯一の定義です。
+// verify-install-real.mjs と同じものを使わないと、
+// 「どちらかだけ通る」状態に気づけません。
 await writeFile(
   path.join(work, "tsconfig.json"),
-  JSON.stringify(
-    {
-      compilerOptions: {
-        target: "ES2022",
-        lib: ["ES2022", "DOM", "DOM.Iterable"],
-        module: "ESNext",
-        moduleResolution: "bundler",
-        jsx: "react-jsx",
-        strict: true,
-        noEmit: true,
-        skipLibCheck: true,
-        // 利用者側の components.json が生成する、標準的な alias
-        baseUrl: ".",
-        paths: { "@/*": ["./src/*"] },
-      },
-      include: ["src/**/*.ts", "src/**/*.tsx"],
-    },
-    null,
-    2,
-  ),
+  JSON.stringify(tsconfig, null, 2),
   "utf8",
 );
 

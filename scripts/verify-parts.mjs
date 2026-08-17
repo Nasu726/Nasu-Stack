@@ -2,11 +2,12 @@
  * v0.4 の部品を実ブラウザで検証します。
  * docs/plan-v04.md の「実測で確かめる項目」10 個に対応しています。
  */
-import { launch, log } from "./_browser.mjs";
+import { launch, log, isPainted } from "./_browser.mjs";
 
 const { errors, openTab, finish, must, mustEq } = await launch();
 const openParts = (width = 1100, height = 900) =>
   openTab("parts", { width, height });
+
 
 /* ===== 1. dialog::backdrop にスタイルが効くか ===================== */
 {
@@ -25,7 +26,7 @@ const openParts = (width = 1100, height = 900) =>
     };
   });
   must("1. dialog が showModal で開く（:modal にマッチ）", r?.matchesTopLayer, JSON.stringify(r));
-  must("   ::backdrop に色が付く", /rgba?\(/.test(r?.backdrop ?? ""), r?.backdrop);
+  must("   ::backdrop に色が付く", isPainted(r?.backdrop), r?.backdrop);
 
   /* ===== 2. Esc で閉じ、フォーカスが戻るか ======================== */
   await page.keyboard.press("Escape");

@@ -100,7 +100,27 @@ export function scaffold(kind, dest, projectName) {
   );
 
   fs.writeFileSync(path.join(dest, "README.md"), readme(kind, projectName));
+  /* 手順は**ファイルに残します。**
+     生成の直後に画面へ出しても、次のコマンドを打った時点で流れて消えます。
+     「さっき何て書いてあったっけ」を、スクロールを遡って探すことになります。 */
+  fs.writeFileSync(path.join(dest, "HowToUse.md"), howToUse(kind, projectName));
   return true;
+}
+
+/**
+ * 部品を足すときに使うレジストリの URL。
+ *
+ * **書き写しません。** 一緒に配る components.json から読みます。
+ * 2 か所に書くと、公開先を変えた日に README だけ古い URL を指します。
+ * 壊れるのはこちらの手元ではなく、利用者が打った瞬間なので気づけません。
+ */
+function registryUrl(kind) {
+  try {
+    const p = path.join(TEMPLATES, kind, "components.json");
+    return JSON.parse(fs.readFileSync(p, "utf8")).registries?.["@nasu"] ?? "";
+  } catch {
+    return "";
+  }
 }
 
 function readme(kind, name) {
@@ -109,44 +129,256 @@ function readme(kind, name) {
 
 WebTemplate から作りました。
 
-## 動かす
-
 \`\`\`bash
 npm install
 npm run dev      # ${dev}
 \`\`\`
 
-## 次にやること
+**次に [HowToUse.md](./HowToUse.md) を読んでください。** 何をどの順で触ればいいか、
+部品の足し方、公開のしかたまで書いてあります。
+`;
+}
 
-1. ${kind === "astro" ? "`src/site.config.ts` と `astro.config.mjs` の `site`" : "`index.html` の title"} を書き換える
-2. ${kind === "astro" ? "`src/pages/index.astro`" : "`src/App.tsx`"} を書き換える
-3. 部品が足りなくなったら足す
+/**
+ * 使い方の全文。**画面に出さず、ファイルに残します。**
+ *
+ * 生成の直後にターミナルへ出しても、次のコマンドを打った時点で流れて消えます。
+ * 「さっき何て書いてあったっけ」をスクロールを遡って探すことになる——
+ * 実際にそう指摘されました。
+ *
+ * 読む相手は「多少プログラミングはできるが、Web は初めて」の人です。
+ * **island も SSG も知りません。** 用語ではなく、何が嬉しいのかを書きます。
+ */
+function howToUse(kind, name) {
+  const astro = kind === "astro";
+  const dev = astro ? "http://localhost:4321" : "http://localhost:5173";
+  const preview = astro ? "http://localhost:4321" : "http://localhost:4173";
+  const entry = astro ? "src/pages/index.astro" : "src/App.tsx";
+  const catalog = registryUrl(kind).replace("/r/{name}.json", "/");
 
-## 覚えることは 2 つだけ
+  return `# ${name} の使い方
 
-**余白は段階から選びます。** 迷わないためです。段階の外の値も書けます。
+このファイルはあなたのものです。読み終わったら消して構いません。
+
+---
+
+## 1. 動かす
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+ブラウザで ${dev} を開きます。
+**この状態のまま作業します。** ファイルを保存すると画面がすぐ切り替わります。
+止めるときは \`Ctrl + C\` です。
+
+---
+
+## 2. どのファイルを触るのか
+
+最初に触るのはこの${astro ? "3" : "2"}つだけです。
+
+| ファイル | 何が変わるか |
+|---|---|
+${astro ? `| \`src/site.config.ts\` | サイトの名前と説明。ヘッダの表示と、検索結果に出る文がここから作られます |
+| \`astro.config.mjs\` の \`site\` | 公開するときのアドレス。まだ決まっていなければ後回しで構いません |
+| \`${entry}\` | トップページの中身 |` : `| \`index.html\` の \`<title>\` | ブラウザのタブに出る名前 |
+| \`${entry}\` | 画面の中身 |`}
+
+${astro ? `\`src/pages/\` にファイルを足すと、そのままページが増えます。
+\`about.astro\` を置けば \`/about/\` で開けます。フォルダを作れば階層にもなります。
+
+` : ``}残りのフォルダの意味です。**最初は触らなくて構いません。**
+
+| 場所 | 中身 |
+|---|---|
+| \`src/components/ui/\` | 部品。ボタン・フォーム・ヘッダなど |
+| \`src/lib/\` | 部品が使う裏方の処理 |
+| \`src/styles/\` | 色・余白・書体の設定 |
+| \`src/hooks/\` | React で状態を扱う仕組み |
+
+---
+
+## 3. 見た目を変える
+
+### 色や雰囲気をまとめて変える
+
+\`src/styles/themes.css\` に 4 種類（\`neutral\` / \`warm\` / \`editorial\` / \`vivid\`）入っています。
+${astro ? "`src/layouts/Base.astro`" : "`index.html`"} の \`<html>\` に書きます。
+
+\`\`\`html
+<html data-theme="warm">
+\`\`\`
+
+色だけでなく、角の丸み・影の強さ・書体・字間まで一緒に変わります。
+**1 か所変えるだけでサイト全体の印象が変わります。**
+
+### 余白を変える
+
+余白は 9 段階から選びます。数字で悩まないためです。
 
 \`\`\`tsx
 <Stack space="lg">…</Stack>
-<Stack space="13px">…</Stack>   {/* 必要ならこれも通ります */}
 \`\`\`
 
-**非同期は関数を 1 つ渡すだけです。** 送信中・成功・失敗・二重送信の防止は
-部品が持っています。
+小さいほうから \`3xs\` \`2xs\` \`xs\` \`sm\` \`md\` \`lg\` \`xl\` \`2xl\` \`3xl\`。
+**段階の外の値も書けます**（\`space="13px"\`）。段階は決まりではなく、既定値です。
+
+### 並べ方を変える
+
+| やりたいこと | 使う部品 |
+|---|---|
+| 縦に積む | \`<Stack space="md">\` |
+| 横に並べる（入りきらなければ折り返す） | \`<Inline space="sm">\` |
+| 段組みにする（狭い画面では自動で縦になる） | \`<Columns>\` + \`<Column>\` |
+| ページ全体の幅を決める | \`<PageBlock width="narrow">\` |
+
+**幅を決めるのは \`PageBlock\` の役目です。** 中の文章に個別で幅を付けると、
+見出しだけ長くて本文が短い、ちぐはぐな見た目になります。
+
+---
+
+## 4. 押したら動くものを作る
+
+ボタンを押して何かする、フォームを送る——こういう「時間がかかる処理」には、
+考えることが意外と多くあります。
+
+- 押している間、押したことが分かるか
+- 二回押されたらどうするか
+- 失敗したら何を出すか
+- やり直せるか
+
+**これは部品が持っています。** あなたが書くのは処理そのものだけです。
 
 \`\`\`tsx
-<Button action={async () => api.save(値)}>保存する</Button>
+import { ActionButton } from "@/components/ui/action-button";
+
+<ActionButton action={async () => await 何かする()}>保存する</ActionButton>
 \`\`\`
 
-## 崩れていないか確かめる
+これだけで、押している間のくるくる、連打の防止、失敗したときの表示と押し直し、
+成功したときのチェックマークが付きます。
+
+フォームも同じ考え方です。
+
+\`\`\`tsx
+<AsyncForm action={async (values) => await 送る(values)} submitLabel="送信する">
+  <Field name="name" label="お名前" required />
+</AsyncForm>
+\`\`\`
+
+> **物足りなくなったら、下の層に降りられます。**
+> \`useAction()\` を使えば状態だけ借りて見た目は自分で書けますし、
+> \`useState\` と \`fetch\` で全部自分で書いても構いません。
+> どの段階で止めても壊れません。
+
+---
+
+## 5. 部品を足す
+
+最初から入っているのは、よく使うものだけです。
+表・タブ・通知・ファイル選択などは、必要になってから足します。
 
 \`\`\`bash
-npm run build && npm run preview
-npx playwright install chromium
-node src/scripts/check-responsive.mjs ${dev.replace(/\\d+$/, kind === "astro" ? "4321" : "4173")}/
+npx shadcn@latest add @nasu/data-table
 \`\`\`
 
-スマホ幅での崩れ・タップ領域・画像の場所取りを、目視ではなく数値で見ます。
+**設定は済んでいるので、これだけです。** その部品が使う他の部品も一緒に入ります。
+入る先は \`src/components/ui/\` です。
+
+> **「すでにあります。上書きしますか？」と何度か聞かれます。**
+> 最初から入っているファイルが、新しい部品からも使われているためです。
+> **そのまま Enter（\`N\`）で構いません。** あなたが書き換えたコードを守るための確認です。
+
+**入った後のコードはあなたのものです。** 気に入らなければ直接書き換えてください。
+（そのために、まとめて配るのではなくコピーする形にしています。
+書き換えても、次の更新で上書きされることがありません。）
+
+足せるものの一覧: ${catalog}
+
+---
+
+${astro ? `## 6. フォームを実際に届くようにする
+
+いまのフォームは、送っても手元で結果を返しているだけです。
+実際にメールなどで受け取るには**送信先**が要ります。
+
+\`src/lib/submit.ts\` の \`createSubmit\` に、受け取る側のアドレスを渡します。
+
+\`\`\`ts
+export const submitContact = createSubmit({
+  url: "https://あなたの受け口/contact",
+});
+\`\`\`
+
+受け口の例は WebTemplate の \`examples/receivers/\` にあります
+（Cloudflare Workers 版）。
+
+タイムアウト、失敗したときの日本語のメッセージ、
+自動投稿を弾く仕組みは \`createSubmit\` が持っています。
+
+---
+
+` : ``}## ${astro ? "7" : "6"}. スマホで崩れていないか確かめる
+
+見た目の崩れは、目で見ても気づけないことがあります。数値で測れます。
+
+\`\`\`bash
+npm i -D playwright
+npx playwright install chromium
+\`\`\`
+
+（1 回だけ。ブラウザを本物で動かすので少し時間がかかります）
+
+別のターミナルで画面を出しておいてから、
+
+\`\`\`bash
+npm run build
+npm run preview
+\`\`\`
+
+もう 1 つのターミナルで測ります。
+
+\`\`\`bash
+node src/scripts/check-responsive.mjs ${preview}/
+\`\`\`
+
+5 つの画面幅で、次を見ます。
+
+- 横にはみ出していないか
+- 指で押すには小さすぎるボタンが無いか
+- 1 行が長すぎて読みにくくないか
+- 画像が読み込まれる前と後で、文章の位置がずれないか
+
+**赤が出たら直す価値があります。**
+
+---
+
+## ${astro ? "8" : "7"}. 公開する
+
+\`npm run build\` で \`dist/\` ができます。**この中身がサイトの全部です。**
+${astro ? "静的" : "静的"}なファイルの集まりなので、置くだけで公開できます。
+
+無料で使える置き場所の例: Cloudflare Pages / GitHub Pages / Netlify / Vercel。
+どれも「GitHub のリポジトリを繋ぐと、push するたびに自動で公開される」形にできます。
+
+${astro ? `公開先が決まったら、\`astro.config.mjs\` の \`site\` をそのアドレスにしてください。
+検索エンジンに渡すページ一覧（\`sitemap.xml\`）と購読用のフィード（\`rss.xml\`）が、
+正しいアドレスで作られるようになります。
+
+` : ``}---
+
+## 困ったとき
+
+| 症状 | 見るところ |
+|---|---|
+| \`npm run dev\` が動かない | Node.js が 18 以上か（\`node -v\`）。\`npm install\` は済んでいるか |
+| 画面が真っ白 | ブラウザの開発者ツール（F12）の Console に赤い文字が出ていないか |
+| 部品を足せない | ネットに繋がっているか。\`components.json\` の \`registries\` の行が消えていないか |
+| 崩れている | 上の「スマホで崩れていないか確かめる」で数値を見る |
+
+WebTemplate 本体: https://github.com/Nasu726/WebTemplate
 `;
 }
 
@@ -226,6 +458,10 @@ async function main() {
   scaffold(kind, dest, name);
   rl?.close();
 
+  /* **画面に出すのは、次の 3 行と読む場所だけにします。**
+     手順を全部ここに並べても、次のコマンドを打った時点で流れて消えます。
+     「さっき何て書いてあったっけ」をスクロールを遡って探すことになるので、
+     中身は HowToUse.md に書いて、その存在だけを伝えます。 */
   const dev = kind === "astro" ? "4321" : "5173";
   console.log("");
   console.log(`  ✅ ${name} を作りました（${KINDS.find((k) => k.key === kind).label}）`);
@@ -233,6 +469,9 @@ async function main() {
   console.log(`     cd ${name}`);
   console.log("     npm install");
   console.log(`     npm run dev        → http://localhost:${dev}`);
+  console.log("");
+  console.log(`  📖 使い方は ${name}/HowToUse.md に書きました。`);
+  console.log("     どのファイルを触るか / 部品の足し方 / 公開のしかたまで入っています。");
   console.log("");
 }
 

@@ -168,7 +168,7 @@ export function DropdownMenu({
           aria-controls={open ? id : undefined}
           onKeyDown={onTriggerKeyDown}
           className={cn(
-            "inline-flex min-h-11 items-center gap-1 rounded-md border border-border",
+            "inline-flex wt-tap items-center gap-1 rounded-md border border-border",
             "bg-card px-3 text-sm font-medium text-card-fg hover:bg-muted",
           )}
         >
@@ -209,7 +209,7 @@ export function DropdownMenu({
                   close();
                 }}
                 className={cn(
-                  "flex min-h-11 w-full items-center rounded-md px-3 text-left text-sm",
+                  "flex wt-tap w-full items-center rounded-md px-3 text-left text-sm",
                   "disabled:cursor-not-allowed disabled:opacity-50",
                   item.tone === "danger"
                     ? "text-danger hover:bg-danger/10"
@@ -269,7 +269,7 @@ export function NavDropdown({
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex min-h-11 items-center gap-1 px-2 text-sm text-muted-fg hover:text-fg"
+        className="inline-flex wt-tap items-center gap-1 px-2 text-sm text-muted-fg hover:text-fg"
       >
         {label}
         <Chevron open={open} />
@@ -293,7 +293,7 @@ export function NavDropdown({
                 aria-current={item.current ? "page" : undefined}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "flex min-h-11 items-center rounded-md px-3 text-sm hover:bg-muted",
+                  "flex wt-tap items-center rounded-md px-3 text-sm hover:bg-muted",
                   item.current && "font-medium text-primary",
                 )}
               >

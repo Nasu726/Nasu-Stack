@@ -65,7 +65,7 @@ export function Disclosure({
         className={cn(
           // 既定の三角マーカーを消すので、代わりの矢印を必ず出します。
           // 消しただけだと「開けることが見えない」状態になります。
-          "wt-summary flex min-h-11 cursor-pointer items-center justify-between gap-sm",
+          "wt-summary flex wt-tap cursor-pointer items-center justify-between gap-sm",
           "py-2 text-left text-sm font-medium",
           "hover:text-primary focus-visible:outline-2 focus-visible:outline-ring",
         )}

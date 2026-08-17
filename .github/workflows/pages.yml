@@ -1,0 +1,105 @@
+name: pages
+
+# ------------------------------------------------------------------
+# 公開するのは main だけ
+# ------------------------------------------------------------------
+# pull_request では動かしません。fork からの PR で任意のコードが
+# **公開ホストに載る経路**を作らないためです。
+# 公開物は利用者のプロジェクトに書き込まれるものなので、
+# 「誰でも中身を差し替えられる入口」を 1 つでも残せません。
+# ------------------------------------------------------------------
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# トップは読むだけ。公開する 1 ジョブでだけ昇格させます。
+permissions:
+  contents: read
+
+# 同時に走らせません。あとから始まったほうが古い成果物を出す可能性を消します。
+# 走っている途中は止めません（公開の途中で切ると中途半端な状態が残ります）。
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # ----------------------------------------------------------------
+  # 配るのは、検査を通ったものだけ
+  # ----------------------------------------------------------------
+  # verify.yml をそのまま呼びます。ここに手順を書き写すと、
+  # 片方だけ直してもう片方が古いまま残ります。
+  # ----------------------------------------------------------------
+  verify:
+    uses: ./.github/workflows/verify.yml
+
+  build:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # 組み立ては scripts/build-pages.mjs にあります。
+      # **ここに手順を並べると、手元で同じものを作れなくなります。**
+      - name: public/ を組み立てる
+        run: pnpm pages:build
+
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # 昇格させるのはこのジョブだけです。
+    #   pages:    公開先へ書く
+    #   id-token: OIDC。長生きするトークンを置かずに済ませる
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # 次のジョブが「実際に公開された URL」を叩けるように渡します。
+    # ここに URL を書き写すと、リポジトリ名を変えた日に嘘になります。
+    outputs:
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+  # ----------------------------------------------------------------
+  # 公開した URL を、外から実際に叩いて確かめる
+  # ----------------------------------------------------------------
+  # 手元で配って通っても、公開ホストでは content-type やリダイレクト、
+  # 404 の扱いが違います。**出した後に測らないと分かりません。**
+  # ----------------------------------------------------------------
+  smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      # 判定は scripts/verify-published.mjs にあります。
+      # **YAML に書くと手元で同じものを試せません。**
+      # 手元では serve-registry.mjs で配って、同じスクリプトを回せます。
+      - name: 公開物が本当に取れるか
+        run: node scripts/verify-published.mjs "${{ needs.deploy.outputs.url }}"

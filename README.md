@@ -3,10 +3,17 @@
 **余白は迷わせない。状態は書かせない。**
 
 ```bash
-npx create-webtemplate my-site
+npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site
 ```
 
 全体像と設計の理由は [docs/overview.md](docs/overview.md) にまとめてあります。
+
+> **npm には publish していません。** 個人的なプロジェクトとして続けるので、
+> 継続的な保守を約束できないためです。npm は URL の tarball をそのまま
+> 受け取れるので、これで同じことができます。
+> **`npx create-webtemplate` とは打たないでください** — その名前は npm で
+> 空いており、こちらの配布物ではありません。理由と守りは
+> [docs/security.md](docs/security.md) に書いてあります。
 
 見た目だけのコンポーネント集ではありません。初心者が確実に詰まる 2 箇所
 — **配置**と**非同期の状態** — を、部品側が引き受けます。
@@ -241,11 +248,27 @@ npm run check -- http://localhost:5173
 コードは npm パッケージではなく**あなたのリポジトリに直接コピー**されます。
 中身を自由に書き換えられるのが目的なので、これが正しい配り方です。
 
-```bash
-npx shadcn@latest add https://<あなたのホスト>/r/action-button.json
+**先に `components.json` へ 1 行足してください。** これが無いと、部品の
+依存（`@nasu/action` など）が解決できず `Unknown registry "@nasu"` で止まります。
+
+```jsonc
+{
+  "registries": {
+    "@nasu": "https://nasu726.github.io/WebTemplate/r/{name}.json"
+  }
+}
 ```
 
-依存する `use-action` / `spinner` / `utils` は自動で一緒に入ります。
+```bash
+npx shadcn@latest add @nasu/action-button
+```
+
+依存する `use-action` / `spinner` / `utils` / `tokens` は自動で一緒に入ります
+（`action-button` なら 10 ファイル）。
+
+URL を直に指定する形（`npx shadcn@latest add https://…/r/action-button.json`）
+でも**その部品 1 つは**入りますが、**依存を辿るところで失敗します。**
+`registries` の宣言が必要なのはそのためです。
 
 ### 2. トンマナを当てる
 
@@ -467,11 +490,14 @@ Astro 側のページ一覧は **sitemap.xml から取ります**（手で並べ
 
 | | |
 |---|---|
-| **配布物（利用者が受け取る 33 ファイル）** | OS 非依存。Node 18 以上 |
-| **このリポジトリの開発用スクリプト** | Linux / macOS で動作確認済み。**Windows は未検証** |
+| **配布物（利用者が受け取る 38 ファイル）** | OS 非依存。Node 18 以上 |
+| **このリポジトリの開発用スクリプト** | Linux / macOS / **Windows 11** で動作確認済み |
 
-Windows まわりは `verify.mjs` と `pack.mjs` にコードだけ入れてあり、
-該当箇所に `⚠️ 要確認` と書いてあります。実機で確かめたら外してください。
+Windows は v0.9a で実機確認しました（Windows 11 / Node 24.13 / pnpm 10.28）。
+`pnpm verify` 19 工程と `pnpm verify:create` 29 判定が緑です。
+子プロセスの起動と停止は [`scripts/_proc.mjs`](scripts/_proc.mjs) が唯一の定義で、
+**なぜ OS ごとに違うのかはそこに書いてあります**（`.cmd` は shell 無しで
+spawn できない / Windows にプロセスグループが無い）。
 
 GitHub Actions で push・PR・週 1 の定期実行にかけています。
 Renovate の依存更新 PR も、これが緑なら中身を見ずに上げられます。

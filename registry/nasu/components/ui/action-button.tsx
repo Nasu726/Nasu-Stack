@@ -207,7 +207,16 @@ export function ActionButton<TInput = void, TOutput = unknown>({
         disabled={disabled || state.isPending}
         aria-busy={state.isPending}
         onClick={() => void state.run(input as TInput)}
-        className={cn(state.isSuccess && "bg-success text-success-fg", className)}
+        /* 成功したときは hover の色まで固定します。
+           **背景だけ差し替えると、hover で消えます。**
+           variant 側は `hover:bg-muted` や `hover:bg-accent` を持っているので、
+           成功色の上にそれが乗り、文字（text-success-fg）だけ残って
+           背景に溶けます。outline の「1 秒かかる処理」で実際に起きました。 */
+        className={cn(
+          state.isSuccess &&
+            "bg-success text-success-fg hover:bg-success hover:text-success-fg",
+          className,
+        )}
         {...buttonProps}
       >
         {content}

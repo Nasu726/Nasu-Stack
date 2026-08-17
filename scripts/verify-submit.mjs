@@ -9,6 +9,7 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { stopTree } from "./_proc.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = 4399;
@@ -26,14 +27,7 @@ const server = spawn(process.execPath, [path.join(root, "scripts/_endpoint.mjs")
   stdio: "ignore",
   detached: process.platform !== "win32",
 });
-const stop = () => {
-  try {
-    if (process.platform === "win32") server.kill();
-    else process.kill(-server.pid);
-  } catch {
-    /* もう落ちている */
-  }
-};
+const stop = () => stopTree(server);
 
 for (let i = 0; i < 40; i++) {
   await new Promise((r) => setTimeout(r, 100));
