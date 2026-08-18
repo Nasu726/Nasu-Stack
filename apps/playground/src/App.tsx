@@ -184,24 +184,45 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
   );
 }
 
+/**
+ * 導入部。**広い画面では見出しと本文を横に並べます。**
+ *
+ * ----------------------------------------------------------------
+ * なぜ縦に積まないのか
+ * ----------------------------------------------------------------
+ * 本文の 1 行は、和文なら 45 字までが読める上限です
+ * （`check-responsive.mjs` が実際に測っています）。14px なら 630px。
+ * 器は 1024px なので、**縦に積むと右に 360px 以上の空白が残ります。**
+ *
+ * 1920px で見ると、最初の画面が左半分だけになって「寄っている」と見えます
+ * （作者の指摘）。器を狭めれば揃いますが、そうするとヘッダの
+ * ブランド + タブ + トンマナ（合計 951px）が 1 行に入りません。
+ *
+ * **どちらも譲らずに済ませる方法が、横に並べることです。**
+ * 1024px 未満では今までどおり縦に積みます。
+ */
 function Intro() {
   return (
-    <Stack space="sm">
-      <h1 className="text-3xl leading-tight sm:text-4xl">
-        余白は迷わせない。
-        <br />
-        状態は書かせない。
-      </h1>
-      <ContentBlock width="prose" align="start" className="text-sm">
-        <p className="leading-relaxed text-muted-fg">
-          余白は 9 段階が既定なので配置で迷いません。ただし 9 段階は制限ではなく、
-          段階に無い値もそのまま書けます。
-          非同期処理は関数を 1 つ渡すだけで、読込中・成功・失敗・空・二重送信・中断が付いてきます。
-          上のスイッチでトンマナ（見た目の系統）を切り替えると、
-          色・角丸・影・書体・余白の広さまで一斉に変わります。
-        </p>
-      </ContentBlock>
-    </Stack>
+    <Columns space="xl" collapseBelow="desktop" alignY="end">
+      <Column width="1/2">
+        <h1 className="text-3xl leading-tight sm:text-4xl">
+          余白は迷わせない。
+          <br />
+          状態は書かせない。
+        </h1>
+      </Column>
+      <Column>
+        <ContentBlock width="prose" align="start" className="text-sm">
+          <p className="leading-relaxed text-muted-fg">
+            余白は 9 段階が既定なので配置で迷いません。ただし 9 段階は制限ではなく、
+            段階に無い値もそのまま書けます。
+            非同期処理は関数を 1 つ渡すだけで、読込中・成功・失敗・空・二重送信・中断が付いてきます。
+            上のスイッチでトンマナ（見た目の系統）を切り替えると、
+            色・角丸・影・書体・余白の広さまで一斉に変わります。
+          </p>
+        </ContentBlock>
+      </Column>
+    </Columns>
   );
 }
 
