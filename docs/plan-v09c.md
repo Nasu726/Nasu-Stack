@@ -340,6 +340,46 @@ Renovate は `helpers:pinGitHubActionDigests` と `minimumReleaseAge` を設定�
 Dependabot alerts は有効化済みなので、**どちらが脆弱性を担当するか**を
 `renovate.json` に明記します（両方動くと PR が二重に出ます）。
 
+### できたもの
+
+判定は **100 件**（verify:create）／**24 工程**（verify）になりました。
+
+| | どう直したか |
+|---|---|
+| P2-03 | `stallTimeout`（既定 60 秒）を足しました。**全体の制限時間ではなく「進みが止まった時間」で測ります。** 大きなファイルを遅い回線で送るのは正常なので、全体の時間で切ると成功するはずの送信を落とします。全体の `timeout` も渡せますが、既定は 0（無制限）です |
+| P2-04 | `matchesAccept` を `lib/upload.ts` に置き、**選ぶ経路と落とす経路の両方**を通しました。守りではないことを型の説明・カタログ・SECURITY.md の 3 か所に書いています |
+| P2-05 | `body` → `defaults` に改名。**実装のほうが正しかった**ので、名前を実装に合わせました。認可に使う値を置かないよう明記 |
+| P2-06 | サーバの `message` を画面に出しません。出すのはサーバが**そのつもりで**入れた `userMessage` だけです。元の文言は `ActionError.message` と `cause` に残るので、開発者からは読めます |
+| P2-07 | Windows の予約語（`con` `nul` `com1`）、使えない記号、ドット・空白で終わる名前、制御文字 |
+| P2-15 | **lockfile は同梱しません。**（下記） |
+| P3-01 | 知らないフラグで止まります。`--help` も足しました |
+| P3-02 | `SECURITY.md`。報告先と、**約束していないこと**を先に書いています |
+| Renovate | `helpers:pinGitHubActionDigests` / `minimumReleaseAge: 7 days`（Actions は 3 日）/ 脆弱性は Dependabot に任せる（`vulnerabilityAlerts: false`）。役割分担は `docs/security.md` に |
+
+#### P2-15 は、レビューの案どおりにはしていません
+
+**生成物に lockfile を同梱しません。** 同梱したものは、利用者が受け取った
+時点で既に古いためです。ビルド時に作るには `npm install` が要り、
+`pnpm verify` が通信に依存するようになります。
+
+代わりに、**利用者の `npm install` が作ったものを commit してもらう**形に
+しました。HowToUse に理由つきで書き、`.gitignore` が lockfile を弾いていない
+ことを機械で確かめます（`7.46`）。
+
+#### 検査
+
+判定を足しただけでは落ちるか分かりません。**わざと壊して確認済みです。**
+
+```
+P2-06 を戻すと → ✗ サーバの message を画面に出さない (PG::UniqueViolation … db-prod-3.internal:5432)
+P2-05 を逆にすると → ✗ defaults は入力に上書きされる ({"role":"guest", …})
+P2-04 を素通しにすると → ✗ image/* に pdf は通らない / ✗ .pdf に png は通らない
+```
+
+カタログの `FileDrop` に `accept` を付けたところ、**既存の「サイズ超過」の判定が
+壊れました。** 渡していた `big.bin` が、サイズより先に種類で弾かれたためです。
+判定が別のものを見ていたので、`big.png` に直し、種類で弾く判定を足しました。
+
 ---
 
 ## Phase 5 — CI

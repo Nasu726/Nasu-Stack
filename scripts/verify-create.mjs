@@ -184,12 +184,21 @@ const PAGES = {
   const { validateName } = await import(
     new URL(`file://${CLI}`).href
   );
+  /* **通ってしまうと、あとで分かりにくい形で失敗するもの**を並べます。
+     とくに Windows の予約語は厄介で、生成そのものは走るのに
+     フォルダが作れず、理由の出ないまま途中で止まります。 */
   const cases = [
     ["My-Site", "大文字"],
     ["my site", "空白"],
     [".hidden", "先頭のドット"],
     ["", "空"],
     ["a/b", "スラッシュ"],
+    ["con", "Windows の予約語"],
+    ["nul", "Windows の予約語"],
+    ["com1", "Windows の予約語"],
+    ["aux.txt", "予約語 + 拡張子（これも作れません）"],
+    ["a<b", "Windows で使えない記号"],
+    ["my-site.", "ドットで終わる（Windows）"],
   ];
   for (const [name, why] of cases) {
     must(`6. 不正な名前を弾く（${why}）`, validateName(name) !== null, validateName(name) ?? "通ってしまった");
@@ -256,6 +265,32 @@ for (const { name, kind } of CASES) {
   const aliasOk = ts.compilerOptions?.paths?.["@/*"]?.[0] === "./src/*" &&
     cj.aliases?.ui === "@/components/ui";
   must(`    ${kind}: alias が tsconfig と揃っている`, aliasOk, cj.aliases?.ui ?? "");
+}
+
+/* ===== 7.46. lockfile が git に入る形になっているか =============== */
+/**
+ * 生成物に lockfile は同梱していません（受け取った時点で既に古いため）。
+ * 代わりに、**利用者の `npm install` が作ったものが commit できる**必要があります。
+ * `.gitignore` が弾いていると、`npm install` の日によって中身が変わる
+ * プロジェクトが出来上がります。
+ */
+for (const { name, kind } of CASES) {
+  const gi = fs.readFileSync(path.join(work, name, ".gitignore"), "utf8");
+  const blocks = gi
+    .split(String.fromCharCode(10))
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("#"))
+    .filter((l) => /lock/i.test(l));
+  must(
+    `7.46 ${kind}: lockfile を .gitignore が弾いていない`,
+    blocks.length === 0,
+    blocks.join(" "),
+  );
+  const md = fs.readFileSync(path.join(work, name, "HowToUse.md"), "utf8");
+  must(
+    `     ${kind}: lockfile を commit するよう案内している`,
+    md.includes("package-lock.json") && md.includes("commit"),
+  );
 }
 
 /* ===== 7.55. エディタの補完が、実在する部品だけを出しているか ==== */
@@ -396,6 +431,25 @@ for (const { name, kind } of CASES) {
     }
   }
   must(`7.45 ${kind}: scripts が実在するファイルを指す`, missing.length === 0, missing.join(", "));
+}
+
+/* ===== 7.47. 知らない指定 ======================================== */
+/**
+ * `--templat vite` のような打ち間違いを黙って無視すると、
+ * 何も言われないまま既定（astro）で作られます。
+ * **気づくのは、できたものを開いて「思っていたのと違う」と感じたとき**です。
+ */
+{
+  const r = create("typo-site", ["--templat", "blog"]);
+  must(
+    "7.47 知らない指定を黙って無視しない",
+    !r.ok && /知らない指定/.test(r.out ?? ""),
+    (r.out ?? "").trim().slice(-80),
+  );
+  must(
+    "     そのときは何も作らない",
+    !fs.existsSync(path.join(work, "typo-site")),
+  );
 }
 
 /* ===== 7.6. README が存在しない部品を教えていないか =============== */

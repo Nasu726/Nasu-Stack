@@ -63,6 +63,17 @@ export function checkNodeVersion(current = process.version) {
   ].join("\n");
 }
 
+/**
+ * Windows が特別扱いする名前。**拡張子を付けても同じです**
+ * （`con.txt` も作れません）。ここを通すと、生成そのものは通るのに
+ * **フォルダが作れない**という分かりにくい失敗になります。
+ */
+const WINDOWS_RESERVED = new Set([
+  "con", "prn", "aux", "nul",
+  ...Array.from({ length: 9 }, (_, i) => `com${i + 1}`),
+  ...Array.from({ length: 9 }, (_, i) => `lpt${i + 1}`),
+]);
+
 const KINDS = [
   {
     key: "astro",
@@ -100,6 +111,15 @@ export function validateName(name) {
     return ". や _ で始まる名前は使えません";
   }
   if (/[~'!()*/\\]/.test(name)) return "記号 ~ ' ! ( ) * / \\ は使えません";
+  if (/[<>:\"|?]/.test(name)) return '記号 < > : \" | ? は使えません（Windows）';
+  // 制御文字。貼り付けで紛れ込むことがあります
+  if (/[\u0000-\u001f]/.test(name)) return "制御文字は使えません";
+  if (WINDOWS_RESERVED.has(name.split(".")[0].toLowerCase())) {
+    return `${name} は Windows が特別扱いする名前です（フォルダを作れません）`;
+  }
+  if (name.endsWith(".") || name.endsWith(" ")) {
+    return ". や空白で終わる名前は使えません（Windows）";
+  }
   if (name.length > 214) return "名前が長すぎます";
   return null;
 }
@@ -302,6 +322,19 @@ npm run dev
 ブラウザで ${dev} を開きます。
 **この状態のまま作業します。** ファイルを保存すると画面がすぐ切り替わります。
 止めるときは \`Ctrl + C\` です。
+
+### \`package-lock.json\` は必ず commit してください
+
+\`npm install\` すると \`package-lock.json\` ができます。**これを git に入れてください。**
+
+\`package.json\` に書いてあるのは \`^7.2.2\` のような**幅のある指定**です。
+入れる日によって中身が変わります。lockfile があると、**次に install した人**
+（別のパソコン、CI、半年後の自分）が同じものを手に入れられます。
+
+このテンプレートには lockfile を同梱していません。**同梱したものは、
+あなたが受け取った時点で既に古い**からです。あなたの \`npm install\` が作った
+ものが、あなたのプロジェクトにとって正しい 1 つです。
+
 
 ---
 
@@ -613,20 +646,48 @@ WebTemplate 本体: https://github.com/Nasu726/WebTemplate
  * CLI
  * ============================================================== */
 
-function parseArgs(argv) {
-  const args = { name: undefined, template: undefined, yes: false };
+/**
+ * 引数を読みます。
+ *
+ * **知らないフラグは黙って捨てません。** `--templat vite` のような打ち間違いを
+ * 無視すると、何も言われないまま既定（astro）で作られます。
+ * 気づくのは、できたものを開いて「思っていたのと違う」と感じたときです。
+ */
+export function parseArgs(argv) {
+  const args = { name: undefined, template: undefined, yes: false, unknown: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--yes" || a === "-y") args.yes = true;
+    else if (a === "--help" || a === "-h") args.help = true;
     else if (a === "--template" || a === "-t") args.template = argv[++i];
     else if (a.startsWith("--template=")) args.template = a.split("=")[1];
-    else if (!a.startsWith("-")) args.name ??= a;
+    else if (a.startsWith("-")) args.unknown.push(a);
+    else args.name ??= a;
   }
   return args;
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  if (args.help) {
+    console.log("");
+    console.log("  使い方: npx <この tarball の URL> <プロジェクト名> [--template <種類>]");
+    console.log("");
+    for (const k of KINDS) console.log(`    --template ${k.key.padEnd(6)} ${k.label}`);
+    console.log("    --yes          対話せずに既定で作る");
+    console.log("");
+    process.exit(0);
+  }
+
+  /* **知らない指定は止めます。** 黙って無視すると、打ち間違えた人は
+     既定で作られたものを受け取り、開くまで気づけません。 */
+  if (args.unknown.length > 0) {
+    console.error(`  ✗ 知らない指定です: ${args.unknown.join(" ")}`);
+    console.error("    使えるのは --template <種類> / --yes / --help です");
+    console.error(`    種類: ${KINDS.map((k) => k.key).join(" / ")}`);
+    process.exit(2);
+  }
 
   console.log("");
   console.log("  WebTemplate — 動くところから始めます");

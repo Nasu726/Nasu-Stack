@@ -79,8 +79,8 @@
 
 ```bash
 pnpm install
-pnpm verify           # 23 工程（独立したものは並列。約 3 分）。型・ビルド・配布物・実ブラウザ
-pnpm verify:create    # 入口の検査 86 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
+pnpm verify           # 24 工程（独立したものは並列。約 3 分）。型・ビルド・配布物・実ブラウザ
+pnpm verify:create    # 入口の検査 100 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 ```
 
@@ -188,14 +188,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
 
 ### v0.9c の残り
 
-1. **Phase 4 — 外部レビューの残りと Renovate**
-   P2-03（`xhr.timeout` が未設定）/ P2-04（`FileDrop` の `accept`）/
-   P2-05（`EndpointSpec.body` の上書き順）/ P2-06（サーバのエラー文言）/
-   P2-07（Windows の予約語）/ P2-15（生成物の lockfile）/
-   P3-01（未知の CLI フラグ）/ P3-02（`SECURITY.md`）。
-   **Renovate は `renovate.json` が置いてあるだけで動いていません。**
-   アクションを SHA で固定したので、追随する仕組みと対で必要です
-2. **Phase 5 — `verify-create` を PR でも走らせる**
+1. **Phase 5 — `verify-create` を PR でも走らせる**
    いまはマージ後（公開の直前）にしか走らないので、気づくのがマージの後です。
    `verify.yml` にジョブを足し、`pages.yml` は `workflow_call` で呼ぶ形にします
 
