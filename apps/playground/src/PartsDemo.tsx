@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Box, Inline, Stack } from "@/components/ui/layout";
-import { Button } from "@/components/ui/action-button";
+import { ActionButton, Button } from "@/components/ui/action-button";
 import { useConfirm, useToast } from "@/components/ui/action-provider";
 import { DataTable, type TableColumn } from "@/components/ui/data-table";
 import { AsyncSelect } from "@/components/ui/async-select";
@@ -40,33 +40,40 @@ function ConfirmSection() {
           に落ちるので、置かなくても壊れません。
         </>
       }
-      code={`const confirm = useConfirm();
-const ok = await confirm({
-  title: "この記事を削除しますか？",
-  description: "元に戻せません。",
-  confirmLabel: "削除する",
-  tone: "danger",
-});
-if (!ok) return;`}
+      code={`// ボタンから出すなら、これだけです。await も if も要りません。
+<ActionButton
+  variant="danger"
+  confirm={{
+    title: "この記事を削除しますか？",
+    description: "元に戻せません。",
+    confirmLabel: "削除する",
+    tone: "danger",
+  }}
+  action={() => api.remove(id)}
+>
+  削除する
+</ActionButton>
+
+// ボタン以外（メニューの項目など）から出したいときだけ、直接呼びます
+const confirm = useConfirm();
+if (!(await confirm("下書きを破棄しますか？"))) return;`}
     >
       <Inline space="sm">
-        <Button
+        {/* 確認は ActionButton の confirm に任せます。
+            取り消したら action は呼ばれません。 */}
+        <ActionButton
           variant="danger"
-          onClick={async () => {
-            const ok = await confirm({
-              title: "この記事を削除しますか？",
-              description: "元に戻せません。",
-              confirmLabel: "削除する",
-              tone: "danger",
-            });
-            toast.show({
-              tone: ok ? "success" : "info",
-              title: ok ? "削除しました" : "取り消しました",
-            });
+          confirm={{
+            title: "この記事を削除しますか？",
+            description: "元に戻せません。",
+            confirmLabel: "削除する",
+            tone: "danger",
           }}
+          action={() => new Promise((r) => setTimeout(r, 400))}
+          labels={{ success: "削除しました" }}
         >
           削除する
-        </Button>
+        </ActionButton>
 
         <Button
           variant="outline"
@@ -81,6 +88,9 @@ if (!ok) return;`}
           文字列だけ渡す
         </Button>
       </Inline>
+      <p className="text-xs text-muted-fg">
+        見本です。押しても実際には何も消えません。
+      </p>
     </Panel>
   );
 }
@@ -100,15 +110,17 @@ interface Row {
   amount: number;
 }
 
+/* 見本の中身は**誰のものでもない値**にします。
+   実在の案件名や氏名を置くと、そのまま公開ページに載ります。 */
 const ROWS: Row[] = [
-  { id: 1, date: "2026-08-01", title: "レースゲーム", stack: "Unity / C#", status: "進行中", owner: "なす", count: 3, amount: 12400 },
-  { id: 2, date: "2026-07-18", title: "口頭作文ツール", stack: "TypeScript", status: "完了", owner: "なす", count: 8, amount: 8900 },
-  { id: 3, date: "2026-07-02", title: "Kaggle パイプライン", stack: "Python", status: "完了", owner: "なす", count: 21, amount: 24100 },
-  { id: 4, date: "2026-06-20", title: "WebTemplate", stack: "React / Astro", status: "進行中", owner: "なす", count: 5, amount: 3300 },
-  { id: 5, date: "2026-06-11", title: "ポートフォリオ改修", stack: "Astro", status: "完了", owner: "collaborator", count: 2, amount: 5600 },
-  { id: 6, date: "2026-05-30", title: "配信ツール", stack: "Rust", status: "停止", owner: "なす", count: 13, amount: 18200 },
-  { id: 7, date: "2026-05-14", title: "音声認識の実験", stack: "Python", status: "完了", owner: "なす", count: 34, amount: 9700 },
-  { id: 8, date: "2026-04-28", title: "ゲームジャム作品", stack: "Godot", status: "完了", owner: "collaborator", count: 1, amount: 2100 },
+  { id: 1, date: "2026-08-01", title: "案件 A", stack: "Unity / C#", status: "進行中", owner: "me", count: 3, amount: 12400 },
+  { id: 2, date: "2026-07-18", title: "案件 B", stack: "TypeScript", status: "完了", owner: "me", count: 8, amount: 8900 },
+  { id: 3, date: "2026-07-02", title: "案件 C", stack: "Python", status: "完了", owner: "me", count: 21, amount: 24100 },
+  { id: 4, date: "2026-06-20", title: "案件 D", stack: "React / Astro", status: "進行中", owner: "me", count: 5, amount: 3300 },
+  { id: 5, date: "2026-06-11", title: "案件 E", stack: "Astro", status: "完了", owner: "collaborator", count: 2, amount: 5600 },
+  { id: 6, date: "2026-05-30", title: "案件 F", stack: "Rust", status: "停止", owner: "me", count: 13, amount: 18200 },
+  { id: 7, date: "2026-05-14", title: "案件 G", stack: "Python", status: "完了", owner: "me", count: 34, amount: 9700 },
+  { id: 8, date: "2026-04-28", title: "案件 H", stack: "Godot", status: "完了", owner: "collaborator", count: 1, amount: 2100 },
 ];
 
 const COLUMNS: TableColumn<Row>[] = [
@@ -170,7 +182,7 @@ interface User {
 }
 
 const USERS: User[] = [
-  { id: 1, name: "なす", team: "本人" },
+  { id: 1, name: "me", team: "自分" },
   { id: 2, name: "Aoi Tanaka", team: "デザイン" },
   { id: 3, name: "Bob Carter", team: "開発" },
   { id: 4, name: "千葉 みなと", team: "開発" },
@@ -305,6 +317,9 @@ function UploadSection() {
           maxSize={2 * 1024 * 1024}
           hint="1 ファイル 2 MB まで。名前に fail を含めると失敗します"
         />
+        <p className="mt-xs text-xs text-muted-fg">
+          見本です。選んだファイルはどこにも送られません（進捗は偽物です）。
+        </p>
       </Box>
     </Panel>
   );

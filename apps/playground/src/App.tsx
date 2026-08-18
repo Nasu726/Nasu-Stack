@@ -111,7 +111,9 @@ export function App() {
 function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
   const { theme } = useTheme();
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-bg/80 backdrop-blur-md">
+    // ナビのデモに置く SiteHeader は z-30 です（部品側の既定）。
+    // カタログの枠がそれより上に無いと、スクロール中に潜られます。
+    <header className="sticky top-0 z-40 border-b border-border bg-bg/80 backdrop-blur-md">
       <PageBlock width="content" gutter="md" className="py-sm">
         <Spread space="sm">
           <Inline space="sm" alignY="baseline">
@@ -250,6 +252,9 @@ function ButtonSection() {
           />
         </Labeled>
       </Inline>
+      <p className="text-xs text-muted-fg">
+        見本です。押しても実際には何も送信されません。
+      </p>
     </Panel>
   );
 }
@@ -319,7 +324,8 @@ function FormSection() {
           <code className="text-fg">ActionError</code> の{" "}
           <code className="text-fg">fields</code> に入れたエラーは、
           対応する入力欄の下へ自動で表示され、打ち直すと消えます。
-          メールを空欄や <code>a@example.com</code> にすると挙動が確認できます。
+          メールを空欄にするか <code>a@example.com</code> を入れると、
+          失敗したときの表示を確認できます。
         </>
       }
       code={`<AsyncForm action={api.signup} submitLabel="アカウントを作成">\n  <Field name="email" label="メールアドレス" type="email" required />\n</AsyncForm>`}
@@ -330,7 +336,7 @@ function FormSection() {
           submitLabel="アカウントを作成"
           successMessage="登録が完了しました"
         >
-          <Field name="name" label="お名前" placeholder="なす" required />
+          <Field name="name" label="お名前" placeholder="山田 太郎" required />
           <Field
             name="email"
             label="メールアドレス"
@@ -347,6 +353,9 @@ function FormSection() {
             required
           />
         </AsyncForm>
+        <p className="mt-xs text-xs text-muted-fg">
+          見本です。押しても実際には何も送信されません。
+        </p>
       </ContentBlock>
     </Panel>
   );
@@ -451,7 +460,7 @@ function EmbeddedPreview() {
       <PageBlock width="content" gutter="md" className="py-lg">
         <Stack space="lg">
           <Spread space="sm">
-            <span className="font-display text-base">Studio Nasu</span>
+            <span className="font-display text-base">Example Studio</span>
             <Inline space="xs">
               <span className="text-xs text-muted-fg">Works</span>
               <span className="text-xs text-muted-fg">About</span>

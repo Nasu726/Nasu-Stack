@@ -15,17 +15,19 @@ import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { PageBlock, Stack, Section, Divider } from "@/components/ui/layout";
 
+/* 中身は**架空です。** ここは雛型の見本なので、実在の名称・住所・沿革を
+   置いてはいけません（そのまま公開ページに載ります）。 */
 const FACTS = [
-  { label: "名称", value: "Studio Nasu" },
-  { label: "所在地", value: "東京都調布市" },
+  { label: "名称", value: "Example Studio" },
+  { label: "所在地", value: "○○県○○市" },
   { label: "事業内容", value: "Web サイトおよび Web アプリケーションの設計・開発" },
   { label: "設立", value: "2026 年 4 月" },
 ];
 
 const HISTORY = [
-  { date: "2026-04", text: "設立。受託開発を開始" },
-  { date: "2026-06", text: "WebTemplate の開発を開始" },
-  { date: "2026-08", text: "レイアウト部品と検査の仕組みを公開" },
+  { date: "2026-04", text: "設立" },
+  { date: "2026-06", text: "サービス A の提供を開始" },
+  { date: "2026-08", text: "サービス B の提供を開始" },
 ];
 import { withBase } from "@/lib/base";
 ---
@@ -91,8 +93,8 @@ import { withBase } from "@/lib/base";
         <h2 class="text-xl">所在地</h2>
         {/* 連絡先は <address>。見た目は変わりませんが、意味が付きます。 */}
         <address class="text-sm not-italic leading-relaxed text-muted-fg">
-          〒182-0000<br />
-          東京都調布市（この雛型では住所を伏せています）
+          〒000-0000<br />
+          ○○県○○市 0-0-0（架空の住所です）
         </address>
         <p class="text-sm">
           <a href={withBase("/contact/")} class="text-primary underline underline-offset-2">
@@ -107,6 +109,6 @@ import { withBase } from "@/lib/base";
     brand={SITE.name}
     description={SITE.description}
     groups={FOOTER_GROUPS}
-    note="© 2026 Studio Nasu — MIT"
+    note="© 2026 Example Studio — MIT"
   />
 </Base>

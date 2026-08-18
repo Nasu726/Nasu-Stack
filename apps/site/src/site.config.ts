@@ -16,10 +16,12 @@ export const SITE = {
    * 既に含まれています。両方に入れると二重になります。
    */
   url: import.meta.env.SITE ?? "https://example.com",
-  name: "Studio Nasu",
+  /* 雛型の見本なので、**誰のものでもない名前**にしています。
+     自分のサイトにするときは、ここと about.astro を書き換えてください。 */
+  name: "Example Studio",
   description:
     "静的なページは Astro、動く部分だけ React。WebTemplate で組んだサイトの見本です。",
-  author: "なす",
+  author: "Example Studio",
   /**
    * 既定の OGP 画像。**無いと SNS に貼ったとき白い箱が出るだけになります。**
    * ページごとに差し替えたいときは Base.astro に image を渡してください。

@@ -38,16 +38,27 @@ const send = ENDPOINT
 
 export function ContactForm() {
   return (
-    <AsyncForm
-      action={send}
-      submitLabel="送信する"
-      successMessage="お問い合わせを受け付けました"
-    >
-      <Field name="name" label="お名前" required />
-      <Field name="email" label="メールアドレス" type="email" required />
-      <Field name="message" label="本文" multiline rows={5} />
-      {/* 人には見えず、キーボードでも読み上げでも到達しない、bot 用のおとり */}
-      <HoneypotField />
-    </AsyncForm>
+    <>
+      <AsyncForm
+        action={send}
+        submitLabel="送信する"
+        successMessage="お問い合わせを受け付けました"
+      >
+        <Field name="name" label="お名前" required />
+        <Field name="email" label="メールアドレス" type="email" required />
+        <Field name="message" label="本文" multiline rows={5} />
+        {/* 人には見えず、キーボードでも読み上げでも到達しない、bot 用のおとり */}
+        <HoneypotField />
+      </AsyncForm>
+
+      {/* 送信先が未設定のときだけ出します。**配線したら自動で消えます。**
+          「押したらどこかへ送られるのでは」と思わせないためのものなので、
+          本当に送られるようになったら出てはいけません。 */}
+      {!ENDPOINT && (
+        <p className="mt-xs text-xs text-muted-fg">
+          この見本は送信先が未設定です。押しても実際には送信されません。
+        </p>
+      )}
+    </>
   );
 }
