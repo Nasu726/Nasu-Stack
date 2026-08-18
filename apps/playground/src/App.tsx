@@ -62,6 +62,7 @@ const PANELS: Record<string, React.ReactNode> = {
       <FormSection />
       <ListSection />
       <AbortSection />
+      <GuardRaceSection />
       <ToastSection />
     </Stack>
   ),
@@ -491,7 +492,9 @@ function AbortSection() {
         <Button variant="outline" onClick={slow.abort} disabled={!slow.isPending}>
           中断
         </Button>
-        <span className="text-xs text-muted-fg">status: {slow.status}</span>
+        <span className="text-xs text-muted-fg" data-testid="abort-status">
+          status: {slow.status}
+        </span>
       </Inline>
 
       <AsyncBoundary
@@ -510,6 +513,122 @@ function AbortSection() {
   );
 }
 
+
+/* ---------------------------------------------------------------- */
+
+/**
+ * guard を待っている間の中断。
+ *
+ * ----------------------------------------------------------------
+ * ここは見た目のデモではありません
+ * ----------------------------------------------------------------
+ * **「押した後にやめたのに、実行された」を数で見るための題材です。**
+ *
+ * v0.9d までは `AbortController` を guard の後に作っていたので、
+ * 確認ダイアログや通信を待っている間に中断しても止まりませんでした。
+ * 画面を離れた後に削除や決済が始まる、という壊れ方をします。
+ *
+ * 見た目では分からないので、**action が何回呼ばれたか**を出します。
+ */
+function GuardRaceSection() {
+  const [alive, setAlive] = React.useState(true);
+  const [calls, setCalls] = React.useState(0);
+  const [rejections, setRejections] = React.useState(0);
+
+  /* 握られなかった Promise の数。**これが増えたら契約が壊れています。** */
+  React.useEffect(() => {
+    const on = () => setRejections((n) => n + 1);
+    window.addEventListener("unhandledrejection", on);
+    return () => window.removeEventListener("unhandledrejection", on);
+  }, []);
+
+  return (
+    <Panel
+      title="guard を待っている間の中断"
+      description={
+        <>
+          <code className="text-fg">guard</code>{" "}
+          が非同期のとき、待っている間に中断したり画面を離れたりできます。
+          <strong className="text-fg">そのあと action が始まってはいけません。</strong>
+          削除・決済・送信だと、利用者が「やめた」と思った後に起きます。
+          下の guard は <strong className="text-fg">中断を自分では見ていません</strong>——
+          それでも止まります。下の数字が増えなければ止まっています。
+        </>
+      }
+      code={`const state = useAction(api.remove, {
+  // ctx.signal を渡せば、guard の中の通信も一緒に止まります
+  guard: async (input, ctx) => confirmSomething(input, ctx),
+});
+
+state.abort();   // guard を待っている間でも効きます`}
+    >
+      <Inline space="md" alignY="start">
+        {alive ? (
+          <SlowGuard onCall={() => setCalls((n) => n + 1)} />
+        ) : (
+          <span className="text-xs text-muted-fg">画面から消しました</span>
+        )}
+        <Stack space="2xs" align="start">
+          <Button size="sm" variant="outline" onClick={() => setAlive((v) => !v)}>
+            {alive ? "画面から消す" : "戻す"}
+          </Button>
+          <span className="text-xs text-muted-fg" data-testid="guard-calls">
+            action が呼ばれた回数: {calls}
+          </span>
+          <span className="text-xs text-muted-fg" data-testid="unhandled-rejections">
+            握られなかった失敗: {rejections}
+          </span>
+        </Stack>
+      </Inline>
+
+      <p className="text-xs text-muted-fg">
+        見本です。押しても実際には何も送信されません。
+      </p>
+    </Panel>
+  );
+}
+
+/** 1 秒待つ guard を持つボタン。待っている間に中断／退場できます。 */
+function SlowGuard({ onCall }: { onCall: () => void }) {
+  const state = useAction(
+    async () => {
+      onCall();
+      await new Promise((r) => setTimeout(r, 200));
+      return { ok: true };
+    },
+    {
+      /* **わざと signal を見ない guard にしてあります。**
+         初心者が書くのはこの形です。「中断されたかどうか」を
+         guard の中で気にしなくても、部品の側が止めます。
+         guard 自身が `ctx.signal.aborted` を見てしまうと、
+         部品が直っているのか guard が親切なだけなのか分かりません。 */
+      guard: async () => {
+        await new Promise((r) => setTimeout(r, 1000));
+        return true;
+      },
+      resetAfter: 0,
+    },
+  );
+
+  return (
+    <Stack space="2xs" align="start">
+      <Inline space="xs">
+        <Button
+          onClick={() => void state.run(undefined)}
+          disabled={state.isPending}
+        >
+          {state.isPending ? "確認中…" : "確認してから実行"}
+        </Button>
+        <Button variant="outline" onClick={state.abort} disabled={!state.isPending}>
+          確認中にやめる
+        </Button>
+      </Inline>
+      <span className="text-xs text-muted-fg" data-testid="guard-status">
+        status: {state.status}
+      </span>
+    </Stack>
+  );
+}
 /* ---------------------------------------------------------------- */
 
 /* ActionProvider は余白や段組の話ではないので、「状態」の章に置いています。
@@ -546,13 +665,13 @@ function ToastSection() {
             await new Promise((r) => setTimeout(r, 600));
             throw new Error("これは通知されない");
           }}
-          onError={(e) =>
+          onError={(e) => {
             toast.show({
               tone: "warning",
               title: "自前で処理しました",
               description: e.displayMessage,
-            })
-          }
+            });
+          }}
           showError={false}
           variant="outline"
         >

@@ -17,8 +17,8 @@ export interface UseResourceOptions<TOutput> {
   placeholder?: TOutput;
   /** 失敗時の自動リトライ回数。既定 1。 */
   retry?: number;
-  onSuccess?: (data: TOutput) => void;
-  onError?: (error: ActionError) => void;
+  onSuccess?: (data: TOutput) => void | Promise<void>;
+  onError?: (error: ActionError) => void | Promise<void>;
 }
 
 export interface UseResourceResult<TOutput> {
@@ -115,7 +115,10 @@ export function useResource<TOutput>(
 
       if (succeeded) {
         setState({ status: "success", data: result, error: undefined });
-        callSafely(() => optionsRef.current.onSuccess?.(result as TOutput), "onSuccess");
+        await callSafely(
+          () => optionsRef.current.onSuccess?.(result as TOutput),
+          "onSuccess",
+        );
         return;
       }
 
@@ -123,7 +126,7 @@ export function useResource<TOutput>(
       if (lastError) {
         // AsyncBoundary が画面内にエラーと再試行を出すので、
         // 取得失敗は既定では通知を出しません（二重表示を避けるため）。
-        callSafely(
+        await callSafely(
           () => optionsRef.current.onError?.(lastError as ActionError),
           "onError",
         );

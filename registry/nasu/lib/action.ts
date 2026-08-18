@@ -318,9 +318,19 @@ async function readBody<T>(res: Response): Promise<T | undefined> {
  * **「action は成功した」というのが事実だから**です。
  * 嘘の断定をしない代わりに、原因が追える場所には必ず残します。
  */
-export function callSafely(fn: () => void, name: string): void {
+export async function callSafely(
+  fn: () => void | Promise<void>,
+  name: string,
+): Promise<void> {
   try {
-    fn();
+    /* **await します。** 同期の throw だけを拾う形だと、
+       `onSuccess: async () => { … throw }` が素通りして
+       unhandled rejection になります（外部レビューの P2-01）。
+       利用者が async なコールバックを書くのは自然なことです。
+
+       呼ぶ側は retry の**外**でこれを待ちます。中で待つと、
+       コールバックの失敗が action の失敗として繰り返されます。 */
+    await fn();
   } catch (e) {
     console.error(
       `[action] ${name} が例外を投げました。処理自体は完了しています。`,

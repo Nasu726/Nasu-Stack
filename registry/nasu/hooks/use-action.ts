@@ -13,20 +13,50 @@ import {
 import { useActionDefaults } from "@/lib/action-defaults";
 
 export interface UseActionOptions<TInput, TOutput> {
-  /** 成功時に呼ばれます。 */
-  onSuccess?: (data: TOutput, input: TInput) => void;
+  /** 成功時に呼ばれます。async でも構いません（失敗はログに出して握ります）。 */
+  onSuccess?: (data: TOutput, input: TInput) => void | Promise<void>;
   /** 失敗時に呼ばれます。ここを未指定にすると ActionProvider の既定処理が走ります。 */
-  onError?: (error: ActionError, input: TInput) => void;
+  onError?: (error: ActionError, input: TInput) => void | Promise<void>;
   /** 成否によらず最後に呼ばれます。 */
-  onSettled?: () => void;
+  onSettled?: () => void | Promise<void>;
   /** 成功状態を何 ms 後に idle へ戻すか。0 で戻しません。既定 2000。 */
   resetAfter?: number;
-  /** 失敗時に自動リトライする回数。既定 0。 */
+  /**
+   * 失敗時に自動リトライする回数。既定 0。
+   *
+   * **同じ操作を 2 回やっても結果が変わらないものにだけ付けてください。**
+   * 決済・注文の作成・メールの送信は違います。1 回目がサーバに届いた後で
+   * 応答だけ失われた場合、リトライは**もう一度実行させます。**
+   *
+   * どうしても必要なら、サーバ側で同じ要求を 1 回として扱う仕組み
+   * （Idempotency-Key など）と対で設計してください。
+   * こちら側だけでは判断できません。
+   */
   retry?: number;
   /** リトライ間隔 (ms)。関数を渡すと指数バックオフなども書けます。既定 500ms。 */
   retryDelay?: number | ((attempt: number) => number);
-  /** 実行前の確認。false を返すと実行しません。 */
-  guard?: (input: TInput) => boolean | Promise<boolean>;
+  /**
+   * 実行前の確認。false を返すと実行しません。
+   *
+   * `ctx.signal` は `action` に渡すものと同じです。**guard の中で通信するなら
+   * 必ず渡してください。** 待っている間に中断されても、それが伝わります。
+   *
+   * ここで例外を投げると、`action` が失敗したときと同じ経路
+   * （`state.error` と `onError`）に乗ります。
+   */
+  guard?: (input: TInput, ctx: ActionContext) => boolean | Promise<boolean>;
+  /**
+   * `guard` を待っている間も pending にするか。既定 true。
+   *
+   * 遅い guard（通信など）では、押したのに何も変わらないと壊れて見えます。
+   * だから既定は true です。
+   *
+   * **確認ダイアログを出す guard では false にしてください。**
+   * 表示が変わると、`<dialog>` を閉じたあと**フォーカスが元のボタンへ
+   * 戻らなくなります**（body へ落ちます）。実測で確かめました。
+   * 待たせているのはダイアログ自身なので、ボタンまで変える必要もありません。
+   */
+  pendingDuringGuard?: boolean;
 }
 
 export interface UseActionResult<TInput, TOutput>
@@ -86,6 +116,10 @@ export function useAction<TInput = void, TOutput = unknown>(
 
   const abortRef = React.useRef<AbortController | null>(null);
   const inFlightRef = React.useRef(false);
+  /* 操作の世代。**guard を待っている間に abort されたことを、
+     戻ってきた側が知るために要ります。** signal だけでは、
+     abort のあとに始まった新しい run と見分けが付きません。 */
+  const generationRef = React.useRef(0);
   const mountedRef = React.useRef(true);
   const resetTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -96,6 +130,7 @@ export function useAction<TInput = void, TOutput = unknown>(
     return () => {
       mountedRef.current = false;
       abortRef.current?.abort();
+      generationRef.current++;
       if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     };
   }, []);
@@ -115,6 +150,9 @@ export function useAction<TInput = void, TOutput = unknown>(
 
   const abort = React.useCallback(() => {
     abortRef.current?.abort();
+    /* **世代も進めます。** guard を待っている操作は signal を見ていないので、
+       これが無いと「戻ってきたら中断済みだった」ことに気づけません。 */
+    generationRef.current++;
     inFlightRef.current = false;
     safeSet({ status: "idle" });
   }, [safeSet]);
@@ -135,6 +173,32 @@ export function useAction<TInput = void, TOutput = unknown>(
       const opts = optionsRef.current;
       const dflt = defaultsRef.current;
 
+      /* --- 中断できる状態を、guard より前に作ります -------------------
+         v0.9d までは `AbortController` を guard の**後**に作っていました。
+
+           run() → guard を await → abort() → guard が true で解決
+                 → ここで初めて controller ができる → action 開始
+
+         `abort()` を呼んだ時点では、この操作の controller がまだ無いので
+         **中断できません。** 画面を離れたとき（unmount）も同じで、
+         **中断したはずの削除・決済・送信が後から始まります。**
+
+         世代番号も持ちます。`abort()` は世代を進めるので、
+         guard から戻ってきた古い操作は自分が用済みだと分かります。
+         外部レビューの P1-02。 */
+      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const generation = ++generationRef.current;
+      const ctx: ActionContext = { signal: controller.signal };
+
+      /** この操作がもう用済みか（中断された / 新しい run が来た / 画面が消えた）。 */
+      const stale = () =>
+        controller.signal.aborted ||
+        generation !== generationRef.current ||
+        !mountedRef.current;
+
       /** action 本体が最終的に成功したか。callback の成否とは別に持ちます。 */
       let succeeded = false;
       let result: TOutput | undefined;
@@ -143,54 +207,79 @@ export function useAction<TInput = void, TOutput = unknown>(
 
       try {
         if (opts.guard) {
-          const ok = await opts.guard(input);
-          if (!ok) return undefined;
+          /* **guard の間も pending にします。** ここを idle のままにすると、
+             遅い guard を待っている間ボタンが押せるように見えて、
+             押しても何も起きません（壊れて見えます）。
+
+             ただし確認ダイアログのときは変えません（上の説明）。 */
+          if (opts.pendingDuringGuard !== false) {
+            safeSet({ status: "pending", error: undefined, attempt: 0 });
+          }
+
+          let ok: boolean;
+          try {
+            ok = await opts.guard(input, ctx);
+          } catch (raw) {
+            /* **guard の例外も、action の失敗と同じ経路に乗せます。**
+               ここで throw し返すと `run()` 自体が reject し、
+               `ActionButton` は `void state.run(...)` で呼ぶので
+               unhandled rejection になります（外部レビューの P2-02）。 */
+            lastError = toActionError(raw);
+            ok = false;
+          }
+
+          if (stale()) {
+            aborted = true;
+            safeSet({ status: "idle" });
+            return undefined;
+          }
+          if (!ok && !lastError) {
+            // 利用者が「やめる」を選んだだけ。エラーではありません。
+            safeSet({ status: "idle" });
+            return undefined;
+          }
         }
 
-        if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
-        abortRef.current?.abort();
-        const controller = new AbortController();
-        abortRef.current = controller;
+        if (!lastError) {
+          const maxAttempts = (opts.retry ?? dflt.retry ?? 0) + 1;
 
-        const maxAttempts = (opts.retry ?? dflt.retry ?? 0) + 1;
+          /* ここが retry の境界です。**action 本体だけを繰り返します。**
+             callback はこの中に入れません（下のコメント参照）。 */
+          for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            safeSet({ status: "pending", error: undefined, attempt });
 
-        /* ここが retry の境界です。**action 本体だけを繰り返します。**
-           callback はこの中に入れません（下のコメント参照）。 */
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          safeSet({ status: "pending", error: undefined, attempt });
+            try {
+              const data = await actionRef.current(input, ctx);
 
-          try {
-            const ctx: ActionContext = { signal: controller.signal };
-            const data = await actionRef.current(input, ctx);
+              if (stale()) {
+                aborted = true;
+                return undefined;
+              }
+              succeeded = true;
+              result = data;
+              break;
+            } catch (raw) {
+              if (stale()) {
+                aborted = true;
+                safeSet({ status: "idle" });
+                return undefined;
+              }
 
-            if (controller.signal.aborted) {
-              aborted = true;
-              return undefined;
-            }
-            succeeded = true;
-            result = data;
-            break;
-          } catch (raw) {
-            if (controller.signal.aborted) {
-              aborted = true;
-              safeSet({ status: "idle" });
-              return undefined;
-            }
+              lastError = toActionError(raw);
 
-            lastError = toActionError(raw);
+              const isLast = attempt === maxAttempts - 1;
+              if (isLast) break;
 
-            const isLast = attempt === maxAttempts - 1;
-            if (isLast) break;
-
-            const delay =
-              typeof opts.retryDelay === "function"
-                ? opts.retryDelay(attempt)
-                : (opts.retryDelay ?? 500);
-            await sleep(delay, controller.signal);
-            if (controller.signal.aborted) {
-              aborted = true;
-              safeSet({ status: "idle" });
-              return undefined;
+              const delay =
+                typeof opts.retryDelay === "function"
+                  ? opts.retryDelay(attempt)
+                  : (opts.retryDelay ?? 500);
+              await sleep(delay, controller.signal);
+              if (stale()) {
+                aborted = true;
+                safeSet({ status: "idle" });
+                return undefined;
+              }
             }
           }
         }
@@ -213,9 +302,9 @@ export function useAction<TInput = void, TOutput = unknown>(
       if (succeeded) {
         safeSet({ status: "success", data: result, error: undefined });
         // 個別指定が優先。無ければ ActionProvider の既定へ委ねる
-        callSafely(() => {
-          if (opts.onSuccess) opts.onSuccess(result as TOutput, input);
-          else dflt.onSuccess?.(result as TOutput);
+        await callSafely(() => {
+          if (opts.onSuccess) return opts.onSuccess(result as TOutput, input);
+          return dflt.onSuccess?.(result as TOutput);
         }, "onSuccess");
 
         const after = opts.resetAfter ?? dflt.resetAfter ?? 2000;
@@ -230,14 +319,14 @@ export function useAction<TInput = void, TOutput = unknown>(
           // 個別に onError を書いていればそちら。書いていなければ
           // ActionProvider の既定（通常は画面隅の通知）へ流す。
           // これで「エラー処理の書き忘れ」が握り潰されなくなります。
-          callSafely(() => {
-            if (opts.onError) opts.onError(lastError as ActionError, input);
-            else dflt.onError?.(lastError as ActionError);
+          await callSafely(() => {
+            if (opts.onError) return opts.onError(lastError as ActionError, input);
+            return dflt.onError?.(lastError as ActionError);
           }, "onError");
         }
       }
 
-      callSafely(() => opts.onSettled?.(), "onSettled");
+      await callSafely(() => opts.onSettled?.(), "onSettled");
       return succeeded ? result : undefined;
     },
     [safeSet],
