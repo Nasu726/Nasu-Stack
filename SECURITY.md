@@ -13,7 +13,11 @@ GitHub の [Security Advisories](https://github.com/Nasu726/WebTemplate/security
 
 ## このリポジトリが何であるか
 
-Web サイトの部品を配る**雛型**です。npm には publish していません。
+Web サイトの部品を配る**雛型**です。
+
+**shadcn のレジストリのディレクトリには載っていますが、npm には publish して
+いません。** 載っていると「npm にもあるだろう」と思われるので、先に書いておきます
+（ディレクトリに載せるのに npm は要りません）。
 配っているのは次の 3 つだけです。
 
 | | |

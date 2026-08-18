@@ -362,6 +362,38 @@ const FRACTION: Record<string, string> = {
   "4/5": "80%",
 };
 
+/**
+ * 畳んでいる間の縦位置指定は、**横方向の指定に化けます。**
+ *
+ * `items-start` は交差軸の指定です。横並び（row）のときは「上端に揃える」
+ * ですが、畳んで縦並び（column）になった瞬間に「左端に揃える」になります。
+ * すると**幅を持たない列が中身の幅まで縮みます。**
+ *
+ * v0.9d で実測: 親 678px に対して `auto` の列が **179px と 48px**、
+ * `Frame` の比率の例は **24px** まで縮んでいました。
+ * 崩れではなく「小さくなるだけ」なので、はみ出しの検査は全部緑のままです。
+ *
+ * だから `alignY` は**横並びになる幅でだけ**当てます。
+ * 畳んでいる間は既定（stretch）＝全幅です。
+ *
+ * Tailwind はクラス名を文字列として静的に探します。
+ * 変数で組み立てたクラス名は出力に含まれないので、literal で並べます。
+ */
+const ALIGN_Y_AT = {
+  tablet: {
+    start: "md:items-start",
+    center: "md:items-center",
+    end: "md:items-end",
+    baseline: "md:items-baseline",
+  },
+  desktop: {
+    start: "lg:items-start",
+    center: "lg:items-center",
+    end: "lg:items-end",
+    baseline: "lg:items-baseline",
+  },
+} as const;
+
 const ColumnsContext = React.createContext<{
   collapseBelow: Breakpoint | null;
 }>({ collapseBelow: "tablet" });
@@ -405,12 +437,18 @@ export function Columns({
         ? "flex-col lg:flex-row"
         : "flex-row";
 
+  /* 畳んでいる間は alignY を当てません（上の ALIGN_Y_AT の説明）。 */
+  const align =
+    collapseBelow === null
+      ? ALIGN_Y[alignY]
+      : ALIGN_Y_AT[collapseBelow][alignY];
+
   const ctx = React.useMemo(() => ({ collapseBelow }), [collapseBelow]);
 
   return (
     <ColumnsContext.Provider value={ctx}>
       <Tag
-        className={cn("flex w-full wt-gap", direction, ALIGN_Y[alignY], className)}
+        className={cn("flex w-full wt-gap", direction, align, className)}
         style={merge(spaceVars("gap", space), style)}
         {...props}
       >

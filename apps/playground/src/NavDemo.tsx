@@ -68,7 +68,11 @@ function HeaderSection() {
           このカタログ自身のヘッダを <code className="text-fg">z-40</code>{" "}
           にしているのはそのためです。
         </p>
-        <div className="overflow-hidden rounded-lg border border-border">
+        {/* **overflow-hidden を付けてはいけません。** 角丸のために付けたく
+            なりますが、狭い画面でハンバーガーを開くと、下へ伸びたメニューが
+            この枠で切られます（実測: 枠の下端 794px に対して項目の下端 948px。
+            154px 分が見えませんでした）。 */}
+        <div className="rounded-lg border border-border">
           <SiteHeader
             brand="Example Studio"
             items={NAV}

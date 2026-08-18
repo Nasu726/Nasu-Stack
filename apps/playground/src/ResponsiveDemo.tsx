@@ -157,15 +157,44 @@ const ROWS = [
 const HEADERS = ["日付", "案件", "技術", "状態", "担当", "優先度", "件数", "金額"];
 
 function ScrollableDemo() {
+  const [bar, setBar] = React.useState<"auto" | "hidden">("auto");
+
   return (
     <Panel
       title="Scrollable — 潰さず、はみ出させず"
-      description="表のように、これ以上縮めると読めなくなる中身があります。無理に折り返すのではなく、その部分だけ横スクロールさせるのが正解です。端が切れていることを示す影が出て、キーボードでも到達できます。"
+      description={
+        <>
+          表のように、これ以上縮めると読めなくなる中身があります。
+          無理に折り返すのではなく、その部分だけ横スクロールさせるのが正解です。
+          端が切れていることを示す影が出て、キーボードでも到達できます。
+          ホイールは<strong className="text-fg">横の動きだけ</strong>を見ます
+          （縦を横に回すと、ページを縦に読んでいる途中で止まります）。
+        </>
+      }
       code={`<Scrollable label="売上の表">
   <table>…</table>
-</Scrollable>`}
+</Scrollable>
+
+// スクロールバーが邪魔なとき（端の影は残ります）
+<Scrollable label="売上の表" scrollbar="hidden">…</Scrollable>`}
     >
-      <Scrollable label="案件の一覧">
+      <Inline space="xs" alignY="center">
+        {(["auto", "hidden"] as const).map((v) => (
+          <Button
+            key={v}
+            size="sm"
+            variant={bar === v ? "primary" : "outline"}
+            onClick={() => setBar(v)}
+          >
+            scrollbar=&quot;{v}&quot;
+          </Button>
+        ))}
+        <span className="text-xs text-muted-fg">
+          隠しても、端の影とキーボード操作は残ります
+        </span>
+      </Inline>
+
+      <Scrollable label="案件の一覧" scrollbar={bar}>
         <table className="w-full min-w-[42rem] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border text-left">

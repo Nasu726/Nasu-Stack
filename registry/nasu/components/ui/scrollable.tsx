@@ -20,17 +20,17 @@ import { cn } from "@/lib/utils";
  *   - キーボードだけの人がスクロールできるよう tabIndex を付ける
  *     （スクロール領域に到達手段が無いのはアクセシビリティ違反です）
  *   - スクロールが不要な幅では影も tabIndex も付けない
- *   - ホイールの縦の動きを横スクロールに回す（`wheelX`。既定は切）
+ *   - スクロールバーを隠せる（`scrollbar="hidden"`。端の影は残します）
  *
- * 最後の 1 つは見落としやすい穴です。横にしか動けない領域の上で
- * ホイールを回しても、既定では**何も起きません。** 指では動き、
- * 矢印キーでも動くので、作った側は気づけません
- * （実際 v0.9c で、作者がタッチパッドで触って初めて分かりました）。
+ * ----------------------------------------------------------------
+ * ホイールの扱い
+ * ----------------------------------------------------------------
+ * **横の動きだけを見ます。** タッチパッドの 2 本指の横払いや、
+ * 横チルトのあるホイールがここに来ます。
  *
- * **既定で入れてはいけません。** コード例や表の上を通っただけで
- * ページの縦スクロールが止まり、横に流れます。縦に読んでいる人の
- * 邪魔になるので、タブの列のように「横にしか意味が無い」ものだけ
- * `wheelX` を付けます。
+ * v0.9c では**縦の動きを横に回して**いました。**やめました。**
+ * コード例や表の上を通っただけでページの縦読みが止まり、横に流れます。
+ * 縦に読んでいる人の邪魔になるほうが害が大きい、というのが作者の判断です。
  */
 export interface ScrollableProps extends React.HTMLAttributes<HTMLDivElement> {
   /** スクロール領域の説明。読み上げに使われます。 */
@@ -38,12 +38,13 @@ export interface ScrollableProps extends React.HTMLAttributes<HTMLDivElement> {
   /** 縦にもスクロールさせたいとき。 */
   axis?: "x" | "y" | "both";
   /**
-   * ホイール（タッチパッドの縦）を横スクロールに回すか。既定 false。
+   * スクロールバーを出すか。既定 "auto"（ブラウザ任せ）。
    *
-   * タブの列のように**横にしか意味が無い**ものだけ true にしてください。
-   * 表やコード例に付けると、ページを縦に読んでいる途中で止まります。
+   * "hidden" にしても**端の影は残します。** 影まで消すと、
+   * そこがスクロールできることを示すものが 1 つも無くなります。
+   * キーボードで到達できる点も変わりません。
    */
-  wheelX?: boolean;
+  scrollbar?: "auto" | "hidden";
   /** 最大の高さ（axis に y を含むとき）。 */
   maxHeight?: string;
   children?: React.ReactNode;
@@ -52,7 +53,7 @@ export interface ScrollableProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Scrollable({
   label,
   axis = "x",
-  wheelX = false,
+  scrollbar = "auto",
   maxHeight,
   className,
   style,
@@ -91,20 +92,20 @@ export function Scrollable({
     };
   }, [update]);
 
-  /* ホイール／タッチパッドの縦の動きを横へ回します。
+  /* ホイールの**横**の動きを反映します。
      **端に着いたら preventDefault しません。** そこで止めてしまうと、
      一覧の端でページ全体のスクロールまで止まります。 */
   React.useEffect(() => {
     const el = ref.current;
-    if (!el || axis !== "x" || !wheelX) return;
+    if (!el || axis === "y") return;
     const onWheel = (e: WheelEvent) => {
       // ピンチ（Ctrl+ホイール）は拡大縮小なので触りません
       if (e.ctrlKey) return;
-      // 横の動きはブラウザがそのまま処理できます
-      if (Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      // 縦の動きには触りません。ページの縦読みを止めないためです。
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
       const max = el.scrollWidth - el.clientWidth;
       if (max <= 0) return;
-      const next = Math.min(max, Math.max(0, el.scrollLeft + e.deltaY));
+      const next = Math.min(max, Math.max(0, el.scrollLeft + e.deltaX));
       if (next === el.scrollLeft) return;
       e.preventDefault();
       el.scrollLeft = next;
@@ -112,7 +113,7 @@ export function Scrollable({
     // passive: false でないと preventDefault が効きません
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [axis, wheelX]);
+  }, [axis]);
 
   const showLeft = state.scrollable && !state.atStart;
   const showRight = state.scrollable && !state.atEnd;
@@ -131,9 +132,12 @@ export function Scrollable({
             ? "overflow-y-auto overflow-x-hidden"
             : axis === "both"
               ? "overflow-auto"
-              : "overflow-x-auto overflow-y-hidden",
+              : // **overflow-y は指定しません。** `Inline wrap={false}`
+                // （wt-nowrap）と同じ形に揃えています。
+                "overflow-x-auto",
           // スマホで指を離したときの慣性と、スクロール端の跳ね返り抑制
           "overscroll-x-contain",
+          scrollbar === "hidden" && "wt-noscrollbar",
         )}
         style={{ maxHeight, ...style }}
         {...props}

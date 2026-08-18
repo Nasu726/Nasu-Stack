@@ -15,3 +15,13 @@ export const SITE = {
  * 手で書くと、年が変わった翌日から全ページが古くなります。
  */
 export const YEAR = new Date().getFullYear();
+
+/**
+ * テーマの保存先（localStorage のキー）。
+ *
+ * **同じドメインに別のサイトを置くときは、必ず分けてください。**
+ * localStorage は origin 単位なので、`example.com/app/` と
+ * `example.com/docs/` は同じ入れ物を共有します。分けないと、
+ * 片方で選んだ明暗がもう片方にもそのまま出ます。
+ */
+export const THEME_STORAGE_KEY = "__PROJECT_NAME__.theme";

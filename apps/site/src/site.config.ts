@@ -36,3 +36,12 @@ export const SITE = {
  * 手で書くと、年が変わった翌日から全ページが古くなります。
  */
 export const YEAR = new Date().getFullYear();
+
+/**
+ * テーマの保存先。**カタログと分けます。**
+ *
+ * localStorage は origin 単位なので、`/catalog/` と `/demo/` は同じ入れ物を
+ * 共有します。v0.9d まで、カタログで選んだトンマナがデモにも出ていました
+ * （`data-theme="warm"` と書いたページが vivid で表示されていました）。
+ */
+export const THEME_STORAGE_KEY = "webtemplate.site.theme";

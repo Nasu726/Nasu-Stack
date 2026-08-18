@@ -124,9 +124,9 @@ function StackDemo() {
 
       <Stack space="2xs">
         <span className="text-xs font-medium text-muted-fg">
-          dividers（線は実際の要素なので、上下の余白が揃います）
+          dividers（線は実際の要素なので、上下の余白が揃います。上のボタンで変わります）
         </span>
-        <Stack space="md" dividers>
+        <Stack space={space} dividers>
           <Blk>A</Blk>
           <Blk>B</Blk>
           <Blk>C</Blk>

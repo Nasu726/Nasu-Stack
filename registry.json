@@ -130,7 +130,8 @@
       "title": "Scrollable",
       "description": "表やコードのように縮められない中身を、その部分だけ横スクロールさせます。端の影とキーボード到達つき。",
       "registryDependencies": [
-        "@nasu/utils"
+        "@nasu/utils",
+        "@nasu/tokens"
       ],
       "files": [
         {
@@ -470,9 +471,9 @@
       "registryDependencies": [
         "@nasu/layout",
         "@nasu/utils",
-        "@nasu/tokens"
-      ,
-        "@nasu/base"],
+        "@nasu/tokens",
+        "@nasu/base"
+      ],
       "files": [
         {
           "path": "registry/nasu/components/ui/site-nav.tsx",
@@ -549,9 +550,9 @@
       "registryDependencies": [
         "@nasu/layout",
         "@nasu/utils",
-        "@nasu/tokens"
-      ,
-        "@nasu/base"],
+        "@nasu/tokens",
+        "@nasu/base"
+      ],
       "files": [
         {
           "path": "registry/nasu/components/ui/site-footer.tsx",

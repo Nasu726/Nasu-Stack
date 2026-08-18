@@ -22,12 +22,19 @@ function injectThemeInit(): Plugin {
         "utf8",
       );
       const m = src.match(
-        /export const themeInitScript = `([\s\S]*?)`\s*\.trim\(\);/,
+        /const THEME_INIT_TEMPLATE = `([\s\S]*?)`\s*\.trim\(\);/,
       );
       const key = src.match(/const STORAGE_KEY = "([^"]+)"/);
-      if (!m || !key) throw new Error("themeInitScript を取り出せませんでした");
-      // テンプレートリテラル内の ${STORAGE_KEY} を実際の値へ差し替える
-      const script = m[1].trim().replaceAll("${STORAGE_KEY}", key[1]);
+      if (!m || !key) throw new Error("THEME_INIT_TEMPLATE を取り出せませんでした");
+      /* 目印を実際の値へ差し替えます（makeThemeInitScript と同じ置換）。
+         カタログは自分でトンマナを切り替えるので lockTheme は使いません。 */
+      const script = m[1]
+        .trim()
+        .replaceAll("__WT_STORAGE_KEY__", key[1])
+        .replace(
+          "__WT_SET_THEME__",
+          "document.documentElement.dataset.theme=t;",
+        );
       return html.replace("<!--theme-init-->", `<script>${script}</script>`);
     },
   };

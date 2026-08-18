@@ -196,6 +196,49 @@ for (const [name, sub] of [["カタログ", "catalog"], ["デモ", "demo"]]) {
   );
 }
 
+/* --- 3.5. shadcn のディレクトリの要件 -------------------------------
+   ディレクトリに載せるには、公開先の root に `registry.json` が要ります。
+   `index.json` しか置いていないと、載せてもらえません。
+
+   **content を入れてはいけないのもここです。** 個別の JSON には入りますが、
+   一覧に入れると数百 KB になり、同じものが 2 か所に出ます。 */
+{
+  const url = `${base}/r/registry.json`;
+  const res = await fetch(url);
+  must("registry.json が 200 で取れる", res.ok, `HTTP ${res.status}`);
+  if (res.ok) {
+    let doc;
+    try {
+      doc = await res.json();
+    } catch (e) {
+      doc = null;
+    }
+    must(
+      "  $schema / name / homepage / items が揃っている",
+      !!doc &&
+        typeof doc.$schema === "string" &&
+        typeof doc.name === "string" &&
+        typeof doc.homepage === "string" &&
+        Array.isArray(doc.items),
+      doc ? Object.keys(doc).join(" ") : "JSON として読めません",
+    );
+    const items = doc?.items ?? [];
+    must(
+      "  すべての項目に files がある",
+      items.length > 0 && items.every((i) => Array.isArray(i.files) && i.files.length > 0),
+      `${items.length} 件`,
+    );
+    const withContent = items.filter((i) =>
+      (i.files ?? []).some((f) => "content" in f),
+    );
+    must(
+      "  一覧に content が入っていない",
+      withContent.length === 0,
+      withContent.map((i) => i.name).slice(0, 3).join(", "),
+    );
+  }
+}
+
 /* --- 3.6. ページを開いたときに飛ぶ要求 -------------------------------
    **HTML に出てこない URL があります。** `loader={{ url: "/works.json" }}`
    のように、島が動き出してから fetch されるものです。

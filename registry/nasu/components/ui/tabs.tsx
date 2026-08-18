@@ -81,6 +81,11 @@ export interface TabsProps {
    * 「このタブは何を操作するのか」を言えなくなります。
    */
   panelId?: string;
+  /**
+   * タブの列のスクロールバーを出すか。既定 "auto"。
+   * 数が多くて横スクロールになるときだけ意味があります。
+   */
+  scrollbar?: "auto" | "hidden";
   children?: React.ReactNode;
   className?: string;
 }
@@ -103,6 +108,7 @@ export function Tabs({
   label,
   idPrefix,
   panelId,
+  scrollbar = "auto",
   children,
   className,
 }: TabsProps) {
@@ -172,7 +178,7 @@ export function Tabs({
         {/* タブの列は横にしか動きません。**ホイールの縦を横へ回します。**
             これが無いと、タッチパッドの人はタブが多いときに端まで辿れません
             （指と矢印キーでは動くので、作った側は気づけません）。 */}
-        <Scrollable label={label ?? "タブ"} wheelX>
+        <Scrollable label={label ?? "タブ"} scrollbar={scrollbar}>
           <div
             ref={listRef}
             role="tablist"
