@@ -33,6 +33,7 @@ fs.writeFileSync(
   JSON.stringify({
     compilerOptions: {
       outDir: ".",
+      rootDir: path.join(root, "registry", "nasu"),
       module: "esnext",
       target: "es2022",
       moduleResolution: "bundler",
@@ -41,10 +42,17 @@ fs.writeFileSync(
       paths: { "@/*": ["./*"] },
       types: [],
       lib: ["es2022", "dom"],
+      jsx: "react-jsx",
     },
     files: [
       path.join(root, "registry", "nasu", "lib", "action.ts"),
       path.join(root, "registry", "nasu", "lib", "upload.ts"),
+      path.join(root, "registry", "nasu", "lib", "inline-script.ts"),
+      /* theme-provider は React を import しますが、確かめたい
+         makeThemeInitScript は React に触りません。**本物を測ります。**
+         文字列を写して測ると、原本が変わったときに気づけません。 */
+      path.join(root, "registry", "nasu", "lib", "utils.ts"),
+      path.join(root, "registry", "nasu", "components", "ui", "theme-provider.tsx"),
     ],
   }),
 );
@@ -54,26 +62,38 @@ execFileSync(
   { stdio: "inherit", cwd: root },
 );
 /* tsc は alias を出力に書き写すだけで、解決はしません。
-   Node がそのまま読めるよう、ここで相対パスに直します。 */
-const emitted = fs.readdirSync(out).filter((f) => f.endsWith(".js"));
-for (const f of emitted) {
-  const jsPath = path.join(out, f);
-  let src = fs.readFileSync(jsPath, "utf8");
-  for (const other of emitted) {
-    const base = other.slice(0, -3);
-    src = src
-      .split('"@/lib/' + base + '"')
-      .join('"./' + base + '.js"');
-  }
-  fs.writeFileSync(jsPath, src);
+   出力は元の木の形（lib/ と components/ui/）で出るので、
+   **深さに合わせた相対パス**へ直します。 */
+const walk = (dir) =>
+  fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory()
+      ? walk(path.join(dir, e.name))
+      : e.name.endsWith(".js")
+        ? [path.join(dir, e.name)]
+        : [],
+  );
+for (const jsPath of walk(out)) {
+  const src = fs.readFileSync(jsPath, "utf8");
+  fs.writeFileSync(
+    jsPath,
+    src.replace(/from "@\/([^"]+)"/g, (_, sub) => {
+      const target = path.join(out, sub) + ".js";
+      let rel = path
+        .relative(path.dirname(jsPath), target)
+        .split(path.sep)
+        .join("/");
+      if (!rel.startsWith(".")) rel = "./" + rel;
+      return 'from "' + rel + '"';
+    }),
+  );
 }
 fs.writeFileSync(path.join(out, "package.json"), '{"type":"module"}\n');
 
 const { jsonRequest, resolveAction } = await import(
-  pathToFileURL(path.join(out, "action.js")).href
+  pathToFileURL(path.join(out, "lib", "action.js")).href
 );
 const { matchesAccept } = await import(
-  pathToFileURL(path.join(out, "upload.js")).href
+  pathToFileURL(path.join(out, "lib", "upload.js")).href
 );
 
 const checks = [];
@@ -184,6 +204,87 @@ globalThis.fetch = realFetch;
     must(`  ${label}`, matchesAccept(file, accept) === want);
   }
 }
+
+/* ===== P1-01. テーマ初期化スクリプトへの差し込み ================== */
+/**
+ * `makeThemeInitScript` は、値を **HTML に直接埋め込むスクリプト**へ渡します。
+ * v0.9d では置き換え先が引用符の中にあり、`"` が 1 つ入るだけで
+ * **データが実行コードになりました。**
+ *
+ * ここでは本物の関数を呼び、出てきたスクリプトを実際に走らせます。
+ * 破れていれば `globalThis.__wt_pwned` が立ちます。
+ */
+{
+  const { makeThemeInitScript } = await import(
+    pathToFileURL(path.join(out, "components", "ui", "theme-provider.js")).href
+  );
+
+  const HOSTILE = [
+    ['二重引用符', 'x");globalThis.__wt_pwned=1;//'],
+    ["円記号", "x\\"],
+    ['改行', 'a\nglobalThis.__wt_pwned=1;\n//'],
+    ['スクリプトの閉じ', 'a</script><script>globalThis.__wt_pwned=1;</script>'],
+    ['行区切り U+2028', 'a\u2028globalThis.__wt_pwned=1;\u2028//'],
+    ['置換の指示 $&', "a$&b"],
+  ];
+
+  for (const [why, key] of HOSTILE) {
+    const script = makeThemeInitScript({ storageKey: key });
+    delete globalThis.__wt_pwned;
+
+    /* 実際に走らせます。**文字列を目で見て判断しません。**
+       localStorage などは引数で影を作って渡すので、
+       突き抜けたときだけ本物の globalThis に触れます。 */
+    let asked = null;
+    const stubs = {
+      localStorage: {
+        getItem: (k) => {
+          asked = k;
+          return null;
+        },
+      },
+      document: {
+        documentElement: { dataset: {}, classList: { toggle() {} } },
+      },
+      matchMedia: () => ({ matches: false }),
+    };
+    try {
+      new Function(
+        "localStorage",
+        "document",
+        "matchMedia",
+        script,
+      )(stubs.localStorage, stubs.document, stubs.matchMedia);
+    } catch (e) {
+      /* 走らないこと自体は破れていない証拠にならないので、
+         下の判定でまとめて見ます。 */
+    }
+
+    must(
+      `${why}: スクリプトを破れない`,
+      globalThis.__wt_pwned === undefined,
+      globalThis.__wt_pwned !== undefined ? "突き抜けました" : "",
+    );
+    must(
+      `  ${why}: 渡した値がそのまま届く`,
+      asked === key,
+      `渡した ${JSON.stringify(key)} / 届いた ${JSON.stringify(asked)}`,
+    );
+  }
+  delete globalThis.__wt_pwned;
+
+  /* `</script>` は HTML のパーサが先に読むので、
+     **文字列としても出てはいけません。** */
+  const withClose = makeThemeInitScript({
+    storageKey: "a</script>b",
+  });
+  must(
+    "生成物に </script> が出てこない",
+    !/<\/script/i.test(withClose),
+    withClose.slice(0, 80),
+  );
+}
+
 
 /* ================================================================ */
 const failed = checks.filter((c) => !c.ok);

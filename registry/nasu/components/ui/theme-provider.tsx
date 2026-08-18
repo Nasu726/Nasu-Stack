@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { toInlineScriptJson } from "@/lib/inline-script";
 import { cn } from "@/lib/utils";
 
 export const THEMES = ["neutral", "warm", "editorial", "vivid"] as const;
@@ -239,7 +240,7 @@ export function ThemeSwitcher({
  */
 const THEME_INIT_TEMPLATE = `
 (function(){try{
-  var s=localStorage.getItem("__WT_STORAGE_KEY__");
+  var s=localStorage.getItem(__WT_STORAGE_KEY__);
   var v=s?JSON.parse(s):{};
   var t=v.theme||"neutral";
   var m=v.mode||"system";
@@ -262,12 +263,15 @@ export function makeThemeInitScript({
   storageKey = STORAGE_KEY,
   lockTheme = false,
 }: { storageKey?: string; lockTheme?: boolean } = {}): string {
+  /* **置換は関数で渡します。** 文字列で渡すと $& や $` が
+     「一致した部分」などの指示として解釈されます。値に $ が 1 つ
+     入るだけで、意図しない中身が入り込む余地ができます。 */
   return THEME_INIT_TEMPLATE.replaceAll(
     "__WT_STORAGE_KEY__",
-    storageKey,
+    () => toInlineScriptJson(storageKey),
   ).replace(
     "__WT_SET_THEME__",
-    lockTheme ? "" : "document.documentElement.dataset.theme=t;",
+    () => (lockTheme ? "" : "document.documentElement.dataset.theme=t;"),
   );
 }
 
