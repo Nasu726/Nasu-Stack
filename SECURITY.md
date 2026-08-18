@@ -4,7 +4,7 @@
 
 **公開の Issue に書かないでください。** 直る前に読まれます。
 
-GitHub の [Security Advisories](https://github.com/Nasu726/WebTemplate/security/advisories/new)
+GitHub の [Security Advisories](https://github.com/Nasu726/Nasu-Stack/security/advisories/new)
 から非公開で報告してください。
 
 返事は**確約できません。** 個人が趣味で続けているもので、
@@ -15,33 +15,51 @@ GitHub の [Security Advisories](https://github.com/Nasu726/WebTemplate/security
 
 Web サイトの部品を配る**雛型**です。
 
-**shadcn のレジストリのディレクトリには載っていますが、npm には publish して
-いません。** 載っていると「npm にもあるだろう」と思われるので、先に書いておきます
-（ディレクトリに載せるのに npm は要りません）。
+**npm には publish していません。**
+
+shadcn のレジストリのディレクトリには、**掲載を申請する準備をしています**
+（この文を書いている時点では、まだ載っていません）。載ったとしても npm には
+出しません（ディレクトリに載せるのに npm は要らないためです）。
+
 配っているのは次の 3 つだけです。
 
 | | |
 |---|---|
-| `https://nasu726.github.io/WebTemplate/r/*.json` | shadcn CLI が読むレジストリ |
-| `https://nasu726.github.io/WebTemplate/create-webtemplate.tgz` | 入口の CLI |
+| `https://nasu726.github.io/Nasu-Stack/r/*.json` | shadcn CLI が読むレジストリ |
+| `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | 入口の CLI |
 | 同 `.sha256` | 上の tarball のハッシュ |
 
-**npm に `create-webtemplate` という名前では出していません。**
-その名前は空いているので、`npx create-webtemplate` と打つと
+**npm に `create-nasu-stack` という名前では出していません。**
+その名前は空いているので、`npx create-nasu-stack` と打つと
 **他人のコードが動きます。** 必ず上の tarball の URL を指してください。
 （この間違いは `scripts/check-forbidden.mjs` が機械で見張っています。）
 
 tarball は打つ前に照合できます。
 
+1 度落として、それを確かめて、**その同じファイルを実行**します。
+
 ```bash
-curl -sL https://nasu726.github.io/WebTemplate/create-webtemplate.tgz | sha256sum
-curl -sL https://nasu726.github.io/WebTemplate/create-webtemplate.tgz.sha256
+curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz
+curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz.sha256
+sha256sum -c create-nasu-stack.tgz.sha256   # OK と出たら
+npx ./create-nasu-stack.tgz my-site
 ```
+
+（Windows の PowerShell なら
+`Get-FileHash create-nasu-stack.tgz -Algorithm SHA256` で出した値を、
+`.sha256` の中身と見比べてください。）
+
+**README の 1 行（URL を直接 npx する形）では確かめられません。**
+あの形は URL からもう一度取り直して実行するので、
+**確かめたものと実行したものが同じとは限りません。**
 
 **これは「誰が作ったか」を示しません。** 示せるのは
 「取れたものが、こちらが出したものと同じか」だけです。
 
 ## 約束していないこと
+
+**これは Public Beta です。** 引き受けている範囲と、あなたが書く必要がある
+ものの一覧は [`docs/boundaries.md`](docs/boundaries.md) にあります。
 
 - **継続的な保守を約束していません。** 個人のプロジェクトです
 - 脆弱性への**対応期限を約束していません**

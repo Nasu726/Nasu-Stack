@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "nasu",
-  "homepage": "https://github.com/Nasu726/WebTemplate",
+  "homepage": "https://github.com/Nasu726/Nasu-Stack",
   "items": [
     {
       "name": "action",
@@ -370,7 +370,8 @@
       "description": "data-theme と .dark を付け替えるだけでトンマナ一式を切り替えます。初期描画のちらつき防止スクリプト同梱。",
       "registryDependencies": [
         "@nasu/tokens",
-        "@nasu/utils"
+        "@nasu/utils",
+        "@nasu/inline-script"
       ],
       "files": [
         {
@@ -515,11 +516,26 @@
       ]
     },
     {
+      "name": "inline-script",
+      "type": "registry:lib",
+      "title": "インラインスクリプトへの直列化",
+      "description": "HTML に直接埋め込む <script> へ値を渡すときの逃がし処理。</script> と U+2028/U+2029 を含みます。",
+      "files": [
+        {
+          "path": "registry/nasu/lib/inline-script.ts",
+          "type": "registry:lib",
+          "target": "lib/inline-script.ts"
+        }
+      ]
+    },
+    {
       "name": "seo",
       "type": "registry:lib",
       "title": "buildMeta",
       "description": "title / canonical / OGP / JSON-LD を組み立てる純粋な関数。相対 URL を絶対に直します。",
-      "registryDependencies": [],
+      "registryDependencies": [
+        "@nasu/inline-script"
+      ],
       "files": [
         {
           "path": "registry/nasu/lib/seo.ts",

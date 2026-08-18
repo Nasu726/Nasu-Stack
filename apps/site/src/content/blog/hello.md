@@ -1,5 +1,5 @@
 ---
-title: WebTemplate で最初のサイトを作る
+title: Nasu Stack で最初のサイトを作る
 description: レイアウト部品と状態を持つ部品を組み合わせて、静的サイトを 1 枚作るまでの流れです。
 date: 2026-08-01
 tags: [はじめに, Astro]

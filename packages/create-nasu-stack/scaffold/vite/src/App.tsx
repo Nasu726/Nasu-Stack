@@ -85,7 +85,7 @@ export function App() {
           </Stack>
         </PageBlock>
 
-        <SiteFooter brand="__PROJECT_NAME__" note="Built with WebTemplate" />
+        <SiteFooter brand="__PROJECT_NAME__" note="Built with Nasu Stack" />
 
         <Dialog open={open} onOpenChange={setOpen} title="ダイアログ">
           <p className="text-sm text-muted-fg">

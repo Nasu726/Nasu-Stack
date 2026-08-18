@@ -157,7 +157,6 @@ export function ActionButton<TInput = void, TOutput = unknown>({
   const defaults = useActionDefaults();
   // Provider があれば整ったダイアログ、無ければ window.confirm に落ちる
   const askConfirm = useConfirm();
-
   const state = useAction<TInput, TOutput>(resolved, {
     onSuccess,
     // showError=true のときは自分で画面内に出すので、通知は出さない。
@@ -169,17 +168,31 @@ export function ActionButton<TInput = void, TOutput = unknown>({
     resetAfter,
     retry,
     retryDelay,
+    /* 確認ダイアログを出す間は、ボタンの表示を変えません。
+       変えるとフォーカスが戻らなくなります（use-action の説明）。 */
+    pendingDuringGuard: !confirm,
     guard: confirm
-      ? async (i) => {
+      ? async (i, ctx) => {
           const ok = await askConfirm(confirm);
           if (!ok) return false;
-          return guard ? await guard(i) : true;
+          return guard ? await guard(i, ctx) : true;
         }
       : guard,
   });
 
   const idleLabel = labels?.idle ?? children ?? "実行";
 
+  /* 確認ダイアログを出している間は、**ボタンの見た目を変えません。**
+     ----------------------------------------------------------------
+     待たせているのはダイアログ自身なので、ボタンまで「処理中…」に
+     する必要がありません。それどころか害があります。
+
+     実測: 中身を差し替えると、`<dialog>` を閉じたあと
+     **フォーカスが元のボタンへ戻らなくなりました**（body へ落ちます）。
+     読み上げやキーボードの利用者は、どこにいるか分からなくなります。
+
+     自前の遅い guard（通信など）には `confirm` が無いので、
+     そちらは今までどおり「処理中…」になります。 */
   const content = state.isPending ? (
     <>
       <Spinner />
@@ -206,7 +219,13 @@ export function ActionButton<TInput = void, TOutput = unknown>({
         size={size}
         disabled={disabled || state.isPending}
         aria-busy={state.isPending}
-        onClick={() => void state.run(input as TInput)}
+        onClick={() => {
+          /* **押した瞬間に印を付けます。** guard の中で付けると、
+             その前に pending の描画が 1 回入り、その一瞬だけボタンが
+             無効になります。`<dialog>` は開いた瞬間のフォーカスを覚えるので、
+             そこが無効だと**閉じても戻れません。** */
+          void state.run(input as TInput);
+        }}
         /* 成功したときは hover の色まで固定します。
            **背景だけ差し替えると、hover で消えます。**
            variant 側は `hover:bg-muted` や `hover:bg-accent` を持っているので、

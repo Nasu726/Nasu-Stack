@@ -4,7 +4,7 @@
 
 ```bash
 npx shadcn@latest add https://…/r/action-button.json   # 利用者の src/ にファイルが書かれる
-npx https://…/create-webtemplate-0.1.0.tgz my-site     # 利用者の手元でコードが動く
+npx https://…/create-nasu-stack-0.1.0.tgz my-site     # 利用者の手元でコードが動く
 ```
 
 だから「作ったものが正しいか」だけでなく、**「配っているものが、こちらの
@@ -101,7 +101,7 @@ npx https://…/create-webtemplate-0.1.0.tgz my-site     # 利用者の手元で
 `gh` にログインしていれば、次をそのまま貼れます。
 
 ```bash
-gh api -X POST repos/Nasu726/WebTemplate/rulesets \
+gh api -X POST repos/Nasu726/Nasu-Stack/rulesets \
   -H "Accept: application/vnd.github+json" \
   -f name='main を守る' \
   -f target='branch' \
@@ -132,7 +132,7 @@ PR を 1 本通してから設定してください。
 リリースを tarball で配るなら（§4）、**タグが動くと配布物が変わります。**
 
 ```bash
-gh api -X POST repos/Nasu726/WebTemplate/rulesets \
+gh api -X POST repos/Nasu726/Nasu-Stack/rulesets \
   -H "Accept: application/vnd.github+json" \
   -f name='タグを守る' \
   -f target='tag' \
@@ -155,14 +155,14 @@ gh api -X POST repos/Nasu726/WebTemplate/rulesets \
 
 ## 4. 入口を npm に置かない、という判断
 
-`npx create-webtemplate my-site` と案内するには npm への publish が要ります。
+`npx create-nasu-stack my-site` と案内するには npm への publish が要ります。
 **このリポジトリは publish しません。** 個人的なプロジェクトとして続けるので、
 継続的な保守を約束できないためです。
 
 代わりに **tarball の URL** を配ります。
 
 ```bash
-npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site
+npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
 ```
 
 npm は URL の tarball をそのまま受け取れます（v0.9a で実測）。
@@ -174,8 +174,8 @@ npm は URL の tarball をそのまま受け取れます（v0.9a で実測）�
 
 ### 残る危険と、その扱い
 
-**`create-webtemplate` という名前は npm で空いています。**
-第三者がその名前で publish すると、`npx create-webtemplate` と打った人には
+**`create-nasu-stack` という名前は npm で空いています。**
+第三者がその名前で publish すると、`npx create-nasu-stack` と打った人には
 **その第三者のコードが動きます。**
 
 こちらから防ぐ手はありません（名前を取ることが唯一の防御で、それはしない判断です）。
@@ -195,15 +195,20 @@ tarball の URL だけを案内しています。
 こちらが固めても、**利用者は「本物の URL を打った」ことしか確かめられません。**
 できることは 2 つです。
 
-- **配布物の SHA-256 を一緒に出す**（`create-webtemplate.tgz.sha256`）。
+- **配布物の SHA-256 を一緒に出す**（`create-nasu-stack.tgz.sha256`）。
   打つ前に照合できます
 - **URL を https に限る。** レジストリの JSON も tarball も同じです
 
 ```bash
-curl -sL https://nasu726.github.io/WebTemplate/create-webtemplate.tgz -o t.tgz
-curl -sL https://nasu726.github.io/WebTemplate/create-webtemplate.tgz.sha256
-sha256sum t.tgz     # 一致することを確かめてから npx t.tgz my-site
+# 1 度落として、それを確かめて、**その同じファイルを実行**します。
+curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz
+curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz.sha256
+sha256sum -c create-nasu-stack.tgz.sha256
+npx ./create-nasu-stack.tgz my-site
 ```
+
+**URL を直接 npx する形では確かめられません。** 取り直して実行するので、
+確かめたものと実行したものが同じとは限りません。
 
 ---
 

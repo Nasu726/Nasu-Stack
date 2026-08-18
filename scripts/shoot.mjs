@@ -16,7 +16,7 @@ for (const spec of themes) {
   await page.addInitScript(
     ([t, m]) => {
       localStorage.setItem(
-        "webtemplate.theme",
+        "nasu-stack.theme",
         JSON.stringify({ theme: t, mode: m }),
       );
     },

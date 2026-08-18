@@ -21,32 +21,57 @@ fs.mkdirSync(out, { recursive: true });
 
 // tsc で JS に落とします。process.execPath 経由で呼ぶので、
 // OS によるコマンド名の違い（tsc / tsc.cmd）を踏みません。
+/* seo.ts が `@/lib/inline-script` を import するので、
+   alias を持った tsconfig を一時的に作って渡します
+   （コマンドラインの引数では paths を渡せません）。 */
+const tsconfig = path.join(out, "tsconfig.json");
+fs.writeFileSync(
+  tsconfig,
+  JSON.stringify({
+    compilerOptions: {
+      outDir: ".",
+      rootDir: path.join(root, "registry", "nasu"),
+      module: "esnext",
+      target: "es2022",
+      moduleResolution: "bundler",
+      skipLibCheck: true,
+      baseUrl: path.join(root, "registry", "nasu"),
+      paths: { "@/*": ["./*"] },
+      types: [],
+      lib: ["es2022", "dom"],
+    },
+    files: [
+      path.join(root, "registry", "nasu", "lib", "seo.ts"),
+      path.join(root, "registry", "nasu", "lib", "feed.ts"),
+      path.join(root, "registry", "nasu", "lib", "inline-script.ts"),
+    ],
+  }),
+);
 execFileSync(
   process.execPath,
-  [
-    path.join(root, "node_modules", "typescript", "bin", "tsc"),
-    path.join(root, "registry", "nasu", "lib", "seo.ts"),
-    path.join(root, "registry", "nasu", "lib", "feed.ts"),
-    "--outDir",
-    out,
-    "--module",
-    "esnext",
-    "--target",
-    "es2022",
-    "--moduleResolution",
-    "bundler",
-  ],
+  [path.join(root, "node_modules", "typescript", "bin", "tsc"), "-p", tsconfig],
   { stdio: "inherit", cwd: root },
 );
+
+/* tsc は alias を出力に書き写すだけで、解決はしません。 */
+for (const f of fs.readdirSync(path.join(out, "lib"))) {
+  if (!f.endsWith(".js")) continue;
+  const jsPath = path.join(out, "lib", f);
+  const src = fs.readFileSync(jsPath, "utf8");
+  fs.writeFileSync(
+    jsPath,
+    src.replace(/from "@\/lib\/([^"]+)"/g, (_, n) => 'from "./' + n + '.js"'),
+  );
+}
 
 // .js を ESM として読ませるため、package.json を置きます
 fs.writeFileSync(path.join(out, "package.json"), '{"type":"module"}\n');
 
 const { buildMeta, absoluteUrl } = await import(
-  pathToFileURL(path.join(out, "seo.js")).href
+  pathToFileURL(path.join(out, "lib", "seo.js")).href
 );
 const { buildSitemap, buildRss, buildRobots, escapeXml } = await import(
-  pathToFileURL(path.join(out, "feed.js")).href
+  pathToFileURL(path.join(out, "lib", "feed.js")).href
 );
 
 /* ================================================================ */

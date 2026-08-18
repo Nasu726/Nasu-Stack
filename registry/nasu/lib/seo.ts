@@ -28,6 +28,8 @@
  * 手で毎回 `https://…` を書くと必ずどこかで忘れるので、ここでまとめて直します。
  */
 
+import { toInlineScriptJson } from "@/lib/inline-script";
+
 export interface MetaInput {
   /** ページの題名。サイト名は自動で足すので入れないでください。 */
   title: string;
@@ -150,11 +152,10 @@ export function buildMeta(input: MetaInput): MetaTag[] {
   tags.push({
     tag: "script",
     attrs: { type: "application/ld+json" },
-    // `<` を \u003c に逃がします。JSON-LD は <script> の中に素で書き出すので、
-    // 記事名に `</script>` が入っていると**そこでスクリプトが終わってしまい**、
-    // 残りが本文として描画されます（差し込みの穴にもなります）。
-    // JSON.stringify は `<` を逃がしてくれないので、自分でやる必要があります。
-    children: escapeForScript(JSON.stringify(
+    /* 逃がし処理は `@/lib/inline-script` に 1 つだけ置いてあります。
+       ここと theme-provider が同じものを使います。2 か所に書くと、
+       片方だけ直したときに気づけません。 */
+    children: toInlineScriptJson(
       buildJsonLd({
         title,
         siteName,
@@ -166,17 +167,10 @@ export function buildMeta(input: MetaInput): MetaTag[] {
         updatedAt,
         author,
       }),
-    )),
+    ),
   });
 
   return tags;
-}
-
-/** `<script>` の中に JSON を書き出すときの逃がし処理。 */
-function escapeForScript(json: string): string {
-  return json.replace(/</g, "\\u003c").replace(/\u2028|\u2029/g, (m) =>
-    m === "\u2028" ? "\\u2028" : "\\u2029",
-  );
 }
 
 /**

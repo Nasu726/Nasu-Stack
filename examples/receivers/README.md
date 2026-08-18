@@ -6,24 +6,39 @@
 |---|---|
 | `cloudflare-worker.ts` | Cloudflare Workers。1 ファイルで完結し、無料枠で足ります |
 
+## 先に: 差出人のドメインを確認する
+
+**ここを飛ばすと、全部設定しても届きません。**
+
+メール送信サービス（Resend など）は、**確認済みのドメイン**からしか送れません。
+適当なアドレスを差出人にすると 403 が返り、Worker は 502 を返します。
+利用者の画面には「送信できませんでした」としか出ないので、原因に辿り着けません。
+
+1. Resend のダッシュボードで自分のドメインを追加し、DNS を設定して確認を通す
+2. 確認できたドメインのアドレスを控える（例: `form@example.com`）
+
 ## 使い方
 
-**上から順に、そのまま貼れます。3 つとも設定してください。**
+**上から順に、そのまま貼れます。4 つとも設定してください。**
 
 ```bash
-npm create cloudflare@latest my-contact-endpoint
+# @latest は使いません。**その時点で publish されているものを無条件に実行します。**
+# 本体の方針（版を固定する）と揃えます。
+npm create cloudflare@2.72.0 my-contact-endpoint
 cd my-contact-endpoint
 # src/index.ts を cloudflare-worker.ts の中身に置き換える
 
 npx wrangler secret put MAIL_API_KEY      # メール送信サービスの鍵
 npx wrangler secret put MAIL_TO           # 受け取るメールアドレス
+npx wrangler secret put MAIL_FROM         # 上で確認したドメインのアドレス
 npx wrangler secret put ALLOWED_ORIGIN    # 例: https://example.com
 
 npx wrangler deploy
 ```
 
-> **`ALLOWED_ORIGIN` を飛ばさないでください。** 3 つ目だけ後回しにされがちですが、
-> 未設定だと `*`（どこからでも許可）のままになります。
+> **4 つとも必須です。** 1 つでも欠けていると 503 を返します。
+> 足りないまま「受け取ったふり」をすると、問い合わせが黙って消えて
+> **気づく方法がありません。**
 
 サイト側の `.env` に、出てきた URL を書きます。
 
@@ -65,15 +80,37 @@ PUBLIC_CONTACT_ENDPOINT=https://my-contact-endpoint.<you>.workers.dev
 
 本気で受け付けるなら、最低限これを足してください。
 
-| やること | どこで |
-|---|---|
-| 本文の大きさに上限を設ける | この Worker の中（`request.headers.get("content-length")`） |
-| 1 つの IP からの回数を制限する | Cloudflare の Rate limiting rules |
-| 人かどうかを見る | Cloudflare Turnstile など |
-| サーバ側で必ず検証する | この Worker の `validate()` |
+| やること | 入っているか | どこで |
+|---|---|---|
+| 送信元をサーバ側で確かめる | **入っています** | `originOk()` |
+| `application/json` 以外を弾く | **入っています** | 本体の入口 |
+| 本文の大きさに上限を設ける | **入っています**（64KB） | `readCapped()` |
+| サーバ側で必ず検証する | **入っています** | `validate()` |
+| 1 つの IP からの回数を制限する | **入っていません** | 下の手順 |
+| 人かどうかを見る（Turnstile） | **入っていません** | 下の手順 |
+| 同じ送信を 1 回として扱う | **入っていません** | Resend の Idempotency-Key |
 
-**この見本には、上の 4 つは入っていません。** 入れずに「安全そう」に見えるのが
+下の 3 つは**この版では引き受けていません。** 入れずに「安全そう」に見えるのが
 いちばん危ないので、入っていないことを書いておきます。
+
+### レート制限（Cloudflare の画面で設定します）
+
+コードではなく設定です。ダッシュボードで:
+
+1. **Security → WAF → Rate limiting rules** を開く
+2. ルールを作る
+   - 一致条件: `URI Path equals /` （Worker のパス）
+   - 数える単位: **IP アドレス**
+   - 上限: 10 分あたり 5 回
+   - 動作: **Block**
+3. 保存して有効にする
+
+**数字は用途で変えてください。** 問い合わせフォームなら、これでも緩いくらいです。
+
+### bot 対策と二重送信
+
+Turnstile（人かどうかを見る）と Idempotency-Key（同じ送信を 1 回として扱う）は、
+**次の版で入れます。** それまでは、上のレート制限を必ず設定してください。
 
 ## 返し方の約束
 

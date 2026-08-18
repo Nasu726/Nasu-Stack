@@ -1,5 +1,5 @@
 /**
- * WebTemplate — 非同期処理の統一契約
+ * Nasu Stack — 非同期処理の統一契約
  * ---------------------------------------------------------------
  * このファイルがテンプレート全体の「背骨」です。
  *
@@ -84,7 +84,7 @@ export class ActionError extends Error {
 }
 
 /** 中断されたことを示す番兵。状態を error にせず idle に戻すために使います。 */
-export const ABORTED = Symbol("webtemplate.aborted");
+export const ABORTED = Symbol("nasu-stack.aborted");
 
 /**
  * 何が throw されても ActionError に揃えます。
@@ -165,7 +165,16 @@ export interface EndpointSpec {
   url: string;
   /** 既定は POST（DataList など読み取り用途では GET を指定）。 */
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  /** 追加ヘッダ。 */
+  /**
+   * 追加のヘッダ。**ブラウザから送られます。**
+   *
+   * ここに置いた値は、開発者ツール・通信の記録・拡張機能から見えます。
+   * `Authorization: Bearer <サービスの鍵>` と書いても**秘密になりません。**
+   *
+   * サーバ側の鍵が要る相手には、**自分のサーバ（Worker など）を挟んで**
+   * そこから呼んでください。鍵はそちらに置きます。
+   * 判断表は docs/boundaries.md に。
+   */
   headers?: Record<string, string>;
   /**
    * 入力に混ぜる**既定値**。同じキーが入力にあれば、**入力が勝ちます。**
@@ -318,9 +327,19 @@ async function readBody<T>(res: Response): Promise<T | undefined> {
  * **「action は成功した」というのが事実だから**です。
  * 嘘の断定をしない代わりに、原因が追える場所には必ず残します。
  */
-export function callSafely(fn: () => void, name: string): void {
+export async function callSafely(
+  fn: () => void | Promise<void>,
+  name: string,
+): Promise<void> {
   try {
-    fn();
+    /* **await します。** 同期の throw だけを拾う形だと、
+       `onSuccess: async () => { … throw }` が素通りして
+       unhandled rejection になります（外部レビューの P2-01）。
+       利用者が async なコールバックを書くのは自然なことです。
+
+       呼ぶ側は retry の**外**でこれを待ちます。中で待つと、
+       コールバックの失敗が action の失敗として繰り返されます。 */
+    await fn();
   } catch (e) {
     console.error(
       `[action] ${name} が例外を投げました。処理自体は完了しています。`,

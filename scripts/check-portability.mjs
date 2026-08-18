@@ -31,7 +31,7 @@ const SKIP_DIRS = new Set([
   "node_modules",
   "dist",
   ".astro",
-  "template", // packages/create-webtemplate/template は生成物
+  "template", // packages/create-nasu-stack/template は生成物
   ".shots",
 ]);
 

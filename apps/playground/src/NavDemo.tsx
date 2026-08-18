@@ -6,6 +6,7 @@ import { Tabs, TabPanel } from "@/components/ui/tabs";
 import { Accordion, Disclosure } from "@/components/ui/disclosure";
 import { DropdownMenu, NavDropdown } from "@/components/ui/dropdown-menu";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { SiteFooter } from "@/components/ui/site-footer";
 import { useToast } from "@/components/ui/toast";
 import { Inline, Stack } from "@/components/ui/layout";
 
@@ -15,7 +16,7 @@ const NAV = [
   { href: "#c", label: "会社概要" },
   // external の見本。**実際に飛ぶ先なので、実在して差し支えない URL にします。**
   // example.com は表記用に予約された名前ですが、IANA の説明ページが本当に出ます。
-  { href: "https://github.com/Nasu726/WebTemplate", label: "GitHub", external: true },
+  { href: "https://github.com/Nasu726/Nasu-Stack", label: "GitHub", external: true },
 ];
 
 export function NavDemo() {
@@ -29,6 +30,7 @@ export function NavDemo() {
       <DialogSection />
       <TabsSection />
       <DisclosureSection />
+      <FooterSection />
     </Stack>
   );
 }
@@ -349,6 +351,77 @@ function MenuSection() {
           ]}
         />
       </Inline>
+    </Panel>
+  );
+}
+
+/* ================================================================ */
+
+/**
+ * SiteFooter。**列が多いときに崩れないかを見るための題材です。**
+ *
+ * v0.9d で「説明文が幅を取ってリンクの列が縦に割れる」のを直しましたが、
+ * そのとき試したのは 2 列だけでした。API は列数を制限していないので、
+ * 6 列でも壊れないことを確かめられる形にしておきます。
+ */
+const FOOTER_GROUPS = [
+  { label: "プロダクト", items: [{ href: "#a", label: "機能一覧" }, { href: "#b", label: "料金" }] },
+  { label: "開発者向け", items: [{ href: "#c", label: "ドキュメント" }, { href: "#d", label: "API" }] },
+  { label: "コミュニティ", items: [{ href: "#e", label: "フォーラム" }] },
+  { label: "サポート", items: [{ href: "#f", label: "問い合わせ" }] },
+  { label: "会社情報", items: [{ href: "#g", label: "会社概要" }] },
+  { label: "利用規約・法務", items: [{ href: "#h", label: "プライバシー" }] },
+];
+
+function FooterSection() {
+  const [many, setMany] = React.useState(true);
+
+  return (
+    <Panel
+      title="SiteFooter"
+      description={
+        <>
+          <strong className="text-fg">縮むのはリンクの列ではなく説明文です。</strong>
+          説明文は何行になっても読めますが、リンクの列は縦に割れると
+          「まとまり」が見えなくなります。列が増えて器に収まらなくなったら、
+          説明文を潰さずに次の行へ落とします。
+        </>
+      }
+      code={`<SiteFooter
+  brand="Example Studio"
+  groups={[{ label: "サイト", items: [{ href: "/blog", label: "ブログ" }] }]}
+  note="© 2026 Example Studio"
+/>`}
+    >
+      <Inline space="xs" alignY="center">
+        {[
+          [true, "6 列"],
+          [false, "2 列"],
+        ].map(([v, label]) => (
+          <Button
+            key={String(v)}
+            size="sm"
+            aria-pressed={many === v}
+            variant={many === v ? "primary" : "outline"}
+            onClick={() => setMany(v as boolean)}
+          >
+            {label as string}
+          </Button>
+        ))}
+        <span className="text-xs text-muted-fg">
+          どちらでも、はみ出さず、列が縦に割れません
+        </span>
+      </Inline>
+
+      <div className="rounded-lg border border-border" data-testid="footer-demo">
+        <SiteFooter
+          brand="Example Studio"
+          description="静的なページは Astro、動く部分だけ React。この部品で組んだサイトの見本です。"
+          groups={many ? FOOTER_GROUPS : FOOTER_GROUPS.slice(0, 2)}
+          note="© 2026 Example Studio"
+          width="narrow"
+        />
+      </div>
     </Panel>
   );
 }

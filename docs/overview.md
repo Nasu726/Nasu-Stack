@@ -1,4 +1,4 @@
-# WebTemplate — 全体像
+# Nasu Stack — 全体像
 
 **作ったものの説明ではなく、なぜこうなっているかを書きます。**
 前者はコードを読めば分かりますが、後者は書かないと失われます。
@@ -203,7 +203,7 @@ type Space = SpaceToken | (string & {});
 | フック | useAction / useResource / useOptimisticList / usePopover |
 | 生成 | `buildMeta`（SEO・OGP・JSON-LD）/ `buildSitemap` / `buildRss` / `buildRobots` |
 | 検査 | `check-responsive.mjs`（**利用者にも配られます**） |
-| 入口 | `create-webtemplate`（Astro 版 / Vite 版） |
+| 入口 | `create-nasu-stack`（Astro 版 / Vite 版） |
 | 雛型 | ランディング / 会社概要 / お問い合わせ / ブログ（一覧・記事・RSS・sitemap・404） |
 | 受け口 | Cloudflare Worker の見本（CORS のプリフライト込み） |
 

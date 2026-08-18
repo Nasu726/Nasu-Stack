@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * create-webtemplate — 動くところから始める
+ * create-nasu-stack — 動くところから始める
  * ================================================================
  *
- *   npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site
- *   npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site --template astro --yes
+ *   npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
+ *   npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site --template astro --yes
  *
  * 部品をいくら揃えても、**始められなければ届きません。**
  * ここが「誰でも簡単に作れる」への最後の一段です。
@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------
  * 短い形は、どこにも書きません
  * ----------------------------------------------------------------
- * npm には publish していないので、`create-webtemplate` という名前は
+ * npm には publish していないので、`create-nasu-stack` という名前は
  * **空いています。**
  * 第三者が取れば、その名前を打った人には他人のコードが動きます。
  * **とくにまずいのは、エラー時に CLI 自身が危険なコマンドを教えることです。**
@@ -251,7 +251,7 @@ function spaceTokens(kind) {
 function shadcnVersion(kind) {
   try {
     const p = path.join(TEMPLATES, kind, "package.json");
-    return JSON.parse(fs.readFileSync(p, "utf8")).webtemplate?.shadcn ?? "";
+    return JSON.parse(fs.readFileSync(p, "utf8")).nasuStack?.shadcn ?? "";
   } catch {
     return "";
   }
@@ -277,7 +277,7 @@ function readme(kind, name) {
   const dev = isAstro(kind) ? "http://localhost:4321" : "http://localhost:5173";
   return `# ${name}
 
-WebTemplate から作りました。
+Nasu Stack から作りました。
 
 \`\`\`bash
 npm install
@@ -331,9 +331,11 @@ npm run dev
 入れる日によって中身が変わります。lockfile があると、**次に install した人**
 （別のパソコン、CI、半年後の自分）が同じものを手に入れられます。
 
-このテンプレートには lockfile を同梱していません。**同梱したものは、
-あなたが受け取った時点で既に古い**からです。あなたの \`npm install\` が作った
-ものが、あなたのプロジェクトにとって正しい 1 つです。
+このテンプレートには、**こちらで検査した時点の lockfile が入っています。**
+最初の install は、こちらが確かめたものと同じ木になります。
+
+そのまま使っても、新しくしても構いません。どちらにしても、
+**できた lockfile を commit してください。**
 
 
 ---
@@ -437,7 +439,7 @@ ${astro ? "`src/layouts/Base.astro`" : "`index.html`"} の \`<html>\` に書き�
 
 ## 3.5. エディタの補完
 
-VS Code なら、**設定は要りません。** \`.vscode/webtemplate.code-snippets\` が
+VS Code なら、**設定は要りません。** \`.vscode/nasu-stack.code-snippets\` が
 入っているので、\`wt-\` と打つとこのテンプレートの部品だけが並びます。
 
 \`\`\`
@@ -490,6 +492,29 @@ import { ActionButton } from "@/components/ui/action-button";
 
 ---
 
+---
+
+## 何を自分で書く必要があるか
+
+**部品は「安全にする」のではなく「安全な判断をしやすくする」ものです。**
+
+置くだけで守られるもの（画面の状態、二重送信、読み上げ、端末幅）と、
+あなたが書かないと守られないもの（認証・認可・サーバ側の検証・レート制限）が
+あります。
+
+とくに誤解しやすいのは次の 4 つです。
+
+| | 実は |
+|---|---|
+| FileDrop の accept と maxSize | **守りではありません。** 名前と推測を見ているだけ |
+| HoneypotField | 単純な bot を減らすだけ。認証の代わりにはなりません |
+| ブラウザから送る headers | **誰でも読めます。** サービスの鍵を置かないでください |
+| PUBLIC_ / VITE_ の環境変数 | **ブラウザに配られます** |
+
+一覧は
+[docs/boundaries.md](https://github.com/Nasu726/Nasu-Stack/blob/main/docs/boundaries.md)
+にあります。**公開する前に 1 度読んでください。**
+
 ## 5. 部品を足す
 
 最初から入っているのは、よく使うものだけです。
@@ -527,7 +552,7 @@ export const submitContact = createSubmit({
 });
 \`\`\`
 
-受け口の例は WebTemplate の \`examples/receivers/\` にあります
+受け口の例は Nasu Stack の \`examples/receivers/\` にあります
 （Cloudflare Workers 版）。
 
 タイムアウト、失敗したときの日本語のメッセージ、
@@ -619,9 +644,9 @@ import { withBase } from "@/lib/base";
 
 > **この不具合は手元では絶対に再現しません。** 開発サーバは直下で動くので、
 > \`/about/\` がそのまま正解になります。**公開して初めて壊れます。**
-> WebTemplate 自身も同じ穴に落ちて、公開したデモのリンクが全部 404 でした。
+> Nasu Stack 自身も同じ穴に落ちて、公開したデモのリンクが全部 404 でした。
 
-（WebTemplate 自身も GitHub Pages で公開していて、同じ設定をしています）
+（Nasu Stack 自身も GitHub Pages で公開していて、同じ設定をしています）
 
 ${astro ? `公開先が決まったら、\`astro.config.mjs\` の \`site\` をそのアドレスにしてください。
 検索エンジンに渡すページ一覧（\`sitemap.xml\`）と購読用のフィード（\`rss.xml\`）が、
@@ -638,7 +663,7 @@ ${astro ? `公開先が決まったら、\`astro.config.mjs\` の \`site\` を�
 | 部品を足せない | ネットに繋がっているか。\`components.json\` の \`registries\` の行が消えていないか |
 | 崩れている | 上の「スマホで崩れていないか確かめる」で数値を見る |
 
-WebTemplate 本体: https://github.com/Nasu726/WebTemplate
+Nasu Stack 本体: https://github.com/Nasu726/Nasu-Stack
 `;
 }
 
@@ -690,7 +715,7 @@ async function main() {
   }
 
   console.log("");
-  console.log("  WebTemplate — 動くところから始めます");
+  console.log("  Nasu Stack — 動くところから始めます");
   console.log("");
 
   /* **作る前に Node を見ます。**
@@ -713,7 +738,7 @@ async function main() {
   if (!name && rl) name = (await rl.question("  プロジェクト名: ")).trim();
   if (!name) {
     console.error("  ✗ プロジェクト名を指定してください");
-    /* **短い形は書きません。** `create-webtemplate` という名前は npm で
+    /* **短い形は書きません。** `create-nasu-stack` という名前は npm で
        空いており、第三者が取れば任意のコードが動きます。
        詰まっている人はエラーメッセージを一番信じるので、ここが一番危ない。 */
     console.error("    さっき打ったコマンドの最後に、作りたい名前を足してください");

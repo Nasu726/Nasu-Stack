@@ -155,9 +155,12 @@ await group([
      サーバの文言が漏れていても画面には何か出ますし、既定値が上書き
      されても送信そのものは成功します。実ブラウザでは出てきません。 */
   ["単体: エラー文言 / 既定値 / accept", "node", ["scripts/verify-action-unit.mjs"]],
+  /* 受け口。**「403 が返った」ではなく「メールが 0 回だった」を見ます。**
+     応答を読めなくても、副作用はサーバで起きているためです。 */
+  ["単体: 受け口の入口", "node", ["scripts/verify-receiver-unit.mjs"]],
   // 入口。生成物を install / build するところまでは重いので
   // `pnpm verify:create` に分けています（ここは生成と検証だけ）。
-  ["入口: create-webtemplate", "node", ["scripts/verify-create.mjs"]],
+  ["入口: create-nasu-stack", "node", ["scripts/verify-create.mjs"]],
 ]);
 
 /* ---- 群 2: レジストリを作ってから ---------------------------------- */

@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * WebTemplate — レイアウト・プリミティブ
+ * Nasu Stack — レイアウト・プリミティブ
  * ================================================================
  * 原則は 1 つだけです。
  *

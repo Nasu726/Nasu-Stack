@@ -12,7 +12,7 @@
  *
  * 手元には node_modules があるので、宣言が間違っていても気づけません。
  * 気づくのは「まっさらな環境の利用者が `npm install` で止まったとき」で、
- * そのとき利用者は「WebTemplate が壊れている」と判断して離脱します。
+ * そのとき利用者は「Nasu Stack が壊れている」と判断して離脱します。
  *
  * だから registry へ実際に問い合わせます。**手元の状態を見ません。**
  *
@@ -69,7 +69,7 @@ if (!online) {
 for (const kind of scaffolds) {
   const pkg = JSON.parse(
     fs.readFileSync(
-      path.join(root, "packages", "create-webtemplate", "scaffold", kind, "package.json"),
+      path.join(root, "packages", "create-nasu-stack", "scaffold", kind, "package.json"),
       "utf8",
     ),
   );

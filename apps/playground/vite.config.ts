@@ -26,14 +26,29 @@ function injectThemeInit(): Plugin {
       );
       const key = src.match(/const STORAGE_KEY = "([^"]+)"/);
       if (!m || !key) throw new Error("THEME_INIT_TEMPLATE を取り出せませんでした");
+      /* 逃がし処理（`lib/inline-script.ts`）をここへ写しません。写すと
+         定義が 2 か所になり、片方だけ直したときに気づけません。
+         **代わりに、写さなくて済む値かどうかを確かめて止めます。** */
+      if (!/^[A-Za-z0-9_.-]+$/.test(key[1])) {
+        throw new Error(
+          `STORAGE_KEY に想定外の文字が入っています: ${key[1]}
+` +
+            "ここは素朴な JSON.stringify で埋めているだけなので、" +
+            "lib/inline-script.ts の toInlineScriptJson を通す形に直してください",
+        );
+      }
       /* 目印を実際の値へ差し替えます（makeThemeInitScript と同じ置換）。
-         カタログは自分でトンマナを切り替えるので lockTheme は使いません。 */
+         カタログは自分でトンマナを切り替えるので lockTheme は使いません。
+
+         **目印は引用符の外にあります。** 値のほうをリテラルにして入れます
+         （理由は registry/nasu/lib/inline-script.ts）。
+         置換は関数で渡します。文字列だと $& が指示として解釈されます。 */
       const script = m[1]
         .trim()
-        .replaceAll("__WT_STORAGE_KEY__", key[1])
+        .replaceAll("__WT_STORAGE_KEY__", () => JSON.stringify(key[1]))
         .replace(
           "__WT_SET_THEME__",
-          "document.documentElement.dataset.theme=t;",
+          () => "document.documentElement.dataset.theme=t;",
         );
       return html.replace("<!--theme-init-->", `<script>${script}</script>`);
     },

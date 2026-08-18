@@ -15,8 +15,8 @@
  * ----------------------------------------------------------------
  *   public/r/<name>.json            shadcn CLI が読むレジストリ
  *   public/r/index.json             一覧
- *   public/create-webtemplate.tgz   入口の CLI（npm レジストリには置きません）
- *   public/create-webtemplate.tgz.sha256
+ *   public/create-nasu-stack.tgz   入口の CLI（npm レジストリには置きません）
+ *   public/create-nasu-stack.tgz.sha256
  *   public/404.html                 存在しない URL のときに出るページ
  *   public/index.html               入口の案内（v0.9b でドキュメントサイトに差し替え）
  */
@@ -30,7 +30,7 @@ import { PUBLIC_BASE, REGISTRY_URL, TARBALL_URL } from "./_site.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pub = path.join(root, "public");
-const cli = path.join(root, "packages", "create-webtemplate");
+const cli = path.join(root, "packages", "create-nasu-stack");
 
 /** 検証済みの shadcn の版。最新版は案内しません（理由は build-create-template.mjs）。 */
 const SHADCN = (
@@ -52,7 +52,7 @@ run([path.join(root, "scripts/build-registry.mjs")]);
  * 継続的な保守を約束できないためです。理由と代償は docs/security.md に。
  *
  * npm は URL の tarball をそのまま受け取れるので、
- * `npx https://…/create-webtemplate.tgz my-site` が成立します。
+ * `npx https://…/create-nasu-stack.tgz my-site` が成立します。
  * npm アカウントという攻撃面が増えず、名前の取り合いにも巻き込まれません。
  */
 // template/ は生成物です（commit していません）。pack の前に必ず作ります。
@@ -80,7 +80,7 @@ const packed = execFileSync(pack.cmd, pack.args, {
 /* 版を含まない名前に揃えます。README に載る URL が版ごとに変わると、
    案内を直し忘れた瞬間に「動かない URL」が残るためです。
    版は tarball の中の package.json にあります。 */
-const tgz = path.join(pub, "create-webtemplate.tgz");
+const tgz = path.join(pub, "create-nasu-stack.tgz");
 // pnpm pack は絶対パスを印字します（npm はファイル名だけ）。
 // resolve なら、どちらが返ってきても正しい 1 か所を指します。
 fs.mkdirSync(pub, { recursive: true });
@@ -94,8 +94,8 @@ fs.renameSync(path.resolve(cli, packed), tgz);
  * それでも、経路の途中で差し替えられていないことは確かめられます。
  */
 const sha = createHash("sha256").update(fs.readFileSync(tgz)).digest("hex");
-fs.writeFileSync(`${tgz}.sha256`, `${sha}  create-webtemplate.tgz\n`, "utf8");
-log(`入口: create-webtemplate.tgz (${(fs.statSync(tgz).size / 1024) | 0} KB)`);
+fs.writeFileSync(`${tgz}.sha256`, `${sha}  create-nasu-stack.tgz\n`, "utf8");
+log(`入口: create-nasu-stack.tgz (${(fs.statSync(tgz).size / 1024) | 0} KB)`);
 log(`sha256: ${sha}`);
 
 /* --- 3. カタログとデモ ---------------------------------------------
@@ -130,7 +130,7 @@ buildApp("site", "apps/site/dist", "demo", {
   /* 絶対 URL（canonical / OGP / sitemap）の起点。**origin だけ**を渡します。
      下の階層は base の担当で、`Astro.url.pathname` に既に含まれています。
      ここに base 込みの URL を渡すと canonical が
-     `…/WebTemplate/WebTemplate/demo/` のように二重になります（実際なりました）。 */
+     `…/Nasu Stack/Nasu Stack/demo/` のように二重になります（実際なりました）。 */
   PUBLIC_SITE: new URL(PUBLIC_BASE).origin,
 });
 
@@ -165,13 +165,13 @@ ${body}
 fs.writeFileSync(
   path.join(pub, "index.html"),
   page(
-    "WebTemplate",
-    `<h1>WebTemplate</h1>
+    "Nasu Stack",
+    `<h1>Nasu Stack</h1>
 <p>Web サイトを作るときに毎回同じところで手間がかかる部分を、部品側で引き受ける土台です。</p>
 
 <h2>新しく作る</h2>
 <pre><code>npx ${TARBALL_URL} my-site</code></pre>
-<p><a href="./create-webtemplate.tgz.sha256">SHA-256</a> を並べて置いてあります。打つ前に照合できます。</p>
+<p><a href="./create-nasu-stack.tgz.sha256">SHA-256</a> を並べて置いてあります。打つ前に照合できます。</p>
 <p>できたプロジェクトには <code>components.json</code> が入っているので、部品はそのまま足せます。</p>
 
 <h2>いまあるプロジェクトに部品だけ入れる</h2>
@@ -190,7 +190,7 @@ fs.writeFileSync(
 ${items.map((i) => `  <li><a href="./r/${i.name}.json"><code>${i.name}</code></a> — ${i.title}</li>`).join("\n")}
 </ul>
 
-<p><a href="https://github.com/Nasu726/WebTemplate">GitHub</a></p>`,
+<p><a href="https://github.com/Nasu726/Nasu-Stack">GitHub</a></p>`,
   ),
   "utf8",
 );
@@ -203,7 +203,7 @@ ${items.map((i) => `  <li><a href="./r/${i.name}.json"><code>${i.name}</code></a
 fs.writeFileSync(
   path.join(pub, "404.html"),
   page(
-    "見つかりませんでした — WebTemplate",
+    "見つかりませんでした — Nasu Stack",
     `<h1>見つかりませんでした</h1>
 <p>その URL には何もありません。</p>
 <p><a href="${new URL(PUBLIC_BASE).pathname}/">入口へ戻る</a></p>`,

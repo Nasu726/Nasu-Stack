@@ -1,3 +1,7 @@
+/* astro が `z` を非推奨にしていますが、**そのままにしています。**
+   代わりは zod を直接 import することですが、それは生成物全部に
+   依存を 1 つ足すことになります。**hint 1 つのために払う値段ではありません。**
+   astro が置き換え先を用意したら、そのとき移します。 */
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
 

@@ -1,7 +1,7 @@
 /**
  * ビルド済みの中身を配ります。**別プロセスとして動かすための入口です。**
  *
- *   node scripts/serve-static.mjs <ディレクトリ> <ポート> [--spa] [--base=/WebTemplate]
+ *   node scripts/serve-static.mjs <ディレクトリ> <ポート> [--spa] [--base=/Nasu Stack]
  *
  * ----------------------------------------------------------------
  * なぜ「別プロセス」なのか

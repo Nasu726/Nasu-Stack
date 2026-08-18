@@ -1,7 +1,7 @@
 /**
  * エディタの補完（スニペット）を、配っている部品から作ります。
  *
- * 生成物の `.vscode/webtemplate.code-snippets` に入ります。
+ * 生成物の `.vscode/nasu-stack.code-snippets` に入ります。
  * VS Code はこのファイルを自動で読むので、利用者の設定は要りません。
  *
  * ----------------------------------------------------------------
@@ -198,7 +198,7 @@ export function writeSnippets(items, root, dest) {
   const dir = path.join(dest, ".vscode");
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(
-    path.join(dir, "webtemplate.code-snippets"),
+    path.join(dir, "nasu-stack.code-snippets"),
     JSON.stringify(snippets, null, 2) + "\n",
     "utf8",
   );

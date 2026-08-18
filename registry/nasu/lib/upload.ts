@@ -42,6 +42,16 @@ export function uploadWithProgress<TOutput = unknown>(
     /** フォームのフィールド名。既定 "file"。 */
     fieldName?: string;
     method?: "POST" | "PUT";
+    /**
+     * 追加のヘッダ。**ブラウザから送られます。**
+     *
+     * ここに置いた値は、開発者ツール・通信の記録・拡張機能から見えます。
+     * `Authorization: Bearer <サービスの鍵>` と書いても**秘密になりません。**
+     *
+     * サーバ側の鍵が要る相手には、**自分のサーバ（Worker など）を挟んで**
+     * そこから呼んでください。鍵はそちらに置きます。
+     * 判断表は docs/boundaries.md に。
+     */
     headers?: Record<string, string>;
     /** 一緒に送る値。 */
     fields?: Record<string, string>;
