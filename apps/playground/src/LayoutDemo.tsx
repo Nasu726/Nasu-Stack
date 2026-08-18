@@ -183,15 +183,87 @@ function InlineDemo() {
   );
 }
 
+/**
+ * いま縦積みかどうかの表示は、**CSS で出し分けます。**
+ *
+ * JS で測る案を 2 つ試して、どちらも古い表示が残りました。
+ *   - ResizeObserver … 描画が止まっているタブでは発火しません
+ *   - matchMedia の change … 同上
+ *
+ * 畳む条件は部品と同じメディアクエリなので、**同じ仕組みで出せば
+ * ずれようがありません。** `<details>` を使うのと同じ考え方です。
+ *
+ * Tailwind はクラス名を文字列として静的に探します。
+ * 変数で組み立てたクラス名は出力に含まれないので、literal で並べます。
+ */
+const COLLAPSE = [
+  {
+    value: "tablet",
+    label: "tablet（既定）",
+    note: "768px 未満で縦積み",
+    stacked: "md:hidden",
+    row: "hidden md:inline",
+  },
+  {
+    value: "desktop",
+    label: "desktop",
+    note: "1024px 未満で縦積み",
+    stacked: "lg:hidden",
+    row: "hidden lg:inline",
+  },
+  { value: null, label: "null", note: "畳まない", stacked: "hidden", row: "" },
+] as const;
+
 function ColumnsDemo() {
+  const [collapse, setCollapse] =
+    React.useState<(typeof COLLAPSE)[number]["value"]>("tablet");
+
+  const current = COLLAPSE.find((c) => c.value === collapse)!;
+
   return (
     <Panel
       title="Columns / Column — 段組"
-      description="既定でタブレット幅より狭いと縦に畳みます。スマホで崩れないのが既定の挙動です。"
-      code={`<Columns space="md">\n  <Column width="1/3"><Nav /></Column>\n  <Column><Article /></Column>\n</Columns>`}
+      description={
+        <>
+          <strong className="text-fg">狭い画面では縦に畳みます。</strong>
+          畳んでいる間は <code className="text-fg">width</code>{" "}
+          の指定は効きません（1/3 のまま縦に並べても読みにくいだけなので、
+          全幅にします）。いつ畳むかは{" "}
+          <code className="text-fg">collapseBelow</code> で変えられます。
+        </>
+      }
+      code={`<Columns space="md" collapseBelow={${
+        collapse === null ? "null" : `"${collapse}"`
+      }}>
+  <Column width="1/3"><Nav /></Column>
+  <Column><Article /></Column>
+</Columns>`}
     >
       <Stack space="md">
-        <Columns space="md">
+        <Inline space="xs" alignY="center">
+          {COLLAPSE.map((c) => (
+            <Button
+              key={String(c.value)}
+              size="sm"
+              variant={collapse === c.value ? "primary" : "outline"}
+              onClick={() => setCollapse(c.value)}
+            >
+              {c.label}
+            </Button>
+          ))}
+          {/* いまの状態。**これが無いと「1/3 と書いてあるのに全幅」に見えます。**
+              畳んでいる間は幅の指定が効かないのが正しい姿ですが、
+              そう書いていないと不具合に見えます（作者の指摘）。 */}
+          <span className="text-xs text-muted-fg">
+            {current.note} — いまは
+            <strong className={`text-fg ${current.stacked}`}>
+              縦積み（width は効きません）
+            </strong>
+            <strong className={`text-fg ${current.row}`}>横並び</strong>
+          </span>
+        </Inline>
+
+        <Columns space="md" collapseBelow={collapse}>
           <Column width="1/3">
             <Blk h="h-20">width=&quot;1/3&quot;</Blk>
           </Column>
@@ -200,7 +272,7 @@ function ColumnsDemo() {
           </Column>
         </Columns>
 
-        <Columns space="md">
+        <Columns space="md" collapseBelow={collapse}>
           <Column width="18rem">
             <Blk h="h-16">width=&quot;18rem&quot;（段階外）</Blk>
           </Column>

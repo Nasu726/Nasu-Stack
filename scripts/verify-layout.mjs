@@ -183,4 +183,51 @@ await toastPage.waitForTimeout(400);
 const before = await toastPage.locator('[role="status"]').count();
 must("通知を直接出せる", before > 0, `${before} 件`);
 
+/* --- 9. 広い画面で、本文が器の右端まで届いているか ------------------
+   ----------------------------------------------------------------
+   **端末幅の検査は 1024px までしか見ません。** それより広い画面で
+   「器は広いのに本文だけ半分で止まる」形になっていても、全部緑で通ります。
+
+   生成物にはこの判定がありました（verify-create の 13）。
+   **カタログには無かったので、そこだけ左に寄ったまま公開していました**
+   （1920px で器 1024 に対し、本文の右端が 1017。右に 431px の空白）。
+
+   本文の 1 行は和文 45em までなので、器を広げるほど余ります。
+   埋め方は中身の作り方の問題です（カタログは見出しと本文を横に並べました）。 */
+{
+  const wide = await openTab("layout", { width: 1920, height: 1000 });
+  const m = await wide.evaluate(() => {
+    const main = document.querySelector("main");
+    const r = main.getBoundingClientRect();
+    /* 見るのは**導入の最初の段落**です。
+       ----------------------------------------------------------------
+       「どこかの段落が右端まで届いていればよい」にすると、パネルの中の
+       デモの段落が偶然届いていて通ってしまいます（実測: 導入が左に
+       寄ったままでも、別の段落が 1233px まで届いていて緑になりました）。
+
+       見出しも数えません。見出しは器いっぱいに広がるので、
+       本文だけ半分で止まっていても「届いている」ことになります。 */
+    let widest = 0;
+    let text = "";
+    for (const el of main.querySelectorAll("p")) {
+      if ((el.textContent || "").trim().length < 20) continue;
+      const b = el.getBoundingClientRect();
+      widest = b.right;
+      text = (el.textContent || "").trim().slice(0, 24);
+      break;
+    }
+    // 器の内側（左右の余白を除いた実際の中身の幅）
+    const inner = main.querySelector("*");
+    const ir = inner ? inner.getBoundingClientRect() : r;
+    return { 器の右端: Math.round(ir.right), 本文の右端: Math.round(widest), 器の幅: Math.round(ir.width), text };
+  });
+  const gap = m["器の右端"] - m["本文の右端"];
+  must(
+    "9. 広い画面（1920px）で本文が器の右端まで届く",
+    gap <= m["器の幅"] * 0.25,
+    `器の右端=${m["器の右端"]} 本文の右端=${m["本文の右端"]} 余り=${gap} "${m.text}"`,
+  );
+  await wide.close();
+}
+
 await finish();
