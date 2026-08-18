@@ -5,8 +5,9 @@
  * フォームだけが island（React）です。ページの残りは静的 HTML なので、
  * JavaScript を待たずに読めます。
  *
- * **送信先はまだ配線していません。** 「で、どこに送るの？」は v0.8 の宿題です。
- * いまは ContactForm の中で偽の API を呼んでいます。
+ * 送信先は `PUBLIC_CONTACT_ENDPOINT` で外から渡します。
+ * **未設定のときだけ**、送らずに成功したふりをします（開発中に
+ * 「まだ受け口が無い」だけで画面が壊れないようにするためです）。
  */
 import Base from "../layouts/Base.astro";
 import { SITE } from "../site.config";
@@ -15,7 +16,6 @@ import { ContactForm } from "../components/ContactForm";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { PageBlock, Stack, Columns, Column, Section } from "@/components/ui/layout";
-import { withBase } from "@/lib/base";
 ---
 
 <Base
@@ -36,7 +36,7 @@ import { withBase } from "@/lib/base";
         <h1 class="text-3xl">お問い合わせ</h1>
         <p class="max-w-prose text-sm leading-relaxed text-muted-fg">
           お仕事のご相談、不具合の報告、その他なんでもどうぞ。
-          2 営業日以内にお返事します。
+          〇営業日以内にお返事します。
         </p>
       </Stack>
 
@@ -51,11 +51,7 @@ import { withBase } from "@/lib/base";
             <h2 class="text-base font-semibold">お返事について</h2>
             <p class="text-sm leading-relaxed text-muted-fg">
               入力いただいた内容は、お問い合わせへの回答にのみ使います。
-              送信できないときは、
-              <a href={withBase("/blog/")} class="text-primary underline underline-offset-2">
-                ブログ
-              </a>
-              の連絡先からもご連絡いただけます。
+              送信できないときは、しばらく置いてからもう一度お試しください。
             </p>
           </Section>
         </Column>

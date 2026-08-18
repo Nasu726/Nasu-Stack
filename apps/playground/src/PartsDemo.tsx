@@ -33,7 +33,7 @@ function ConfirmSection() {
       title="ConfirmDialog"
       description={
         <>
-          native の <code className="text-fg">&lt;dialog&gt;</code> を使っています。
+          ブラウザ標準の <code className="text-fg">&lt;dialog&gt;</code> を使っています。
           フォーカスの閉じ込め・背景の暗転・Esc で閉じる・最前面表示・
           閉じたあとのフォーカス復帰が、全部ブラウザ任せになります。
           Provider が無いときは <code className="text-fg">window.confirm</code>{" "}
@@ -222,7 +222,7 @@ function SelectSection() {
           <AsyncSelect<User>
             label="担当者"
             placeholder="名前で検索"
-            hint="入力すると絞り込みます（350ms の遅延を入れてあります）"
+            hint="入力すると絞り込みます（応答に 350ms かかる想定にしてあります）"
             loader={async (q, ctx) => {
               await new Promise((r) => setTimeout(r, 350));
               if (ctx.signal.aborted) return [];
@@ -302,7 +302,6 @@ function UploadSection() {
           <code className="text-fg">uploadWithProgress</code>{" "}
           が隠すので利用者が XHR を書くことはありません。
           1 ファイルずつ送るので、失敗した分だけ再送できます。
-          ファイル名に <code>fail</code> を入れると失敗します。
         </>
       }
       code={`<FileDrop
@@ -315,10 +314,14 @@ function UploadSection() {
         <FileDrop
           action={fakeUpload}
           maxSize={2 * 1024 * 1024}
-          hint="1 ファイル 2 MB まで。名前に fail を含めると失敗します"
+          hint="1 ファイル 2 MB まで"
         />
         <p className="mt-xs text-xs text-muted-fg">
           見本です。選んだファイルはどこにも送られません（進捗は偽物です）。
+          <strong className="text-fg">
+            このデモの偽サーバーは、名前に <code>fail</code> を含むファイルだけ拒否します。
+          </strong>
+          部品の仕様ではありません。
         </p>
       </Box>
     </Panel>

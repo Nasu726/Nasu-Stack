@@ -185,6 +185,27 @@ const active = (page) =>
     JSON.stringify(many),
   );
 
+  /* 横にしか動けない領域は、**ホイールの縦を横へ回さないと動きません。**
+     指でも矢印キーでも動くので、作った側は気づけません
+     （v0.9c で、作者がタッチパッドで触って初めて分かりました）。 */
+  const wheel = await page.evaluate(async () => {
+    const tl = document.querySelector('[role="tablist"][aria-label="たくさんある例"]');
+    const el = tl?.parentElement;
+    if (!el) return { 前: -1, 後: -1 };
+    el.scrollLeft = 0;
+    const 前 = el.scrollLeft;
+    el.dispatchEvent(
+      new WheelEvent("wheel", { deltaY: 120, bubbles: true, cancelable: true }),
+    );
+    await new Promise((r) => setTimeout(r, 100));
+    return { 前, 後: el.scrollLeft };
+  });
+  must(
+    "   ホイール（縦）で横スクロールできる",
+    wheel["後"] > wheel["前"],
+    JSON.stringify(wheel),
+  );
+
   await page.close();
 }
 

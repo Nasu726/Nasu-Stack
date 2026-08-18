@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/layout";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Button } from "@/components/ui/action-button";
+import { withBase } from "@/lib/base";
 import { Panel } from "./Panel";
 
 export function ResponsiveDemo() {
@@ -70,8 +71,11 @@ function DevicePreview() {
             style={{ width, maxWidth: "100%" }}
           >
             <iframe
-              // ネストが無限に増えないよう、プレビュー内ではこのタブを出しません
-              src="/?embed=1"
+              // ネストが無限に増えないよう、プレビュー内ではこのタブを出しません。
+              // **base を自分で付けます。** src は手で書いた文字列なので、
+              // ビルドは書き換えません。付け忘れると、サブパスに公開したときだけ
+              // ここが 404 になります（v0.9c で実際にそうなっていました）。
+              src={withBase("/?embed=1")}
               title={`幅 ${width}px のプレビュー`}
               className="block h-[520px] w-full border-0"
             />
@@ -199,11 +203,12 @@ function CheckCommand() {
     <Panel
       title="崩れていないことを数値で確かめる"
       description="「たぶん大丈夫」ではなく、実際のブラウザを 5 つの幅で開いて機械的に調べます。崩れがあると終了コード 1 を返すので、CI にそのまま載せられます。"
-      code={`npm run check -- http://localhost:5173
+      code={`npm run check          # 見に行く URL は package.json に書いてあります
+                       # （astro なら 4321、vite なら 4173）
 
 端末幅チェック: 1 ページ × 5 幅
 
-  ✗ http://localhost:5173  @ 320 (小さいスマホ)
+  ✗ http://localhost:4321  @ 320 (小さいスマホ)
       横に 577px はみ出しています
         ↳ <p class="…"> が 577px 外へ  "https://example.com/very/long…"
         → 長い文字列なら overflow-wrap、表やコードなら <Scrollable> で囲んでください

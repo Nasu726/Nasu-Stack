@@ -20,12 +20,30 @@ import { cn } from "@/lib/utils";
  *   - キーボードだけの人がスクロールできるよう tabIndex を付ける
  *     （スクロール領域に到達手段が無いのはアクセシビリティ違反です）
  *   - スクロールが不要な幅では影も tabIndex も付けない
+ *   - ホイールの縦の動きを横スクロールに回す（`wheelX`。既定は切）
+ *
+ * 最後の 1 つは見落としやすい穴です。横にしか動けない領域の上で
+ * ホイールを回しても、既定では**何も起きません。** 指では動き、
+ * 矢印キーでも動くので、作った側は気づけません
+ * （実際 v0.9c で、作者がタッチパッドで触って初めて分かりました）。
+ *
+ * **既定で入れてはいけません。** コード例や表の上を通っただけで
+ * ページの縦スクロールが止まり、横に流れます。縦に読んでいる人の
+ * 邪魔になるので、タブの列のように「横にしか意味が無い」ものだけ
+ * `wheelX` を付けます。
  */
 export interface ScrollableProps extends React.HTMLAttributes<HTMLDivElement> {
   /** スクロール領域の説明。読み上げに使われます。 */
   label?: string;
   /** 縦にもスクロールさせたいとき。 */
   axis?: "x" | "y" | "both";
+  /**
+   * ホイール（タッチパッドの縦）を横スクロールに回すか。既定 false。
+   *
+   * タブの列のように**横にしか意味が無い**ものだけ true にしてください。
+   * 表やコード例に付けると、ページを縦に読んでいる途中で止まります。
+   */
+  wheelX?: boolean;
   /** 最大の高さ（axis に y を含むとき）。 */
   maxHeight?: string;
   children?: React.ReactNode;
@@ -34,6 +52,7 @@ export interface ScrollableProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Scrollable({
   label,
   axis = "x",
+  wheelX = false,
   maxHeight,
   className,
   style,
@@ -71,6 +90,29 @@ export function Scrollable({
       ro.disconnect();
     };
   }, [update]);
+
+  /* ホイール／タッチパッドの縦の動きを横へ回します。
+     **端に着いたら preventDefault しません。** そこで止めてしまうと、
+     一覧の端でページ全体のスクロールまで止まります。 */
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || axis !== "x" || !wheelX) return;
+    const onWheel = (e: WheelEvent) => {
+      // ピンチ（Ctrl+ホイール）は拡大縮小なので触りません
+      if (e.ctrlKey) return;
+      // 横の動きはブラウザがそのまま処理できます
+      if (Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 0) return;
+      const next = Math.min(max, Math.max(0, el.scrollLeft + e.deltaY));
+      if (next === el.scrollLeft) return;
+      e.preventDefault();
+      el.scrollLeft = next;
+    };
+    // passive: false でないと preventDefault が効きません
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [axis, wheelX]);
 
   const showLeft = state.scrollable && !state.atStart;
   const showRight = state.scrollable && !state.atEnd;

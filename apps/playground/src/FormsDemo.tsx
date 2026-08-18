@@ -95,7 +95,7 @@ const values = formDataToObject(new FormData(formEl));`}
               name="langs"
               label="使う言語（複数選択）"
               multiple
-              hint="Ctrl / ⌘ を押しながらで複数選べます"
+              hint="複数選べます（パソコンでは Ctrl / ⌘ を押しながらクリック）"
               options={[
                 { value: "ts", label: "TypeScript" },
                 { value: "py", label: "Python" },
@@ -276,7 +276,6 @@ function OptimisticSection() {
           追加・削除・更新をサーバーの応答を待たずに反映し、失敗したら
           <strong className="text-fg">その操作だけ</strong>取り消します。
           「配列を控えて戻す」実装だと、同時に走った他の操作まで巻き戻ります。
-          題名に <code>fail</code> を入れると失敗します。
           保留中の行は薄く表示されます。
         </>
       }
@@ -294,7 +293,7 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="やることを追加（fail を含めると失敗）"
+            placeholder="やることを追加"
             aria-label="やることの題名"
             className="min-w-0 flex-1 rounded-md border border-input bg-card px-3 py-2 text-base"
           />
@@ -399,6 +398,15 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
           </Button>
           <span className="self-center text-xs text-muted-fg">
             保留中: {list.hasPending ? "あり" : "なし"}
+          </span>
+        </Inline>
+
+        <Inline space="xs">
+          <span className="text-xs text-muted-fg">
+            <strong className="text-fg">
+              このデモの偽サーバーは、題名に fail を含むものだけ拒否します。
+            </strong>
+            部品の仕様ではありません。失敗したときの戻り方を見るための細工です。
           </span>
         </Inline>
       </Stack>

@@ -46,10 +46,10 @@ function ProseSection() {
           <h2>見出しの例</h2>
           <p>
             本文です。行の長さは <code>ContentBlock</code> が決めています。
-            和文はおよそ 40 字で折り返るので、視線が戻る距離が短く保たれます。
+            和文はおよそ 40 字で折り返すので、視線が戻る距離が短く保たれます。
             長い URL（
             <a href="#x">https://example.com/very/long/path/that/never/breaks</a>
-            ）を書いても、はみ出さずに折り返ります。
+            ）を書いても、はみ出さずに折り返します。
           </p>
           <h3>箇条書き</h3>
           <ul>

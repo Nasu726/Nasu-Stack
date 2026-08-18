@@ -22,10 +22,13 @@ export function NavDemo() {
   return (
     <Stack space="3xl">
       <HeaderSection />
+      {/* メニューは**下に余白がある位置に置きます。**
+          最下部だと必ず上向きに開くので、
+          「入り切らないときだけ上に出す」動きが見られません。 */}
+      <MenuSection />
       <DialogSection />
       <TabsSection />
       <DisclosureSection />
-      <MenuSection />
     </Stack>
   );
 }
@@ -96,7 +99,7 @@ function DialogSection() {
       title="Dialog"
       description={
         <>
-          native の <code className="text-fg">&lt;dialog&gt;</code>{" "}
+          ブラウザ標準の <code className="text-fg">&lt;dialog&gt;</code>{" "}
           を使うので、フォーカスの閉じ込め・背面の無効化・Esc・最前面表示は
           ブラウザ任せです。
           <strong className="text-fg">
