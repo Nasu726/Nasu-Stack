@@ -14,7 +14,7 @@ SECURITY.md にも「掲載を申請する準備をしています」と書い�
 | 要件 | 状態 |
 |---|---|
 | 公開されていて、オープンソースであること | ✓ MIT、GitHub Pages で公開 |
-| 公開先の root に `registry.json` があること | ✓ `https://nasu726.github.io/WebTemplate/r/registry.json` |
+| 公開先の root に `registry.json` があること | ✓ `https://nasu726.github.io/Nasu-Stack/r/registry.json` |
 | 個別の JSON が同じ階層に平置きされていること | ✓ `…/r/<name>.json` |
 | 一覧の `files` に `content` を入れないこと | ✓ 機械で確かめています（`verify-published.mjs`） |
 | **npm への publish** | **不要です。** 公開 URL があれば足ります |
@@ -37,9 +37,9 @@ SECURITY.md にも「掲載を申請する準備をしています」と書い�
 入口の CLI は tarball の URL のままです。
 
 ```bash
-npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site
+npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
 ```
 
-`npx create-webtemplate` は**空いている名前**なので、打つと他人のコードが動きます。
+`npx create-nasu-stack` は**空いている名前**なので、打つと他人のコードが動きます。
 `scripts/check-forbidden.mjs` が、その文字列がコードに紛れ込んでいないか毎回見ています。
 理由は [`security.md`](security.md) と [`../SECURITY.md`](../SECURITY.md) に。

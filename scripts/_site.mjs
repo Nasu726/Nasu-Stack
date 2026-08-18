@@ -17,10 +17,10 @@
  */
 
 /** GitHub Pages の project site。リポジトリ名がパスに入ります。 */
-export const PUBLIC_BASE = "https://nasu726.github.io/WebTemplate";
+export const PUBLIC_BASE = "https://nasu726.github.io/Nasu-Stack";
 
 /** shadcn CLI の `registries` に書く形。`{name}` は CLI が置き換えます。 */
 export const REGISTRY_URL = `${PUBLIC_BASE}/r/{name}.json`;
 
 /** 入口の CLI。npm には publish しないので、tarball を直に指します。 */
-export const TARBALL_URL = `${PUBLIC_BASE}/create-webtemplate.tgz`;
+export const TARBALL_URL = `${PUBLIC_BASE}/create-nasu-stack.tgz`;

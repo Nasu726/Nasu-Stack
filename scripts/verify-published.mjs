@@ -1,7 +1,7 @@
 /**
  * 公開されたものを、**外から実際に叩いて**確かめます。
  *
- *   node scripts/verify-published.mjs https://nasu726.github.io/WebTemplate
+ *   node scripts/verify-published.mjs https://nasu726.github.io/Nasu-Stack
  *   node scripts/verify-published.mjs http://127.0.0.1:5055        （手元で）
  *
  * ----------------------------------------------------------------
@@ -98,10 +98,10 @@ must(
    **経路の途中で差し替えられていないこと**を、利用者と同じ手順で確かめます。 */
 try {
   const [tgz, sha] = await Promise.all([
-    fetch(`${base}/create-webtemplate.tgz`),
-    fetch(`${base}/create-webtemplate.tgz.sha256`),
+    fetch(`${base}/create-nasu-stack.tgz`),
+    fetch(`${base}/create-nasu-stack.tgz.sha256`),
   ]);
-  must("create-webtemplate.tgz が 200 で取れる", tgz.ok, `HTTP ${tgz.status}`);
+  must("create-nasu-stack.tgz が 200 で取れる", tgz.ok, `HTTP ${tgz.status}`);
   must("sha256 が 200 で取れる", sha.ok, `HTTP ${sha.status}`);
 
   const bytes = Buffer.from(await tgz.arrayBuffer());
@@ -125,7 +125,7 @@ try {
    見ていませんでした。
 
    実際、公開したデモは全部のページ間リンクが 404 でした
-   （`/WebTemplate/demo/about/` にあるのに `/about/` を指していた）。
+   （`/Nasu Stack/demo/about/` にあるのに `/about/` を指していた）。
    判定は緑のままです。
 
    **拡張子で絞りません。** ページに出てくる同一サイトの参照を全部辿ります。

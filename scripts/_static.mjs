@@ -58,7 +58,7 @@ async function readIf(file) {
  * `root` を `port` で配ります。
  *
  * @param {object} [opts]
- * @param {string} [opts.basePath]  本番がサブパス配信のときに合わせる（例 "/WebTemplate"）
+ * @param {string} [opts.basePath]  本番がサブパス配信のときに合わせる（例 "/Nasu Stack"）
  * @param {boolean} [opts.spa]      見つからないときに index.html を返す（Vite の SPA 用）
  * @returns {Promise<import("node:http").Server>} listen 済みのサーバ
  */
@@ -80,7 +80,7 @@ export function serveStatic(root, port, { basePath = "", spa = false } = {}) {
       return void res.end("bad request");
     }
     /* **basePath の外は 404 にします。**
-       ここを素通しにすると、`public/` が `/` と `/WebTemplate/` の
+       ここを素通しにすると、`public/` が `/` と `/Nasu Stack/` の
        両方に生えます。本番（GitHub Pages）で `/` にあるのは
        **別のサイト**なので、手元だけ `/index.html` が 200 で返り、
        「root を指したリンク」が通ってしまいます。

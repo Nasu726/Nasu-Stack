@@ -45,16 +45,16 @@
 - `main` … v0.9c まで（PR #6 でマージ済み）
 - `claude/v0.9d` … **ここが最新です**（幅の制御と shadcn ディレクトリ対応）
 
-**公開済みです。** https://nasu726.github.io/WebTemplate/
+**公開済みです。** https://nasu726.github.io/Nasu-Stack/
 （`/catalog/` に部品のカタログ、`/demo/` にデモサイト、`/r/*.json` にレジストリ）
 
 ### 配っている雛型は 3 つです
 
 | `--template` | 中身 | 原本 |
 |---|---|---|
-| `astro` | 1 ページだけ。自分で組み立てたい人向け | `packages/create-webtemplate/scaffold/astro/` |
+| `astro` | 1 ページだけ。自分で組み立てたい人向け | `packages/create-nasu-stack/scaffold/astro/` |
 | `blog` | ブログ・LP・会社概要・問い合わせ・RSS・sitemap・404 | **`apps/site` から生成します**（下記） |
-| `vite` | React のアプリ | `packages/create-webtemplate/scaffold/vite/` |
+| `vite` | React のアプリ | `packages/create-nasu-stack/scaffold/vite/` |
 
 `blog` の中身は `apps/site`（公開しているデモ）から
 `scripts/build-create-template.mjs` が写します。**手でコピーして commit しません。**
@@ -93,8 +93,8 @@ pnpm pages:build      # 公開する public/ を組み立てる（レジスト�
 `public/` を配ってから同じものを回します。
 
 ```bash
-BASE_PATH=/WebTemplate node scripts/serve-registry.mjs 5055
-node scripts/verify-published.mjs http://127.0.0.1:5055/WebTemplate
+BASE_PATH=/Nasu Stack node scripts/serve-registry.mjs 5055
+node scripts/verify-published.mjs http://127.0.0.1:5055/Nasu Stack
 ```
 
 **`BASE_PATH` を必ず渡してください。** 本番はサブパス配信です。
@@ -128,7 +128,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
   ある理由です
 - **同じ値を 2 か所に置かない。** ヘッダ高さ、タブ一覧、下書きの判定、
   入力欄のクラス、依存の宣言 — このリポジトリのバグはほぼ全部これです。
-  `packages/create-webtemplate/template/` を commit していないのも同じ理由
+  `packages/create-nasu-stack/template/` を commit していないのも同じ理由
 - **測るときは、測りたい状態を作ってから測る。** 画像の場所取りは画像の
   読み込みを止めてから、はみ出しは実際にホイールを回してから測ります。
   推測で書いた検査は、**通っているように見えて何も見ていません**

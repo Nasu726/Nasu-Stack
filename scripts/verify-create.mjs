@@ -1,5 +1,5 @@
 /**
- * 入口（create-webtemplate）の検証。
+ * 入口（create-nasu-stack）の検証。
  *
  *   node scripts/verify-create.mjs          軽い検査だけ（pnpm verify に入る）
  *   node scripts/verify-create.mjs --full   install → build → 実ブラウザまで
@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { npm, pnpm, stopTree } from "./_proc.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const CLI = path.join(root, "packages", "create-webtemplate", "index.mjs");
+const CLI = path.join(root, "packages", "create-nasu-stack", "index.mjs");
 const FULL = process.argv.includes("--full");
 
 const checks = [];
@@ -66,7 +66,7 @@ const PAGES = {
     cwd: root,
     stdio: "ignore",
   });
-  const tpl = path.join(root, "packages", "create-webtemplate", "template");
+  const tpl = path.join(root, "packages", "create-nasu-stack", "template");
   const list = (dir) =>
     fs.existsSync(dir)
       ? fs.readdirSync(dir, { recursive: true }).map(String).sort()
@@ -149,7 +149,7 @@ const PAGES = {
      ファイル名の集合が一致するかを見ます。 */
   const wantArticles = fs
     .readdirSync(
-      path.join(root, "packages/create-webtemplate/scaffold/blog/src/content/blog"),
+      path.join(root, "packages/create-nasu-stack/scaffold/blog/src/content/blog"),
     )
     .filter((f) => f.endsWith(".md"))
     .sort();
@@ -304,7 +304,7 @@ for (const { name, kind } of CASES) {
  * **補完に出る名前が、同梱のファイルで本当に export されているか**を見ます。
  */
 for (const { name, kind } of CASES) {
-  const p = path.join(work, name, ".vscode", "webtemplate.code-snippets");
+  const p = path.join(work, name, ".vscode", "nasu-stack.code-snippets");
   if (!fs.existsSync(p)) {
     must(`7.55 ${kind}: エディタの補完が入っている`, false, "ファイルが無い");
     continue;

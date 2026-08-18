@@ -16,7 +16,7 @@ const NAV = [
   { href: "#c", label: "会社概要" },
   // external の見本。**実際に飛ぶ先なので、実在して差し支えない URL にします。**
   // example.com は表記用に予約された名前ですが、IANA の説明ページが本当に出ます。
-  { href: "https://github.com/Nasu726/WebTemplate", label: "GitHub", external: true },
+  { href: "https://github.com/Nasu726/Nasu-Stack", label: "GitHub", external: true },
 ];
 
 export function NavDemo() {

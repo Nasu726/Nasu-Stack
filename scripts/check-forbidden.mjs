@@ -6,7 +6,7 @@
  * ----------------------------------------------------------------
  * なぜ機械で見張るのか
  * ----------------------------------------------------------------
- * `npx create-webtemplate` は npm で**空いている名前**です。
+ * `npx create-nasu-stack` は npm で**空いている名前**です。
  * 第三者が取れば、その名前を打った人には他人のコードが動きます。
  *
  * README を直しても、**コードの中に残っていれば同じこと**です。
@@ -30,7 +30,7 @@ const SKIP_DIRS = new Set(["node_modules", "dist", ".astro", "template", ".shots
 
 const RULES = [
   {
-    re: /npx\s+create-webtemplate/g,
+    re: /npx\s+create-nasu-stack/g,
     why:
       "npm で空いている名前です。第三者が取ると、打った人に他人のコードが動きます。\n" +
       "      tarball の URL を指す形だけを書いてください",

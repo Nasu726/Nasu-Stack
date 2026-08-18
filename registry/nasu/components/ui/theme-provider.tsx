@@ -39,7 +39,7 @@ const ThemeContext = React.createContext<ThemeCtx | null>(null);
  *
  * 分けたいときは `storageKey` を渡してください。
  */
-const STORAGE_KEY = "webtemplate.theme";
+const STORAGE_KEY = "nasu-stack.theme";
 
 /**
  * トンマナ切り替えの提供者。

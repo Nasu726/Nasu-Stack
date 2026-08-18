@@ -1,22 +1,25 @@
-# WebTemplate
+# Nasu Stack
 
 **余白は迷わせない。状態は書かせない。**
 
 ```bash
-npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site
+npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
 ```
 
-**先に見る:** [部品のカタログ](https://nasu726.github.io/WebTemplate/catalog/)（38 個を実際に触れます） /
-[デモサイト](https://nasu726.github.io/WebTemplate/demo/)（この部品で組んだサイト）
+**先に見る:** [部品のカタログ](https://nasu726.github.io/Nasu-Stack/catalog/)（38 個を実際に触れます） /
+[デモサイト](https://nasu726.github.io/Nasu-Stack/demo/)（この部品で組んだサイト）
 
 全体像と設計の理由は [docs/overview.md](docs/overview.md) にまとめてあります。
+**v0.9e より前の記録（`docs/plan-*` `docs/result-*` と `ROADMAP.md`）には、
+旧名の `WebTemplate` で出てきます。** 当時の記録なので直していません
+（改名の経緯は [docs/rename.md](docs/rename.md)）。
 **何を引き受け、何を引き受けないか**は [docs/boundaries.md](docs/boundaries.md) に。
 **何を引き受け、何を引き受けないか**は [docs/boundaries.md](docs/boundaries.md) に。
 
 > **npm には publish していません。** 個人的なプロジェクトとして続けるので、
 > 継続的な保守を約束できないためです。npm は URL の tarball をそのまま
 > 受け取れるので、これで同じことができます。
-> **`npx create-webtemplate` とは打たないでください** — その名前は npm で
+> **`npx create-nasu-stack` とは打たないでください** — その名前は npm で
 > 空いており、こちらの配布物ではありません。理由と守りは
 > [docs/security.md](docs/security.md) に書いてあります。
 
@@ -259,7 +262,7 @@ npm run check -- http://localhost:5173
 ```jsonc
 {
   "registries": {
-    "@nasu": "https://nasu726.github.io/WebTemplate/r/{name}.json"
+    "@nasu": "https://nasu726.github.io/Nasu-Stack/r/{name}.json"
   }
 }
 ```

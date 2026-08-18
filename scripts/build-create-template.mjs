@@ -1,5 +1,5 @@
 /**
- * create-webtemplate のテンプレートを組み立てます。
+ * create-nasu-stack のテンプレートを組み立てます。
  *
  *   node scripts/build-create-template.mjs
  *
@@ -25,7 +25,7 @@ import { writeSnippets } from "./build-snippets.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const registryRoot = path.join(root, "registry", "nasu");
 const site = path.join(root, "apps", "site");
-const pkg = path.join(root, "packages", "create-webtemplate");
+const pkg = path.join(root, "packages", "create-nasu-stack");
 const out = path.join(pkg, "template");
 
 const registry = JSON.parse(
@@ -270,7 +270,7 @@ for (const kind of ["astro", "blog", "vite"]) {
   {
     const p = path.join(dest, "package.json");
     const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
-    pkg.webtemplate = { shadcn: testedShadcnVersion() };
+    pkg.nasuStack = { shadcn: testedShadcnVersion() };
     fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + "\n", "utf8");
   }
   const r = copyItems([...STARTER.common, ...STARTER[kind]], path.join(dest, "src"));

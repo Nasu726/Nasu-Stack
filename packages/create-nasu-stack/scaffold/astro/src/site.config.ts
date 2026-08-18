@@ -3,7 +3,7 @@ export const SITE = {
   /** astro.config.mjs の `site` と同じ値にしてください。 */
   url: "https://example.com",
   name: "__PROJECT_NAME__",
-  description: "WebTemplate で作ったサイトです。",
+  description: "Nasu Stack で作ったサイトです。",
   author: "",
   locale: "ja",
   ogImage: "/og.png",

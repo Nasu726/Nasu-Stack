@@ -1,7 +1,7 @@
 /** public/ を静的配信します。公開物の動作確認用。
  *
  *   node scripts/serve-registry.mjs [port]
- *   BASE_PATH=/WebTemplate node scripts/serve-registry.mjs
+ *   BASE_PATH=/Nasu Stack node scripts/serve-registry.mjs
  *
  * 本番（GitHub Pages）はリポジトリ名の下に出るので、同じ形に揃えられます。
  *

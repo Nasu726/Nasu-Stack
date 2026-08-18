@@ -1,5 +1,5 @@
 /**
- * WebTemplate — 非同期処理の統一契約
+ * Nasu Stack — 非同期処理の統一契約
  * ---------------------------------------------------------------
  * このファイルがテンプレート全体の「背骨」です。
  *
@@ -84,7 +84,7 @@ export class ActionError extends Error {
 }
 
 /** 中断されたことを示す番兵。状態を error にせず idle に戻すために使います。 */
-export const ABORTED = Symbol("webtemplate.aborted");
+export const ABORTED = Symbol("nasu-stack.aborted");
 
 /**
  * 何が throw されても ActionError に揃えます。

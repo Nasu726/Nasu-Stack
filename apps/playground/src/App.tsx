@@ -147,7 +147,7 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
             ---------------------------------------------------------------- */}
         <div className="flex flex-wrap items-center gap-xs lg:gap-sm">
           <Inline space="sm" alignY="baseline" className="order-1 shrink-0">
-            <span className="font-display text-lg">WebTemplate</span>
+            <span className="font-display text-lg">Nasu Stack</span>
             <span className="text-xs text-muted-fg">/ {theme}</span>
           </Inline>
 
@@ -771,7 +771,7 @@ function Footer() {
   return (
     <footer className="border-t border-border">
       <PageBlock width="content" gutter="md" className="py-lg">
-        <p className="text-xs text-muted-fg">WebTemplate — MIT License</p>
+        <p className="text-xs text-muted-fg">Nasu Stack — MIT License</p>
       </PageBlock>
     </footer>
   );

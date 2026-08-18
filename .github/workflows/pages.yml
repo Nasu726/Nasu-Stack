@@ -125,6 +125,6 @@ jobs:
 
       # 判定は scripts/verify-published.mjs にあります。
       # **YAML に書くと手元で同じものを試せません。**
-      # 手元では BASE_PATH=/WebTemplate で配って、同じスクリプトを回せます。
+      # 手元では BASE_PATH=/Nasu Stack で配って、同じスクリプトを回せます。
       - name: 公開物が本当に取れるか
         run: node scripts/verify-published.mjs "${{ needs.deploy.outputs.url }}"

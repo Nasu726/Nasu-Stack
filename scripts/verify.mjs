@@ -160,7 +160,7 @@ await group([
   ["単体: 受け口の入口", "node", ["scripts/verify-receiver-unit.mjs"]],
   // 入口。生成物を install / build するところまでは重いので
   // `pnpm verify:create` に分けています（ここは生成と検証だけ）。
-  ["入口: create-webtemplate", "node", ["scripts/verify-create.mjs"]],
+  ["入口: create-nasu-stack", "node", ["scripts/verify-create.mjs"]],
 ]);
 
 /* ---- 群 2: レジストリを作ってから ---------------------------------- */

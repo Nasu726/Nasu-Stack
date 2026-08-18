@@ -10,7 +10,7 @@ public/
 .verify-install/
 .verify-install-real/
 .verify-install-real-broken/
-packages/create-webtemplate/template/
+packages/create-nasu-stack/template/
 
 # 検査中に撮る画面の記録。診断用なので commit しません。
 # 置き場は scripts/_browser.mjs の SHOTS_DIR が決めます。

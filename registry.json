@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "nasu",
-  "homepage": "https://github.com/Nasu726/WebTemplate",
+  "homepage": "https://github.com/Nasu726/Nasu-Stack",
   "items": [
     {
       "name": "action",

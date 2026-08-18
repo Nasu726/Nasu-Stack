@@ -20,7 +20,7 @@ export const SITE = {
      自分のサイトにするときは、ここと about.astro を書き換えてください。 */
   name: "Example Studio",
   description:
-    "静的なページは Astro、動く部分だけ React。WebTemplate で組んだサイトの見本です。",
+    "静的なページは Astro、動く部分だけ React。Nasu Stack で組んだサイトの見本です。",
   author: "Example Studio",
   /**
    * 既定の OGP 画像。**無いと SNS に貼ったとき白い箱が出るだけになります。**
@@ -44,4 +44,4 @@ export const YEAR = new Date().getFullYear();
  * 共有します。v0.9d まで、カタログで選んだトンマナがデモにも出ていました
  * （`data-theme="warm"` と書いたページが vivid で表示されていました）。
  */
-export const THEME_STORAGE_KEY = "webtemplate.site.theme";
+export const THEME_STORAGE_KEY = "nasu-stack.site.theme";

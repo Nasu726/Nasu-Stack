@@ -4,7 +4,7 @@
 
 **公開の Issue に書かないでください。** 直る前に読まれます。
 
-GitHub の [Security Advisories](https://github.com/Nasu726/WebTemplate/security/advisories/new)
+GitHub の [Security Advisories](https://github.com/Nasu726/Nasu-Stack/security/advisories/new)
 から非公開で報告してください。
 
 返事は**確約できません。** 個人が趣味で続けているもので、
@@ -25,12 +25,12 @@ shadcn のレジストリのディレクトリには、**掲載を申請する�
 
 | | |
 |---|---|
-| `https://nasu726.github.io/WebTemplate/r/*.json` | shadcn CLI が読むレジストリ |
-| `https://nasu726.github.io/WebTemplate/create-webtemplate.tgz` | 入口の CLI |
+| `https://nasu726.github.io/Nasu-Stack/r/*.json` | shadcn CLI が読むレジストリ |
+| `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | 入口の CLI |
 | 同 `.sha256` | 上の tarball のハッシュ |
 
-**npm に `create-webtemplate` という名前では出していません。**
-その名前は空いているので、`npx create-webtemplate` と打つと
+**npm に `create-nasu-stack` という名前では出していません。**
+その名前は空いているので、`npx create-nasu-stack` と打つと
 **他人のコードが動きます。** 必ず上の tarball の URL を指してください。
 （この間違いは `scripts/check-forbidden.mjs` が機械で見張っています。）
 
@@ -39,14 +39,14 @@ tarball は打つ前に照合できます。
 1 度落として、それを確かめて、**その同じファイルを実行**します。
 
 ```bash
-curl -fsSL -O https://nasu726.github.io/WebTemplate/create-webtemplate.tgz
-curl -fsSL -O https://nasu726.github.io/WebTemplate/create-webtemplate.tgz.sha256
-sha256sum -c create-webtemplate.tgz.sha256   # OK と出たら
-npx ./create-webtemplate.tgz my-site
+curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz
+curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz.sha256
+sha256sum -c create-nasu-stack.tgz.sha256   # OK と出たら
+npx ./create-nasu-stack.tgz my-site
 ```
 
 （Windows の PowerShell なら
-`Get-FileHash create-webtemplate.tgz -Algorithm SHA256` で出した値を、
+`Get-FileHash create-nasu-stack.tgz -Algorithm SHA256` で出した値を、
 `.sha256` の中身と見比べてください。）
 
 **README の 1 行（URL を直接 npx する形）では確かめられません。**
