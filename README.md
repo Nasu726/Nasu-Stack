@@ -2,6 +2,22 @@
 
 **余白は迷わせない。状態は書かせない。**
 
+> ### これは Public Beta です
+>
+> 部品と雛型は実ブラウザで検査しています（`verify` 25 工程 /
+> `verify:create` 106 判定）。ただし、**次はまだこちらで
+> 引き受けていません。**
+>
+> - 問い合わせの受け口のレート制限と bot 対策（見本は入口の見張りまで）
+> - 認証・認可
+> - サーバ側の検証（雛型にあるのは見本だけ）
+>
+> 一覧は [docs/boundaries.md](docs/boundaries.md) に表で並べてあります。
+> **公開する前に 1 度読んでください。**
+>
+> 個人のプロジェクトです。保守と対応期限は約束していません
+> （[SECURITY.md](SECURITY.md)）。
+
 ```bash
 npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
 ```
