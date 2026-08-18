@@ -64,7 +64,22 @@ export function SiteFooter({
   return (
     <footer className={cn("mt-3xl border-t border-border", className)}>
       <PageBlock width={width} gutter="md" className="py-xl">
-        <div className="flex flex-col gap-xl md:flex-row md:justify-between">
+        {/* ----------------------------------------------------------------
+            リンクの列を先に確保します
+            ----------------------------------------------------------------
+            **説明文とリンクの列がぶつかると、縮むのはリンクの側でした。**
+            説明文は max-w-prose の分まで伸びるので、残りが足りなくなると
+            リンクの列が 1 列ずつ縦に折り返し、左に大きな空白が残ります
+            （実測: 器 704 に対して説明文 468、リンク側は 164 しか残らず、
+            56px と 75px の 2 列が並べられませんでした）。
+
+            リンクの列は shrink-0 で必要な幅を確保し、**折り返すのは説明文の
+            側にします。** 説明文は何行になっても読めますが、リンクの列は
+            縦に割れると「まとまり」が見えなくなります。
+
+            外側に flex-wrap を足してあるのは保険です。列が増えて器に
+            収まらなくなったら、説明文を潰さずに次の行へ落とします。 */}
+        <div className="flex flex-col gap-xl md:flex-row md:flex-wrap md:justify-between">
           <div className="flex min-w-0 flex-col gap-2xs">
             {brand && (
               <a
@@ -82,7 +97,7 @@ export function SiteFooter({
           </div>
 
           {groups.length > 0 && (
-            <div className="flex flex-wrap gap-xl">
+            <div className="flex shrink-0 flex-wrap gap-lg">
               {groups.map((group) => (
                 <FooterColumn key={group.label} group={group} />
               ))}

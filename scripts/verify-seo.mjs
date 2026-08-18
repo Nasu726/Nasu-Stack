@@ -277,7 +277,11 @@ if (headingId) {
  * 4.5 雛型ページの骨格
  * ============================================================== */
 
-for (const path of ["/lp/", "/about/", "/contact/"]) {
+/* **トップ（/）を外してはいけません。** フッタの器の幅がページごとに
+   違い（トップは narrow、lp と contact は content）、**狭いほうでだけ
+   リンクの列が縦に折り返していました。** 広いほうしか見ていないと、
+   実際に崩れているページを一度も測らないことになります。 */
+for (const path of ["/", "/lp/", "/about/", "/contact/"]) {
   await page.goto(SITE_BASE + path, { waitUntil: "networkidle" });
   const s = await page.evaluate(() => ({
     h1: document.querySelectorAll("h1").length,
@@ -305,6 +309,30 @@ for (const path of ["/lp/", "/about/", "/contact/"]) {
     s.headingOrder.every((lv, i, a) => i === 0 || lv - a[i - 1] <= 1),
     JSON.stringify(s.headingOrder),
   );
+
+  /* フッタのリンクの列が横に並んでいるか。
+     ----------------------------------------------------------------
+     **縮むのがリンクの側になっていました。** 説明文が max-w-prose まで
+     伸びるので残りが足りなくなり、リンクの列が 1 列ずつ縦に折り返して
+     左に大きな空白が残ります（実測: 器 704 に対して説明文 468、
+     リンク側は 164 しか残らず、56px と 75px の 2 列が並べられませんでした）。
+
+     はみ出してはいないので、端末幅の検査は緑のまま通ります。 */
+  const cols = await page.evaluate(() =>
+    [...document.querySelectorAll("footer nav")].map((n) => ({
+      label: n.querySelector("h2")?.textContent?.trim() ?? "",
+      top: Math.round(n.getBoundingClientRect().top),
+      width: Math.round(n.getBoundingClientRect().width),
+    })),
+  );
+  if (cols.length > 1) {
+    const need = cols.reduce((a, c) => a + c.width, 0);
+    must(
+      `${path} フッタのリンクの列が横に並んでいる`,
+      cols.every((c) => c.top === cols[0].top),
+      `${cols.map((c) => `${c.label}=${c.width}px@${c.top}`).join(" ")} 合計 ${need}px`,
+    );
+  }
 }
 
 /* ================================================================
