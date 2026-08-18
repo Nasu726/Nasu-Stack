@@ -104,7 +104,7 @@ if (!up) {
    検査のためだけに依存を入れ直さずに済みます
    （verify-install.mjs が `.verify-install/` でやっているのと同じ手です）。 */
 const work = path.join(root, ".verify-install-real");
-makeFixture(work, { registryUrl: `${BASE}/r/{name}.json` });
+makeFixture(work, { project: true });
 
 const index = JSON.parse(fs.readFileSync(path.join(pub, "r", "index.json"), "utf8"));
 /* **一覧は生成物から取ります。** 手で並べると、部品を足したときに
@@ -119,6 +119,24 @@ function shadcn(args, cwd) {
     { cwd, encoding: "utf8", stdio: "pipe" },
   );
 }
+
+/* --- 3.5 案内しているとおりに registries を足す ---------------------- */
+/* **README が書いているのはこの 1 コマンドです。**
+   ここで `components.json` を直接書いてしまうと、案内している手順そのものは
+   一度も動かないまま緑になります。CLI 側がこの機能をやめても気づけません。 */
+const REGISTRY_ARG = `@nasu=${BASE}/r/{name}.json`;
+try {
+  shadcn(["registry", "add", REGISTRY_ARG], work);
+} catch (e) {
+  must("shadcn registry add で名前空間を足せる", false, String(e.stdout ?? e).slice(-400));
+  stopTree(server);
+  finish(1);
+}
+must(
+  "shadcn registry add で名前空間を足せる",
+  JSON.parse(fs.readFileSync(path.join(work, "components.json"), "utf8"))
+    .registries?.["@nasu"] === `${BASE}/r/{name}.json`,
+);
 
 /* --- 4. 本物の CLI で全部入れる -------------------------------------- */
 let added = "";
@@ -172,10 +190,7 @@ try {
    ちゃんと失敗することを確認します。ここが通ってしまうなら、
    上の 4 は何も見ていません。 */
 const broken = path.join(root, ".verify-install-real-broken");
-makeFixture(broken, { registryUrl: `${BASE}/r/{name}.json` });
-const cj = JSON.parse(fs.readFileSync(path.join(broken, "components.json"), "utf8"));
-delete cj.registries;
-fs.writeFileSync(path.join(broken, "components.json"), JSON.stringify(cj, null, 2));
+makeFixture(broken, { project: true });
 
 let failedAsExpected = false;
 let why = "";
@@ -186,6 +201,24 @@ try {
   why = (String(e.stdout ?? "") + String(e.stderr ?? "")).match(/Unknown registry[^\n]*/)?.[0] ?? "";
 }
 must("registries が無いプロジェクトでは、ちゃんと失敗する", failedAsExpected, why);
+
+/* URL を直に指定すれば名前空間を宣言せずに済む、と誤解されがちです。
+   **依存に `@nasu/…` がある部品は 1 ファイルも入りません。**
+   README にはそう書いてあるので、実際にそうであることを見ておきます。 */
+let urlFormFailed = false;
+try {
+  shadcn(["add", `${BASE}/r/action-button.json`, "--yes"], broken);
+} catch {
+  urlFormFailed = true;
+}
+const leftover = fs.existsSync(path.join(broken, "src"))
+  ? fs.readdirSync(path.join(broken, "src")).length
+  : 0;
+must(
+  "URL 直指定でも、依存が辿れないなら 1 ファイルも書かれない",
+  urlFormFailed && leftover === 0,
+  `書かれた ${leftover} 件`,
+);
 
 /* --- 後片付け -------------------------------------------------------- */
 stopTree(server);

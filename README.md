@@ -48,20 +48,18 @@ npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
 コードは npm パッケージではなく**あなたのリポジトリに直接コピー**されます。
 中身を自由に書き換えられるのが目的なので、これが正しい配り方です。
 
-**先に `components.json` へ 1 行足してください。** これが無いと、部品の
-依存（`@nasu/action` など）が解決できず `Unknown registry "@nasu"` で止まります。
+**先に名前空間を登録してください。** 1 回だけです。
 
-```jsonc
-{
-  "registries": {
-    "@nasu": "https://nasu726.github.io/Nasu-Stack/r/{name}.json"
-  }
-}
+```bash
+npx shadcn@4.17.0 registry add "@nasu=https://nasu726.github.io/Nasu-Stack/r/{name}.json"
 ```
 
 ```bash
 npx shadcn@4.17.0 add @nasu/action-button
 ```
+
+これが無いと、部品の依存（`@nasu/action` など）が解決できず
+`Unknown registry "@nasu"` で止まります。
 
 依存する `use-action` / `spinner` / `utils` / `tokens` は自動で一緒に入ります
 （`action-button` なら 10 ファイル）。
@@ -70,8 +68,8 @@ npx shadcn@4.17.0 add @nasu/action-button
 > 待機期間も素通りします。ここに書いてあるのは、こちらの検査が実際に通した版です。
 
 URL を直に指定する形（`npx shadcn@4.17.0 add https://…/r/action-button.json`）
-でも**その部品 1 つは**入りますが、**依存を辿るところで失敗します。**
-`registries` の宣言が必要なのはそのためです。
+では、**1 ファイルも入りません。** 依存を辿る前に止まります（実測）。
+名前空間の登録が要るのはそのためです。
 
 ### トンマナを当てる
 

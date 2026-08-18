@@ -42,6 +42,10 @@ export const tsconfig = {
  * `registries` は **`@nasu/action` のような名前空間を解決するために必須**です。
  * 無いと `Unknown registry "@nasu"` で止まります（v0.9a で実測）。
  * URL の `{name}` を CLI が項目名に置き換えます。
+ *
+ * **`registryUrl` を省くと `registries` を書きません。** 利用者に案内して
+ * いるのは `shadcn registry add` で足す手順なので、本物の CLI を通す検査は
+ * その一手ごと動かします（`verify-install-real.mjs`）。
  */
 export function componentsJson(registryUrl) {
   return {
@@ -49,7 +53,7 @@ export function componentsJson(registryUrl) {
     style: "new-york",
     rsc: false,
     tsx: true,
-    registries: { "@nasu": registryUrl },
+    ...(registryUrl ? { registries: { "@nasu": registryUrl } } : {}),
     tailwind: {
       config: "",
       css: "src/styles/tokens.css",
@@ -70,12 +74,19 @@ export function componentsJson(registryUrl) {
 const write = (p, obj) =>
   fs.writeFileSync(p, JSON.stringify(obj, null, 2) + "\n", "utf8");
 
-/** 空のプロジェクトを 1 つ作ります。`registryUrl` を渡すと components.json も置きます。 */
-export function makeFixture(dir, { registryUrl } = {}) {
+/**
+ * 空のプロジェクトを 1 つ作ります。
+ *
+ *   makeFixture(dir)                      … tsconfig だけ
+ *   makeFixture(dir, { project: true })   … + package.json / components.json
+ *                                           （`registries` は無し）
+ *   makeFixture(dir, { registryUrl })     … + `registries` も書き込む
+ */
+export function makeFixture(dir, { registryUrl, project = !!registryUrl } = {}) {
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(path.join(dir, "src"), { recursive: true });
   write(path.join(dir, "tsconfig.json"), tsconfig);
-  if (registryUrl) {
+  if (project) {
     write(path.join(dir, "package.json"), {
       name: "fixture",
       private: true,

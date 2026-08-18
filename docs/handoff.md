@@ -187,13 +187,14 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
 
 ## 6. まだ確認できていないこと
 
-- ~~**Windows の実機。**~~ v0.9a で確認しました。`pnpm verify` 20 工程 /
-  `pnpm verify:create` 49 判定が緑です。**コードを読んで書いた対応のうち
+- ~~**Windows の実機。**~~ v0.9a で確認しました（いまは `pnpm verify` 25 工程 /
+  `pnpm verify:create` 106 判定が緑です）。**コードを読んで書いた対応のうち
   2 つは実際には間違っていました**（詳細は `docs/result-v09a.md`）
 - ~~**`npx shadcn add` の実インストール。**~~ v0.9a で本物の CLI を通しました。
   **利用者の `components.json` に `registries` の宣言が要ります**（無いと
-  `Unknown registry "@nasu"` で止まります）。`scripts/verify-install-real.mjs`
-  が毎回確かめます
+  `Unknown registry "@nasu"` で止まります）。手で書かせる必要はありません。
+  `shadcn registry add "@nasu=<URL>"` の 1 コマンドで足せます（v0.9e で実測）。
+  `scripts/verify-install-real.mjs` が**その 1 コマンドごと**毎回動かします
 - ~~**静的ホスティング上での 404 の扱い。**~~ 公開して実測しました。404 が返ります
   （`verify-published.mjs` が毎回測って印字します）
 - **作者自身の使い心地。** 公開したカタログとデモを実機で見て、v0.9c で
