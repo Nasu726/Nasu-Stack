@@ -10,7 +10,7 @@
  * 「まだ受け口が無い」だけで画面が壊れないようにするためです）。
  */
 import Base from "../layouts/Base.astro";
-import { SITE } from "../site.config";
+import { SITE, YEAR } from "../site.config";
 import { NAV, FOOTER_GROUPS } from "../lib/nav";
 import { ContactForm } from "../components/ContactForm";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
@@ -63,6 +63,6 @@ import { PageBlock, Stack, Columns, Column, Section } from "@/components/ui/layo
     brand={SITE.name}
     description={SITE.description}
     groups={FOOTER_GROUPS}
-    note="© 2026 Example Studio — MIT"
+    note={`© ${YEAR} ${SITE.name}`}
   />
 </Base>

@@ -66,8 +66,13 @@ export function checkNodeVersion(current = process.version) {
 const KINDS = [
   {
     key: "astro",
-    label: "サイト（Astro）",
-    hint: "静的なページ中心。ブログや会社サイト。JavaScript は必要な部分だけ",
+    label: "サイト（Astro）— まっさら",
+    hint: "1 ページだけ。自分で組み立てたい人向け",
+  },
+  {
+    key: "blog",
+    label: "サイト（Astro）— ひととおり入り",
+    hint: "ブログ・LP・会社概要・問い合わせ・RSS・sitemap・404 が入った状態から始める",
   },
   {
     key: "vite",
@@ -75,6 +80,9 @@ const KINDS = [
     hint: "画面の中で動く部分が多いもの。管理画面やツール",
   },
 ];
+
+/** Astro の雛型か（Vite でないか）。開発サーバの番号や触る場所が変わります。 */
+const isAstro = (kind) => kind !== "vite";
 
 /* ================================================================
  * プロジェクト名の検証
@@ -246,7 +254,7 @@ function registryUrl(kind) {
 }
 
 function readme(kind, name) {
-  const dev = kind === "astro" ? "http://localhost:4321" : "http://localhost:5173";
+  const dev = isAstro(kind) ? "http://localhost:4321" : "http://localhost:5173";
   return `# ${name}
 
 WebTemplate から作りました。
@@ -272,7 +280,7 @@ npm run dev      # ${dev}
  * **island も SSG も知りません。** 用語ではなく、何が嬉しいのかを書きます。
  */
 function howToUse(kind, name) {
-  const astro = kind === "astro";
+  const astro = isAstro(kind);
   const dev = astro ? "http://localhost:4321" : "http://localhost:5173";
   const preview = astro ? "http://localhost:4321" : "http://localhost:4173";
   const entry = astro ? "src/pages/index.astro" : "src/App.tsx";
@@ -319,6 +327,39 @@ ${astro ? `\`src/pages/\` にファイルを足すと、そのままページが
 | \`src/lib/\` | 部品が使う裏方の処理 |
 | \`src/styles/\` | 色・余白・書体の設定 |
 | \`src/hooks/\` | React で状態を扱う仕組み |
+${kind === "blog" ? `
+### 入っているページ
+
+\`\`\`
+/             トップ（一覧と問い合わせ）
+/lp/          サービス紹介（よくある質問つき）
+/about/       会社概要
+/contact/     お問い合わせ
+/blog/        記事の一覧
+/blog/<名前>/ 記事
+/rss.xml      購読用のフィード       ← 自動で作られます
+/sitemap.xml  検索エンジン向けの地図 ← 自動で作られます
+/404          見つからないときのページ
+\`\`\`
+
+**要らないページは消して構いません。** \`src/pages/\` からファイルを消すだけです。
+消したら \`src/lib/nav.ts\` からも消してください。**ナビの定義はそこ 1 か所だけ**なので、
+残したままだとヘッダから 404 へのリンクが出ます。
+
+### 記事を書く
+
+\`src/content/blog/\` に \`.md\` を足すだけです。
+ファイル名がそのまま URL になります（\`my-post.md\` → \`/blog/my-post/\`）。
+
+置いてある \`hello.md\` に、書き方と画像の入れ方が書いてあります。
+**\`draft: true\` を付けた記事は、一覧にも sitemap にも RSS にも出ません。**
+
+### トップの一覧が読んでいるもの
+
+\`public/works.json\` です。中身は差し替えて構いません。
+サーバから取ってくるようにしたくなったら、\`src/pages/index.astro\` の
+\`loader\` の \`url\` を書き換えるだけです。
+` : ``}
 
 ---
 
@@ -642,7 +683,7 @@ async function main() {
      手順を全部ここに並べても、次のコマンドを打った時点で流れて消えます。
      「さっき何て書いてあったっけ」をスクロールを遡って探すことになるので、
      中身は HowToUse.md に書いて、その存在だけを伝えます。 */
-  const dev = kind === "astro" ? "4321" : "5173";
+  const dev = isAstro(kind) ? "4321" : "5173";
   console.log("");
   console.log(`  ✅ ${name} を作りました（${KINDS.find((k) => k.key === kind).label}）`);
   console.log("");

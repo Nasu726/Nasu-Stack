@@ -37,13 +37,29 @@
 
 ## 3. いまどこまで来ているか
 
-- `main` … README のみ
-- `claude/build-v0.1-v0.8` … v0.1〜v0.8。PR が開いています
-- `claude/v0.9` … v0.9a（配布）。**main にマージ済み**
-- `claude/v0.9b` … **v0.9b（実害の修正と検査の作り直し）。ここが最新です**
+- `main` … v0.9c の Phase 1・1.5 までマージ済み
+- `claude/v0.9c` … **ここが最新です**（Phase 2 = 3 つ目の雛型まで）
 
 **公開済みです。** https://nasu726.github.io/WebTemplate/
 （`/catalog/` に部品のカタログ、`/demo/` にデモサイト、`/r/*.json` にレジストリ）
+
+### 配っている雛型は 3 つです
+
+| `--template` | 中身 | 原本 |
+|---|---|---|
+| `astro` | 1 ページだけ。自分で組み立てたい人向け | `packages/create-webtemplate/scaffold/astro/` |
+| `blog` | ブログ・LP・会社概要・問い合わせ・RSS・sitemap・404 | **`apps/site` から生成します**（下記） |
+| `vite` | React のアプリ | `packages/create-webtemplate/scaffold/vite/` |
+
+`blog` の中身は `apps/site`（公開しているデモ）から
+`scripts/build-create-template.mjs` が写します。**手でコピーして commit しません。**
+2 か所に置くと「デモは直したが雛型は古いまま」が静かに起きます。
+
+`scaffold/blog/` に置いてあるのは、astro の足場と**違うところだけ**です
+（`package.json` と記事の `.md`）。記事だけは原本がどこにも無いので、
+そこが唯一の定義になります。**`apps/site` の記事は写しません**——
+「この記事は検査用です」と自己申告する文面が利用者全員のブログに配られるためです
+（`verify-create.mjs` がファイル名の集合で見張っています）。
 
 外部 AI から公開停止（HOLD）を含むレビューを受けました。全文は
 [`docs/review-external-v09a.md`](review-external-v09a.md)、こちらの検証結果と
@@ -63,8 +79,8 @@
 
 ```bash
 pnpm install
-pnpm verify           # 22 工程（独立したものは並列。約 170 秒）。型・ビルド・配布物・実ブラウザ
-pnpm verify:create    # 入口の検査 56 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
+pnpm verify           # 23 工程（独立したものは並列。約 3 分）。型・ビルド・配布物・実ブラウザ
+pnpm verify:create    # 入口の検査 77 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 ```
 
@@ -72,9 +88,13 @@ pnpm pages:build      # 公開する public/ を組み立てる（レジスト�
 `public/` を配ってから同じものを回します。
 
 ```bash
-node scripts/serve-registry.mjs 5055
-node scripts/verify-published.mjs http://127.0.0.1:5055
+BASE_PATH=/WebTemplate node scripts/serve-registry.mjs 5055
+node scripts/verify-published.mjs http://127.0.0.1:5055/WebTemplate
 ```
+
+**`BASE_PATH` を必ず渡してください。** 本番はサブパス配信です。
+渡さないと `public/` が `/` に生え、**root を指したリンクが手元でだけ通ります**
+（v0.9c で実際にこれに騙されました）。
 
 **`pnpm verify` が緑でないまま次の作業に進まないでください。** この
 リポジトリの価値の半分は、部品そのものではなく「壊れたら機械が気づく」
@@ -126,6 +146,15 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
 - **道具の preview に検査を寄せないでください。** astro 7 の preview は
   デーモンになり、勝手に別ポートへ逃げ、親 PID が死ぬので止められません。
   ビルド済みの中身は `scripts/_static.mjs` で自分で配ります
+- **CSS のクラス名は、定義が無くてもエラーになりません。** 余白の段階は
+   Tailwind 標準の名前空間を避けているので、`@utility` を書き忘れた形
+   （`pt-2xl` など）は**静かに 0px になります。** 見た目が少し詰まるだけなので
+   目では見つかりません。v0.9c の時点で 10 か所死んでいて、配っている
+   `site-footer.tsx` の中にもありました。`scripts/check-space-utilities.mjs` が見張ります
+- **手元の配信サーバを、本番と同じ形にしてください。** `BASE_PATH` の外は
+   404 を返します。そうしないと `public/` が `/` にも生え、
+   **root を指したリンクが手元でだけ通ります。** v0.9c で、端末プレビューの
+   iframe が公開先で 404 を出しているのに判定は緑、という状態を作りました
 - **`verify.mjs` の中でサーバを立ててはいけません。** `step()` は `spawnSync`
   なので、子が走る間はイベントループが止まり、**接続は受けるのに応答しません**。
   サーバは必ず別プロセス（`scripts/serve-static.mjs`）にしてください
@@ -141,32 +170,42 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
   **利用者の `components.json` に `registries` の宣言が要ります**（無いと
   `Unknown registry "@nasu"` で止まります）。`scripts/verify-install-real.mjs`
   が毎回確かめます
-- **静的ホスティング上での 404 の扱い。** まだ公開していないので測れません。
-  公開したら `scripts/verify-published.mjs` が自動で測ります
-- **作者自身の使い心地。** 2 回触って 3 件 + 報告 7 件を直しました
-  （`docs/result-v09a.md` の Phase 4・5）。実際にサイトを 1 つ作り切るまで公開しません
+- ~~**静的ホスティング上での 404 の扱い。**~~ 公開して実測しました。404 が返ります
+  （`verify-published.mjs` が毎回測って印字します）
+- **作者自身の使い心地。** 公開したカタログとデモを実機で見て、v0.9c で
+  9 件 + 4 件の指摘が出ました（`docs/review-copy-v09c.md`）。
+  **部品側の検査はその間ずっと全部緑でした。** 見て触るまで出てきません
+- **`blog` の雛型を、実際にブログとして使い続けたときの具合。**
+  生成 → install → build → 実ブラウザ（6 ページ × 5 幅）までは機械で見ていますが、
+  記事を書き足していったときのことは分かりません
 
 ---
 
 ## 7. 次にやること
 
-### v0.9a の残り（公開まで）
+計画は [`docs/plan-v09c.md`](plan-v09c.md)、文言の採否は
+[`docs/review-copy-v09c.md`](review-copy-v09c.md) にあります。
 
-1. **作者がサイトを 1 つ作り切る。** 使い心地を確かめるまで公開しません。
-   これまでに 3 件 + 報告 7 件が出ています（`docs/result-v09a.md` の Phase 4・5）
-2. **`main` へマージ** → `pages.yml` が走って初めて公開されます
-3. **404 のステータスを実測** — `verify-published.mjs` がデプロイ直後に測ります
+### v0.9c の残り
 
-### v0.9b（未着手）
+1. **Phase 3 — エディタの補完（スニペット）**
+   `.vscode/webtemplate.code-snippets` を生成物に入れる。
+   **`registry.json` と各部品の型から生成**すること（手で書かない）。
+   接頭辞は `wt-` に揃える
+2. **Phase 4 — 外部レビューの残りと Renovate**
+   P2-03（`xhr.timeout` が未設定）/ P2-04（`FileDrop` の `accept`）/
+   P2-05（`EndpointSpec.body` の上書き順）/ P2-06（サーバのエラー文言）/
+   P2-07（Windows の予約語）/ P2-15（生成物の lockfile）/
+   P3-01（未知の CLI フラグ）/ P3-02（`SECURITY.md`）。
+   **Renovate は `renovate.json` が置いてあるだけで動いていません。**
+   アクションを SHA で固定したので、追随する仕組みと対で必要です
+3. **Phase 5 — `verify-create` を PR でも走らせる**
+   いまはマージ後（公開の直前）にしか走らないので、気づくのがマージの後です。
+   `verify.yml` にジョブを足し、`pages.yml` は `workflow_call` で呼ぶ形にします
 
-1. **カタログをドキュメントサイトにする** — いまの `apps/playground` は
-   開発用の確認画面です。利用者が見て選べる形にする。
-   各部品の `add` コマンドは **`registry.json` から生成**すること（手で書かない）
-2. **Renovate を動かす** — `renovate.json` は置いてあるだけです。
-   **アクションを SHA で固定したので、これは対で必要です。**
-   追随する仕組みが無いと「勝手に変わらない」代わりに「勝手に直らない」状態になります
-3. GitHub Pages の project site はサブパス配信なので、
-   カタログを載せるなら Vite の `base` を `/WebTemplate/` にする必要があります
+### 作者にお願いすること
+
+- Phase 5 の後、required status check に `verify-create` を足すか判断
 
 積み残し（急がないもの): ダッシュボードの雛型（React 側）、`Field` の
 その場検証、`DataTable` の列の表示切り替え、一括操作の進捗表示。

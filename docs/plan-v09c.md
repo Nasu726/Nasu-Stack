@@ -249,6 +249,30 @@ root を指したリンクは手元でだけ 200 で通ります。
 （いま 2 種で 56 判定）。Phase 1 の並列化があるので入りますが、
 CI の所要時間は伸びます。
 
+### できたもの
+
+`--template blog`。判定は **56 → 77 件**になりました。
+
+| | |
+|---|---|
+| `scaffold/blog/` にあるもの | `package.json`（`check` が 6 ページを見る）と記事の `.md` 3 本だけ |
+| `apps/site` から生成するもの | `src/pages` `src/layouts` `src/lib` `src/components` `src/assets` `content.config.ts` `public/` |
+| 写さないもの | `src/styles`（`@import` の指す先が違う）、`site.config.ts`（`__PROJECT_NAME__` が要る）、設定ファイル、**記事の `.md`** |
+
+記事を写さないのは、`apps/site` の記事が「この記事は検査用です」と
+自己申告しているためです。`verify-create.mjs` が
+**ファイル名の集合**で見張ります（文面を言葉で探す形は、言い回しを
+変えれば通ってしまうのでやめました）。
+
+雛型に配る前提で、`apps/site` 側も直しています。
+
+- フッタの `© 2026 Example Studio` → `© ${YEAR} ${SITE.name}`（生成物では `© 2026 my-blog`）
+- 会社概要の「名称」→ `SITE.name`
+- 住所を「雛型の例です。書き換えてください」に
+
+検査は 6 ページ × 5 幅を実ブラウザで見ます。**入口だけでは足りません**——
+崩れるのはたいてい記事や表のあるページです。
+
 ---
 
 ## Phase 3 — エディタの補完（スニペット）

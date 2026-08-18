@@ -39,6 +39,23 @@ const create = (name, args = []) => {
   }
 };
 
+/**
+ * 検査する雛型。**ここが唯一の一覧です。**
+ * 増やしたときに書き足す場所が複数あると、必ずどれかを忘れます
+ * （忘れても何も言われず、その雛型だけ検査を素通りします）。
+ */
+const CASES = [
+  { kind: "astro", name: "my-site", port: 4598 },
+  { kind: "blog", name: "my-blog", port: 4600 },
+  { kind: "vite", name: "my-app", port: 4599 },
+];
+/** 検査するページ。ブログ付きは入口だけ見ても意味がありません。 */
+const PAGES = {
+  astro: ["/"],
+  blog: ["/", "/lp/", "/about/", "/contact/", "/blog/", "/blog/hello/"],
+  vite: ["/"],
+};
+
 /* ===== 0. テンプレートが原本と同期しているか ==================== */
 {
   // 生成し直して差分が無いことを見ます。
@@ -53,9 +70,12 @@ const create = (name, args = []) => {
     fs.existsSync(dir)
       ? fs.readdirSync(dir, { recursive: true }).map(String).sort()
       : [];
-  const astro = list(path.join(tpl, "astro"));
-  const vite = list(path.join(tpl, "vite"));
-  must("0. テンプレートが生成できる", astro.length > 0 && vite.length > 0, `astro ${astro.length} / vite ${vite.length}`);
+  const counts = CASES.map((c) => [c.kind, list(path.join(tpl, c.kind)).length]);
+  must(
+    "0. テンプレートが生成できる",
+    counts.every(([, n]) => n > 0),
+    counts.map(([k, n]) => `${k} ${n}`).join(" / "),
+  );
 
   // 原本と中身が一致しているか（1 ファイル抜き取り）
   const a = fs.readFileSync(path.join(root, "registry/nasu/components/ui/layout.tsx"), "utf8");
@@ -89,6 +109,57 @@ const create = (name, args = []) => {
   must(
     "   vite 側にも入口がある",
     fs.existsSync(path.join(work, "my-app", "src", "App.tsx")),
+  );
+
+  /* ブログ付きの雛型。**中身は apps/site から生成しています。**
+     写し漏れがあると、型検査でもビルドでもなく「ページが無い」で出ます。 */
+  const r3 = create("my-blog", ["--template", "blog"]);
+  must("2.5 blog テンプレートを生成できる", r3.ok, r3.out.trim().slice(-120));
+  const blogWant = [
+    path.join("src", "pages", "lp.astro"),
+    path.join("src", "pages", "about.astro"),
+    path.join("src", "pages", "contact.astro"),
+    path.join("src", "pages", "blog", "index.astro"),
+    path.join("src", "pages", "rss.xml.ts"),
+    path.join("src", "pages", "sitemap.xml.ts"),
+    path.join("src", "content.config.ts"),
+    path.join("src", "content", "blog", "hello.md"),
+    path.join("src", "lib", "posts.ts"),
+    path.join("src", "lib", "nav.ts"),
+    path.join("public", "works.json"),
+  ];
+  const blogFiles = fs
+    .readdirSync(path.join(work, "my-blog"), { recursive: true })
+    .map(String);
+  const blogMissing = blogWant.filter((w) => !blogFiles.includes(w));
+  must(
+    "    blog: ページと記事が揃っている",
+    blogMissing.length === 0,
+    blogMissing.join(", ") || `${blogFiles.length} ファイル`,
+  );
+
+  /* **検査用の文面を配ってはいけません。** apps/site の記事は
+     「この記事は検査用です」と自己申告しています。そのまま雛型に入れると、
+     利用者全員のブログにその文章が載ります（v0.9c の指摘 C-5）。
+
+     文面を言葉で探すのはやめました。**言い回しを変えれば通ってしまいます。**
+     雛型が持つべき記事は scaffold/blog に置いてある分だけなので、
+     ファイル名の集合が一致するかを見ます。 */
+  const wantArticles = fs
+    .readdirSync(
+      path.join(root, "packages/create-webtemplate/scaffold/blog/src/content/blog"),
+    )
+    .filter((f) => f.endsWith(".md"))
+    .sort();
+  const gotArticles = fs
+    .readdirSync(path.join(work, "my-blog", "src", "content", "blog"))
+    .filter((f) => f.endsWith(".md"))
+    .sort();
+  const extra = gotArticles.filter((f) => !wantArticles.includes(f));
+  must(
+    "    blog: 記事が雛型用のものだけになっている",
+    wantArticles.length > 0 && extra.length === 0,
+    extra.length ? `原本から漏れています: ${extra.join(", ")}` : gotArticles.join(" "),
   );
 }
 
@@ -166,7 +237,7 @@ const create = (name, args = []) => {
  * **部品側の検査は全部緑でした。** 生成物を実際に触るまで気づけません。
  * だからここで機械に見せます。
  */
-for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
+for (const { name, kind } of CASES) {
   const p = path.join(work, name, "components.json");
   if (!fs.existsSync(p)) {
     must(`7.5 ${kind}: components.json がある`, false, "ファイルが無い");
@@ -193,7 +264,7 @@ for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
  * **スクロールを遡って探すことになる**——実際にそう指摘されました。
  * ファイルとして残っていることを機械で確かめます。
  */
-for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
+for (const { name, kind } of CASES) {
   const p = path.join(work, name, "HowToUse.md");
   const md = fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
   must(`7.4 ${kind}: HowToUse.md がある`, md.length > 500, `${md.length} 文字`);
@@ -208,7 +279,7 @@ for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
  * **初めての人ほど `git add .` を打ちます。** 一度 git の履歴に入った鍵は、
  * ファイルを消しても消えません。作り直しが必要になります。
  */
-for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
+for (const { name, kind } of CASES) {
   const gi = fs.readFileSync(path.join(work, name, ".gitignore"), "utf8");
   const ok = /^\.env$/m.test(gi) && /^\.env\.\*$/m.test(gi) && /^!\.env\.example$/m.test(gi);
   must(`7.42 ${kind}: .gitignore が .env を無視する`, ok, ok ? "" : gi.slice(0, 80));
@@ -254,7 +325,7 @@ for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
  * 実体は `src/scripts/` にありました。**打った人が最初に踏みます。**
  * ビルドも型検査も通るので、既存の検査は全部緑のままでした。
  */
-for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
+for (const { name, kind } of CASES) {
   const pkg = JSON.parse(fs.readFileSync(path.join(work, name, "package.json"), "utf8"));
   const missing = [];
   for (const cmd of Object.values(pkg.scripts ?? {})) {
@@ -379,11 +450,13 @@ if (!FULL) {
     log("（「部品を足せる」の判定は飛ばします）");
   }
 
-  for (const [name, kind, port, buildArgs, checkArgs] of [
+  for (const { name, kind, port } of CASES) {
     // build は `npm run build`（利用者が打つ形）。型検査は npm exec で直に。
-    ["my-site", "astro", 4598, ["run", "build"], ["exec", "--", "astro", "check"]],
-    ["my-app", "vite", 4599, ["run", "build"], ["exec", "--", "tsc", "--noEmit"]],
-  ]) {
+    const buildArgs = ["run", "build"];
+    const checkArgs =
+      kind === "vite"
+        ? ["exec", "--", "tsc", "--noEmit"]
+        : ["exec", "--", "astro", "check"];
     const dir = path.join(work, name);
     log(`${kind}: npm install …`);
     // 利用者が打つのと同じ 1 行。--ignore-workspace のような
@@ -481,10 +554,17 @@ if (!FULL) {
             `file://${path.join(root, "registry/nasu/scripts/check-responsive.mjs")}`,
           ).href
         );
-      const report = await checkUrls([`http://127.0.0.1:${port}/`]);
+      /* **入口だけ見ても足りません。** ブログ付きの雛型は 6 ページあり、
+         崩れるのはたいてい記事や表のあるページです。 */
+      const urls = PAGES[kind].map((u) => `http://127.0.0.1:${port}${u}`);
+      const report = await checkUrls(urls);
       const { text, problems } = formatReport(report);
-      const img = formatImageReport(await checkImageSizing([`http://127.0.0.1:${port}/`]));
-      must(`12. ${kind}: 端末幅の検査（5 幅）を通る`, problems === 0, problems ? text : "");
+      const img = formatImageReport(await checkImageSizing(urls));
+      must(
+        `12. ${kind}: 端末幅の検査（${urls.length} ページ × 5 幅）を通る`,
+        problems === 0,
+        problems ? text : "",
+      );
       must(`    ${kind}: 画像が場所を取っている`, img.problems === 0, img.problems ? img.text : "");
 
       /* --- 13. 広い画面で、本文と見出しの幅が揃っているか ------------
