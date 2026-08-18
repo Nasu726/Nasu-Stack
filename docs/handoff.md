@@ -20,6 +20,10 @@
 `docs/plan-*.md` と `docs/result-*.md` は各版の計画と結果です。過去の判断の
 理由を知りたいときだけ読めば足ります。
 
+**いま動いている版の結果は [`docs/result-v09c.md`](result-v09c.md) です。**
+この版で直したものは、ほぼ全部「検査が緑のまま壊れていた」ものでした。
+同じ間違いを繰り返さないための材料として、先に読むことを勧めます。
+
 ---
 
 ## 2. 作者からの決まりごと
@@ -188,13 +192,16 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
 
 ### v0.9c の残り
 
-1. **Phase 5 — `verify-create` を PR でも走らせる**
-   いまはマージ後（公開の直前）にしか走らないので、気づくのがマージの後です。
-   `verify.yml` にジョブを足し、`pages.yml` は `workflow_call` で呼ぶ形にします
+**v0.9c の Phase 1 〜 5 は全部終わっています。** 残っているのは次だけです。
+
+1. **外部レビューをもう一度受ける**（作者の判断で 0.9 の完了後）
+2. **`main` へマージ** → `pages.yml` が走って公開されます
 
 ### 作者にお願いすること
 
-- Phase 5 の後、required status check に `verify-create` を足すか判断
+- required status check に **`verify-create`** を足すか判断してください。
+  `verify.yml` の 2 つ目のジョブとして PR で走るようになっています
+  （所要 15〜25 分。public リポジトリなので runner の費用はかかりません）
 
 積み残し（急がないもの): ダッシュボードの雛型（React 側）、`Field` の
 その場検証、`DataTable` の列の表示切り替え、一括操作の進捗表示。

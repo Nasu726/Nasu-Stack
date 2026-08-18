@@ -394,6 +394,28 @@ P2-04 を素通しにすると → ✗ image/* に pdf は通らない / ✗ .pd
 - `pages.yml` は `workflow_call` でそれを呼ぶ形にして、**定義を 1 か所**に
 - required status check に `verify-create` を足すのは**あなたの設定**です
 
+### できたもの
+
+`verify.yml` が `verify` と `verify-create` の 2 ジョブになりました。
+`pages.yml` は `uses: ./.github/workflows/verify.yml` で呼ぶだけです
+（手順の写しが消えました）。
+
+#### ついでに見つかったもの: smoke に実ブラウザが入っていませんでした
+
+公開後に走る `smoke` は `node scripts/verify-published.mjs` を呼ぶだけで、
+**playwright を入れていませんでした。** スクリプトは入っていなければ
+黙って飛ばすので、
+
+> HTML に出てこない URL（島が fetch するもの、React が組み立てる iframe の src）
+
+を拾う**いちばん効く判定が、公開先に対して一度も走っていませんでした。**
+Phase 1.5 で端末プレビューの 404 を手元で捕まえられたのに、
+公開先では見ていなかったことになります。
+
+- `smoke` に `pnpm install` と Chromium の用意を足しました
+- `verify-published.mjs` は、**CI では飛ばさず赤くします**
+  （ログは出ていましたが、緑のまま通るので誰も読みません）
+
 ---
 
 ## 触るファイル

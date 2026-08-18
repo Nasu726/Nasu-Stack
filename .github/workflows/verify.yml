@@ -72,3 +72,43 @@ jobs:
             apps/*/dist
           if-no-files-found: ignore
           retention-days: 7
+
+  # ----------------------------------------------------------------
+  # 利用者が実際に踏む経路
+  # ----------------------------------------------------------------
+  # `verify` だけでは足りません。生成物の `npm install` → `npm run build`
+  # → 実ブラウザ → 部品の追加は `verify:create` にしかありません。
+  #
+  # v0.9c まで、これは **main へマージしたあと（公開の直前）にしか
+  # 走りませんでした。** つまり気づくのがマージの後です。
+  # public リポジトリは runner が無料なので、代償は待ち時間だけです。
+  #
+  # 定義はここ 1 か所です。`pages.yml` は workflow_call で呼びます。
+  # ----------------------------------------------------------------
+  verify-create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          # 生成物が要求する下限。**ここで確かめないと意味がありません。**
+          # 案内より新しい版でだけ通る状態になっていても気づけません。
+          node-version: 22.12.0
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Chromium を用意
+        run: pnpm exec playwright install --with-deps chromium
+
+      # レジストリは「本物の CLI で部品を足せるか」の判定が使います
+      - name: レジストリを生成
+        run: pnpm registry:build
+
+      - name: 生成物を npm で install / build / 実ブラウザ
+        run: pnpm verify:create
