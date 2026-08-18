@@ -10,6 +10,8 @@ npx https://nasu726.github.io/WebTemplate/create-webtemplate.tgz my-site
 [デモサイト](https://nasu726.github.io/WebTemplate/demo/)（この部品で組んだサイト）
 
 全体像と設計の理由は [docs/overview.md](docs/overview.md) にまとめてあります。
+**何を引き受け、何を引き受けないか**は [docs/boundaries.md](docs/boundaries.md) に。
+**何を引き受け、何を引き受けないか**は [docs/boundaries.md](docs/boundaries.md) に。
 
 > **npm には publish していません。** 個人的なプロジェクトとして続けるので、
 > 継続的な保守を約束できないためです。npm は URL の tarball をそのまま
