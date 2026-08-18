@@ -20,9 +20,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { REGISTRY_URL } from "./_site.mjs";
+import { writeSnippets } from "./build-snippets.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const registryRoot = path.join(root, "registry", "nasu");
+const site = path.join(root, "apps", "site");
 const pkg = path.join(root, "packages", "create-webtemplate");
 const out = path.join(pkg, "template");
 
@@ -50,6 +52,19 @@ const STARTER = {
     "check-responsive",
   ],
   astro: ["seo", "feed", "submit", "honeypot-field", "async-form", "form-fields"],
+  /* ブログ付きの雛型。**astro の足場に、apps/site の中身を載せます。**
+     apps/site が使っている部品をそのまま並べています
+     （依存は resolve が辿るので、直接 import しているものだけ）。 */
+  blog: [
+    "seo",
+    "feed",
+    "submit",
+    "honeypot-field",
+    "async-form",
+    "data-list",
+    "disclosure",
+    "theme-provider",
+  ],
   vite: [
     "theme-provider",
     "action-provider",
@@ -98,13 +113,63 @@ function copyItems(names, destSrc) {
       count++;
     }
   }
-  return { items: items.size, files: count };
+  return { items: items.size, files: count, resolved: items };
 }
 
 /** 足場（設定ファイルなど）をそのまま写します。 */
 function copyScaffold(kind, dest) {
   const from = path.join(pkg, "scaffold", kind);
   fs.cpSync(from, dest, { recursive: true });
+}
+
+/**
+ * ブログ付きの雛型の中身を `apps/site` から写します。
+ *
+ * ----------------------------------------------------------------
+ * なぜ手でコピーして commit しないのか
+ * ----------------------------------------------------------------
+ * ページ・レイアウト・記事の読み込みは、**公開しているデモと同じもの**です。
+ * 2 か所に置くと必ずずれます。しかもずれても誰も気づきません
+ * （デモは直したが雛型は古いまま、が静かに起きます）。
+ *
+ * だから写す元は `apps/site` の 1 つに保ち、ここで生成します。
+ *
+ * ----------------------------------------------------------------
+ * 写さないもの
+ * ----------------------------------------------------------------
+ *   src/styles/     … `@import` が `../../../../registry/nasu` を指しています。
+ *                     生成物では `./tokens.css` なので、足場のほうを使います
+ *   src/site.config … 足場のほうは `__PROJECT_NAME__` が入ります
+ *   記事（*.md）    … 「この記事は検査用です」と自己申告する文面なので、
+ *                     利用者のブログに配ってはいけません。
+ *                     scaffold/blog の記事で上書きします
+ *   *.config.mjs 等 … 足場のほうが正しい（`@` の指す先が違います）
+ */
+function copyFromSite(dest) {
+  const src = path.join(site, "src");
+  const destSrc = path.join(dest, "src");
+
+  for (const d of ["pages", "layouts", "lib", "components", "assets"]) {
+    fs.cpSync(path.join(src, d), path.join(destSrc, d), { recursive: true });
+  }
+  fs.copyFileSync(
+    path.join(src, "content.config.ts"),
+    path.join(destSrc, "content.config.ts"),
+  );
+
+  /* 記事のうち **.md 以外だけ**（本文から相対パスで参照している画像）。
+     本文は scaffold/blog のものを使います。 */
+  const from = path.join(src, "content", "blog");
+  const to = path.join(destSrc, "content", "blog");
+  fs.mkdirSync(to, { recursive: true });
+  for (const f of fs.readdirSync(from)) {
+    if (f.endsWith(".md")) continue;
+    fs.copyFileSync(path.join(from, f), path.join(to, f));
+  }
+
+  fs.cpSync(path.join(site, "public"), path.join(dest, "public"), {
+    recursive: true,
+  });
 }
 
 /**
@@ -185,10 +250,17 @@ function writeComponentsJson(kind, dest) {
 fs.rmSync(out, { recursive: true, force: true });
 
 const report = [];
-for (const kind of ["astro", "vite"]) {
+for (const kind of ["astro", "blog", "vite"]) {
   const dest = path.join(out, kind);
   fs.mkdirSync(dest, { recursive: true });
-  copyScaffold(kind, dest);
+  if (kind === "blog") {
+    // 足場は astro と同じ → apps/site の中身 → ブログ固有の上書き、の順。
+    copyScaffold("astro", dest);
+    copyFromSite(dest);
+    copyScaffold("blog", dest);
+  } else {
+    copyScaffold(kind, dest);
+  }
   writeComponentsJson(kind, dest);
   /* 生成物の package.json に、検証済みの版を残します。
      利用者が「何で試された構成なのか」を後から見られます。 */
@@ -199,7 +271,16 @@ for (const kind of ["astro", "vite"]) {
     fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + "\n", "utf8");
   }
   const r = copyItems([...STARTER.common, ...STARTER[kind]], path.join(dest, "src"));
-  report.push({ kind, ...r });
+
+  /* エディタの補完。**入っている部品の分だけ**出します。
+     入っていない部品を補完に出すと、選んだ瞬間に「そんなものは無い」に
+     なります。原本の型から作るので、手で直す場所はありません。 */
+  const snips = writeSnippets(
+    [...r.resolved].map((n) => byName.get(n)),
+    root,
+    dest,
+  );
+  report.push({ kind, ...r, snippets: snips });
 }
 
 // 生成物であることを、開いた人にも分かるようにしておきます
@@ -215,6 +296,8 @@ fs.writeFileSync(
 );
 
 for (const r of report) {
-  console.log(`  ${r.kind}: ${r.items} アイテム / ${r.files} ファイル`);
+  console.log(
+    `  ${r.kind}: ${r.items} アイテム / ${r.files} ファイル / 補完 ${r.snippets} 個`,
+  );
 }
 console.log(`✅ テンプレートを生成しました: ${path.relative(root, out)}`);

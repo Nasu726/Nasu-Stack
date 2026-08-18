@@ -272,9 +272,12 @@ const openParts = (width = 1100, height = 900) =>
     JSON.stringify(after),
   );
 
-  // サイズ超過が弾かれるか
+  /* サイズ超過が弾かれるか。
+     **種類は accept に合うものを使います。** 合わないものを渡すと
+     サイズより先に種類で弾かれて、この判定が別のものを見てしまいます
+     （v0.9c で実際にそうなりました）。 */
   await input.setInputFiles([
-    { name: "big.bin", mimeType: "application/octet-stream", buffer: Buffer.alloc(3 * 1024 * 1024) },
+    { name: "big.png", mimeType: "image/png", buffer: Buffer.alloc(3 * 1024 * 1024) },
   ]);
   await page.waitForTimeout(400);
   const tooBig = await page.evaluate(() =>
@@ -283,6 +286,20 @@ const openParts = (width = 1100, height = 900) =>
       .filter((t) => t?.includes("超えて")),
   );
   must("14. サイズ超過が弾かれる", tooBig.length >= 1, JSON.stringify(tooBig));
+
+  /* accept が**選択の経路でも落とす経路でも**効くか。
+     `<input accept>` は選択画面への助言でしかないので、
+     ここを部品側で見ていないと落とす経路が素通りします。 */
+  await input.setInputFiles([
+    { name: "note.txt", mimeType: "text/plain", buffer: Buffer.from("x") },
+  ]);
+  await page.waitForTimeout(400);
+  const wrongType = await page.evaluate(() =>
+    [...document.querySelectorAll('[role="alert"]')]
+      .map((e) => e.textContent?.trim())
+      .filter((t) => t?.includes("種類")),
+  );
+  must("15. accept に合わない種類が弾かれる", wrongType.length >= 1, JSON.stringify(wrongType));
   await page.close();
 }
 

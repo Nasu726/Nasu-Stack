@@ -1,9 +1,22 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
   "timezone": "Asia/Tokyo",
   "schedule": ["before 6am on monday"],
   "labels": ["dependencies"],
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "vulnerabilityAlerts": {
+    "enabled": false
+  },
+  "osvVulnerabilityAlerts": false,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"]
+  },
   "packageRules": [
     {
       "description": "パッチ・マイナーはまとめて 1 本の PR に。CI が緑なら中身を見ずに上げられる",
@@ -27,6 +40,13 @@
         "vite"
       ],
       "groupName": null
+    },
+    {
+      "description": "GitHub Actions は SHA で固定する。タグは動かせるので、固定しないと中身が入れ替わっても気づけない。固定した以上、追随する仕組みが要る（これが無いと『勝手に変わらない』代わりに『勝手に直らない』状態になる）",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "pinDigests": true,
+      "minimumReleaseAge": "3 days"
     }
   ]
 }

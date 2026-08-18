@@ -167,8 +167,17 @@ export interface EndpointSpec {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   /** 追加ヘッダ。 */
   headers?: Record<string, string>;
-  /** 入力に必ず混ぜる固定値。 */
-  body?: Record<string, unknown>;
+  /**
+   * 入力に混ぜる**既定値**。同じキーが入力にあれば、**入力が勝ちます。**
+   *
+   * v0.9c まで `body`（「必ず混ぜる固定値」）という名前でしたが、
+   * 実際は上書きできる既定値でした。**名前のほうを実装に合わせました。**
+   *
+   * **認可に使う値をここに置かないでください。** `role` `tenantId`
+   * `userId` のようなものは、クライアントが送った値である以上、
+   * ここに書いても上書きできます。誰であるかはサーバ側で決めてください。
+   */
+  defaults?: Record<string, unknown>;
 }
 
 /** 関数でも宣言でも受け取れる型。 */
@@ -182,7 +191,7 @@ export function resolveAction<TInput, TOutput>(
 ): Action<TInput, TOutput> {
   if (typeof spec === "function") return spec;
 
-  const { url, method = "POST", headers, body } = spec;
+  const { url, method = "POST", headers, defaults } = spec;
 
   return async (input: TInput, ctx: ActionContext) => {
     if (method === "GET") {
@@ -190,8 +199,8 @@ export function resolveAction<TInput, TOutput>(
     }
     const payload =
       input && typeof input === "object"
-        ? { ...body, ...(input as Record<string, unknown>) }
-        : (body ?? (input as unknown));
+        ? { ...defaults, ...(input as Record<string, unknown>) }
+        : (defaults ?? (input as unknown));
     return jsonRequest<TOutput>(url, {
       method,
       headers: { "content-type": "application/json", ...headers },
@@ -217,13 +226,26 @@ export async function jsonRequest<T>(
       /* 読めない応答は無視して、下でステータスから文言を作ります */
     }
     const o = (body ?? {}) as Record<string, unknown>;
+    /* **サーバの `message` を画面に出しません。**
+       そこに来るのは DB のエラー、内部の URL、使っている製品の名前など、
+       利用者に見せる前提で書かれていないものです。React が escape するので
+       XSS にはなりませんが、**内部の事情がそのまま漏れます。**
+
+       画面に出すのは、サーバが**そのつもりで**入れた `userMessage` だけです。
+       無ければ、こちらでステータスから作ります。
+
+       サーバ側の形:
+         { "userMessage": "送信できませんでした", "code": "CONTACT_FAILED",
+           "requestId": "…", "fields": { "email": "…" } }
+
+       元の `message` は捨てていません。`ActionError.message` と `cause` に
+       残るので、開発者コンソールと Sentry などからは読めます。 */
+    const userMessage =
+      typeof o.userMessage === "string" ? o.userMessage : undefined;
     throw new ActionError(
       typeof o.message === "string" ? o.message : `HTTP ${res.status}`,
       {
-        displayMessage:
-          typeof o.message === "string"
-            ? o.message
-            : `通信に失敗しました (${res.status})`,
+        displayMessage: userMessage ?? `通信に失敗しました (${res.status})`,
         code: res.status,
         fields:
           o.fields && typeof o.fields === "object"

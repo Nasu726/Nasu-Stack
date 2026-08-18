@@ -73,7 +73,9 @@ for (const d of TARGET_DIRS) {
    取っているので、`p-4`（Tailwind 標準）は対象になりません。 */
 const stepAlt = [...steps].sort((a, b) => b.length - a.length).join("|");
 const re = new RegExp(
-  `(?<![\w-])(?:[a-z]+:)*([a-z]+(?:-[xy])?)-(${stepAlt})(?![\w-])`,
+  // 境界は文字クラスを直に書きます。テンプレートリテラルの中の
+  // 短縮記法（\w など）は不正なエスケープとして黙って別物になります。
+  `(?<![A-Za-z0-9_-])(?:[a-z]+:)*([a-z]+(?:-[xy])?)-(${stepAlt})(?![A-Za-z0-9_-])`,
   "g",
 );
 

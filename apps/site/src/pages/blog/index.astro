@@ -1,11 +1,11 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { SITE } from "../../site.config";
+import { SITE, YEAR } from "../../site.config";
 import { NAV, FOOTER_GROUPS } from "../../lib/nav";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { getPublishedPosts, formatDate } from "../../lib/posts";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
-import { PageBlock, Stack, Inline, Divider } from "@/components/ui/layout";
+import { PageBlock, Stack, Inline } from "@/components/ui/layout";
 
 const posts = await getPublishedPosts();
 
@@ -75,7 +75,7 @@ import { withBase } from "@/lib/base";
     brand={SITE.name}
     description={SITE.description}
     groups={FOOTER_GROUPS}
-    note="© 2026 Example Studio — MIT"
+    note={`© ${YEAR} ${SITE.name}`}
     width="narrow"
   />
 </Base>

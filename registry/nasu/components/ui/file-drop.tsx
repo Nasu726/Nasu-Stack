@@ -7,6 +7,7 @@ import {
   formatBytes,
   type UploadAction,
   type UploadContext,
+  matchesAccept,
 } from "@/lib/upload";
 import { Button } from "@/components/ui/action-button";
 import { AlertIcon, CheckIcon, Spinner } from "@/components/ui/spinner";
@@ -45,7 +46,17 @@ interface Item {
 export interface FileDropProps {
   /** 1 ファイルを送る関数。ctx.onProgress(0..1) を呼ぶと進捗バーが動きます。 */
   action: UploadAction;
-  /** `image/*` `.pdf` など。`<input accept>` と同じ書式。 */
+  /**
+   * `image/*` `.pdf` など。`<input accept>` と同じ書式。
+   *
+   * **選ぶときも、ドラッグして落としたときも、同じ基準で弾きます。**
+   * `<input accept>` は選択画面への助言でしかないので、
+   * 落とす経路には効きません（v0.9c まで素通りしていました）。
+   *
+   * **これは守りではありません。** 名前と、ブラウザが言う種類を見ているだけで、
+   * どちらも送る側が自由に決められます。**受け取るサーバ側で、
+   * 大きさ・種類・中身の署名を必ず確かめてください。**
+   */
   accept?: string;
   /** 1 ファイルの上限サイズ（バイト）。超えたものは送らずに弾きます。 */
   maxSize?: number;
@@ -174,6 +185,18 @@ export function FileDrop({
       const accepted: Item[] = [];
 
       for (const file of list) {
+        if (!matchesAccept(file, accept)) {
+          accepted.push({
+            id: nextId.current++,
+            file,
+            status: "error",
+            progress: 0,
+            error: new ActionError("type not allowed", {
+              displayMessage: `この種類のファイルは送れません（${accept}）`,
+            }),
+          });
+          continue;
+        }
         if (maxSize && file.size > maxSize) {
           accepted.push({
             id: nextId.current++,
@@ -197,7 +220,7 @@ export function FileDrop({
       setItems((prev) => (multiple ? [...prev, ...accepted] : accepted));
       setTimeout(pump, 0);
     },
-    [maxSize, multiple, pump],
+    [accept, maxSize, multiple, pump],
   );
 
   // 全部終わったら通知

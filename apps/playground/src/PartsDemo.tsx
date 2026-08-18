@@ -302,6 +302,12 @@ function UploadSection() {
           <code className="text-fg">uploadWithProgress</code>{" "}
           が隠すので利用者が XHR を書くことはありません。
           1 ファイルずつ送るので、失敗した分だけ再送できます。
+          <code className="text-fg">accept</code> は
+          <strong className="text-fg">選んだときも落としたときも</strong>効きます
+          （ドラッグして落とす経路は素通りしがちです）。
+          <strong className="text-fg">ただし守りではありません。</strong>
+          見ているのは名前とブラウザの推測だけなので、
+          受け取るサーバ側で必ず確かめてください。
         </>
       }
       code={`<FileDrop
@@ -313,8 +319,9 @@ function UploadSection() {
       <Box className="max-w-lg">
         <FileDrop
           action={fakeUpload}
+          accept="image/*,.pdf"
           maxSize={2 * 1024 * 1024}
-          hint="1 ファイル 2 MB まで"
+          hint="画像か PDF、1 ファイル 2 MB まで"
         />
         <p className="mt-xs text-xs text-muted-fg">
           見本です。選んだファイルはどこにも送られません（進捗は偽物です）。

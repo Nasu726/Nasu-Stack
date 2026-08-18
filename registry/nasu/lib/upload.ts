@@ -45,6 +45,26 @@ export function uploadWithProgress<TOutput = unknown>(
     headers?: Record<string, string>;
     /** 一緒に送る値。 */
     fields?: Record<string, string>;
+    /**
+     * 進捗が止まったとみなすまでの ms。既定 60000。0 で切ります。
+     *
+     * **これが無いと、通信が半端に切れたとき永久に待ちます。**
+     * TCP は相手が黙っただけでは切れないので、`error` も `timeout` も
+     * 飛んできません。画面は「送信中…」のまま何時間でも止まります。
+     *
+     * 全体の制限時間（`timeout`）ではなく**進みが止まった時間**で測ります。
+     * 大きなファイルを遅い回線で送るのは正常なので、全体の時間で切ると
+     * 成功するはずの送信を落とします。
+     */
+    stallTimeout?: number;
+    /**
+     * 送信全体の制限時間 (ms)。**既定は 0（無制限）です。**
+     *
+     * 既定を入れていないのは、上限が「ファイルの大きさ × 回線の速さ」で
+     * 決まるためです。こちらが決めた数字は、誰かの正常な送信を落とします。
+     * 止まったときの保険は `stallTimeout` が持ちます。
+     */
+    timeout?: number;
   } = {},
 ): Promise<TOutput> {
   const {
@@ -52,6 +72,8 @@ export function uploadWithProgress<TOutput = unknown>(
     method = "POST",
     headers = {},
     fields = {},
+    stallTimeout = 60000,
+    timeout = 0,
   } = options;
 
   return new Promise<TOutput>((resolve, reject) => {
@@ -61,6 +83,7 @@ export function uploadWithProgress<TOutput = unknown>(
     form.append(fieldName, file, file.name);
 
     xhr.open(method, url, true);
+    xhr.timeout = timeout;
     for (const [k, v] of Object.entries(headers)) xhr.setRequestHeader(k, v);
 
     // 中断の配線。これが無いと、画面を離れてもアップロードが続きます。
@@ -70,11 +93,31 @@ export function uploadWithProgress<TOutput = unknown>(
       return;
     }
     ctx.signal.addEventListener("abort", onAbort, { once: true });
-    const cleanup = () => ctx.signal.removeEventListener("abort", onAbort);
+
+    /* 進みが止まったら中断します。**abort と区別する必要があります。**
+       止めるために xhr.abort() を呼ぶので、そのままだと
+       「利用者が中断した」と同じ扱いになり、画面に何も出ません。 */
+    let stalled = false;
+    let stallTimer: ReturnType<typeof setTimeout> | undefined;
+    const beat = () => {
+      if (!stallTimeout) return;
+      clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        stalled = true;
+        xhr.abort();
+      }, stallTimeout);
+    };
+    const cleanup = () => {
+      clearTimeout(stallTimer);
+      ctx.signal.removeEventListener("abort", onAbort);
+    };
 
     xhr.upload.addEventListener("progress", (e) => {
+      beat();
       if (e.lengthComputable) ctx.onProgress(e.loaded / e.total);
     });
+    // 応答の受け取りでも生きているとみなします
+    xhr.addEventListener("progress", beat);
 
     xhr.addEventListener("load", () => {
       cleanup();
@@ -88,14 +131,16 @@ export function uploadWithProgress<TOutput = unknown>(
 
       if (!ok) {
         const o = (body ?? {}) as Record<string, unknown>;
+        /* 画面に出すのはサーバが**そのつもりで**入れた userMessage だけです。
+           理由は lib/action.ts の jsonRequest に書きました。 */
+        const userMessage =
+          typeof o.userMessage === "string" ? o.userMessage : undefined;
         reject(
           new ActionError(
             typeof o.message === "string" ? o.message : `HTTP ${xhr.status}`,
             {
               displayMessage:
-                typeof o.message === "string"
-                  ? o.message
-                  : `アップロードに失敗しました (${xhr.status})`,
+                userMessage ?? `アップロードに失敗しました (${xhr.status})`,
               code: xhr.status,
               cause: body,
             },
@@ -118,6 +163,16 @@ export function uploadWithProgress<TOutput = unknown>(
 
     xhr.addEventListener("abort", () => {
       cleanup();
+      if (stalled) {
+        reject(
+          new ActionError("stalled", {
+            displayMessage:
+              "通信が止まりました。回線を確かめて、もう一度お試しください。",
+            code: "STALLED",
+          }),
+        );
+        return;
+      }
       reject(new DOMException("Aborted", "AbortError"));
     });
 
@@ -129,6 +184,7 @@ export function uploadWithProgress<TOutput = unknown>(
     });
 
     try {
+      beat();
       xhr.send(form);
     } catch (e) {
       cleanup();
@@ -148,4 +204,37 @@ export function formatBytes(bytes: number): string {
     i++;
   }
   return `${v < 10 ? v.toFixed(1) : Math.round(v)} ${units[i]}`;
+}
+
+/**
+ * `accept` に合うファイルか調べます。
+ *
+ * `<input accept>` と同じ書式（`image/*`、`.pdf`、`text/csv` をカンマ区切り）。
+ *
+ * **これは守りではありません。** 見ているのは
+ *
+ *   - 拡張子（ファイル名の末尾。送る側が自由に付け替えられます）
+ *   - `File.type`（ブラウザが拡張子から推測した値。中身は見ていません）
+ *
+ * の 2 つだけです。`virus.exe` を `photo.png` に改名すれば通ります。
+ * **受け取るサーバ側で、大きさ・種類・中身の署名を必ず確かめてください。**
+ *
+ * ここで弾く目的は「間違って選んだ人にその場で伝える」ことです。
+ */
+export function matchesAccept(file: File, accept?: string): boolean {
+  if (!accept || !accept.trim()) return true;
+
+  const name = file.name.toLowerCase();
+  const type = (file.type || "").toLowerCase();
+
+  return accept.split(",").some((raw) => {
+    const rule = raw.trim().toLowerCase();
+    if (!rule) return false;
+    // ".pdf" のような拡張子
+    if (rule.startsWith(".")) return name.endsWith(rule);
+    // "image/*" のような部分一致
+    if (rule.endsWith("/*")) return type.startsWith(rule.slice(0, -1));
+    // "text/csv" のような完全一致
+    return type === rule;
+  });
 }

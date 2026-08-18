@@ -249,6 +249,30 @@ root を指したリンクは手元でだけ 200 で通ります。
 （いま 2 種で 56 判定）。Phase 1 の並列化があるので入りますが、
 CI の所要時間は伸びます。
 
+### できたもの
+
+`--template blog`。判定は **56 → 77 件**になりました。
+
+| | |
+|---|---|
+| `scaffold/blog/` にあるもの | `package.json`（`check` が 6 ページを見る）と記事の `.md` 3 本だけ |
+| `apps/site` から生成するもの | `src/pages` `src/layouts` `src/lib` `src/components` `src/assets` `content.config.ts` `public/` |
+| 写さないもの | `src/styles`（`@import` の指す先が違う）、`site.config.ts`（`__PROJECT_NAME__` が要る）、設定ファイル、**記事の `.md`** |
+
+記事を写さないのは、`apps/site` の記事が「この記事は検査用です」と
+自己申告しているためです。`verify-create.mjs` が
+**ファイル名の集合**で見張ります（文面を言葉で探す形は、言い回しを
+変えれば通ってしまうのでやめました）。
+
+雛型に配る前提で、`apps/site` 側も直しています。
+
+- フッタの `© 2026 Example Studio` → `© ${YEAR} ${SITE.name}`（生成物では `© 2026 my-blog`）
+- 会社概要の「名称」→ `SITE.name`
+- 住所を「雛型の例です。書き換えてください」に
+
+検査は 6 ページ × 5 幅を実ブラウザで見ます。**入口だけでは足りません**——
+崩れるのはたいてい記事や表のあるページです。
+
 ---
 
 ## Phase 3 — エディタの補完（スニペット）
@@ -264,6 +288,35 @@ CI の所要時間は伸びます。
 型から props を取り出すのは、TypeScript の API を使わずに
 `export interface XxxProps` を読む程度で足ります（完全な解析はしません。
 **できないことをできるつもりで書かない**ため、限界をコメントに残します）。
+
+### できたもの
+
+`scripts/build-snippets.mjs`。生成物の `.vscode/webtemplate.code-snippets` に
+入るので、**利用者の設定は要りません。** 判定は **77 → 86 件**。
+
+| 雛型 | 補完の数 |
+|---|---|
+| astro | 22 |
+| blog | 23 |
+| vite | 29 |
+
+必須の props だけ埋めた形で出し、任意の props は説明に並べます。
+**属性の位置に `{/* … */}` を置く案はやめました。** JSX はそこにコメントを
+書けません（`ts(1005)`。v0.9c の Phase 1 で実際に踏みました）。
+
+いちばん重い判定は「**補完に出る名前が、同梱のファイルで本当に export
+されているか**」です。出たのに無い部品は、選んだ側が自分の間違いだと思うので、
+原因に辿り着けません。実在しない部品と export されていない名前を混ぜて、
+両方赤くなることを確認しています。
+
+書いている途中で、生成側の欠陥が 3 つ出ました。**どれも「補完が減るだけ」で、
+エラーにはなりません。**
+
+| 欠陥 | 何が起きていたか |
+|---|---|
+| `export function Columns` を先に見つけて止まっていた | `Column` が「存在しない」と判定され、補完から消えていた |
+| `=>` の `>` を閉じ括弧として数えていた | 深さが負になり、**その行から後ろの props が全部消えた**（`Dialog` の `onOpenChange` 以降） |
+| 必須の真偽値を属性名だけで出していた | `<Dialog open />` になり、**常に true** になっていた |
 
 ---
 
@@ -287,6 +340,46 @@ Renovate は `helpers:pinGitHubActionDigests` と `minimumReleaseAge` を設定�
 Dependabot alerts は有効化済みなので、**どちらが脆弱性を担当するか**を
 `renovate.json` に明記します（両方動くと PR が二重に出ます）。
 
+### できたもの
+
+判定は **100 件**（verify:create）／**24 工程**（verify）になりました。
+
+| | どう直したか |
+|---|---|
+| P2-03 | `stallTimeout`（既定 60 秒）を足しました。**全体の制限時間ではなく「進みが止まった時間」で測ります。** 大きなファイルを遅い回線で送るのは正常なので、全体の時間で切ると成功するはずの送信を落とします。全体の `timeout` も渡せますが、既定は 0（無制限）です |
+| P2-04 | `matchesAccept` を `lib/upload.ts` に置き、**選ぶ経路と落とす経路の両方**を通しました。守りではないことを型の説明・カタログ・SECURITY.md の 3 か所に書いています |
+| P2-05 | `body` → `defaults` に改名。**実装のほうが正しかった**ので、名前を実装に合わせました。認可に使う値を置かないよう明記 |
+| P2-06 | サーバの `message` を画面に出しません。出すのはサーバが**そのつもりで**入れた `userMessage` だけです。元の文言は `ActionError.message` と `cause` に残るので、開発者からは読めます |
+| P2-07 | Windows の予約語（`con` `nul` `com1`）、使えない記号、ドット・空白で終わる名前、制御文字 |
+| P2-15 | **lockfile は同梱しません。**（下記） |
+| P3-01 | 知らないフラグで止まります。`--help` も足しました |
+| P3-02 | `SECURITY.md`。報告先と、**約束していないこと**を先に書いています |
+| Renovate | `helpers:pinGitHubActionDigests` / `minimumReleaseAge: 7 days`（Actions は 3 日）/ 脆弱性は Dependabot に任せる（`vulnerabilityAlerts: false`）。役割分担は `docs/security.md` に |
+
+#### P2-15 は、レビューの案どおりにはしていません
+
+**生成物に lockfile を同梱しません。** 同梱したものは、利用者が受け取った
+時点で既に古いためです。ビルド時に作るには `npm install` が要り、
+`pnpm verify` が通信に依存するようになります。
+
+代わりに、**利用者の `npm install` が作ったものを commit してもらう**形に
+しました。HowToUse に理由つきで書き、`.gitignore` が lockfile を弾いていない
+ことを機械で確かめます（`7.46`）。
+
+#### 検査
+
+判定を足しただけでは落ちるか分かりません。**わざと壊して確認済みです。**
+
+```
+P2-06 を戻すと → ✗ サーバの message を画面に出さない (PG::UniqueViolation … db-prod-3.internal:5432)
+P2-05 を逆にすると → ✗ defaults は入力に上書きされる ({"role":"guest", …})
+P2-04 を素通しにすると → ✗ image/* に pdf は通らない / ✗ .pdf に png は通らない
+```
+
+カタログの `FileDrop` に `accept` を付けたところ、**既存の「サイズ超過」の判定が
+壊れました。** 渡していた `big.bin` が、サイズより先に種類で弾かれたためです。
+判定が別のものを見ていたので、`big.png` に直し、種類で弾く判定を足しました。
+
 ---
 
 ## Phase 5 — CI
@@ -300,6 +393,28 @@ Dependabot alerts は有効化済みなので、**どちらが脆弱性を担当
 - `verify.yml` に `verify-create` ジョブを足す（`pull_request` で走る）
 - `pages.yml` は `workflow_call` でそれを呼ぶ形にして、**定義を 1 か所**に
 - required status check に `verify-create` を足すのは**あなたの設定**です
+
+### できたもの
+
+`verify.yml` が `verify` と `verify-create` の 2 ジョブになりました。
+`pages.yml` は `uses: ./.github/workflows/verify.yml` で呼ぶだけです
+（手順の写しが消えました）。
+
+#### ついでに見つかったもの: smoke に実ブラウザが入っていませんでした
+
+公開後に走る `smoke` は `node scripts/verify-published.mjs` を呼ぶだけで、
+**playwright を入れていませんでした。** スクリプトは入っていなければ
+黙って飛ばすので、
+
+> HTML に出てこない URL（島が fetch するもの、React が組み立てる iframe の src）
+
+を拾う**いちばん効く判定が、公開先に対して一度も走っていませんでした。**
+Phase 1.5 で端末プレビューの 404 を手元で捕まえられたのに、
+公開先では見ていなかったことになります。
+
+- `smoke` に `pnpm install` と Chromium の用意を足しました
+- `verify-published.mjs` は、**CI では飛ばさず赤くします**
+  （ログは出ていましたが、緑のまま通るので誰も読みません）
 
 ---
 

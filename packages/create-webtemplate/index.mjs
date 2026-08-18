@@ -63,11 +63,27 @@ export function checkNodeVersion(current = process.version) {
   ].join("\n");
 }
 
+/**
+ * Windows が特別扱いする名前。**拡張子を付けても同じです**
+ * （`con.txt` も作れません）。ここを通すと、生成そのものは通るのに
+ * **フォルダが作れない**という分かりにくい失敗になります。
+ */
+const WINDOWS_RESERVED = new Set([
+  "con", "prn", "aux", "nul",
+  ...Array.from({ length: 9 }, (_, i) => `com${i + 1}`),
+  ...Array.from({ length: 9 }, (_, i) => `lpt${i + 1}`),
+]);
+
 const KINDS = [
   {
     key: "astro",
-    label: "サイト（Astro）",
-    hint: "静的なページ中心。ブログや会社サイト。JavaScript は必要な部分だけ",
+    label: "サイト（Astro）— まっさら",
+    hint: "1 ページだけ。自分で組み立てたい人向け",
+  },
+  {
+    key: "blog",
+    label: "サイト（Astro）— ひととおり入り",
+    hint: "ブログ・LP・会社概要・問い合わせ・RSS・sitemap・404 が入った状態から始める",
   },
   {
     key: "vite",
@@ -75,6 +91,9 @@ const KINDS = [
     hint: "画面の中で動く部分が多いもの。管理画面やツール",
   },
 ];
+
+/** Astro の雛型か（Vite でないか）。開発サーバの番号や触る場所が変わります。 */
+const isAstro = (kind) => kind !== "vite";
 
 /* ================================================================
  * プロジェクト名の検証
@@ -92,6 +111,15 @@ export function validateName(name) {
     return ". や _ で始まる名前は使えません";
   }
   if (/[~'!()*/\\]/.test(name)) return "記号 ~ ' ! ( ) * / \\ は使えません";
+  if (/[<>:\"|?]/.test(name)) return '記号 < > : \" | ? は使えません（Windows）';
+  // 制御文字。貼り付けで紛れ込むことがあります
+  if (/[\u0000-\u001f]/.test(name)) return "制御文字は使えません";
+  if (WINDOWS_RESERVED.has(name.split(".")[0].toLowerCase())) {
+    return `${name} は Windows が特別扱いする名前です（フォルダを作れません）`;
+  }
+  if (name.endsWith(".") || name.endsWith(" ")) {
+    return ". や空白で終わる名前は使えません（Windows）";
+  }
   if (name.length > 214) return "名前が長すぎます";
   return null;
 }
@@ -246,7 +274,7 @@ function registryUrl(kind) {
 }
 
 function readme(kind, name) {
-  const dev = kind === "astro" ? "http://localhost:4321" : "http://localhost:5173";
+  const dev = isAstro(kind) ? "http://localhost:4321" : "http://localhost:5173";
   return `# ${name}
 
 WebTemplate から作りました。
@@ -272,7 +300,7 @@ npm run dev      # ${dev}
  * **island も SSG も知りません。** 用語ではなく、何が嬉しいのかを書きます。
  */
 function howToUse(kind, name) {
-  const astro = kind === "astro";
+  const astro = isAstro(kind);
   const dev = astro ? "http://localhost:4321" : "http://localhost:5173";
   const preview = astro ? "http://localhost:4321" : "http://localhost:4173";
   const entry = astro ? "src/pages/index.astro" : "src/App.tsx";
@@ -294,6 +322,19 @@ npm run dev
 ブラウザで ${dev} を開きます。
 **この状態のまま作業します。** ファイルを保存すると画面がすぐ切り替わります。
 止めるときは \`Ctrl + C\` です。
+
+### \`package-lock.json\` は必ず commit してください
+
+\`npm install\` すると \`package-lock.json\` ができます。**これを git に入れてください。**
+
+\`package.json\` に書いてあるのは \`^7.2.2\` のような**幅のある指定**です。
+入れる日によって中身が変わります。lockfile があると、**次に install した人**
+（別のパソコン、CI、半年後の自分）が同じものを手に入れられます。
+
+このテンプレートには lockfile を同梱していません。**同梱したものは、
+あなたが受け取った時点で既に古い**からです。あなたの \`npm install\` が作った
+ものが、あなたのプロジェクトにとって正しい 1 つです。
+
 
 ---
 
@@ -319,6 +360,39 @@ ${astro ? `\`src/pages/\` にファイルを足すと、そのままページが
 | \`src/lib/\` | 部品が使う裏方の処理 |
 | \`src/styles/\` | 色・余白・書体の設定 |
 | \`src/hooks/\` | React で状態を扱う仕組み |
+${kind === "blog" ? `
+### 入っているページ
+
+\`\`\`
+/             トップ（一覧と問い合わせ）
+/lp/          サービス紹介（よくある質問つき）
+/about/       会社概要
+/contact/     お問い合わせ
+/blog/        記事の一覧
+/blog/<名前>/ 記事
+/rss.xml      購読用のフィード       ← 自動で作られます
+/sitemap.xml  検索エンジン向けの地図 ← 自動で作られます
+/404          見つからないときのページ
+\`\`\`
+
+**要らないページは消して構いません。** \`src/pages/\` からファイルを消すだけです。
+消したら \`src/lib/nav.ts\` からも消してください。**ナビの定義はそこ 1 か所だけ**なので、
+残したままだとヘッダから 404 へのリンクが出ます。
+
+### 記事を書く
+
+\`src/content/blog/\` に \`.md\` を足すだけです。
+ファイル名がそのまま URL になります（\`my-post.md\` → \`/blog/my-post/\`）。
+
+置いてある \`hello.md\` に、書き方と画像の入れ方が書いてあります。
+**\`draft: true\` を付けた記事は、一覧にも sitemap にも RSS にも出ません。**
+
+### トップの一覧が読んでいるもの
+
+\`public/works.json\` です。中身は差し替えて構いません。
+サーバから取ってくるようにしたくなったら、\`src/pages/index.astro\` の
+\`loader\` の \`url\` を書き換えるだけです。
+` : ``}
 
 ---
 
@@ -358,6 +432,25 @@ ${astro ? "`src/layouts/Base.astro`" : "`index.html`"} の \`<html>\` に書き�
 
 **幅を決めるのは \`PageBlock\` の役目です。** 中の文章に個別で幅を付けると、
 見出しだけ長くて本文が短い、ちぐはぐな見た目になります。
+
+---
+
+## 3.5. エディタの補完
+
+VS Code なら、**設定は要りません。** \`.vscode/webtemplate.code-snippets\` が
+入っているので、\`wt-\` と打つとこのテンプレートの部品だけが並びます。
+
+\`\`\`
+wt-stack        → <Stack>…</Stack>
+wt-page-block   → <PageBlock>…</PageBlock>
+wt-async-form   → <AsyncForm action={…}>…</AsyncForm>
+\`\`\`
+
+**必須の props だけが埋まった形**で出ます。Tab で次の場所へ移れます。
+任意の props は補完の説明に並べてあるので、そこから選んでください。
+
+この一覧は**同梱している部品から作っています。** 入っていない部品は
+出ません（あとから \`shadcn add\` で足したものは、次に作るときの一覧に入ります）。
 
 ---
 
@@ -553,20 +646,48 @@ WebTemplate 本体: https://github.com/Nasu726/WebTemplate
  * CLI
  * ============================================================== */
 
-function parseArgs(argv) {
-  const args = { name: undefined, template: undefined, yes: false };
+/**
+ * 引数を読みます。
+ *
+ * **知らないフラグは黙って捨てません。** `--templat vite` のような打ち間違いを
+ * 無視すると、何も言われないまま既定（astro）で作られます。
+ * 気づくのは、できたものを開いて「思っていたのと違う」と感じたときです。
+ */
+export function parseArgs(argv) {
+  const args = { name: undefined, template: undefined, yes: false, unknown: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--yes" || a === "-y") args.yes = true;
+    else if (a === "--help" || a === "-h") args.help = true;
     else if (a === "--template" || a === "-t") args.template = argv[++i];
     else if (a.startsWith("--template=")) args.template = a.split("=")[1];
-    else if (!a.startsWith("-")) args.name ??= a;
+    else if (a.startsWith("-")) args.unknown.push(a);
+    else args.name ??= a;
   }
   return args;
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  if (args.help) {
+    console.log("");
+    console.log("  使い方: npx <この tarball の URL> <プロジェクト名> [--template <種類>]");
+    console.log("");
+    for (const k of KINDS) console.log(`    --template ${k.key.padEnd(6)} ${k.label}`);
+    console.log("    --yes          対話せずに既定で作る");
+    console.log("");
+    process.exit(0);
+  }
+
+  /* **知らない指定は止めます。** 黙って無視すると、打ち間違えた人は
+     既定で作られたものを受け取り、開くまで気づけません。 */
+  if (args.unknown.length > 0) {
+    console.error(`  ✗ 知らない指定です: ${args.unknown.join(" ")}`);
+    console.error("    使えるのは --template <種類> / --yes / --help です");
+    console.error(`    種類: ${KINDS.map((k) => k.key).join(" / ")}`);
+    process.exit(2);
+  }
 
   console.log("");
   console.log("  WebTemplate — 動くところから始めます");
@@ -642,7 +763,7 @@ async function main() {
      手順を全部ここに並べても、次のコマンドを打った時点で流れて消えます。
      「さっき何て書いてあったっけ」をスクロールを遡って探すことになるので、
      中身は HowToUse.md に書いて、その存在だけを伝えます。 */
-  const dev = kind === "astro" ? "4321" : "5173";
+  const dev = isAstro(kind) ? "4321" : "5173";
   console.log("");
   console.log(`  ✅ ${name} を作りました（${KINDS.find((k) => k.key === kind).label}）`);
   console.log("");

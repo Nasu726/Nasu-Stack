@@ -9,7 +9,7 @@
  * これらは読み上げと機械可読性のためのもので、見た目には出ません。
  */
 import Base from "../layouts/Base.astro";
-import { SITE } from "../site.config";
+import { SITE, YEAR } from "../site.config";
 import { NAV, FOOTER_GROUPS } from "../lib/nav";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { SiteFooter } from "@/components/ui/site-footer";
@@ -18,7 +18,7 @@ import { PageBlock, Stack, Section, Divider } from "@/components/ui/layout";
 /* 中身は**架空です。** ここは雛型の見本なので、実在の名称・住所・沿革を
    置いてはいけません（そのまま公開ページに載ります）。 */
 const FACTS = [
-  { label: "名称", value: "Example Studio" },
+  { label: "名称", value: SITE.name },
   { label: "所在地", value: "○○県○○市" },
   { label: "事業内容", value: "Web サイトおよび Web アプリケーションの設計・開発" },
   { label: "設立", value: "2026 年 4 月" },
@@ -94,7 +94,7 @@ import { withBase } from "@/lib/base";
         {/* 連絡先は <address>。見た目は変わりませんが、意味が付きます。 */}
         <address class="text-sm not-italic leading-relaxed text-muted-fg">
           〒000-0000<br />
-          ○○県○○市 0-0-0（架空の住所です）
+          ○○県○○市 0-0-0（雛型の例です。書き換えてください）
         </address>
         <p class="text-sm">
           <a href={withBase("/contact/")} class="text-primary underline underline-offset-2">
@@ -109,6 +109,6 @@ import { withBase } from "@/lib/base";
     brand={SITE.name}
     description={SITE.description}
     groups={FOOTER_GROUPS}
-    note="© 2026 Example Studio — MIT"
+    note={`© ${YEAR} ${SITE.name}`}
   />
 </Base>

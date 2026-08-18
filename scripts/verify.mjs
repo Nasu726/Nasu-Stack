@@ -151,6 +151,10 @@ await group([
   // 純粋な関数の単体検査。ブラウザを立てないので速く、
   // `&` ひとつでフィードが壊れる類の間違いはここでしか捕まえられません。
   ["単体: SEO / フィードの組み立て", "node", ["scripts/verify-seo-unit.mjs"]],
+  /* 契約の単体検査。**画面を見ても分からないもの**を見ます。
+     サーバの文言が漏れていても画面には何か出ますし、既定値が上書き
+     されても送信そのものは成功します。実ブラウザでは出てきません。 */
+  ["単体: エラー文言 / 既定値 / accept", "node", ["scripts/verify-action-unit.mjs"]],
   // 入口。生成物を install / build するところまでは重いので
   // `pnpm verify:create` に分けています（ここは生成と検証だけ）。
   ["入口: create-webtemplate", "node", ["scripts/verify-create.mjs"]],

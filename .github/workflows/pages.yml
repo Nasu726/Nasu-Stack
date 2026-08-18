@@ -27,51 +27,20 @@ jobs:
   # ----------------------------------------------------------------
   # 配るのは、検査を通ったものだけ
   # ----------------------------------------------------------------
-  # verify.yml をそのまま呼びます。ここに手順を書き写すと、
-  # 片方だけ直してもう片方が古いまま残ります。
+  # verify.yml をそのまま呼びます。**手順をここに書き写しません。**
+  # 片方だけ直すと、もう片方が古いまま残ります。
+  #
+  # 呼ぶと `verify` と `verify-create` の両方が走ります。
+  # `verify` だけでは足りません。生成物の `npm install` → `npm run build`
+  # → 実ブラウザ → 部品の追加は `verify:create` にしかないためです
+  # （外部レビューの P1-06。緑の CI が意味していたのは「部品は動く」で
+  # あって「利用者が始められる」ではありませんでした）。
   # ----------------------------------------------------------------
   verify:
     uses: ./.github/workflows/verify.yml
 
-  # ----------------------------------------------------------------
-  # 利用者が実際に踏む経路を、公開の前に通します
-  # ----------------------------------------------------------------
-  # `verify` だけでは足りません。生成物の `npm install` → `npm run build`
-  # → 実ブラウザ → 部品の追加は `verify:create` にしかなく、そこが
-  # **リリース判定の外にありました。**
-  #
-  # 外部レビューの指摘（P1-06）そのものです。緑の CI が意味していたのは
-  # 「部品は動く」であって「利用者が始められる」ではありませんでした。
-  # ----------------------------------------------------------------
-  verify-create:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
-
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          # 生成物が要求する下限。**ここで確かめないと意味がありません。**
-          # 案内より新しい版でだけ通る状態になっていても気づけません。
-          node-version: 22.12.0
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Chromium を用意
-        run: pnpm exec playwright install --with-deps chromium
-
-      # レジストリは「本物の CLI で部品を足せるか」の判定が使います
-      - name: レジストリを生成
-        run: pnpm registry:build
-
-      - name: 生成物を npm で install / build / 実ブラウザ
-        run: pnpm verify:create
-
   build:
-    needs: [verify, verify-create]
+    needs: [verify]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -127,16 +96,35 @@ jobs:
   smoke:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # ----------------------------------------------------------------
+      # **実ブラウザが要ります。**
+      # ----------------------------------------------------------------
+      # HTML に出てこない URL があります（島が動き出してから fetch する
+      # ものや、React が組み立てる iframe の src）。リンクを辿るだけの
+      # 判定では永久に見つかりません。
+      #
+      # v0.9c まで、このジョブは playwright を入れていませんでした。
+      # スクリプトは黙って飛ばすので、**いちばん効く判定が
+      # 一度も走っていませんでした。**
+      # ----------------------------------------------------------------
+      - name: Chromium を用意
+        run: pnpm exec playwright install --with-deps chromium
 
       # 判定は scripts/verify-published.mjs にあります。
       # **YAML に書くと手元で同じものを試せません。**
-      # 手元では serve-registry.mjs で配って、同じスクリプトを回せます。
+      # 手元では BASE_PATH=/WebTemplate で配って、同じスクリプトを回せます。
       - name: 公開物が本当に取れるか
         run: node scripts/verify-published.mjs "${{ needs.deploy.outputs.url }}"

@@ -39,6 +39,23 @@ const create = (name, args = []) => {
   }
 };
 
+/**
+ * 検査する雛型。**ここが唯一の一覧です。**
+ * 増やしたときに書き足す場所が複数あると、必ずどれかを忘れます
+ * （忘れても何も言われず、その雛型だけ検査を素通りします）。
+ */
+const CASES = [
+  { kind: "astro", name: "my-site", port: 4598 },
+  { kind: "blog", name: "my-blog", port: 4600 },
+  { kind: "vite", name: "my-app", port: 4599 },
+];
+/** 検査するページ。ブログ付きは入口だけ見ても意味がありません。 */
+const PAGES = {
+  astro: ["/"],
+  blog: ["/", "/lp/", "/about/", "/contact/", "/blog/", "/blog/hello/"],
+  vite: ["/"],
+};
+
 /* ===== 0. テンプレートが原本と同期しているか ==================== */
 {
   // 生成し直して差分が無いことを見ます。
@@ -53,9 +70,12 @@ const create = (name, args = []) => {
     fs.existsSync(dir)
       ? fs.readdirSync(dir, { recursive: true }).map(String).sort()
       : [];
-  const astro = list(path.join(tpl, "astro"));
-  const vite = list(path.join(tpl, "vite"));
-  must("0. テンプレートが生成できる", astro.length > 0 && vite.length > 0, `astro ${astro.length} / vite ${vite.length}`);
+  const counts = CASES.map((c) => [c.kind, list(path.join(tpl, c.kind)).length]);
+  must(
+    "0. テンプレートが生成できる",
+    counts.every(([, n]) => n > 0),
+    counts.map(([k, n]) => `${k} ${n}`).join(" / "),
+  );
 
   // 原本と中身が一致しているか（1 ファイル抜き取り）
   const a = fs.readFileSync(path.join(root, "registry/nasu/components/ui/layout.tsx"), "utf8");
@@ -90,6 +110,57 @@ const create = (name, args = []) => {
     "   vite 側にも入口がある",
     fs.existsSync(path.join(work, "my-app", "src", "App.tsx")),
   );
+
+  /* ブログ付きの雛型。**中身は apps/site から生成しています。**
+     写し漏れがあると、型検査でもビルドでもなく「ページが無い」で出ます。 */
+  const r3 = create("my-blog", ["--template", "blog"]);
+  must("2.5 blog テンプレートを生成できる", r3.ok, r3.out.trim().slice(-120));
+  const blogWant = [
+    path.join("src", "pages", "lp.astro"),
+    path.join("src", "pages", "about.astro"),
+    path.join("src", "pages", "contact.astro"),
+    path.join("src", "pages", "blog", "index.astro"),
+    path.join("src", "pages", "rss.xml.ts"),
+    path.join("src", "pages", "sitemap.xml.ts"),
+    path.join("src", "content.config.ts"),
+    path.join("src", "content", "blog", "hello.md"),
+    path.join("src", "lib", "posts.ts"),
+    path.join("src", "lib", "nav.ts"),
+    path.join("public", "works.json"),
+  ];
+  const blogFiles = fs
+    .readdirSync(path.join(work, "my-blog"), { recursive: true })
+    .map(String);
+  const blogMissing = blogWant.filter((w) => !blogFiles.includes(w));
+  must(
+    "    blog: ページと記事が揃っている",
+    blogMissing.length === 0,
+    blogMissing.join(", ") || `${blogFiles.length} ファイル`,
+  );
+
+  /* **検査用の文面を配ってはいけません。** apps/site の記事は
+     「この記事は検査用です」と自己申告しています。そのまま雛型に入れると、
+     利用者全員のブログにその文章が載ります（v0.9c の指摘 C-5）。
+
+     文面を言葉で探すのはやめました。**言い回しを変えれば通ってしまいます。**
+     雛型が持つべき記事は scaffold/blog に置いてある分だけなので、
+     ファイル名の集合が一致するかを見ます。 */
+  const wantArticles = fs
+    .readdirSync(
+      path.join(root, "packages/create-webtemplate/scaffold/blog/src/content/blog"),
+    )
+    .filter((f) => f.endsWith(".md"))
+    .sort();
+  const gotArticles = fs
+    .readdirSync(path.join(work, "my-blog", "src", "content", "blog"))
+    .filter((f) => f.endsWith(".md"))
+    .sort();
+  const extra = gotArticles.filter((f) => !wantArticles.includes(f));
+  must(
+    "    blog: 記事が雛型用のものだけになっている",
+    wantArticles.length > 0 && extra.length === 0,
+    extra.length ? `原本から漏れています: ${extra.join(", ")}` : gotArticles.join(" "),
+  );
 }
 
 /* ===== 4〜5. 上書き事故の防止 =================================== */
@@ -113,12 +184,21 @@ const create = (name, args = []) => {
   const { validateName } = await import(
     new URL(`file://${CLI}`).href
   );
+  /* **通ってしまうと、あとで分かりにくい形で失敗するもの**を並べます。
+     とくに Windows の予約語は厄介で、生成そのものは走るのに
+     フォルダが作れず、理由の出ないまま途中で止まります。 */
   const cases = [
     ["My-Site", "大文字"],
     ["my site", "空白"],
     [".hidden", "先頭のドット"],
     ["", "空"],
     ["a/b", "スラッシュ"],
+    ["con", "Windows の予約語"],
+    ["nul", "Windows の予約語"],
+    ["com1", "Windows の予約語"],
+    ["aux.txt", "予約語 + 拡張子（これも作れません）"],
+    ["a<b", "Windows で使えない記号"],
+    ["my-site.", "ドットで終わる（Windows）"],
   ];
   for (const [name, why] of cases) {
     must(`6. 不正な名前を弾く（${why}）`, validateName(name) !== null, validateName(name) ?? "通ってしまった");
@@ -166,7 +246,7 @@ const create = (name, args = []) => {
  * **部品側の検査は全部緑でした。** 生成物を実際に触るまで気づけません。
  * だからここで機械に見せます。
  */
-for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
+for (const { name, kind } of CASES) {
   const p = path.join(work, name, "components.json");
   if (!fs.existsSync(p)) {
     must(`7.5 ${kind}: components.json がある`, false, "ファイルが無い");
@@ -187,13 +267,100 @@ for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
   must(`    ${kind}: alias が tsconfig と揃っている`, aliasOk, cj.aliases?.ui ?? "");
 }
 
+/* ===== 7.46. lockfile が git に入る形になっているか =============== */
+/**
+ * 生成物に lockfile は同梱していません（受け取った時点で既に古いため）。
+ * 代わりに、**利用者の `npm install` が作ったものが commit できる**必要があります。
+ * `.gitignore` が弾いていると、`npm install` の日によって中身が変わる
+ * プロジェクトが出来上がります。
+ */
+for (const { name, kind } of CASES) {
+  const gi = fs.readFileSync(path.join(work, name, ".gitignore"), "utf8");
+  const blocks = gi
+    .split(String.fromCharCode(10))
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("#"))
+    .filter((l) => /lock/i.test(l));
+  must(
+    `7.46 ${kind}: lockfile を .gitignore が弾いていない`,
+    blocks.length === 0,
+    blocks.join(" "),
+  );
+  const md = fs.readFileSync(path.join(work, name, "HowToUse.md"), "utf8");
+  must(
+    `     ${kind}: lockfile を commit するよう案内している`,
+    md.includes("package-lock.json") && md.includes("commit"),
+  );
+}
+
+/* ===== 7.55. エディタの補完が、実在する部品だけを出しているか ==== */
+/**
+ * 補完は `registry.json` と各部品の型から生成しています（build-snippets.mjs）。
+ *
+ * **いちばん悪いのは「補完に出たのに部品が無い」です。** 選んで書いた側は
+ * 自分が間違えたと思うので、原因に辿り着けません。だから
+ * **補完に出る名前が、同梱のファイルで本当に export されているか**を見ます。
+ */
+for (const { name, kind } of CASES) {
+  const p = path.join(work, name, ".vscode", "webtemplate.code-snippets");
+  if (!fs.existsSync(p)) {
+    must(`7.55 ${kind}: エディタの補完が入っている`, false, "ファイルが無い");
+    continue;
+  }
+  const snips = JSON.parse(fs.readFileSync(p, "utf8"));
+  const keys = Object.keys(snips);
+  must(`7.55 ${kind}: エディタの補完が入っている`, keys.length > 10, `${keys.length} 個`);
+
+  // 接頭辞が揃っていないと、補完の一覧で見分けが付きません
+  const badPrefix = keys.filter((k) => !String(snips[k].prefix ?? "").startsWith("wt-"));
+  must(
+    `     ${kind}: 接頭辞が wt- で揃っている`,
+    badPrefix.length === 0,
+    badPrefix.join(", "),
+  );
+
+  /* 補完が指す部品が、本当に同梱されているか。
+     import 文は description の 1 行目に入れてあります。 */
+  const missing = [];
+  for (const k of keys) {
+    const line = String(snips[k].description ?? "").split(String.fromCharCode(10))[0];
+    const MARK = ' from "@/';
+    const at = line.indexOf(MARK);
+    const m = at < 0 ? null : line.slice(at + MARK.length, line.lastIndexOf('"'));
+    if (!m) {
+      missing.push(`${k}(import が読めない)`);
+      continue;
+    }
+    const file = path.join(work, name, "src", `${m}.tsx`);
+    if (!fs.existsSync(file)) {
+      missing.push(`${k}(${m} が無い)`);
+      continue;
+    }
+    const src = fs.readFileSync(file, "utf8");
+    const declared = ["export function ", "export const ", "export default function "]
+      .some((d) => {
+        for (let at = src.indexOf(d + k); at >= 0; at = src.indexOf(d + k, at + 1)) {
+          const after = src[at + d.length + k.length];
+          if (["(", " ", "<", ":", "="].includes(after)) return true;
+        }
+        return false;
+      });
+    if (!declared) missing.push(`${k}(export されていない)`);
+  }
+  must(
+    `     ${kind}: 補完の部品がすべて実在する`,
+    missing.length === 0,
+    missing.slice(0, 5).join(", "),
+  );
+}
+
 /* ===== 7.4. 使い方が「消えない場所」にあるか ====================== */
 /**
  * 生成の直後に手順を画面へ出しても、次のコマンドで流れて消えます。
  * **スクロールを遡って探すことになる**——実際にそう指摘されました。
  * ファイルとして残っていることを機械で確かめます。
  */
-for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
+for (const { name, kind } of CASES) {
   const p = path.join(work, name, "HowToUse.md");
   const md = fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
   must(`7.4 ${kind}: HowToUse.md がある`, md.length > 500, `${md.length} 文字`);
@@ -208,7 +375,7 @@ for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
  * **初めての人ほど `git add .` を打ちます。** 一度 git の履歴に入った鍵は、
  * ファイルを消しても消えません。作り直しが必要になります。
  */
-for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
+for (const { name, kind } of CASES) {
   const gi = fs.readFileSync(path.join(work, name, ".gitignore"), "utf8");
   const ok = /^\.env$/m.test(gi) && /^\.env\.\*$/m.test(gi) && /^!\.env\.example$/m.test(gi);
   must(`7.42 ${kind}: .gitignore が .env を無視する`, ok, ok ? "" : gi.slice(0, 80));
@@ -254,7 +421,7 @@ for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
  * 実体は `src/scripts/` にありました。**打った人が最初に踏みます。**
  * ビルドも型検査も通るので、既存の検査は全部緑のままでした。
  */
-for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
+for (const { name, kind } of CASES) {
   const pkg = JSON.parse(fs.readFileSync(path.join(work, name, "package.json"), "utf8"));
   const missing = [];
   for (const cmd of Object.values(pkg.scripts ?? {})) {
@@ -264,6 +431,25 @@ for (const [name, kind] of [["my-site", "astro"], ["my-app", "vite"]]) {
     }
   }
   must(`7.45 ${kind}: scripts が実在するファイルを指す`, missing.length === 0, missing.join(", "));
+}
+
+/* ===== 7.47. 知らない指定 ======================================== */
+/**
+ * `--templat vite` のような打ち間違いを黙って無視すると、
+ * 何も言われないまま既定（astro）で作られます。
+ * **気づくのは、できたものを開いて「思っていたのと違う」と感じたとき**です。
+ */
+{
+  const r = create("typo-site", ["--templat", "blog"]);
+  must(
+    "7.47 知らない指定を黙って無視しない",
+    !r.ok && /知らない指定/.test(r.out ?? ""),
+    (r.out ?? "").trim().slice(-80),
+  );
+  must(
+    "     そのときは何も作らない",
+    !fs.existsSync(path.join(work, "typo-site")),
+  );
 }
 
 /* ===== 7.6. README が存在しない部品を教えていないか =============== */
@@ -379,11 +565,13 @@ if (!FULL) {
     log("（「部品を足せる」の判定は飛ばします）");
   }
 
-  for (const [name, kind, port, buildArgs, checkArgs] of [
+  for (const { name, kind, port } of CASES) {
     // build は `npm run build`（利用者が打つ形）。型検査は npm exec で直に。
-    ["my-site", "astro", 4598, ["run", "build"], ["exec", "--", "astro", "check"]],
-    ["my-app", "vite", 4599, ["run", "build"], ["exec", "--", "tsc", "--noEmit"]],
-  ]) {
+    const buildArgs = ["run", "build"];
+    const checkArgs =
+      kind === "vite"
+        ? ["exec", "--", "tsc", "--noEmit"]
+        : ["exec", "--", "astro", "check"];
     const dir = path.join(work, name);
     log(`${kind}: npm install …`);
     // 利用者が打つのと同じ 1 行。--ignore-workspace のような
@@ -481,10 +669,17 @@ if (!FULL) {
             `file://${path.join(root, "registry/nasu/scripts/check-responsive.mjs")}`,
           ).href
         );
-      const report = await checkUrls([`http://127.0.0.1:${port}/`]);
+      /* **入口だけ見ても足りません。** ブログ付きの雛型は 6 ページあり、
+         崩れるのはたいてい記事や表のあるページです。 */
+      const urls = PAGES[kind].map((u) => `http://127.0.0.1:${port}${u}`);
+      const report = await checkUrls(urls);
       const { text, problems } = formatReport(report);
-      const img = formatImageReport(await checkImageSizing([`http://127.0.0.1:${port}/`]));
-      must(`12. ${kind}: 端末幅の検査（5 幅）を通る`, problems === 0, problems ? text : "");
+      const img = formatImageReport(await checkImageSizing(urls));
+      must(
+        `12. ${kind}: 端末幅の検査（${urls.length} ページ × 5 幅）を通る`,
+        problems === 0,
+        problems ? text : "",
+      );
       must(`    ${kind}: 画像が場所を取っている`, img.problems === 0, img.problems ? img.text : "");
 
       /* --- 13. 広い画面で、本文と見出しの幅が揃っているか ------------

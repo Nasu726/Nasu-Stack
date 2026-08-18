@@ -8,3 +8,10 @@ export const SITE = {
   locale: "ja",
   ogImage: "/og.png",
 } as const;
+
+/**
+ * フッタの著作権表記に使う年。**手で書きません。**
+ * 静的サイトなので、ビルドした時点の年で固定されます。
+ * 手で書くと、年が変わった翌日から全ページが古くなります。
+ */
+export const YEAR = new Date().getFullYear();
