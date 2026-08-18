@@ -16,3 +16,4 @@ packages/create-webtemplate/template/
 # 置き場は scripts/_browser.mjs の SHOTS_DIR が決めます。
 .shots/
 .verify-action/
+.verify-receiver/
