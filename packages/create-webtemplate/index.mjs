@@ -402,6 +402,25 @@ ${astro ? "`src/layouts/Base.astro`" : "`index.html`"} の \`<html>\` に書き�
 
 ---
 
+## 3.5. エディタの補完
+
+VS Code なら、**設定は要りません。** \`.vscode/webtemplate.code-snippets\` が
+入っているので、\`wt-\` と打つとこのテンプレートの部品だけが並びます。
+
+\`\`\`
+wt-stack        → <Stack>…</Stack>
+wt-page-block   → <PageBlock>…</PageBlock>
+wt-async-form   → <AsyncForm action={…}>…</AsyncForm>
+\`\`\`
+
+**必須の props だけが埋まった形**で出ます。Tab で次の場所へ移れます。
+任意の props は補完の説明に並べてあるので、そこから選んでください。
+
+この一覧は**同梱している部品から作っています。** 入っていない部品は
+出ません（あとから \`shadcn add\` で足したものは、次に作るときの一覧に入ります）。
+
+---
+
 ## 4. 押したら動くものを作る
 
 ボタンを押して何かする、フォームを送る——こういう「時間がかかる処理」には、

@@ -258,6 +258,67 @@ for (const { name, kind } of CASES) {
   must(`    ${kind}: alias が tsconfig と揃っている`, aliasOk, cj.aliases?.ui ?? "");
 }
 
+/* ===== 7.55. エディタの補完が、実在する部品だけを出しているか ==== */
+/**
+ * 補完は `registry.json` と各部品の型から生成しています（build-snippets.mjs）。
+ *
+ * **いちばん悪いのは「補完に出たのに部品が無い」です。** 選んで書いた側は
+ * 自分が間違えたと思うので、原因に辿り着けません。だから
+ * **補完に出る名前が、同梱のファイルで本当に export されているか**を見ます。
+ */
+for (const { name, kind } of CASES) {
+  const p = path.join(work, name, ".vscode", "webtemplate.code-snippets");
+  if (!fs.existsSync(p)) {
+    must(`7.55 ${kind}: エディタの補完が入っている`, false, "ファイルが無い");
+    continue;
+  }
+  const snips = JSON.parse(fs.readFileSync(p, "utf8"));
+  const keys = Object.keys(snips);
+  must(`7.55 ${kind}: エディタの補完が入っている`, keys.length > 10, `${keys.length} 個`);
+
+  // 接頭辞が揃っていないと、補完の一覧で見分けが付きません
+  const badPrefix = keys.filter((k) => !String(snips[k].prefix ?? "").startsWith("wt-"));
+  must(
+    `     ${kind}: 接頭辞が wt- で揃っている`,
+    badPrefix.length === 0,
+    badPrefix.join(", "),
+  );
+
+  /* 補完が指す部品が、本当に同梱されているか。
+     import 文は description の 1 行目に入れてあります。 */
+  const missing = [];
+  for (const k of keys) {
+    const line = String(snips[k].description ?? "").split(String.fromCharCode(10))[0];
+    const MARK = ' from "@/';
+    const at = line.indexOf(MARK);
+    const m = at < 0 ? null : line.slice(at + MARK.length, line.lastIndexOf('"'));
+    if (!m) {
+      missing.push(`${k}(import が読めない)`);
+      continue;
+    }
+    const file = path.join(work, name, "src", `${m}.tsx`);
+    if (!fs.existsSync(file)) {
+      missing.push(`${k}(${m} が無い)`);
+      continue;
+    }
+    const src = fs.readFileSync(file, "utf8");
+    const declared = ["export function ", "export const ", "export default function "]
+      .some((d) => {
+        for (let at = src.indexOf(d + k); at >= 0; at = src.indexOf(d + k, at + 1)) {
+          const after = src[at + d.length + k.length];
+          if (["(", " ", "<", ":", "="].includes(after)) return true;
+        }
+        return false;
+      });
+    if (!declared) missing.push(`${k}(export されていない)`);
+  }
+  must(
+    `     ${kind}: 補完の部品がすべて実在する`,
+    missing.length === 0,
+    missing.slice(0, 5).join(", "),
+  );
+}
+
 /* ===== 7.4. 使い方が「消えない場所」にあるか ====================== */
 /**
  * 生成の直後に手順を画面へ出しても、次のコマンドで流れて消えます。

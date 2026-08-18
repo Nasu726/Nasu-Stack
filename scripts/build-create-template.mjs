@@ -20,6 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { REGISTRY_URL } from "./_site.mjs";
+import { writeSnippets } from "./build-snippets.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const registryRoot = path.join(root, "registry", "nasu");
@@ -112,7 +113,7 @@ function copyItems(names, destSrc) {
       count++;
     }
   }
-  return { items: items.size, files: count };
+  return { items: items.size, files: count, resolved: items };
 }
 
 /** 足場（設定ファイルなど）をそのまま写します。 */
@@ -270,7 +271,16 @@ for (const kind of ["astro", "blog", "vite"]) {
     fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + "\n", "utf8");
   }
   const r = copyItems([...STARTER.common, ...STARTER[kind]], path.join(dest, "src"));
-  report.push({ kind, ...r });
+
+  /* エディタの補完。**入っている部品の分だけ**出します。
+     入っていない部品を補完に出すと、選んだ瞬間に「そんなものは無い」に
+     なります。原本の型から作るので、手で直す場所はありません。 */
+  const snips = writeSnippets(
+    [...r.resolved].map((n) => byName.get(n)),
+    root,
+    dest,
+  );
+  report.push({ kind, ...r, snippets: snips });
 }
 
 // 生成物であることを、開いた人にも分かるようにしておきます
@@ -286,6 +296,8 @@ fs.writeFileSync(
 );
 
 for (const r of report) {
-  console.log(`  ${r.kind}: ${r.items} アイテム / ${r.files} ファイル`);
+  console.log(
+    `  ${r.kind}: ${r.items} アイテム / ${r.files} ファイル / 補完 ${r.snippets} 個`,
+  );
 }
 console.log(`✅ テンプレートを生成しました: ${path.relative(root, out)}`);
