@@ -79,20 +79,34 @@ export function serveStatic(root, port, { basePath = "", spa = false } = {}) {
       res.writeHead(400, { "content-type": "text/plain; charset=utf-8" });
       return void res.end("bad request");
     }
-    if (base && rel.startsWith(base)) rel = rel.slice(base.length) || "/";
+    /* **basePath の外は 404 にします。**
+       ここを素通しにすると、`public/` が `/` と `/WebTemplate/` の
+       両方に生えます。本番（GitHub Pages）で `/` にあるのは
+       **別のサイト**なので、手元だけ `/index.html` が 200 で返り、
+       「root を指したリンク」が通ってしまいます。
 
-    const target = path.join(dir, rel);
+       v0.9c で実際にこれに騙されました。端末プレビューの iframe が
+       `/?embed=1` を指したまま、公開先では 404 なのに、
+       手元の判定は緑でした。**サーバの側が本番と違っていたためです。** */
+    if (base) {
+      if (rel === base) rel = "/";
+      else if (rel.startsWith(`${base}/`)) rel = rel.slice(base.length);
+      else rel = null;
+    }
+
+    const target = rel === null ? null : path.join(dir, rel);
     // ディレクトリを外に出る指定（../）を弾きます
-    if (!target.startsWith(dir)) return void res.writeHead(403).end();
+    if (target !== null && !target.startsWith(dir))
+      return void res.writeHead(403).end();
 
     // そのまま → ディレクトリなら index.html → 拡張子なしなら .html
-    let body = rel.endsWith("/") ? null : await readIf(target);
+    let body = target === null || rel.endsWith("/") ? null : await readIf(target);
     let file = target;
-    if (!body) {
+    if (!body && target !== null) {
       file = path.join(target, "index.html");
       body = await readIf(file);
     }
-    if (!body && !path.extname(target)) {
+    if (!body && target !== null && !path.extname(target)) {
       file = `${target}.html`;
       body = await readIf(file);
     }

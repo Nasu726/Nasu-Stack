@@ -13,17 +13,22 @@ const NAV = [
   { href: "#a", label: "製品" },
   { href: "#b", label: "料金" },
   { href: "#c", label: "会社概要" },
-  { href: "https://example.com", label: "ドキュメント", external: true },
+  // external の見本。**実際に飛ぶ先なので、実在して差し支えない URL にします。**
+  // example.com は表記用に予約された名前ですが、IANA の説明ページが本当に出ます。
+  { href: "https://github.com/Nasu726/WebTemplate", label: "GitHub", external: true },
 ];
 
 export function NavDemo() {
   return (
     <Stack space="3xl">
       <HeaderSection />
+      {/* メニューは**下に余白がある位置に置きます。**
+          最下部だと必ず上向きに開くので、
+          「入り切らないときだけ上に出す」動きが見られません。 */}
+      <MenuSection />
       <DialogSection />
       <TabsSection />
       <DisclosureSection />
-      <MenuSection />
     </Stack>
   );
 }
@@ -46,7 +51,7 @@ function HeaderSection() {
       }
       code={`<SkipLink />
 <SiteHeader
-  brand="Studio Nasu"
+  brand="Example Studio"
   items={[{ href: "/works", label: "Works" }]}
   currentPath={Astro.url.pathname}   // ルーターに依存しない
   actions={<ThemeSwitcher />}
@@ -56,9 +61,16 @@ function HeaderSection() {
         <p className="text-xs text-muted-fg">
           下は実物です（sticky は切ってあります）。画面を狭くするとハンバーガーに変わります。
         </p>
+        <p className="text-xs text-muted-fg">
+          このヘッダは <code className="text-fg">z-30</code>{" "}
+          です。ページの一部として埋め込むときは、
+          <strong className="text-fg">外側の枠をそれより手前に置いてください。</strong>
+          このカタログ自身のヘッダを <code className="text-fg">z-40</code>{" "}
+          にしているのはそのためです。
+        </p>
         <div className="overflow-hidden rounded-lg border border-border">
           <SiteHeader
-            brand="Studio Nasu"
+            brand="Example Studio"
             items={NAV}
             currentPath="#b"
             sticky={false}
@@ -87,7 +99,7 @@ function DialogSection() {
       title="Dialog"
       description={
         <>
-          native の <code className="text-fg">&lt;dialog&gt;</code>{" "}
+          ブラウザ標準の <code className="text-fg">&lt;dialog&gt;</code>{" "}
           を使うので、フォーカスの閉じ込め・背面の無効化・Esc・最前面表示は
           ブラウザ任せです。
           <strong className="text-fg">
@@ -148,6 +160,9 @@ function DialogSection() {
             <a
               key={n.href}
               href={n.href}
+              {...(n.external
+                ? { target: "_blank", rel: "noreferrer noopener" }
+                : {})}
               className="flex min-h-11 items-center rounded-md px-3 text-sm hover:bg-muted"
               onClick={() => setSheet(false)}
             >

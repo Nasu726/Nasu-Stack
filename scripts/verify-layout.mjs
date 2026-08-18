@@ -147,10 +147,15 @@ must(
 await page.setViewportSize({ width: 1100, height: 900 });
 await page.waitForTimeout(200);
 
+/* --- 6〜8. ActionProvider -------------------------------------------
+   **「状態」の章に移しました。** 余白や段組の話ではないので、
+   探しに来る人が見るのはそちらのはずです（v0.9c の指摘 C-2）。 */
+const toastPage = await openTab("state", { width: 1100, height: 900 });
+
 /* --- 6. ActionProvider: onError 未指定 → 通知が出るか -------------- */
-await page.getByRole("button", { name: "onError を書かずに失敗させる" }).click();
-await page.waitForTimeout(1200);
-const toast1 = await page.locator('[role="alert"]').allTextContents();
+await toastPage.getByRole("button", { name: "onError を書かずに失敗させる" }).click();
+await toastPage.waitForTimeout(1200);
+const toast1 = await toastPage.locator('[role="alert"]').allTextContents();
 must(
   "onError を書かずに失敗したら、既定の通知が出る",
   toast1.some((t) => t.trim().length > 0),
@@ -159,12 +164,12 @@ must(
 
 /* --- 7. onError を書いた場合は既定が走らないか --------------------- */
 // 前の通知が残っていると判定できないので、読み直して状態を空にする
-await page.reload({ waitUntil: "networkidle" });
-await page.waitForTimeout(400);
-await page.getByRole("button", { name: "onError を自分で書く" }).click();
-await page.waitForTimeout(1200);
-const statuses = await page.locator('[role="status"]').allTextContents();
-const alerts = await page.locator('[role="alert"]').allTextContents();
+await toastPage.reload({ waitUntil: "networkidle" });
+await toastPage.waitForTimeout(400);
+await toastPage.getByRole("button", { name: "onError を自分で書く" }).click();
+await toastPage.waitForTimeout(1200);
+const statuses = await toastPage.locator('[role="status"]').allTextContents();
+const alerts = await toastPage.locator('[role="alert"]').allTextContents();
 const shown = [...statuses, ...alerts].filter((t) => t.trim());
 must(
   "onError を自分で書いたら、既定の通知は走らない",
@@ -173,9 +178,9 @@ must(
 );
 
 /* --- 8. 通知が自動で消えるか（success は 5s） --------------------- */
-await page.getByRole("button", { name: "通知を直接出す" }).click();
-await page.waitForTimeout(400);
-const before = await page.locator('[role="status"]').count();
+await toastPage.getByRole("button", { name: "通知を直接出す" }).click();
+await toastPage.waitForTimeout(400);
+const before = await toastPage.locator('[role="status"]').count();
 must("通知を直接出せる", before > 0, `${before} 件`);
 
 await finish();

@@ -10,11 +10,11 @@ import { withBase } from "@/lib/base";
  * ================================================================
  * ```tsx
  * <SiteFooter
- *   brand="Studio Nasu"
+ *   brand="Example Studio"
  *   groups={[
  *     { label: "サイト", items: [{ href: "/blog", label: "ブログ" }] },
  *   ]}
- *   note="© 2026 Studio Nasu"
+ *   note="© 2026 Example Studio"
  * />
  * ```
  *

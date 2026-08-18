@@ -207,15 +207,24 @@ try {
   const browser = await chromium.launch({
     executablePath: process.env.CHROMIUM_PATH || undefined,
   });
+  /* **カタログは章ごとに中身が違います。** 既定の章しか開かないと、
+     他の章にしか無いものは一度も要求されません。実際 v0.9c では、
+     「端末幅」の章にある端末プレビューの iframe が 404 を出したまま、
+     この検査は緑でした。だから全部の章を開きます。 */
+  const { TAB_KEYS } = await import("../apps/playground/src/tabs.mjs");
+  const targets = [
+    ...TAB_KEYS.map((k) => [`カタログ(${k})`, `catalog/?tab=${k}`]),
+    ["デモ", "demo/"],
+  ];
   try {
-    for (const [name, sub] of [["カタログ", "catalog"], ["デモ", "demo"]]) {
+    for (const [name, sub] of targets) {
       const page = await browser.newPage();
       const failed = [];
       page.on("response", (r) => {
         if (r.status() >= 400) failed.push(`${r.url()} → HTTP ${r.status()}`);
       });
       page.on("requestfailed", (r) => failed.push(`${r.url()} → ${r.failure()?.errorText}`));
-      await page.goto(`${base}/${sub}/`, { waitUntil: "networkidle", timeout: 30000 });
+      await page.goto(`${base}/${sub}`, { waitUntil: "networkidle", timeout: 30000 });
       // 島が動き出してから飛ぶものがあるので、少し待ちます
       await page.waitForTimeout(1500);
       await page.close();

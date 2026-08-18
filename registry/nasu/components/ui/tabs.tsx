@@ -169,7 +169,10 @@ export function Tabs({
   return (
     <TabsContext.Provider value={{ value: current, baseId, unmountInactive }}>
       <div className={cn("flex w-full flex-col gap-md", className)}>
-        <Scrollable label={label ?? "タブ"}>
+        {/* タブの列は横にしか動きません。**ホイールの縦を横へ回します。**
+            これが無いと、タッチパッドの人はタブが多いときに端まで辿れません
+            （指と矢印キーでは動くので、作った側は気づけません）。 */}
+        <Scrollable label={label ?? "タブ"} wheelX>
           <div
             ref={listRef}
             role="tablist"

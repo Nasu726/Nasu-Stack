@@ -13,8 +13,7 @@ import {
   Tiles,
   type SpaceToken,
 } from "@/components/ui/layout";
-import { ActionButton, Button } from "@/components/ui/action-button";
-import { useToast } from "@/components/ui/action-provider";
+import { Button } from "@/components/ui/action-button";
 import { Blk, Panel } from "./Panel";
 
 const SPACES: SpaceToken[] = [
@@ -38,7 +37,6 @@ export function LayoutDemo() {
       <ColumnsDemo />
       <TilesDemo />
       <PageDemo />
-      <ToastDemo />
     </Stack>
   );
 }
@@ -275,67 +273,3 @@ function PageDemo() {
   );
 }
 
-/* ---------------------------------------------------------------- */
-
-function ToastDemo() {
-  const toast = useToast();
-
-  return (
-    <Panel
-      title="ActionProvider — 書き忘れの受け皿"
-      description={
-        <>
-          <code className="text-fg">onError</code> を書かなかったアクションが失敗すると、
-          画面隅に通知が出ます。エラー処理の書き忘れが握り潰されなくなります。
-          個別に <code className="text-fg">onError</code> を書いた場合はそちらが優先され、通知は出ません。
-        </>
-      }
-      code={`<ActionProvider>\n  <App />\n</ActionProvider>`}
-    >
-      <Inline space="sm">
-        <ActionButton
-          action={async () => {
-            await new Promise((r) => setTimeout(r, 600));
-            throw new Error("在庫の取得に失敗しました");
-          }}
-          showError={false}
-          variant="outline"
-        >
-          onError を書かずに失敗させる
-        </ActionButton>
-
-        <ActionButton
-          action={async () => {
-            await new Promise((r) => setTimeout(r, 600));
-            throw new Error("これは通知されない");
-          }}
-          onError={(e) =>
-            toast.show({
-              tone: "warning",
-              title: "自前で処理しました",
-              description: e.displayMessage,
-            })
-          }
-          showError={false}
-          variant="outline"
-        >
-          onError を自分で書く
-        </ActionButton>
-
-        <Button
-          variant="ghost"
-          onClick={() =>
-            toast.show({
-              tone: "success",
-              title: "保存しました",
-              description: "3 件の変更を反映しました",
-              action: { label: "元に戻す", onClick: () => {} },
-            })
-          }
-        >
-          通知を直接出す
-        </Button>
-      </Inline>
-    </Panel>
-  );
-}

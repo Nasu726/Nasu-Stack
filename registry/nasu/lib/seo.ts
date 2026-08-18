@@ -7,7 +7,7 @@
  * ```ts
  * const meta = buildMeta({
  *   title: "はじめての記事",
- *   siteName: "Studio Nasu",
+ *   siteName: "Example Studio",
  *   description: "…",
  *   site: "https://example.com",
  *   path: "/blog/hello",

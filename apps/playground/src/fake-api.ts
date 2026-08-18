@@ -14,10 +14,10 @@ export interface Task {
 }
 
 const TASKS: Task[] = [
-  { id: 1, title: "ヒーローセクションの文言を確定する", owner: "なす", done: true },
-  { id: 2, title: "問い合わせフォームを API に接続", owner: "なす", done: false },
+  { id: 1, title: "ヒーローセクションの文言を確定する", owner: "me", done: true },
+  { id: 2, title: "問い合わせフォームを API に接続", owner: "me", done: false },
   { id: 3, title: "OGP 画像の生成を自動化", owner: "collaborator", done: false },
-  { id: 4, title: "Lighthouse のスコアを 95 以上にする", owner: "なす", done: false },
+  { id: 4, title: "Lighthouse のスコアを 95 以上にする", owner: "me", done: false },
 ];
 
 const wait = (ms: number, signal?: AbortSignal) =>

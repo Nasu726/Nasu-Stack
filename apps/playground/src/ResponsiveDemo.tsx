@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/layout";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Button } from "@/components/ui/action-button";
+import { withBase } from "@/lib/base";
 import { Panel } from "./Panel";
 
 export function ResponsiveDemo() {
@@ -37,7 +38,17 @@ function DevicePreview() {
   return (
     <Panel
       title="端末プレビュー"
-      description="このカタログ自身を、指定した幅で表示します。実際のブラウザ幅で描画しているので、md: や lg: の切り替わりもそのまま再現されます。"
+      description={
+        <>
+          このカタログ自身を、指定した幅で表示します。iframe は独立した
+          ビューポートなので、<code className="text-fg">md:</code> や{" "}
+          <code className="text-fg">lg:</code> の切り替わりもそのまま起きます。
+          <strong className="text-fg">
+            画面の広い端末で見るためのものです。
+          </strong>
+          スマホでは元の幅がもともと狭いので、どの幅を選んでもほとんど変わりません。
+        </>
+      }
     >
       <Stack space="md">
         <Inline space="xs">
@@ -60,8 +71,11 @@ function DevicePreview() {
             style={{ width, maxWidth: "100%" }}
           >
             <iframe
-              // ネストが無限に増えないよう、プレビュー内ではこのタブを出しません
-              src="/?embed=1"
+              // ネストが無限に増えないよう、プレビュー内ではこのタブを出しません。
+              // **base を自分で付けます。** src は手で書いた文字列なので、
+              // ビルドは書き換えません。付け忘れると、サブパスに公開したときだけ
+              // ここが 404 になります（v0.9c で実際にそうなっていました）。
+              src={withBase("/?embed=1")}
               title={`幅 ${width}px のプレビュー`}
               className="block h-[520px] w-full border-0"
             />
@@ -132,11 +146,13 @@ pre { overflow-x: auto; }
 
 /* ---------------------------------------------------------------- */
 
+/* 見本の中身は**誰のものでもない値**にします。
+   実在の案件名や氏名を置くと、そのまま公開ページに載ります。 */
 const ROWS = [
-  ["2026-08-01", "レースゲーム", "Unity / C#", "進行中", "なす", "高", "3", "12,400"],
-  ["2026-07-18", "口頭作文ツール", "TypeScript", "完了", "なす", "中", "8", "8,900"],
-  ["2026-07-02", "Kaggle パイプライン", "Python", "完了", "なす", "低", "21", "24,100"],
-  ["2026-06-20", "WebTemplate", "React / Astro", "進行中", "なす", "高", "5", "3,300"],
+  ["2026-08-01", "案件 A", "Unity / C#", "進行中", "me", "高", "3", "12,400"],
+  ["2026-07-18", "案件 B", "TypeScript", "完了", "me", "中", "8", "8,900"],
+  ["2026-07-02", "案件 C", "Python", "完了", "collaborator", "低", "21", "24,100"],
+  ["2026-06-20", "案件 D", "React / Astro", "進行中", "me", "高", "5", "3,300"],
 ];
 const HEADERS = ["日付", "案件", "技術", "状態", "担当", "優先度", "件数", "金額"];
 
@@ -187,11 +203,12 @@ function CheckCommand() {
     <Panel
       title="崩れていないことを数値で確かめる"
       description="「たぶん大丈夫」ではなく、実際のブラウザを 5 つの幅で開いて機械的に調べます。崩れがあると終了コード 1 を返すので、CI にそのまま載せられます。"
-      code={`npm run check -- http://localhost:5173
+      code={`npm run check          # 見に行く URL は package.json に書いてあります
+                       # （astro なら 4321、vite なら 4173）
 
 端末幅チェック: 1 ページ × 5 幅
 
-  ✗ http://localhost:5173  @ 320 (小さいスマホ)
+  ✗ http://localhost:4321  @ 320 (小さいスマホ)
       横に 577px はみ出しています
         ↳ <p class="…"> が 577px 外へ  "https://example.com/very/long…"
         → 長い文字列なら overflow-wrap、表やコードなら <Scrollable> で囲んでください

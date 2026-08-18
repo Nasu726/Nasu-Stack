@@ -150,9 +150,28 @@
  * `max-w-sm` が 24rem ではなく 0.75rem になってしまいます（実際に踏みました）。
  * 独自ユーティリティとして定義することで、標準のクラスを一切壊しません。
  */
+/*
+ * **方向つきも全部定義します。** ここが中途半端だと、`pt-2xl` のような
+ * クラスが**何のエラーも出さずに 0 になります。** 書いた側は効いたつもりで、
+ * 見た目だけが違う——いちばん気づきにくい壊れ方です。
+ *
+ * v0.9c で実測したところ、`pt-2xl` `pb-3xl` `mt-xs` `mt-xl` `mb-2xs` が
+ * すべて 0px でした（配っている site-footer.tsx の中にもありました）。
+ * 定義の漏れは `scripts/check-space-utilities.mjs` が機械で見張ります。
+ *
+ * 縦のリズムは `Stack` / `Section` の担当です。margin 系は、
+ * それでは届かない例外のために置いています。
+ */
 @utility gap-* {
   gap: --value(--space-*);
 }
+@utility gap-x-* {
+  column-gap: --value(--space-*);
+}
+@utility gap-y-* {
+  row-gap: --value(--space-*);
+}
+
 @utility p-* {
   padding: --value(--space-*);
 }
@@ -161,6 +180,52 @@
 }
 @utility py-* {
   padding-block: --value(--space-*);
+}
+@utility pt-* {
+  padding-block-start: --value(--space-*);
+}
+@utility pb-* {
+  padding-block-end: --value(--space-*);
+}
+@utility ps-* {
+  padding-inline-start: --value(--space-*);
+}
+@utility pe-* {
+  padding-inline-end: --value(--space-*);
+}
+@utility pl-* {
+  padding-left: --value(--space-*);
+}
+@utility pr-* {
+  padding-right: --value(--space-*);
+}
+
+@utility m-* {
+  margin: --value(--space-*);
+}
+@utility mx-* {
+  margin-inline: --value(--space-*);
+}
+@utility my-* {
+  margin-block: --value(--space-*);
+}
+@utility mt-* {
+  margin-block-start: --value(--space-*);
+}
+@utility mb-* {
+  margin-block-end: --value(--space-*);
+}
+@utility ms-* {
+  margin-inline-start: --value(--space-*);
+}
+@utility me-* {
+  margin-inline-end: --value(--space-*);
+}
+@utility ml-* {
+  margin-left: --value(--space-*);
+}
+@utility mr-* {
+  margin-right: --value(--space-*);
 }
 
 /**

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/layout";
 import { Tabs } from "@/components/ui/tabs";
 import { Panel } from "./Panel";
+import { useToast } from "@/components/ui/action-provider";
 import { LayoutDemo } from "./LayoutDemo";
 import { ResponsiveDemo } from "./ResponsiveDemo";
 import { PartsDemo } from "./PartsDemo";
@@ -61,15 +62,25 @@ const PANELS: Record<string, React.ReactNode> = {
       <FormSection />
       <ListSection />
       <AbortSection />
+      <ToastSection />
     </Stack>
   ),
 };
 
 function NotBuilt({ tab }: { tab: string }) {
+  // 画面に出すのは見に来た人向けの一言だけ。
+  // **こちらが気づくための情報はコンソールへ回します。**
+  // 内部のファイル名を出しても、読む人には手がかりになりません。
+  React.useEffect(() => {
+    console.warn(
+      `[catalog] tabs.mjs に "${tab}" がありますが、App.tsx の PANELS に中身がありません`,
+    );
+  }, [tab]);
+
   return (
-    <Panel title={`「${tab}」はまだ作っていません`} description={null}>
+    <Panel title="この章はまだ準備中です" description={null}>
       <p className="text-sm text-muted-fg">
-        tabs.mjs にはありますが、App.tsx の PANELS に対応する中身がありません。
+        まだ中身がありません。他のタブをご覧ください。
       </p>
     </Panel>
   );
@@ -85,7 +96,7 @@ export function App() {
     // 別のタブだった、を黙って見逃さないための目印です。
     <div className="min-h-dvh bg-bg text-fg" data-active-tab={tab}>
       <Header tab={tab} onTab={setTab} />
-      <PageBlock width="content" gutter="md" as="main" className="pb-3xl pt-xl">
+      <PageBlock width="content" gutter="md" as="main" className="pb-3xl pt-2xl">
         <Stack space="3xl">
           <Intro />
           {/* タブ列はヘッダ、中身はここ、と離れています。
@@ -111,7 +122,9 @@ export function App() {
 function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
   const { theme } = useTheme();
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-bg/80 backdrop-blur-md">
+    // ナビのデモに置く SiteHeader は z-30 です（部品側の既定）。
+    // カタログの枠がそれより上に無いと、スクロール中に潜られます。
+    <header className="sticky top-0 z-40 border-b border-border bg-bg/80 backdrop-blur-md">
       <PageBlock width="content" gutter="md" className="py-sm">
         <Spread space="sm">
           <Inline space="sm" alignY="baseline">
@@ -135,7 +148,9 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
               label="カタログの章"
               idPrefix="catalog"
               panelId="catalog-panel"
-              className="min-w-0 max-w-[min(38rem,60vw)]"
+              // 幅は**残りに合わせます。** 以前は max-w に vw を混ぜていて、
+              // 画面を半分にしたときだけ、余白があるのにスクロールが出ていました。
+              className="min-w-0 flex-1"
             />
             <ThemeSwitcher />
           </Inline>
@@ -155,10 +170,11 @@ function Intro() {
       </h1>
       <ContentBlock width="prose" align="start" className="text-sm">
         <p className="leading-relaxed text-muted-fg">
-          余白は 9 段階が既定なので配置で迷いません。ただし壁ではなく、
+          余白は 9 段階が既定なので配置で迷いません。ただし 9 段階は制限ではなく、
           段階に無い値もそのまま書けます。
           非同期処理は関数を 1 つ渡すだけで、読込中・成功・失敗・空・二重送信・中断が付いてきます。
-          上のスイッチでトンマナを切り替えると、色・角丸・影・書体・余白の広さまで一斉に変わります。
+          上のスイッチでトンマナ（見た目の系統）を切り替えると、
+          色・角丸・影・書体・余白の広さまで一斉に変わります。
         </p>
       </ContentBlock>
     </Stack>
@@ -206,7 +222,7 @@ function ButtonSection() {
           </ActionButton>
         </Labeled>
 
-        <Labeled label="2回失敗→自動で3回目">
+        <Labeled label="2 回失敗 → 自動で 3 回目">
           <ActionButton action={api.flaky} retry={3} retryDelay={400}>
             同期する
           </ActionButton>
@@ -250,6 +266,9 @@ function ButtonSection() {
           />
         </Labeled>
       </Inline>
+      <p className="text-xs text-muted-fg">
+        見本です。押しても実際には何も送信されません。
+      </p>
     </Panel>
   );
 }
@@ -319,7 +338,8 @@ function FormSection() {
           <code className="text-fg">ActionError</code> の{" "}
           <code className="text-fg">fields</code> に入れたエラーは、
           対応する入力欄の下へ自動で表示され、打ち直すと消えます。
-          メールを空欄や <code>a@example.com</code> にすると挙動が確認できます。
+          メールを空欄にするか <code>a@example.com</code> を入れると、
+          失敗したときの表示を確認できます。
         </>
       }
       code={`<AsyncForm action={api.signup} submitLabel="アカウントを作成">\n  <Field name="email" label="メールアドレス" type="email" required />\n</AsyncForm>`}
@@ -330,7 +350,7 @@ function FormSection() {
           submitLabel="アカウントを作成"
           successMessage="登録が完了しました"
         >
-          <Field name="name" label="お名前" placeholder="なす" required />
+          <Field name="name" label="お名前" placeholder="山田 太郎" required />
           <Field
             name="email"
             label="メールアドレス"
@@ -347,6 +367,9 @@ function FormSection() {
             required
           />
         </AsyncForm>
+        <p className="mt-xs text-xs text-muted-fg">
+          見本です。押しても実際には何も送信されません。
+        </p>
       </ContentBlock>
     </Panel>
   );
@@ -444,6 +467,73 @@ function AbortSection() {
 
 /* ---------------------------------------------------------------- */
 
+/* ActionProvider は余白や段組の話ではないので、「状態」の章に置いています。
+   探す人が見るのはこちらのはずです。 */
+function ToastSection() {
+  const toast = useToast();
+
+  return (
+    <Panel
+      title="ActionProvider — 書き忘れの受け皿"
+      description={
+        <>
+          <code className="text-fg">onError</code> を書かなかったアクションが失敗すると、
+          画面隅に通知が出ます。エラー処理の書き忘れが握り潰されなくなります。
+          個別に <code className="text-fg">onError</code> を書いた場合はそちらが優先され、通知は出ません。
+        </>
+      }
+      code={`<ActionProvider>\n  <App />\n</ActionProvider>`}
+    >
+      <Inline space="sm">
+        <ActionButton
+          action={async () => {
+            await new Promise((r) => setTimeout(r, 600));
+            throw new Error("在庫の取得に失敗しました");
+          }}
+          showError={false}
+          variant="outline"
+        >
+          onError を書かずに失敗させる
+        </ActionButton>
+
+        <ActionButton
+          action={async () => {
+            await new Promise((r) => setTimeout(r, 600));
+            throw new Error("これは通知されない");
+          }}
+          onError={(e) =>
+            toast.show({
+              tone: "warning",
+              title: "自前で処理しました",
+              description: e.displayMessage,
+            })
+          }
+          showError={false}
+          variant="outline"
+        >
+          onError を自分で書く
+        </ActionButton>
+
+        <Button
+          variant="ghost"
+          onClick={() =>
+            toast.show({
+              tone: "success",
+              title: "保存しました",
+              description: "3 件の変更を反映しました",
+              action: { label: "元に戻す", onClick: () => {} },
+            })
+          }
+        >
+          通知を直接出す
+        </Button>
+      </Inline>
+    </Panel>
+  );
+}
+
+/* ---------------------------------------------------------------- */
+
 /** 端末プレビュー用の簡略ページ。実際のレイアウト部品だけで組んであります。 */
 function EmbeddedPreview() {
   return (
@@ -451,7 +541,7 @@ function EmbeddedPreview() {
       <PageBlock width="content" gutter="md" className="py-lg">
         <Stack space="lg">
           <Spread space="sm">
-            <span className="font-display text-base">Studio Nasu</span>
+            <span className="font-display text-base">Example Studio</span>
             <Inline space="xs">
               <span className="text-xs text-muted-fg">Works</span>
               <span className="text-xs text-muted-fg">About</span>

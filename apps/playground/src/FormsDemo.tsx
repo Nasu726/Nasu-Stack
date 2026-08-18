@@ -34,21 +34,31 @@ function InputsSection() {
 
   return (
     <Panel
-      title="入力部品と、複数値の取りこぼし"
+      title="入力部品と formDataToObject"
       description={
         <>
-          <code className="text-fg">Object.fromEntries(fd.entries())</code>{" "}
-          は同じキーが複数あると最後だけ残します。
-          つまり複数選択のセレクトやチェックボックス群が壊れます。
-          未チェックのチェックボックスは FormData に現れないので、
-          隠し入力で目印を送っています。送信すると実際の値が下に出ます。
+          <code className="text-fg">AsyncForm</code> は送信のとき{" "}
+          <code className="text-fg">formDataToObject</code>{" "}
+          を通してから <code className="text-fg">action</code> を呼びます。
+          <strong className="text-fg">同じ名前の入力は配列に畳まれ</strong>、
+          チェックの外れているチェックボックスも空文字で届きます。
+          下のフォームを送ると、<code className="text-fg">action</code>{" "}
+          が実際に受け取った値がそのまま出ます。
         </>
       }
-      code={`// これを使ってはいけない
-Object.fromEntries(fd.entries())   // 同名キーは最後だけ残る
+      code={`<AsyncForm action={(values) => api.save(values)}>…</AsyncForm>
 
-// 同名は配列に畳む
-formDataToObject(fd)`}
+// values は畳んだあとの形で届きます
+{
+  title: "打ち合わせの記録",
+  langs: ["ts", "rs"],   // <select multiple> で 2 つ選んだ
+  tags:  ["web"],        // 同じ name のチェックボックス
+  plan:  "pro",
+  agree: ""              // チェックを外したまま送った
+}
+
+// 自分で <form> を書くときは、直接呼べます
+const values = formDataToObject(new FormData(formEl));`}
     >
       <Stack space="lg">
         <Box className="max-w-md">
@@ -85,7 +95,7 @@ formDataToObject(fd)`}
               name="langs"
               label="使う言語（複数選択）"
               multiple
-              hint="Ctrl / ⌘ を押しながらで複数選べます"
+              hint="複数選べます（パソコンでは Ctrl / ⌘ を押しながらクリック）"
               options={[
                 { value: "ts", label: "TypeScript" },
                 { value: "py", label: "Python" },
@@ -118,12 +128,11 @@ formDataToObject(fd)`}
 
             <DateField name="due" label="期限" hint="ブラウザ標準の日付入力です" />
 
-            <CheckboxField
-              name="agree"
-              label="規約に同意する"
-              hint="未チェックでも値が届きます（空文字になります）"
-            />
+            <CheckboxField name="agree" label="規約に同意する" />
           </AsyncForm>
+          <p className="mt-xs text-xs text-muted-fg">
+            見本です。押しても実際には何も送信されません。
+          </p>
         </Box>
 
         {sent && (
@@ -267,7 +276,6 @@ function OptimisticSection() {
           追加・削除・更新をサーバーの応答を待たずに反映し、失敗したら
           <strong className="text-fg">その操作だけ</strong>取り消します。
           「配列を控えて戻す」実装だと、同時に走った他の操作まで巻き戻ります。
-          題名に <code>fail</code> を入れると失敗します。
           保留中の行は薄く表示されます。
         </>
       }
@@ -285,7 +293,7 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="やることを追加（fail を含めると失敗）"
+            placeholder="やることを追加"
             aria-label="やることの題名"
             className="min-w-0 flex-1 rounded-md border border-input bg-card px-3 py-2 text-base"
           />
@@ -390,6 +398,15 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
           </Button>
           <span className="self-center text-xs text-muted-fg">
             保留中: {list.hasPending ? "あり" : "なし"}
+          </span>
+        </Inline>
+
+        <Inline space="xs">
+          <span className="text-xs text-muted-fg">
+            <strong className="text-fg">
+              このデモの偽サーバーは、題名に fail を含むものだけ拒否します。
+            </strong>
+            部品の仕様ではありません。失敗したときの戻り方を見るための細工です。
           </span>
         </Inline>
       </Stack>
