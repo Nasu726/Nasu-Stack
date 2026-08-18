@@ -511,4 +511,34 @@ const active = (page) =>
 }
 
 console.log(`\n（対象: ${BASE} / http://127.0.0.1:4321）`);
+/* ===== SiteFooter: 列が多いとき（Δ-P2-01） ======================
+   v0.9d でリンクの列を shrink-0 にしましたが、試したのは 2 列だけでした。
+   API は列数を制限していないので、**6 列でも器から出ないこと**を見ます。 */
+{
+  const page = await openTab("nav", { width: 1280, height: 900 });
+  for (const w of [768, 1024, 1280]) {
+    await page.setViewportSize({ width: w, height: 900 });
+    await page.waitForTimeout(300);
+    const m = await page.evaluate(() => {
+      const box = document.querySelector('[data-testid="footer-demo"]');
+      const navs = [...box.querySelectorAll("nav")];
+      const r = box.getBoundingClientRect();
+      return {
+        列数: navs.length,
+        はみ出し: Math.round(Math.max(0, ...navs.map((n) => n.getBoundingClientRect().right - r.right))),
+        いちばん狭い列: Math.round(Math.min(...navs.map((n) => n.getBoundingClientRect().width))),
+        中身が入りきらない列: navs.filter((n) => n.scrollWidth > n.clientWidth + 1).length,
+        ページのはみ出し: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    must(
+      `12. SiteFooter が 6 列でも器から出ない (${w}px)`,
+      m.はみ出し === 0 && m.ページのはみ出し <= 0 && m.中身が入りきらない列 === 0,
+      JSON.stringify(m),
+    );
+  }
+  await page.close();
+}
+
+
 await finish();

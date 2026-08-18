@@ -254,7 +254,10 @@ for (const kind of ["astro", "blog", "vite"]) {
   const dest = path.join(out, kind);
   fs.mkdirSync(dest, { recursive: true });
   if (kind === "blog") {
-    // 足場は astro と同じ → apps/site の中身 → ブログ固有の上書き、の順。
+    /* 足場は astro と同じ → apps/site の中身 → ブログ固有の上書き、の順。
+       **package-lock.json は astro のものが残ります。** blog の依存は
+       astro と同じで、違うのは scripts だけだからです。ずれたら
+       verify-create の判定（同梱の lock で install が通るか）が落ちます。 */
     copyScaffold("astro", dest);
     copyFromSite(dest);
     copyScaffold("blog", dest);

@@ -200,10 +200,15 @@ tarball の URL だけを案内しています。
 - **URL を https に限る。** レジストリの JSON も tarball も同じです
 
 ```bash
-curl -sL https://nasu726.github.io/WebTemplate/create-webtemplate.tgz -o t.tgz
-curl -sL https://nasu726.github.io/WebTemplate/create-webtemplate.tgz.sha256
-sha256sum t.tgz     # 一致することを確かめてから npx t.tgz my-site
+# 1 度落として、それを確かめて、**その同じファイルを実行**します。
+curl -fsSL -O https://nasu726.github.io/WebTemplate/create-webtemplate.tgz
+curl -fsSL -O https://nasu726.github.io/WebTemplate/create-webtemplate.tgz.sha256
+sha256sum -c create-webtemplate.tgz.sha256
+npx ./create-webtemplate.tgz my-site
 ```
+
+**URL を直接 npx する形では確かめられません。** 取り直して実行するので、
+確かめたものと実行したものが同じとは限りません。
 
 ---
 

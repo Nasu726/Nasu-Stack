@@ -36,10 +36,22 @@ shadcn のレジストリのディレクトリには、**掲載を申請する�
 
 tarball は打つ前に照合できます。
 
+1 度落として、それを確かめて、**その同じファイルを実行**します。
+
 ```bash
-curl -sL https://nasu726.github.io/WebTemplate/create-webtemplate.tgz | sha256sum
-curl -sL https://nasu726.github.io/WebTemplate/create-webtemplate.tgz.sha256
+curl -fsSL -O https://nasu726.github.io/WebTemplate/create-webtemplate.tgz
+curl -fsSL -O https://nasu726.github.io/WebTemplate/create-webtemplate.tgz.sha256
+sha256sum -c create-webtemplate.tgz.sha256   # OK と出たら
+npx ./create-webtemplate.tgz my-site
 ```
+
+（Windows の PowerShell なら
+`Get-FileHash create-webtemplate.tgz -Algorithm SHA256` で出した値を、
+`.sha256` の中身と見比べてください。）
+
+**README の 1 行（URL を直接 npx する形）では確かめられません。**
+あの形は URL からもう一度取り直して実行するので、
+**確かめたものと実行したものが同じとは限りません。**
 
 **これは「誰が作ったか」を示しません。** 示せるのは
 「取れたものが、こちらが出したものと同じか」だけです。

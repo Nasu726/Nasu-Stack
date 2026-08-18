@@ -245,6 +245,10 @@ function ColumnsDemo() {
             <Button
               key={String(c.value)}
               size="sm"
+              /* **色だけでは伝わりません。** 読み上げには「3 つのボタン」
+                 としか見えず、どれが選ばれているか分かりません。
+                 アクセシビリティを売りにしている以上、デモ自身が手本であるべきです。 */
+              aria-pressed={collapse === c.value}
               variant={collapse === c.value ? "primary" : "outline"}
               onClick={() => setCollapse(c.value)}
             >

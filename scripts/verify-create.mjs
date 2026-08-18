@@ -9,6 +9,7 @@
  * （`Button` に `action` は無い）が見つかりました。
  */
 import { execFileSync, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -92,6 +93,7 @@ const PAGES = {
     .map(String);
   const want = [
     "package.json",
+    "package-lock.json",
     "tsconfig.json",
     "astro.config.mjs",
     ".gitignore",
@@ -574,11 +576,35 @@ if (!FULL) {
         : ["exec", "--", "astro", "check"];
     const dir = path.join(work, name);
     log(`${kind}: npm install …`);
+
+    /* 同梱した lockfile が、まだ package.json と噛み合っているか。
+       ----------------------------------------------------------------
+       **古い lockfile を配るのが、同梱した分の新しいリスクです。**
+       噛み合っていないと npm は黙って書き直すので、
+       前後のハッシュを比べれば分かります。
+       （書き直された = 利用者が受け取るのは、こちらが検査していない木） */
+    const lockPath = path.join(dir, "package-lock.json");
+    /* 改行は見ません。**見たいのは「npm が木を書き換えたか」**であって、
+       CRLF/LF の違いではありません（環境で変わります）。 */
+    const hashOf = (p) =>
+      createHash("sha256")
+        .update(fs.readFileSync(p, "utf8").split(String.fromCharCode(13)).join(""))
+        .digest("hex");
+    const lockBefore = fs.existsSync(lockPath) ? hashOf(lockPath) : null;
+    must(`7.48 ${kind}: lockfile が同梱されている`, lockBefore !== null);
+
     // 利用者が打つのと同じ 1 行。--ignore-workspace のような
     // こちら側の都合は入れません。
     const i = run(dir, ["install"]);
     must(`8. ${kind}: npm install が通る`, i.ok, i.out ?? "");
     if (!i.ok) continue;
+    if (lockBefore) {
+      must(
+        `     ${kind}: install しても lockfile が書き換わらない`,
+        hashOf(lockPath) === lockBefore,
+        "書き換わった = 同梱していた lockfile が古い",
+      );
+    }
 
     /* --- 8.2. 配っている依存に、既知の脆弱性が無いか ----------------
        **これが無いと、古いまま配り続けます。**

@@ -1,0 +1,3 @@
+# lockfile は npm が LF で書き出します。CRLF で持つと、利用者の最初の
+# `npm install` が改行だけを書き換えて、意味のない差分が出ます。
+package-lock.json text eol=lf
