@@ -242,6 +242,20 @@
  * `@media (pointer: coarse)` の側では直せません。この指摘は
  * 1024px 幅（指ではない端末）でも出るからです。
  */
+/**
+ * スクロールバーを隠します。**場所は取ったままです**（overlay でない環境で
+ * 出し入れすると、中身が横に跳ねます）。
+ *
+ * **端の影までは消しません。** 影も消すと「ここはスクロールできる」ことを
+ * 示すものが 1 つも無くなります。
+ */
+@utility wt-noscrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @utility wt-tap {
   min-block-size: 2.75rem;
   min-inline-size: 1.5rem;

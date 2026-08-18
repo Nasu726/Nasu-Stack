@@ -1,14 +1,20 @@
 import * as React from "react";
 import { Panel } from "./Panel";
 import { Frame, Img } from "@/components/ui/frame";
+import { withBase } from "@/lib/base";
 import { ContentBlock, Columns, Column, Stack } from "@/components/ui/layout";
 import { Button } from "@/components/ui/action-button";
 
 /**
  * 1600x900 の画像。**外部の URL は使いません。**
  * 検証はネットワークの無い環境でも走る必要があるためです。
+ *
+ * **base は自分で付けます。** `src` は手で書いた文字列なので、
+ * ビルドは書き換えません。付け忘れると、サブパスに公開したときだけ
+ * 画像が出なくなります（v0.9d まで実際に出ていませんでした。
+ * ボタンを押すまで描画されないので、検査も素通りしていました）。
  */
-const IMAGE = "/demo-1600x900.png";
+const IMAGE = withBase("/demo-1600x900.png");
 
 export function TextDemo() {
   return (

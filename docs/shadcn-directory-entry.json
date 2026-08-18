@@ -1,0 +1,6 @@
+{
+  "name": "nasu",
+  "homepage": "https://github.com/Nasu726/WebTemplate",
+  "registry": "https://nasu726.github.io/WebTemplate/r/{name}.json",
+  "description": "余白と非同期の状態を部品の側が引き受ける、日本語のサイト/アプリ用レジストリ。レイアウト・フォーム・ナビ・SEO と、端末幅の崩れを機械で測る検査を含みます。"
+}

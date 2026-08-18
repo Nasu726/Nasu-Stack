@@ -185,26 +185,28 @@ const active = (page) =>
     JSON.stringify(many),
   );
 
-  /* 横にしか動けない領域は、**ホイールの縦を横へ回さないと動きません。**
-     指でも矢印キーでも動くので、作った側は気づけません
-     （v0.9c で、作者がタッチパッドで触って初めて分かりました）。 */
+  /* 横にしか動けない領域は、**ホイールの横の動きを見ないと動きません。**
+     指でも矢印キーでも動くので、作った側は気づけません。
+
+     **縦では動いてはいけません。** v0.9c では縦を横へ回していましたが、
+     コード例や表の上を通っただけでページの縦読みが止まるので、やめました。
+
+     ここで作る wheel は合成イベントなので、ブラウザ自身のスクロールは
+     起きません。**動いたなら、こちらの処理が動いたということです。** */
   const wheel = await page.evaluate(async () => {
     const tl = document.querySelector('[role="tablist"][aria-label="たくさんある例"]');
     const el = tl?.parentElement;
-    if (!el) return { 前: -1, 後: -1 };
-    el.scrollLeft = 0;
-    const 前 = el.scrollLeft;
-    el.dispatchEvent(
-      new WheelEvent("wheel", { deltaY: 120, bubbles: true, cancelable: true }),
-    );
-    await new Promise((r) => setTimeout(r, 100));
-    return { 前, 後: el.scrollLeft };
+    if (!el) return { 横: -1, 縦: -1 };
+    const fire = async (init) => {
+      el.scrollLeft = 0;
+      el.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, ...init }));
+      await new Promise((r) => setTimeout(r, 100));
+      return el.scrollLeft;
+    };
+    return { 横: await fire({ deltaX: 120 }), 縦: await fire({ deltaY: 120 }) };
   });
-  must(
-    "   ホイール（縦）で横スクロールできる",
-    wheel["後"] > wheel["前"],
-    JSON.stringify(wheel),
-  );
+  must("   ホイールの横で横スクロールできる", wheel["横"] > 0, JSON.stringify(wheel));
+  must("   ホイールの縦では横に動かない", wheel["縦"] === 0, JSON.stringify(wheel));
 
   await page.close();
 }

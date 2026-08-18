@@ -1,8 +1,9 @@
 ---
 import "../styles/global.css";
-import { themeInitScript } from "@/components/ui/theme-provider";
+import { makeThemeInitScript } from "@/components/ui/theme-provider";
+import { ThemeToggle } from "../components/ThemeToggle";
 import Seo from "../components/Seo.astro";
-import { SITE } from "../site.config";
+import { SITE, THEME_STORAGE_KEY } from "../site.config";
 import type { MetaInput } from "@/lib/seo";
 
 interface Props extends Omit<MetaInput, "site" | "siteName"> {
@@ -33,12 +34,34 @@ import { withBase } from "@/lib/base";
 
     <link rel="alternate" type="application/rss+xml" title={SITE.name} href={withBase("/rss.xml")} />
 
-    {/* 保存済みのテーマを描画前に適用してちらつきを防ぐ。
-        処理の定義は theme-provider.tsx にしかありません（二重管理を避けるため）。 */}
-    <script is:inline set:html={themeInitScript} />
+    {/* 保存済みの明暗を描画前に適用してちらつきを防ぐ。
+        処理の定義は theme-provider.tsx にしかありません（二重管理を避けるため）。
+
+        **lockTheme: true です。** 上の <html data-theme> に書いた系統を
+        書き換えません。カタログと保存先も分けています（同じドメインなので、
+        分けないと片方の選択がもう片方に出ます）。 */}
+    <script
+      is:inline
+      set:html={makeThemeInitScript({
+        storageKey: THEME_STORAGE_KEY,
+        lockTheme: true,
+      })}
+    />
   </head>
 
   <body class="min-h-dvh bg-bg text-fg">
     <slot />
+
+    {/* 明暗の切り替え。**画面の端に固定します。**
+        SiteHeader の中に入れられない理由は ThemeToggle.tsx に書きました。
+        印刷には出しません。
+
+        **client:idle にしてはいけません。** requestIdleCallback は
+        タブが見えていないと発火しないので、開いた直後に押しても
+        何も起きないことがあります（実測で踏みました）。
+        押される場所なので、読み込んだら動く形にします。 */}
+    <div class="fixed bottom-4 right-4 z-40 print:hidden">
+      <ThemeToggle client:load />
+    </div>
   </body>
 </html>

@@ -74,14 +74,41 @@ for (const item of registry.items) {
     type: item.type,
     title: item.title,
     description: item.description,
+    /* 一覧には**中身を入れません。** content まで入れると 1 ファイルが
+       数百 KB になり、しかも個別 JSON と同じものが 2 か所に出ます。
+       shadcn のディレクトリの要件でもあります（files は要る、content は入れない）。 */
+    files: (item.files ?? []).map((f) => ({
+      path: f.path,
+      type: f.type,
+      ...(f.target ? { target: f.target } : {}),
+    })),
   });
   count++;
 }
 
-await writeFile(
-  path.join(outDir, "index.json"),
-  JSON.stringify({ name: registry.name, items: index }, null, 2) + "\n",
-  "utf8",
-);
+/**
+ * 一覧。**2 つの名前で出します。**
+ *
+ *   registry.json … shadcn のディレクトリに載せるための名前。
+ *                   $schema / name / homepage / items[].files が要ります
+ *   index.json    … これまで配ってきた名前。**消しません。**
+ *                   既に読んでいる人がいるかもしれないためです
+ *
+ * 中身は同じものです（下で 1 回だけ組み立てます）。
+ */
+const listing = {
+  $schema: "https://ui.shadcn.com/schema/registry.json",
+  name: registry.name,
+  homepage: registry.homepage,
+  items: index,
+};
+
+for (const file of ["registry.json", "index.json"]) {
+  await writeFile(
+    path.join(outDir, file),
+    JSON.stringify(listing, null, 2) + String.fromCharCode(10),
+    "utf8",
+  );
+}
 
 console.log(`✓ ${count} 件を public/r/ に出力しました`);

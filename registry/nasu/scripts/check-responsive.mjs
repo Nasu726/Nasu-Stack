@@ -233,7 +233,68 @@ export function inspect(viewportWidth) {
     }
   }
 
-  /* 6. 場所を取っていない画像は、別の走査で調べます（下の checkImageSizing）。
+  /* 6. 潰れ ---------------------------------------------------
+     **はみ出しの反対側です。** ここまでの判定は「外へ出ていないか」しか
+     見ていません。中へ潰れているものは、全部緑のまま通ります。
+
+     v0.9d で実測した実例:
+       - 段組を畳んだとき、幅を持たない列が 179px と 48px（親は 678px）
+       - Frame の比率の例が 24px
+       - カタログ上部のタブが可視幅 13px（中身は 530px）
+
+     どれも「小さくなるだけ」なので、目で見ないと気づけません。
+     しかも見た人は「そういうデザイン」だと思うので、報告も来ません。 */
+  const squashed = [];
+  {
+    /** 中身が入る場所があるのに、極端に狭くなっている要素を探します。 */
+    const CANDIDATE = ".wt-col, .wt-frame, [data-wt-fill]";
+    for (const el of document.querySelectorAll(CANDIDATE)) {
+      const p = el.parentElement;
+      if (!p) continue;
+      const r = el.getBoundingClientRect();
+      const pr = p.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      // 親が狭ければ子が狭いのは当たり前
+      if (pr.width < 200) continue;
+      // 横に並んでいるなら、狭いのは正しい姿
+      const pcs = getComputedStyle(p);
+      const stacked =
+        pcs.display === "block" ||
+        ((pcs.display === "flex" || pcs.display === "inline-flex") &&
+          pcs.flexDirection.startsWith("column"));
+      if (!stacked) continue;
+      if (r.width / pr.width >= 0.4) continue;
+      squashed.push({
+        tag: el.tagName.toLowerCase(),
+        cls: String(el.className || "").slice(0, 46),
+        width: Math.round(r.width),
+        parent: Math.round(pr.width),
+        text: (el.textContent || "").trim().slice(0, 24),
+      });
+    }
+
+    /* スクロールできる器が、1 項目より狭くなっていないか。
+       狭くなると「そこに何かある」ことすら分かりません。 */
+    for (const list of document.querySelectorAll('[role="tablist"]')) {
+      const box = list.parentElement;
+      if (!box) continue;
+      const first = list.querySelector('[role="tab"]');
+      if (!first) continue;
+      const need = first.getBoundingClientRect().width;
+      const have = box.clientWidth;
+      if (need > 0 && have > 0 && have < need) {
+        squashed.push({
+          tag: "tablist",
+          cls: String(list.getAttribute("aria-label") || "").slice(0, 46),
+          width: Math.round(have),
+          parent: Math.round(list.scrollWidth),
+          text: "1 項目 " + Math.round(need) + "px より狭い",
+        });
+      }
+    }
+  }
+
+  /* 7. 場所を取っていない画像は、別の走査で調べます（下の checkImageSizing）。
      ここで属性から推測すると、**読み込みが速い環境では見逃します。**
      実際、寸法の無い画像を置いて試したところ、この方式では検出できませんでした
      （プレビューが速すぎて、測るときには既に読み終わっていたため）。 */
@@ -247,6 +308,8 @@ export function inspect(viewportWidth) {
     zoomCount: zoomOnFocus.length,
     rigid: rigid.slice(0, 3),
     rigidCount: rigid.length,
+    squashed: squashed.slice(0, 5),
+    squashedCount: squashed.length,
     longLines: longLineDetail.length,
     longLineDetail: longLineDetail.slice(0, 3),
   };
@@ -435,6 +498,17 @@ export function formatReport(report) {
       issues.push(
         `画面幅より縮まない要素: ${r.rigidCount} 件 ` +
           `(${r.rigid.map((x) => `${x.tag} ${x.minWidth ?? x.width}`).join(", ")})`,
+      );
+    }
+    if (r.squashedCount > 0) {
+      issues.push(`場所があるのに潰れている要素: ${r.squashedCount} 件`);
+      for (const s of r.squashed) {
+        issues.push(
+          `  ↳ <${s.tag} class="${s.cls}"> が ${s.width}px（親は ${s.parent}px）  "${s.text}"`,
+        );
+      }
+      issues.push(
+        "  → 畳んだときの align、flex-1 での縮み、幅を持たない子を疑ってください",
       );
     }
     if (r.longLines > 0) {

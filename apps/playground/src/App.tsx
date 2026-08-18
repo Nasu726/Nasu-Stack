@@ -125,36 +125,60 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
     // ナビのデモに置く SiteHeader は z-30 です（部品側の既定）。
     // カタログの枠がそれより上に無いと、スクロール中に潜られます。
     <header className="sticky top-0 z-40 border-b border-border bg-bg/80 backdrop-blur-md">
-      <PageBlock width="content" gutter="md" className="py-sm">
-        <Spread space="sm">
-          <Inline space="sm" alignY="baseline">
+      {/* 狭いときは 3 段になるので、余白を詰めます。
+          実測（375px）: py-sm/gap-sm だと 171px、py-xs/gap-xs で 155px。
+          貼り付いたヘッダが画面の 2 割を占めるのは重いので、そこを削ります。 */}
+      <PageBlock width="content" gutter="md" className="py-xs lg:py-sm">
+        {/* ----------------------------------------------------------------
+            1024px 未満は 2 段にします
+            ----------------------------------------------------------------
+            実測（1440px）: 器 1024px に対して
+            ブランド 108 + タブ 531 + トンマナ 248 + 明暗 64 = 951。
+            余りは 73px しかありません。器が 980 を切ると 1 行には入りません。
+
+            v0.9c では「残りに合わせる」（flex-1）にしました。半画面は直りましたが、
+            **375px でタブの可視幅が 13px になりました**（中身は 530px）。
+            はみ出してはいないので、端末幅の検査は緑のまま通ります。
+            狭いときは**潰さずに段を増やす**のが正解でした。
+
+            段の入れ替えは order でやります。ThemeSwitcher を 2 つ置いて
+            hidden で出し分けると、読み上げに同じものが 2 回現れます。
+            ---------------------------------------------------------------- */}
+        <div className="flex flex-wrap items-center gap-xs lg:gap-sm">
+          <Inline space="sm" alignY="baseline" className="order-1 shrink-0">
             <span className="font-display text-lg">WebTemplate</span>
             <span className="text-xs text-muted-fg">/ {theme}</span>
           </Inline>
-          <Inline space="sm">
-            {/* 配布している Tabs をそのまま使っています。
-                自分で使わない部品は必ず腐るので、手書きの button 列から
-                差し替えました（矢印キー・roving tabindex が付きます）。 */}
-            <Tabs
-              items={TABS.map((t) => ({ value: t.key, label: t.label }))}
-              value={tab}
-              onValueChange={(k) => {
-                onTab(k);
-                // 検査スクリプトが直接そのタブを開けるように URL を合わせる
-                const u = new URL(window.location.href);
-                u.searchParams.set("tab", k);
-                window.history.replaceState(null, "", u);
-              }}
-              label="カタログの章"
-              idPrefix="catalog"
-              panelId="catalog-panel"
-              // 幅は**残りに合わせます。** 以前は max-w に vw を混ぜていて、
-              // 画面を半分にしたときだけ、余白があるのにスクロールが出ていました。
-              className="min-w-0 flex-1"
-            />
+
+          {/* 狭いとき: ブランドと同じ行の右端。広いとき: いちばん右。
+              **shrink-0 を付けてはいけません。** 320px ではトンマナの
+              4 ボタンが入り切らず、15px はみ出しました（実測）。
+              ThemeSwitcher は自分で折り返せるので、縮めるほうを許します。 */}
+          <div className="order-2 ms-auto min-w-0 lg:order-3 lg:ms-0">
             <ThemeSwitcher />
-          </Inline>
-        </Spread>
+          </div>
+
+          {/* 配布している Tabs をそのまま使っています。
+              自分で使わない部品は必ず腐るので、手書きの button 列から
+              差し替えました（矢印キー・roving tabindex が付きます）。 */}
+          <Tabs
+            items={TABS.map((t) => ({ value: t.key, label: t.label }))}
+            value={tab}
+            onValueChange={(k) => {
+              onTab(k);
+              // 検査スクリプトが直接そのタブを開けるように URL を合わせる
+              const u = new URL(window.location.href);
+              u.searchParams.set("tab", k);
+              window.history.replaceState(null, "", u);
+            }}
+            label="カタログの章"
+            idPrefix="catalog"
+            panelId="catalog-panel"
+            // basis-full で 2 段目へ落とします。**縮めません。**
+            // 入り切らないときは Scrollable が横に流します。
+            className="order-3 min-w-0 basis-full lg:order-2 lg:ms-auto lg:basis-auto"
+          />
+        </div>
       </PageBlock>
     </header>
   );
