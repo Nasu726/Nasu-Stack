@@ -4,6 +4,7 @@ import { Frame, Img } from "@/components/ui/frame";
 import { withBase } from "@/lib/base";
 import { ContentBlock, Columns, Column, Stack } from "@/components/ui/layout";
 import { Button } from "@/components/ui/action-button";
+import { t } from "./lang";
 
 /**
  * 1600x900 の画像。**外部の URL は使いません。**
@@ -33,14 +34,13 @@ function ProseSection() {
       title="prose.css"
       description={
         <>
-          Markdown を流し込む場所の見た目です。
-          <strong className="text-fg">幅は持たせていません。</strong>
-          読みやすい行長は <code className="text-fg">ContentBlock width="prose"</code>{" "}
-          の担当で、両方が幅を決めると同じ基準が 2 か所に増えて必ずずれるためです。
-          この部分だけ「部品は外側の余白を持たない」の原則を破っています。
-          <code className="text-fg">&lt;h2&gt;</code> と{" "}
-          <code className="text-fg">&lt;p&gt;</code> の間に{" "}
-          <code className="text-fg">&lt;Stack&gt;</code> は挟めないからです。
+          {t("Markdown を流し込む場所の見た目です。")}
+          <strong className="text-fg">{t("幅は持たせていません。")}</strong>
+          {t("読みやすい行長は")} <code className="text-fg">ContentBlock width="prose"</code>{" "}
+          {t("の担当で、両方が幅を決めると同じ基準が 2 か所に増えて必ずずれるためです。\r\n          この部分だけ「部品は外側の余白を持たない」の原則を破っています。")}
+          <code className="text-fg">&lt;h2&gt;</code> {t("と")}{" "}
+          <code className="text-fg">&lt;p&gt;</code> {t("の間に")}{" "}
+          <code className="text-fg">&lt;Stack&gt;</code> {t("は挟めないからです。")}
         </>
       }
       code={`<ContentBlock width="prose">
@@ -49,49 +49,45 @@ function ProseSection() {
     >
       <ContentBlock width="prose">
         <div className="wt-prose">
-          <h2>見出しの例</h2>
+          <h2>{t("見出しの例")}</h2>
           <p>
-            本文です。行の長さは <code>ContentBlock</code> が決めています。
-            和文はおよそ 40 字で折り返すので、視線が戻る距離が短く保たれます。
-            長い URL（
+            {t("本文です。行の長さは")} <code>ContentBlock</code> {t("が決めています。\r\n            和文はおよそ 40 字で折り返すので、視線が戻る距離が短く保たれます。\r\n            長い URL（")}
             <a href="#x">https://example.com/very/long/path/that/never/breaks</a>
-            ）を書いても、はみ出さずに折り返します。
+            {t("）を書いても、はみ出さずに折り返します。")}
           </p>
-          <h3>箇条書き</h3>
+          <h3>{t("箇条書き")}</h3>
           <ul>
-            <li>行間は 1.85。和文は詰まって見えやすいので広めにしています</li>
+            <li>{t("行間は 1.85。和文は詰まって見えやすいので広めにしています")}</li>
             <li>
-              入れ子も揃います
+              {t("入れ子も揃います")}
               <ul>
-                <li>2 段目</li>
+                <li>{t("2 段目")}</li>
               </ul>
             </li>
           </ul>
           <blockquote>
-            引用。左に線が入り、色が一段落ちます。
+            {t("引用。左に線が入り、色が一段落ちます。")}
           </blockquote>
           <pre>
-            <code>{`const answer = 42;
-// 横に長いコードは折り返さず、この中だけ横スクロールします`}</code>
+            <code>{t("const answer = 42;\n// 横に長いコードは折り返さず、この中だけ横スクロールします")}</code>
           </pre>
           <p>
-            リンクの<a href="#x">下線は消していません</a>。
-            色だけで示すと、色を見分けにくい人に届かないためです。
+            {t("リンクの")}<a href="#x">{t("下線は消していません")}</a>{t("。\r\n            色だけで示すと、色を見分けにくい人に届かないためです。")}
           </p>
           <table>
             <thead>
               <tr>
-                <th>項目</th>
-                <th>値</th>
+                <th>{t("項目")}</th>
+                <th>{t("値")}</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>行間</td>
+                <td>{t("行間")}</td>
                 <td>1.85</td>
               </tr>
               <tr>
-                <td>見出しの上余白</td>
+                <td>{t("見出しの上余白")}</td>
                 <td>--space-xl</td>
               </tr>
             </tbody>
@@ -112,24 +108,19 @@ function FrameSection() {
       title="Frame / Img"
       description={
         <>
-          画像は読み込みが終わるまで大きさが分かりません。何もしないと、
-          読み込んだ瞬間に
-          <strong className="text-fg">その下の本文がガクッと下へずれます</strong>
-          （レイアウトシフト）。比率さえ決めておけば、画像がまだ来ていなくても
-          高さが確定します。画像そのものの最適化はしません。Astro
-          の <code className="text-fg">&lt;Image&gt;</code> をそのまま中に入れられます。
+          {t("画像は読み込みが終わるまで大きさが分かりません。何もしないと、\r\n          読み込んだ瞬間に")}
+          <strong className="text-fg">{t("その下の本文がガクッと下へずれます")}</strong>
+          {t("（レイアウトシフト）。比率さえ決めておけば、画像がまだ来ていなくても\r\n          高さが確定します。画像そのものの最適化はしません。Astro\r\n          の")} <code className="text-fg">&lt;Image&gt;</code> {t("をそのまま中に入れられます。")}
         </>
       }
-      code={`<Frame ratio="16/9">
-  <Img src="/hero.avif" alt="" priority />   {/* 最初の画面に入る画像 */}
-</Frame>`}
+      code={t("<Frame ratio=\"16/9\">\n  <Img src=\"/hero.avif\" alt=\"\" priority />   {/* 最初の画面に入る画像 */}\n</Frame>")}
     >
       <Stack space="md">
         <Columns space="md" collapseBelow="tablet">
           <Column>
             <Stack space="2xs">
               <p className="text-xs font-medium text-danger">
-                包まない（下の文章がずれます）
+                {t("包まない（下の文章がずれます）")}
               </p>
               <div className="rounded-lg border border-dashed border-danger/40 p-2">
                 {shown !== "none" && (
@@ -140,7 +131,7 @@ function FrameSection() {
                   />
                 )}
                 <p className="text-xs text-muted-fg">
-                  この文章の位置が、画像の到着で下へ動きます。
+                  {t("この文章の位置が、画像の到着で下へ動きます。")}
                 </p>
               </div>
             </Stack>
@@ -148,7 +139,7 @@ function FrameSection() {
           <Column>
             <Stack space="2xs">
               <p className="text-xs font-medium text-success">
-                Frame で包む（動きません）
+                {t("Frame で包む（動きません）")}
               </p>
               <div className="rounded-lg border border-dashed border-success/40 p-2">
                 <Frame ratio="16/9">
@@ -157,7 +148,7 @@ function FrameSection() {
                   )}
                 </Frame>
                 <p className="text-xs text-muted-fg">
-                  こちらは先に場所が取ってあるので、位置が変わりません。
+                  {t("こちらは先に場所が取ってあるので、位置が変わりません。")}
                 </p>
               </div>
             </Stack>
@@ -168,11 +159,11 @@ function FrameSection() {
           variant="outline"
           onClick={() => setShown(shown === "none" ? "bad" : "none")}
         >
-          {shown === "none" ? "画像を読み込む" : "戻す"}
+          {shown === "none" ? t("画像を読み込む") : t("戻す")}
         </Button>
 
         <Stack space="2xs">
-          <p className="text-xs text-muted-fg">比率を変えた例</p>
+          <p className="text-xs text-muted-fg">{t("比率を変えた例")}</p>
           <Columns space="sm">
             <Column>
               <Frame ratio="1" radius="md">

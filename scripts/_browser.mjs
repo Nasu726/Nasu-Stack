@@ -70,7 +70,14 @@ export async function launch() {
    * クリックだと「ボタンの文言が変わっただけ」でスクリプトが黙って
    * 別のタブを検査してしまうためです。URL なら開けなければ失敗します。
    */
-  async function openTab(tab, { width = 1200, height = 950 } = {}) {
+  /**
+   * `lang` の既定は `ja` です。**この検査の選択子が日本語の文言だから**で、
+   * 英語を軽んじているのではありません。カタログの既定は英語です。
+   *
+   * 英語のほうは「端末幅の崩れ」が両方の言語で回します。
+   * **言語で変わるのは行の長さと折り返し**なので、測る意味があるのはそこです。
+   */
+  async function openTab(tab, { width = 1200, height = 950, lang = "ja" } = {}) {
     if (!TAB_KEYS.includes(tab)) throw new Error(`知らないタブです: ${tab}`);
     const page = await browser.newPage({
       viewport: { width, height },
@@ -78,7 +85,8 @@ export async function launch() {
       hasTouch: width < 768,
     });
     page.on("pageerror", (e) => errors.push(String(e)));
-    await page.goto(`${BASE}/?tab=${tab}`, { waitUntil: "networkidle" });
+    const q = lang === "ja" ? `?tab=${tab}&lang=ja` : `?tab=${tab}`;
+    await page.goto(`${BASE}/${q}`, { waitUntil: "networkidle" });
     // 開いたタブが本当にそれか確かめる（黙って別のタブを検査しないため）
     const opened = await page.evaluate(
       () => document.querySelector("[data-active-tab]")?.dataset.activeTab,
