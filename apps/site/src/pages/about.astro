@@ -18,23 +18,23 @@ import { PageBlock, Stack, Section, Divider } from "@/components/ui/layout";
 /* 中身は**架空です。** ここは雛型の見本なので、実在の名称・住所・沿革を
    置いてはいけません（そのまま公開ページに載ります）。 */
 const FACTS = [
-  { label: "名称", value: SITE.name },
-  { label: "所在地", value: "○○県○○市" },
-  { label: "事業内容", value: "Web サイトおよび Web アプリケーションの設計・開発" },
-  { label: "設立", value: "2026 年 4 月" },
+  { label: "Name", value: SITE.name },
+  { label: "Location", value: "Anytown, Somewhere" },
+  { label: "What we do", value: "Design and development of websites and web applications" },
+  { label: "Founded", value: "April 2026" },
 ];
 
 const HISTORY = [
-  { date: "2026-04", text: "設立" },
-  { date: "2026-06", text: "サービス A の提供を開始" },
-  { date: "2026-08", text: "サービス B の提供を開始" },
+  { date: "2026-04", text: "Founded" },
+  { date: "2026-06", text: "Launched Service A" },
+  { date: "2026-08", text: "Launched Service B" },
 ];
 import { withBase } from "@/lib/base";
 ---
 
 <Base
-  title="会社概要"
-  description={`${SITE.name} の会社概要と沿革です。`}
+  title="About"
+  description={`About ${SITE.name}, and how it got here.`}
 >
   <SkipLink />
   <SiteHeader
@@ -47,14 +47,14 @@ import { withBase } from "@/lib/base";
   <PageBlock width="narrow" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
     <Stack space="3xl">
       <Stack space="sm">
-        <h1 class="text-3xl">会社概要</h1>
+        <h1 class="text-3xl">About</h1>
         <p class="max-w-prose text-sm leading-relaxed text-muted-fg">
-          小さく作って、長く直せるものを作っています。
+          We build small things that stay easy to change.
         </p>
       </Stack>
 
       <Section space="md">
-        <h2 class="text-xl">基本情報</h2>
+        <h2 class="text-xl">The basics</h2>
         {/* 項目と値の組は <dl>。表にすると「行と列の関係」を
             読み上げが探しに行って、かえって分かりにくくなります。 */}
         <dl class="grid grid-cols-1 gap-y-sm sm:grid-cols-[8rem_1fr] sm:gap-x-lg">
@@ -72,13 +72,13 @@ import { withBase } from "@/lib/base";
       <Divider />
 
       <Section space="md">
-        <h2 class="text-xl">沿革</h2>
+        <h2 class="text-xl">History</h2>
         <ol class="flex flex-col gap-sm">
           {
             HISTORY.map((h) => (
               <li class="flex gap-md">
                 <time datetime={h.date} class="w-20 shrink-0 text-sm text-muted-fg">
-                  {h.date.replace("-", "年")}月
+                  {h.date}
                 </time>
                 <span class="min-w-0 text-sm leading-relaxed">{h.text}</span>
               </li>
@@ -90,15 +90,15 @@ import { withBase } from "@/lib/base";
       <Divider />
 
       <Section space="md">
-        <h2 class="text-xl">所在地</h2>
+        <h2 class="text-xl">Where we are</h2>
         {/* 連絡先は <address>。見た目は変わりませんが、意味が付きます。 */}
         <address class="text-sm not-italic leading-relaxed text-muted-fg">
           〒000-0000<br />
-          ○○県○○市 0-0-0（雛型の例です。書き換えてください）
+          0-0-0 Anytown, Somewhere (sample text — replace it)
         </address>
         <p class="text-sm">
           <a href={withBase("/contact/")} class="text-primary underline underline-offset-2">
-            お問い合わせはこちら
+            Get in touch
           </a>
         </p>
       </Section>

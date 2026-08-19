@@ -5,28 +5,28 @@
  * 「新しいページを足したのにヘッダから辿れない」が必ず起きます。
  */
 export const NAV = [
-  { href: "/", label: "ホーム" },
-  { href: "/lp/", label: "サービス" },
-  { href: "/about/", label: "会社概要" },
-  { href: "/blog/", label: "ブログ" },
-  { href: "/contact/", label: "お問い合わせ" },
+  { href: "/", label: "Home" },
+  { href: "/lp/", label: "Services" },
+  { href: "/about/", label: "About" },
+  { href: "/blog/", label: "Blog" },
+  { href: "/contact/", label: "Contact" },
 ];
 
 export const FOOTER_GROUPS = [
   {
-    label: "サイト",
+    label: "Site",
     items: [
-      { href: "/lp/", label: "サービス" },
-      { href: "/about/", label: "会社概要" },
-      { href: "/blog/", label: "ブログ" },
+      { href: "/lp/", label: "Services" },
+      { href: "/about/", label: "About" },
+      { href: "/blog/", label: "Blog" },
     ],
   },
   {
-    label: "その他",
+    label: "More",
     items: [
-      { href: "/contact/", label: "お問い合わせ" },
+      { href: "/contact/", label: "Contact" },
       { href: "/rss.xml", label: "RSS" },
-      { href: "/sitemap.xml", label: "サイトマップ" },
+      { href: "/sitemap.xml", label: "Sitemap" },
     ],
   },
 ];

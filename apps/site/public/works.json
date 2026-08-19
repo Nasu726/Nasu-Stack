@@ -1,6 +1,6 @@
 [
-  { "id": 1, "title": "プロジェクト A", "stack": "React / TypeScript", "year": 2026 },
-  { "id": 2, "title": "プロジェクト B", "stack": "Astro / Tailwind", "year": 2026 },
-  { "id": 3, "title": "プロジェクト C", "stack": "Node.js / SQLite", "year": 2025 },
-  { "id": 4, "title": "プロジェクト D", "stack": "Python / FastAPI", "year": 2025 }
+  { "id": 1, "title": "Project A", "stack": "React / TypeScript", "year": 2026 },
+  { "id": 2, "title": "Project B", "stack": "Astro / Tailwind", "year": 2026 },
+  { "id": 3, "title": "Project C", "stack": "Node.js / SQLite", "year": 2025 },
+  { "id": 4, "title": "Project D", "stack": "Python / FastAPI", "year": 2025 }
 ]

@@ -16,7 +16,7 @@ if (!site) {
   // ここを黙って通すと、canonical も OGP も相対パスのまま出ます。
   // 静かに壊れるより、ビルドで止めたほうが安全です。
   throw new Error(
-    "astro.config の `site` が設定されていません。canonical と OGP に絶対 URL が必要です。",
+    "astro.config has no `site`. canonical and OGP need an absolute URL.",
   );
 }
 

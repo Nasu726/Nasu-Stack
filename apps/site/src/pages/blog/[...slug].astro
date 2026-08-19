@@ -63,14 +63,14 @@ import { withBase } from "@/lib/base";
       {/* 行の長さは ContentBlock が決め、見た目は prose.css が持ちます。
           両方が幅を持つと基準が 2 か所に増えて必ずずれます。 */}
       <ContentBlock width="prose">
-        <div class="wt-prose">
+        <div class="wt-prose" lang={post.data.lang ?? SITE.locale}>
           <Content />
         </div>
       </ContentBlock>
 
       <p class="text-sm">
         <a href={withBase("/blog/")} class="text-primary underline underline-offset-2">
-          ← 記事一覧へ
+          ← All articles
         </a>
       </p>
     </Stack>

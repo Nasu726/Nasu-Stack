@@ -14,8 +14,8 @@ import { withBase } from "@/lib/base";
 ---
 
 <Base
-  title="ブログ"
-  description={`${SITE.name} の記事一覧です。`}
+  title="Blog"
+  description={`Articles from ${SITE.name}.`}
   type="website"
 >
   <SkipLink />
@@ -29,7 +29,7 @@ import { withBase } from "@/lib/base";
 
   <PageBlock width="narrow" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
     <Stack space="xl">
-      <h1 class="text-3xl">ブログ</h1>
+      <h1 class="text-3xl">Blog</h1>
 
       <Stack space="lg" dividers>
         {
@@ -48,7 +48,10 @@ import { withBase } from "@/lib/base";
                       {post.data.title}
                     </a>
                   </h2>
-                  <p class="text-sm leading-relaxed text-muted-fg">
+                  {/* **行長を止めます。** 器いっぱいだと 48em になり、
+                      欧文の上限 40em を超えます。和文の説明文は同じ内容でも
+                      文字数が半分ほどなので、訳すまで当たりませんでした。 */}
+                  <p class="max-w-[var(--width-prose)] text-sm leading-relaxed text-muted-fg">
                     {post.data.description}
                   </p>
                   {post.data.tags.length > 0 && (
@@ -67,7 +70,7 @@ import { withBase } from "@/lib/base";
         }
       </Stack>
 
-      {posts.length === 0 && <p class="text-sm text-muted-fg">まだ記事がありません。</p>}
+      {posts.length === 0 && <p class="text-sm text-muted-fg">No articles yet.</p>}
     </Stack>
   </PageBlock>
 
