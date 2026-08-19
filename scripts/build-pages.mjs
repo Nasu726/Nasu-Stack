@@ -175,8 +175,8 @@ fs.writeFileSync(
 <p>できたプロジェクトには <code>components.json</code> が入っているので、部品はそのまま足せます。</p>
 
 <h2>いまあるプロジェクトに部品だけ入れる</h2>
-<p>先に <code>components.json</code> へ 1 行足してください。これが無いと部品の依存を辿れません。</p>
-<pre><code>{ "registries": { "@nasu": "${REGISTRY_URL}" } }</code></pre>
+<p>先に名前空間を登録してください。1 回だけです。これが無いと部品の依存を辿れません。</p>
+<pre><code>npx shadcn@${SHADCN} registry add "@nasu=${REGISTRY_URL}"</code></pre>
 <pre><code>npx shadcn@${SHADCN} add @nasu/action-button</code></pre>
 
 <h2>見る</h2>
