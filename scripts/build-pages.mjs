@@ -27,6 +27,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { pnpm } from "./_proc.mjs";
 import { PUBLIC_BASE, REGISTRY_URL, TARBALL_URL } from "./_site.mjs";
+import { REPO } from "./_deps.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pub = path.join(root, "public");
@@ -139,9 +140,14 @@ const items = JSON.parse(
   fs.readFileSync(path.join(pub, "r", "index.json"), "utf8"),
 ).items;
 
-/** 静的ホスティングに置くだけなので、外部への参照を持たない 1 枚にします。 */
-const page = (title, body) => `<!doctype html>
-<html lang="ja">
+/**
+ * 静的ホスティングに置くだけなので、外部への参照を持たない 1 枚にします。
+ *
+ * `lang` は本文と揃えます。**読み上げの発音がここで決まる**ので、
+ * 英語の本文に lang="ja" が付いていると日本語として読まれます。
+ */
+const page = (title, body, lang = "en") => `<!doctype html>
+<html lang="${lang}">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
@@ -167,30 +173,33 @@ fs.writeFileSync(
   page(
     "Nasu Stack",
     `<h1>Nasu Stack</h1>
-<p>Web サイトを作るときに毎回同じところで手間がかかる部分を、部品側で引き受ける土台です。</p>
+<p><b>Spacing you don't have to decide. State you don't have to write.</b></p>
+<p>Components and starter templates for React and Astro. They take over the two
+things beginners reliably get stuck on: layout and async state.</p>
 
-<h2>新しく作る</h2>
+<h2>Start a new project</h2>
 <pre><code>npx ${TARBALL_URL} my-site</code></pre>
-<p><a href="./create-nasu-stack.tgz.sha256">SHA-256</a> を並べて置いてあります。打つ前に照合できます。</p>
-<p>できたプロジェクトには <code>components.json</code> が入っているので、部品はそのまま足せます。</p>
+<p>The <a href="./create-nasu-stack.tgz.sha256">SHA-256</a> is published next to it, so you can verify before you run it.</p>
 
-<h2>いまあるプロジェクトに部品だけ入れる</h2>
-<p>先に名前空間を登録してください。1 回だけです。これが無いと部品の依存を辿れません。</p>
+<h2>Add components to an existing project</h2>
+<p>No configuration needed — dependencies come along automatically.</p>
+<pre><code>npx shadcn@${SHADCN} add ${REPO}/action-button</code></pre>
+<p>Prefer the short <code>@nasu/…</code> form? Register the namespace once:</p>
 <pre><code>npx shadcn@${SHADCN} registry add "@nasu=${REGISTRY_URL}"</code></pre>
-<pre><code>npx shadcn@${SHADCN} add @nasu/action-button</code></pre>
 
-<h2>見る</h2>
+<h2>Look around</h2>
 <ul>
-  <li><a href="./catalog/">部品のカタログ</a> — ${items.length} 個の部品を、実際に触って確かめられます</li>
-  <li><a href="./demo/">デモサイト</a> — この部品で組んだサイトがどう見えるか（ブログ・LP・問い合わせ）</li>
+  <li><a href="./catalog/">Component catalog</a> — every component, live</li>
+  <li><a href="./demo/">Demo site</a> — a site built from them (blog, landing page, contact)</li>
 </ul>
 
-<h2>配っている部品（${items.length}）</h2>
+<h2>Components (${items.length})</h2>
 <ul>
 ${items.map((i) => `  <li><a href="./r/${i.name}.json"><code>${i.name}</code></a> — ${i.title}</li>`).join("\n")}
 </ul>
 
-<p><a href="https://github.com/Nasu726/Nasu-Stack">GitHub</a></p>`,
+<p><a href="https://github.com/Nasu726/Nasu-Stack">GitHub</a> ・
+<a href="https://github.com/Nasu726/Nasu-Stack/blob/main/README.ja.md">日本語版の README</a></p>`,
   ),
   "utf8",
 );
@@ -203,10 +212,10 @@ ${items.map((i) => `  <li><a href="./r/${i.name}.json"><code>${i.name}</code></a
 fs.writeFileSync(
   path.join(pub, "404.html"),
   page(
-    "見つかりませんでした — Nasu Stack",
-    `<h1>見つかりませんでした</h1>
-<p>その URL には何もありません。</p>
-<p><a href="${new URL(PUBLIC_BASE).pathname}/">入口へ戻る</a></p>`,
+    "Not found — Nasu Stack",
+    `<h1>Not found</h1>
+<p>There is nothing at that URL.</p>
+<p><a href="${new URL(PUBLIC_BASE).pathname}/">Back to the start</a></p>`,
   ),
   "utf8",
 );

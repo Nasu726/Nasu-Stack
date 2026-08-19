@@ -78,7 +78,7 @@ Astro 側のページ一覧は **sitemap.xml から取ります**（手で並べ
 `404.html` を置いてもステータスを 404 にしない静的ホスティングがあります。
 配信側の設定を確かめてください。
 既定タブしか見ていなかったせいで新しい部品が検査から漏れていた、という事故が
-実際にあったためです（[docs/refactor-v05.md](docs/refactor-v05.md)）。
+実際にあったためです（[docs/refactor-v05.md](refactor-v05.md)）。
 
 `check-registry-deps.mjs` は、ソースが実際に import しているものと
 `registry.json` の `registryDependencies` を突き合わせます。
@@ -102,7 +102,7 @@ Astro 側のページ一覧は **sitemap.xml から取ります**（手で並べ
 
 Windows は実機確認しています（Windows 11 / Node 24.13 / pnpm 10.28）。
 `pnpm verify` 25 工程と `pnpm verify:create` 106 判定が緑です。
-子プロセスの起動と停止は [`scripts/_proc.mjs`](scripts/_proc.mjs) が唯一の定義で、
+子プロセスの起動と停止は [`scripts/_proc.mjs`](../scripts/_proc.mjs) が唯一の定義で、
 **なぜ OS ごとに違うのかはそこに書いてあります**（`.cmd` は shell 無しで
 spawn できない / Windows にプロセスグループが無い）。
 

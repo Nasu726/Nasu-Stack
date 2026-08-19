@@ -1,91 +1,98 @@
-# 何を引き受け、何を引き受けないか
+# What is covered, and what is not
 
-**部品は「安全にする」のではなく「安全な判断をしやすくする」ものです。**
-置くだけで守られるものと、あなたが書かないと守られないものを分けて並べます。
+**These components don't make your app safe. They make the safe choice easier
+to reach.** Below is what you get by dropping them in, and what stays your job.
 
-## 表
+*[日本語版はこちら](boundaries.ja.md)*
 
-| こちらが引き受ける | あなた（サーバ側）が必ず書く |
+## The table
+
+| We cover | You must write (server side) |
 |---|---|
-| 画面の状態（読込中・成功・失敗・空） | **認証**（誰か） |
-| 二重送信の防止・中断・時間切れ | **認可**（その人がやってよいか） |
-| 読み上げ・キーボード・端末幅 | **サーバ側の検証**（ブラウザ側は素通りできます） |
-| ブラウザ側の入力チェック（**助言**） | CSRF・レート制限 |
-| 秘密を置く場所の案内 | アップロードの検証（大きさ・種類・**中身の署名**） |
-| サーバの生の文言を画面に出さないこと | ログに何を残すか |
+| Screen state (loading, success, failure, empty) | **Authentication** — who is this |
+| Double-submit guard, abort, timeout | **Authorization** — are they allowed to |
+| Screen readers, keyboard, screen width | **Server-side validation** (the browser side can be bypassed) |
+| Browser-side input checks (**advice**) | CSRF, rate limiting |
+| Telling you where secrets go | Upload validation (size, type, **magic bytes**) |
+| Keeping raw server text off the screen | What ends up in your logs |
 
 ---
 
-## 誤解しやすいところ
+## Easy to misread
 
-### `FileDrop` の `accept` と `maxSize`
+### `FileDrop`'s `accept` and `maxSize`
 
-**守りではありません。** 見ているのはファイル名の末尾と、ブラウザが推測した
-種類だけです。どちらも送る側が自由に決められます。`virus.exe` を
-`photo.png` に改名すれば通ります。
+**These are not a defense.** They look at the file extension and the type the
+browser guessed — both of which the sender controls. Rename `virus.exe` to
+`photo.png` and it passes.
 
-ここで弾く目的は「間違って選んだ人にその場で伝える」ことです。
-**受け取るサーバ側で、大きさ・種類・中身の署名を必ず確かめてください。**
-画像なら SVG も含めて、実際の形式を見ます。
+The point of rejecting here is to tell someone immediately that they picked the
+wrong file. **On the receiving server, always check size, type, and the actual
+magic bytes.** For images that includes recognizing SVG for what it is.
 
 ### `HoneypotField`
 
-単純な bot を減らすだけです。**認証・認可・CSRF・レート制限の代わりには
-なりません。** 狙って来る相手には効きません。
+It thins out naive bots. **It is not a substitute for authentication,
+authorization, CSRF protection, or rate limiting.** Anyone targeting you
+specifically will walk past it.
 
 ### `EndpointSpec.defaults`
 
-クライアントが送る値なので、**同じキーが入力にあれば入力が勝ちます。**
-`role` `tenantId` `userId` のような認可に使う値を置かないでください。
-誰であるかはサーバ側で決めます。
+These are values the client sends, so **if the same key exists in the input,
+the input wins.** Don't put authorization values like `role`, `tenantId`, or
+`userId` here. Who someone is gets decided on the server.
 
-### ブラウザから送る `headers`
+### `headers` sent from the browser
 
-`EndpointSpec.headers` / `createSubmit({ headers })` /
-`uploadWithProgress(..., { headers })` は**ブラウザから送られます。**
+`EndpointSpec.headers`, `createSubmit({ headers })`, and
+`uploadWithProgress(..., { headers })` are **sent from the browser.**
 
 ```ts
-// これは秘密になりません
+// This is not a secret
 headers: { Authorization: `Bearer ${SERVICE_API_KEY}` }
 ```
 
-開発者ツール・通信の記録・拡張機能から見えます。
-サーバ側の鍵が要る相手には、**自分のサーバ（Worker など）を挟んで**
-そこから呼んでください。
+Devtools, network logs, and browser extensions can all read it. When the other
+side needs a server key, **put your own server (a Worker, say) in between** and
+call from there.
 
-### `PUBLIC_` / `VITE_` で始まる環境変数
+### Environment variables starting with `PUBLIC_` or `VITE_`
 
-**ブラウザに配られます。** 誰でも読めます。鍵を置かないでください。
+**They ship to the browser.** Anyone can read them. Don't put keys in them.
 
 ### `retry`
 
-**同じ操作を 2 回やっても結果が変わらないものにだけ**付けてください。
-決済・注文の作成・メールの送信は違います。1 回目がサーバに届いた後で
-応答だけ失われた場合、リトライは**もう一度実行させます。**
+Only add it to operations where **doing the same thing twice changes nothing.**
+Payments, order creation, and sending mail are not such operations. If the
+first request reached the server and only the response was lost, a retry
+**makes it happen again.**
 
-必要なら、サーバ側で同じ要求を 1 回として扱う仕組み（Idempotency-Key など）と
-対で設計してください。こちら側だけでは判断できません。
+If you need it there, design it together with a server-side mechanism that
+treats identical requests as one (an `Idempotency-Key`, for example). This side
+alone cannot tell the difference.
 
 ---
 
-## 秘密をどこに置くか
+## Where secrets go
 
-| 置き場所 | 誰が読めるか | 置いてよいもの |
+| Location | Who can read it | What belongs there |
 |---|---|---|
-| `PUBLIC_*` / `VITE_*` の環境変数 | **誰でも** | 公開してよい URL、公開鍵 |
-| ブラウザから送る `headers` | **誰でも** | 公開してよいトークン |
-| コードに直接書く | **誰でも**（配布物に入ります） | 何も置かない |
-| サーバ（Worker など）の秘密 | あなただけ | API キー、送信先、認証の鍵 |
+| `PUBLIC_*` / `VITE_*` env vars | **Anyone** | Public URLs, public keys |
+| `headers` sent from the browser | **Anyone** | Tokens that are safe to publish |
+| Written directly in the code | **Anyone** (it ships) | Nothing |
+| Server-side secret (Worker, etc.) | Only you | API keys, destinations, auth keys |
 
-**迷ったら「これは公開ページに書けるか」で判断してください。**
-書けないなら、ブラウザに置いてはいけません。
+**When in doubt, ask whether you'd write it on a public page.** If you
+wouldn't, it doesn't belong in the browser.
 
 ---
 
-## いま引き受けていないもの
+## Not covered right now
 
-- 問い合わせの受け口のレート制限と bot 対策（`examples/receivers/` は見本です）
-- 認証・認可
-- サーバ側の検証（雛型にあるのは見本だけ）
+- Rate limiting and bot protection for the contact receiver
+  (`examples/receivers/` is a worked example, not a service)
+- Authentication and authorization
+- Server-side validation (what's in the templates is only a sample)
 
-これらは [`../SECURITY.md`](../SECURITY.md) の「約束していないこと」にも書いてあります。
+These are also listed under "What is not promised" in
+[`../SECURITY.md`](../SECURITY.md).

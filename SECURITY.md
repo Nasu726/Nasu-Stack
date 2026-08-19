@@ -1,89 +1,93 @@
-# セキュリティについて
+# Security
 
-## 見つけたときの連絡先
+*[日本語版はこちら](SECURITY.ja.md)*
 
-**公開の Issue に書かないでください。** 直る前に読まれます。
+## Reporting something you found
 
-GitHub の [Security Advisories](https://github.com/Nasu726/Nasu-Stack/security/advisories/new)
-から非公開で報告してください。
+**Please don't open a public issue.** It gets read before it gets fixed.
 
-返事は**確約できません。** 個人が趣味で続けているもので、
-対応の期限も約束していません（下の「約束していないこと」を読んでください）。
-急ぎで確実な対応が要る用途には向きません。
+Report it privately through GitHub
+[Security Advisories](https://github.com/Nasu726/Nasu-Stack/security/advisories/new).
 
-## このリポジトリが何であるか
+**A reply is not guaranteed.** This is a personal project maintained in
+someone's spare time, and no response deadline is promised (see "What is not
+promised" below). It is not a good fit for uses that need a fast, certain
+answer.
 
-Web サイトの部品を配る**雛型**です。
+## What this repository is
 
-**npm には publish していません。**
+A **starter kit** that distributes website components.
 
-shadcn のレジストリのディレクトリには、**掲載を申請する準備をしています**
-（この文を書いている時点では、まだ載っていません）。載ったとしても npm には
-出しません（ディレクトリに載せるのに npm は要らないためです）。
+**It is not published to npm.**
 
-配っているのは次の 3 つだけです。
+It is also **not listed in the shadcn registry directory**, and it doesn't need
+to be — `npx shadcn add Nasu726/Nasu-Stack/<name>` works without any listing.
+If it is ever listed, it still won't go to npm (the directory doesn't require
+it).
+
+Only three things are distributed:
 
 | | |
 |---|---|
-| `https://nasu726.github.io/Nasu-Stack/r/*.json` | shadcn CLI が読むレジストリ |
-| `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | 入口の CLI |
-| 同 `.sha256` | 上の tarball のハッシュ |
+| `https://nasu726.github.io/Nasu-Stack/r/*.json` | the registry the shadcn CLI reads |
+| `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | the starter CLI |
+| the matching `.sha256` | the hash of that tarball |
 
-**npm に `create-nasu-stack` という名前では出していません。**
-その名前は空いているので、`npx create-nasu-stack` と打つと
-**他人のコードが動きます。** 必ず上の tarball の URL を指してください。
-（この間違いは `scripts/check-forbidden.mjs` が機械で見張っています。）
+**Nothing is published to npm under the name `create-nasu-stack`.** That name
+is unclaimed, so typing `npx create-nasu-stack` **runs somebody else's code.**
+Always point at the tarball URL above. (`scripts/check-forbidden.mjs` watches
+for that string mechanically.)
 
-tarball は打つ前に照合できます。
+You can verify the tarball before you run it.
 
-1 度落として、それを確かめて、**その同じファイルを実行**します。
+Download it once, verify that file, and **run that same file**:
 
 ```bash
 curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz
 curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz.sha256
-sha256sum -c create-nasu-stack.tgz.sha256   # OK と出たら
+sha256sum -c create-nasu-stack.tgz.sha256   # once this says OK
 npx ./create-nasu-stack.tgz my-site
 ```
 
-（Windows の PowerShell なら
-`Get-FileHash create-nasu-stack.tgz -Algorithm SHA256` で出した値を、
-`.sha256` の中身と見比べてください。）
+(On Windows PowerShell, compare the output of
+`Get-FileHash create-nasu-stack.tgz -Algorithm SHA256` against the contents of
+the `.sha256` file.)
 
-**README の 1 行（URL を直接 npx する形）では確かめられません。**
-あの形は URL からもう一度取り直して実行するので、
-**確かめたものと実行したものが同じとは限りません。**
+**The one-liner in the README cannot verify anything.** That form fetches from
+the URL again at run time, so **what you checked and what you ran are not
+necessarily the same bytes.**
 
-**これは「誰が作ったか」を示しません。** 示せるのは
-「取れたものが、こちらが出したものと同じか」だけです。
+**This does not tell you who made it.** All it tells you is whether what you
+got matches what was published here.
 
-## 約束していないこと
+## What is not promised
 
-**これは Public Beta です。** 引き受けている範囲と、あなたが書く必要がある
-ものの一覧は [`docs/boundaries.md`](docs/boundaries.md) にあります。
+**This is a Public Beta.** What is covered, and what you have to write
+yourself, is listed in [`docs/boundaries.md`](docs/boundaries.md).
 
-- **継続的な保守を約束していません。** 個人のプロジェクトです
-- 脆弱性への**対応期限を約束していません**
-- 古い版へのバックポートはしません。直すのは最新だけです
+- **Ongoing maintenance is not promised.** It's a personal project
+- **No response deadline** is promised for vulnerabilities
+- No backports to older versions. Fixes land on the newest one only
 
-こうした条件が受け入れられない用途では、使わないでください。
-理由と代償は [`docs/security.md`](docs/security.md) に書いてあります。
+If those terms don't work for your use, please don't use this.
+The reasoning and the trade-offs are in [`docs/security.md`](docs/security.md).
 
-## 配っているコードについて、先に言っておくこと
+## Things to know about the code that ships
 
-部品はブラウザで動きます。**ブラウザ側の確認は守りではありません。**
+The components run in the browser. **Browser-side checks are not a defense.**
 
-| 部品 | 誤解しやすいところ |
+| Component | Easy to misread |
 |---|---|
-| `FileDrop` の `accept` / `maxSize` | 名前とブラウザの推測を見ているだけです。**サーバ側で大きさ・種類・中身の署名を必ず確かめてください** |
-| `HoneypotField` | 単純な bot を減らすだけです。狙って来る相手には効きません |
-| `EndpointSpec.defaults` | クライアントが送る値なので、**入力で上書きできます。** 認可に使う値をここに置かないでください |
-| `ActionError.displayMessage` | サーバの `message` は画面に出しません（内部の事情が漏れるため）。出したい文言は `userMessage` で返してください |
-| `PUBLIC_` / `VITE_` で始まる環境変数 | **ブラウザに配られます。** 誰でも読めるので、鍵を置かないでください |
+| `FileDrop`'s `accept` / `maxSize` | Only looks at the name and the browser's guess. **Always verify size, type, and magic bytes on the server** |
+| `HoneypotField` | Thins out naive bots. Useless against anyone targeting you |
+| `EndpointSpec.defaults` | Values the client sends, so **the input can override them.** Don't put authorization values here |
+| `ActionError.displayMessage` | A server's raw `message` is never shown (it leaks internals). Return the text you want shown as `userMessage` |
+| `PUBLIC_` / `VITE_` env vars | **They ship to the browser.** Anyone can read them, so no keys |
 
-## 依存について
+## Dependencies
 
-- GitHub Actions は**すべて SHA で固定**しています。タグは動かせるためです
-- ワークフローには最小の `permissions:` を明示しています
-- 生成物は `npm audit` を毎回通しています（high 以上があると CI が落ちます）
-- 依存の更新は Renovate、脆弱性の通知は Dependabot alerts が担当します
-  （役割は `renovate.json` に書いてあります）
+- GitHub Actions are **all pinned by SHA** — tags can be moved
+- Workflows declare the minimum `permissions:` explicitly
+- Generated projects run `npm audit` every time (CI fails on high or above)
+- Renovate handles dependency updates; Dependabot alerts handle vulnerability
+  notices (the split is documented in `renovate.json`)

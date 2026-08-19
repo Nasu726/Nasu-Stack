@@ -1,109 +1,126 @@
 # Nasu Stack
 
-**余白は迷わせない。状態は書かせない。**
+**Spacing you don't have to decide. State you don't have to write.**
 
-React / Astro 向けの**部品と雛型**です。見た目だけのコンポーネント集ではありません。
-初心者が確実に詰まる 2 箇所 — **配置**と**非同期の状態** — を、部品側が引き受けます。
+Components and starter templates for React and Astro. Not another set of
+pretty-but-empty components — these take over the two things beginners
+reliably get stuck on: **layout** and **async state**.
+
+*[日本語版はこちら](README.ja.md)*
 
 ```tsx
 <Stack space="lg">
   <Hero />
-  {/* 関数を 1 つ渡すだけ。読込中も失敗も連打も全部入っている */}
-  <ActionButton action={() => api.save(form)}>保存する</ActionButton>
+  {/* Hand it one function. Loading, failure, and double-click are handled. */}
+  <ActionButton action={() => api.save(form)}>Save</ActionButton>
 </Stack>
 ```
 
-**先に見る:** [部品のカタログ](https://nasu726.github.io/Nasu-Stack/catalog/)（全部の部品を実際に触れます） /
-[デモサイト](https://nasu726.github.io/Nasu-Stack/demo/)（この部品で組んだサイト）
+**See it first:** [component catalog](https://nasu726.github.io/Nasu-Stack/catalog/) (every component, live) /
+[demo site](https://nasu726.github.io/Nasu-Stack/demo/) (a site built from them)
 
-> **Public Beta です。** 部品と雛型は実ブラウザで検査していますが、
-> **認証・認可、サーバ側の検証、問い合わせの受け口のレート制限は引き受けていません。**
-> 公開する前に [docs/boundaries.md](docs/boundaries.md) を 1 度読んでください。
+> **This is a Public Beta.** The components and templates are checked in a real
+> browser, but **authentication, server-side validation, and rate limiting for
+> the contact receiver are not covered.**
+> Read [docs/boundaries.md](docs/boundaries.md) once before you ship.
 
 ---
 
-## 使い方
+## Getting started
 
-### 新しく作る
+### Start a new project
 
-コマンドは 1 つです。**聞かれるのは「どこから始めるか」だけ**です。
+One command. **The only thing it asks is where you want to start from.**
 
 ```bash
 npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
 ```
 
-#### まっさらから始める
+#### Start from scratch
 
-**自分で組み立てたい人向け。** 土台とトンマナだけ入っていて、中身は空です。
+**For people who want to build it themselves.** You get the foundation and the
+theme; the content is yours.
 
-| 選ぶもの | |
+| Choice | |
 |---|---|
-| `astro` | **1 ページだけ**の静的サイト。動く部分だけ React の island にできます |
-| `vite` | React 単体のアプリ。管理画面やツールのように、画面の中が動くもの |
+| `astro` | A static site with **a single page**. Make the interactive parts React islands |
+| `vite` | A React app. For admin panels and tools, where the screen itself is the product |
 
-#### テンプレートから始める
+#### Start from a template
 
-**動いているサイトを削って作りたい人向け。** 白紙から書き始めずに済みます。
+**For people who would rather delete than write from nothing.**
 
-| 選ぶもの | |
+| Choice | |
 |---|---|
-| `blog` | **ブログ・LP・会社概要・問い合わせ・RSS・sitemap・404** が入った状態 |
+| `blog` | Comes with a **blog, landing page, about, contact, RSS, sitemap, and 404** |
 
-[デモサイト](https://nasu726.github.io/Nasu-Stack/demo/)がこれです。**中身を見てから決められます。**
+The [demo site](https://nasu726.github.io/Nasu-Stack/demo/) is exactly this, so
+**you can look before you choose.**
 
-対話を飛ばすなら `--template <種類> --yes` を付けます。
+Add `--template <kind> --yes` to skip the prompts.
 
-> **npm には publish していません。** 個人的なプロジェクトとして続けるので、
-> 継続的な保守を約束できないためです。npm は URL の tarball をそのまま受け取れます。
-> **`npx create-nasu-stack` とは打たないでください** — その名前は npm で空いており、
-> こちらの配布物ではありません（[docs/security.md](docs/security.md)）。
+> **Not published to npm.** This is a personal project and I can't promise
+> ongoing maintenance, so I don't want to hold an npm name. `npx` takes a
+> tarball URL directly, which does the same job.
+> **Do not type `npx create-nasu-stack`** — that name is unclaimed on npm and is
+> not mine ([docs/security.md](docs/security.md)).
 
-### 既にあるプロジェクトへ足す
+### Add components to a project you already have
 
-コードは npm パッケージではなく**あなたのリポジトリに直接コピー**されます。
-中身を自由に書き換えられるのが目的なので、これが正しい配り方です。
+Nothing is installed as an npm package. **The code is copied into your
+repository**, so you can edit it freely. That's the point.
 
-**先に名前空間を登録してください。** 1 回だけです。
+```bash
+npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button
+```
+
+**That's it — no configuration.** No `components.json` entry, no registry
+setup. The dependencies (`use-action`, `spinner`, `utils`, `tokens`, …) come
+along automatically — 10 files for `action-button`.
+
+<details>
+<summary>Prefer the shorter <code>@nasu/…</code> form?</summary>
+
+Register the namespace once, then use the short name everywhere:
 
 ```bash
 npx shadcn@4.17.0 registry add "@nasu=https://nasu726.github.io/Nasu-Stack/r/{name}.json"
-```
-
-```bash
 npx shadcn@4.17.0 add @nasu/action-button
 ```
 
-これが無いと、部品の依存（`@nasu/action` など）が解決できず
-`Unknown registry "@nasu"` で止まります。
+This also enables `shadcn search @nasu` and lets you point the namespace at a
+fork or mirror. Without the registration you'll get
+`Unknown registry "@nasu"`.
 
-依存する `use-action` / `spinner` / `utils` / `tokens` は自動で一緒に入ります
-（`action-button` なら 10 ファイル）。
+Note that passing a bare item URL
+(`npx shadcn add https://…/r/action-button.json`) **installs nothing** — it
+stops before it can resolve the dependencies. That's measured, not assumed.
 
-> **版を固定しているのはわざとです。** 最新版をそのまま実行すると、lockfile も
-> 待機期間も素通りします。ここに書いてあるのは、こちらの検査が実際に通した版です。
+</details>
 
-URL を直に指定する形（`npx shadcn@4.17.0 add https://…/r/action-button.json`）
-では、**1 ファイルも入りません。** 依存を辿る前に止まります（実測）。
-名前空間の登録が要るのはそのためです。
+> **The pinned version is deliberate.** Running the newest release
+> straight from the internet skips your lockfile and any cooling-off period.
+> The version above is the one this project's own checks actually ran.
 
-### トンマナを当てる
+### Apply the theme
 
 ```css
 /* src/index.css */
-@import "./styles/tokens.css";   /* 土台 + 既定テーマ。これだけで動きます */
-@import "./styles/themes.css";   /* 追加の 3 テーマ。不要なら省略可 */
+@import "./styles/tokens.css";   /* foundation + default theme. Enough on its own */
+@import "./styles/themes.css";   /* three extra themes. Skip it if you don't need them */
 ```
 
 ```html
 <html data-theme="warm" class="dark"></html>
 ```
 
-`neutral` / `warm` / `editorial` / `vivid` の 4 種。
-色だけでなく**角丸・影の強さ・書体・字間・余白の広さ**まで一緒に変わるので、
-部分的に浮くことがありません。切り替え UI は `ThemeSwitcher` をそのまま置けます。
+Four themes: `neutral`, `warm`, `editorial`, `vivid`. Each changes more than
+color — **corner radius, shadow strength, typeface, letter spacing, and the
+size of the spacing scale** move together, so nothing looks bolted on. Drop in
+`ThemeSwitcher` if you want a toggle.
 
-自分のテーマは、`tokens.css` の `:root` に並んでいる変数を別のセレクタで
-上書きするだけです。
+To make your own, override the variables from `tokens.css` under a different
+selector:
 
 ```css
 [data-theme="mybrand"] {
@@ -111,75 +128,77 @@ URL を直に指定する形（`npx shadcn@4.17.0 add https://…/r/action-butto
   --fg: oklch(0.2 0 0);
   --primary: oklch(0.55 0.2 150);
   --primary-fg: oklch(0.99 0 0);
-  /* …一覧は tokens.css の :root を参照（25 個） */
+  /* …see the :root block in tokens.css for the full list (25 variables) */
 
-  --radius: 0.5rem;                   /* 角丸 */
-  --font-display: "Your Font", serif; /* 見出しの書体 */
-  --space-3xl: 8rem;                  /* 余白の広さもテーマの一部 */
+  --radius: 0.5rem;                   /* corner radius */
+  --font-display: "Your Font", serif; /* headings */
+  --space-3xl: 8rem;                  /* spacing is part of the theme too */
 }
-[data-theme="mybrand"].dark { /* 暗い版 */ }
+[data-theme="mybrand"].dark { /* dark variant */ }
 ```
 
-`themes.css` を読み込まなければ、既定の neutral と自分のテーマだけになります。
+Skip `themes.css` entirely and you're left with `neutral` plus your own.
 
 ---
 
-## 何のための道具か
+## What this is for
 
-Web で品質を求めるとまだ人の力が重要ですが、毎回同じところで手間がかかります。
-その「毎回同じところ」を部品側が引き受けて、**創作に使える時間を増やす**ための土台です。
+Building for the web by hand gets you the quality you want, but the same parts
+cost you time on every project. This takes those parts over so **more of your
+time goes into the work that's actually yours.**
 
-既存のビジュアルエディタ系ツールより自由度が高く、素の Astro / Next.js より最初の壁が低い。
-その間を目指しています。
+More freedom than the visual site builders, a lower first wall than plain Astro
+or Next.js. That gap is the target.
 
-### 想定している人
+### Who it's for
 
 | | |
 |---|---|
-| 主な対象 | プログラミング初心者〜中級者。**少しはコードを触れる人** |
-| 副次的 | 自由度を求める開発者 |
-| 対象外 | **コードを全く書かない人** |
+| Primary | Beginners through intermediate developers — **people who can touch code a little** |
+| Secondary | Developers who want the freedom |
+| Not for | **People who never write code.** That space is already served |
 
-「少しは触れる」を下限にしたのが、この設計の最も大きな分岐点です。
-ここを含めるとビジュアルエディタが必須になり、開発規模が一桁変わります。
+Setting the floor at "can touch code a little" is the single biggest fork in
+this design. Including people below it would require a visual editor, and that
+is an order of magnitude more project.
 
-### 設計上の約束
+### Design commitments
 
-1. **バックエンドを固定しない。** fetch でも Supabase でも Convex でも、
-   `(input, ctx) => Promise<output>` の形にできれば何でも刺さります。
-2. **エスケープハッチを必ず残す。** どの層でも 1 段下に降りられます。
-   「乗り換え」ではなく「降りる」形にすること。
+1. **Never lock in a backend.** fetch, Supabase, Convex — anything you can
+   shape into `(input, ctx) => Promise<output>` plugs in.
+2. **Always leave an escape hatch.** Every layer can drop one level down. Not
+   "switch to something else" — **step down**, in place.
 
    ```
    <ActionButton action={…}>  →  <Button> + useAction()  →  useState / fetch
    <Stack space="lg">         →  <Stack space="13px">    →  className="gap-[13px]"
    ```
 
-3. **エラーは必ず 1 つの型に揃える。** 何が throw されても `ActionError` になるので、
-   表示側が分岐する必要がありません。
-4. **見た目だけの部品は作らない。** ヒーローや料金表のようなセクションは
-   既存の shadcn ブロック集に 2,500 個以上あります。ここで作るのは
-   **状態を持つもの**と**レイアウトの制約**だけです。
-5. **アクセシビリティは既定で入れる。** 後付けしない。
+3. **One error type, always.** Whatever gets thrown becomes an `ActionError`,
+   so the display side never has to branch on shape.
+4. **No purely presentational components.** Heroes and pricing tables already
+   exist by the thousand in the shadcn block market. What's built here is
+   **things that hold state** and **layout constraints** — nothing else.
+5. **Accessibility by default.** Never bolted on afterwards.
 
-### 4 つの層
+### The four layers
 
 ```
 ┌─────────────────────────────────────────┐
-│  トンマナ層  tokens.css + themes.css     │  ← 色・角丸・影・書体・余白を data-theme で切替
+│  Theme      tokens.css + themes.css     │  ← color, radius, shadow, type, spacing via data-theme
 ├─────────────────────────────────────────┤
-│  レイアウト層  Stack / Columns / Tiles   │  ← 余白は 9 段階のみ。外側の余白は部品が持たない
+│  Layout     Stack / Columns / Tiles     │  ← 9 spacing steps. Components own no outer margin
 ├─────────────────────────────────────────┤
-│  部品層       ActionButton / AsyncForm   │  ← 状態を全部持つ。バックエンド非依存
-│               SiteHeader / Dialog / Tabs│  ← ナビと開閉。ARIA とキーボードは部品の担当
+│  Component  ActionButton / AsyncForm    │  ← holds all the state. Backend-agnostic
+│             SiteHeader / Dialog / Tabs  │  ← nav and disclosure. ARIA and keys are ours
 ├─────────────────────────────────────────┤
-│  契約層       Action / ActionSpec        │  ← (input, ctx) => Promise<output> だけ
+│  Contract   Action / ActionSpec         │  ← just (input, ctx) => Promise<output>
 └─────────────────────────────────────────┘
                     ↕
-        あなたの API / Supabase / Convex / 何でも
+        your API / Supabase / Convex / whatever
 ```
 
-利用者が覚える契約は実質これだけです。
+In practice the only contract you have to learn is this:
 
 ```ts
 type Action<TInput, TOutput> = (
@@ -188,68 +207,70 @@ type Action<TInput, TOutput> = (
 ) => Promise<TOutput>;
 ```
 
-設計の理由は [docs/overview.md](docs/overview.md) にもっと詳しく書いてあります。
+The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 
 ---
 
-## 中身
+## What's in it
 
-### 状態 — `ActionButton` の 1 行に入っているもの
+### State — what one line of `ActionButton` covers
 
-- 押している間のスピナー表示とボタン無効化
-- 連打による二重送信の防止
-- 失敗時のエラーメッセージ表示と、押し直しでの再実行
-- 成功時のチェックマーク表示と、数秒後の自動リセット
-- アンマウント時のリクエスト中断（`ctx.signal`）
-- `aria-busy` / `role="status"` / `role="alert"` の付与
+- Spinner and disabled button while it runs
+- Double-submit prevention
+- Error message on failure, re-run on the next press
+- Checkmark on success, automatic reset a few seconds later
+- Request abort on unmount (`ctx.signal`)
+- `aria-busy` / `role="status"` / `role="alert"`
 
-| 名前 | 何をしてくれるか |
+| Name | What it does for you |
 |---|---|
-| `ActionButton` | 関数を渡すだけの 4 状態ボタン。連打防止・確認ダイアログ・自動リトライ |
-| `AsyncForm` + `Field` | 送信関数 1 つでフォーム完成。フィールド単位のエラー表示と自動クリア |
-| `DataList` | 取得・スケルトン・空・失敗と再試行を 1 個で |
-| `AsyncBoundary` | 読込中 / エラー / 空 / データありの 4 分岐を閉じ込める |
-| `DataTable` | 並べ替え・ページング。**狭い画面では 1 行 = 1 カードに組み替え** |
-| `AsyncSelect` | 検索つきセレクト。前の要求を自動で中断。キーボード操作つき |
-| `FileDrop` | ドラッグ&ドロップ・進捗・失敗した分だけ再送 |
-| `ConfirmDialog` / `useConfirm` | 確認ダイアログ。native `<dialog>` |
-| `ActionProvider` | エラー処理の書き忘れを握り潰さない安全網 |
-| `Toast` / `useToast` | 画面隅の通知 |
-| `ThemeProvider` / `ThemeSwitcher` | トンマナ切替。ちらつき防止スクリプトつき |
-| `useAction` / `useResource` | 書き込み系 / 読み取り系の状態管理フック |
+| `ActionButton` | Four-state button from one function. Double-click guard, confirm dialog, retry |
+| `AsyncForm` + `Field` | A whole form from one submit function. Per-field errors that clear themselves |
+| `DataList` | Fetch, skeleton, empty, failure, and retry in a single component |
+| `AsyncBoundary` | Wraps the loading / error / empty / loaded fork |
+| `DataTable` | Sorting and paging. **Below tablet width it becomes one card per row** |
+| `AsyncSelect` | Searchable select. Cancels the previous request. Keyboard support included |
+| `FileDrop` | Drag and drop, progress, retry only what failed |
+| `ConfirmDialog` / `useConfirm` | Confirmation on native `<dialog>` |
+| `ActionProvider` | A net so a forgotten error handler doesn't swallow the failure |
+| `Toast` / `useToast` | Corner notifications |
+| `ThemeProvider` / `ThemeSwitcher` | Theme switching, with a no-flash init script |
+| `useAction` / `useResource` | State hooks for writes and for reads |
 
 <details>
-<summary><b>DataTable — 狭い画面では表をやめる</b></summary>
+<summary><b>DataTable — stop being a table when the screen is narrow</b></summary>
 
-320px で 8 列の表は、横スクロールできても実用に耐えません。
-なので**タブレット幅未満では 1 行 = 1 カード**に組み替え、各値に列名を付けます。
+An eight-column table at 320px is unusable even with horizontal scroll. So
+**below tablet width each row becomes a card**, with the column name attached
+to every value.
 
 ```tsx
 <DataTable
-  rows={rows}                    // 配列を渡せばメモリ上で並べ替え・ページング
+  rows={rows}                    // pass an array and it sorts and pages in memory
   columns={[
-    { key: "date",  label: "日付", sortable: true },
-    { key: "owner", label: "担当", hideOnCard: true },  // カードでは省く
-    { key: "amount", label: "金額", sortable: true, align: "end" },
+    { key: "date",  label: "Date", sortable: true },
+    { key: "owner", label: "Owner", hideOnCard: true },  // dropped in card view
+    { key: "amount", label: "Amount", sortable: true, align: "end" },
   ]}
   pageSize={5}
 />
 ```
 
-`label` が必須なのは、**カード表示では列名が唯一の手がかりになる**ためです。
-サーバー側で処理したい場合は `loader` に `{ rows, total }` を返す関数を渡します。
+`label` is required because **in card view the column name is the only clue
+left.** To handle it server-side, pass a `loader` that returns
+`{ rows, total }`.
 
 </details>
 
 <details>
-<summary><b>FileDrop — なぜ XHR なのか</b></summary>
+<summary><b>FileDrop — why XHR</b></summary>
 
-**`fetch` はアップロードの進捗を取れません。** 2026 年時点でもそうです。
-リクエストのストリームで測れるのは「ブラウザが自分のストリームからデータを
-引き取った時点」であって、送信された時点ではありません。
+**`fetch` cannot report upload progress.** Still true in 2026. What a request
+stream can measure is the moment the browser pulled data from your stream, not
+the moment it reached the server.
 
-なので内部では `XMLHttpRequest` を使いますが、`uploadWithProgress` が隠すので
-利用者が XHR を書くことはありません。
+So internally it uses `XMLHttpRequest` — but `uploadWithProgress` hides that,
+and you never write XHR yourself.
 
 ```tsx
 <FileDrop
@@ -259,18 +280,18 @@ type Action<TInput, TOutput> = (
 />
 ```
 
-**1 ファイルずつ**送ります。まとめて送ると 1 つ失敗しただけで全部やり直しに
-なるためです。個別に状態を持つので「失敗した分だけ再送」が自然に書けます。
+**One file at a time.** Sending them together means one failure costs you the
+whole batch. With per-file state, "retry only what failed" falls out naturally.
 
-`accept` と `maxSize` は**利用者への助言であって守りではありません**
-（[docs/boundaries.md](docs/boundaries.md)）。
+`accept` and `maxSize` are **guidance for the person using the form, not a
+defense** ([docs/boundaries.md](docs/boundaries.md)).
 
 </details>
 
 <details>
-<summary><b>ActionProvider — 書き忘れの受け皿</b></summary>
+<summary><b>ActionProvider — a net for what you forgot</b></summary>
 
-アプリの一番外側に 1 回置くだけです。**無くても全部動きます。**
+Put it once at the outside of your app. **Everything works without it.**
 
 ```tsx
 <ActionProvider>
@@ -278,40 +299,44 @@ type Action<TInput, TOutput> = (
 </ActionProvider>
 ```
 
-置くと、`onError` を書かなかったアクションが失敗したとき画面隅に通知が出ます。
-初心者が一番やりがちな「エラー処理の書き忘れ」で失敗が黙って消えるのを防ぎます。
-二重に出ないよう、既に画面内へ出せている場合は通知しません。
+With it, an action that fails without an `onError` shows a corner notification.
+That's the mistake beginners make most, and it's the one where the failure
+disappears silently.
 
-| 状況 | 表示 |
+It stays quiet when the error is already visible on screen, so you never get it
+twice.
+
+| Situation | What shows |
 |---|---|
-| `onError` を書いた | 書いたものだけ |
-| `ActionButton`（`showError` 既定 true） | ボタン下に赤字。通知は出ない |
-| `ActionButton showError={false}` | 画面隅の通知 |
-| `AsyncForm` の入力ミス（`fields` あり） | 各入力欄の下。通知は出ない |
-| `AsyncForm` の通信断・サーバー障害 | 画面隅の通知 |
+| You wrote `onError` | Only what you wrote |
+| `ActionButton` (`showError` defaults to true) | Red text under the button. No notification |
+| `ActionButton showError={false}` | Corner notification |
+| `AsyncForm` field errors (`fields` present) | Under each input. No notification |
+| `AsyncForm` network or server failure | Corner notification |
 
 </details>
 
-### 配置 — 迷わせない。でも塞がない
+### Layout — decide less, without being fenced in
 
-初心者が配置で詰まる原因は、自由度が高すぎることではなく
-**選択肢が無限にあること**です。`8px` か `12px` かは、経験が無いと判断できません。
+People don't get stuck on layout because there's too much freedom. They get
+stuck because **the options are infinite.** `8px` or `12px` is not a decision
+you can make without experience.
 
-なので**既定の道を 9 段階に絞りました**。入力補完に出るのはこれだけです。
+So **the default path is nine steps.** That's all autocomplete offers you.
 
 ```
 none   2xs   xs    sm    md    lg    xl    2xl   3xl
- 0      4     8    12    16    24    40    64    96   (px / neutral テーマ)
+ 0      4     8    12    16    24    40    64    96   (px, neutral theme)
 ```
 
-ただし**壁ではありません。** 段階に無い値もそのまま書けます。
-Tailwind の `p-4` と `p-[13px]` の関係と同じです。
+**It is not a wall.** Values outside the scale work exactly as written — the
+same relationship Tailwind has between `p-4` and `p-[13px]`.
 
 ```tsx
-<Stack space="lg" />                        {/* 推奨。補完が効く */}
-<Stack space="13px" />                      {/* 段階外の値 */}
-<Stack space="clamp(1rem, 4vw, 3rem)" />    {/* 計算式も可 */}
-<Stack space={{ mobile: "sm", tablet: "3rem" }} />  {/* 混在も可 */}
+<Stack space="lg" />                        {/* recommended. autocomplete works */}
+<Stack space="13px" />                      {/* off-scale value */}
+<Stack space="clamp(1rem, 4vw, 3rem)" />    {/* expressions too */}
+<Stack space={{ mobile: "sm", tablet: "3rem" }} />  {/* and mixtures */}
 
 <Column width="1/3" />          <Column width="18rem" />
 <ContentBlock width="prose" />  <ContentBlock width="52rem" />
@@ -319,22 +344,23 @@ Tailwind の `p-4` と `p-[13px]` の関係と同じです。
 <Tiles columns="repeat(auto-fill, minmax(14rem, 1fr))" />
 ```
 
-そして唯一の原則があります。
+And there is exactly one rule:
 
-> **コンポーネントは自分の周囲に余白を持たない。余白はレイアウト部品だけが所有する。**
+> **A component never carries margin around itself. Spacing belongs to layout
+> components alone.**
 
-これで「なぜかここだけ隙間が広い」が起きません。
+That's what stops "why is the gap bigger only here".
 
 ```tsx
-<PageBlock>                        {/* 最大幅 + 左右の余白 */}
-  <Stack space="3xl">              {/* 縦に積む */}
+<PageBlock>                        {/* max width + side padding */}
+  <Stack space="3xl">              {/* stack vertically */}
     <Section>
-      <Spread>                     {/* 両端に寄せる */}
+      <Spread>                     {/* push to both edges */}
         <Logo /> <Nav />
       </Spread>
     </Section>
 
-    <Columns space="lg">           {/* 段組。狭い画面では自動で縦に畳む */}
+    <Columns space="lg">           {/* columns. Folds to a stack when narrow */}
       <Column width="1/3"><Side /></Column>
       <Column><Article /></Column>
     </Columns>
@@ -346,78 +372,83 @@ Tailwind の `p-4` と `p-[13px]` の関係と同じです。
 </PageBlock>
 ```
 
-| 部品 | 役割 |
+| Component | Role |
 |---|---|
-| `PageBlock` | ページの外枠。最大幅 + 左右の余白 |
-| `ContentBlock` | 中身の最大幅だけ（本文は `width="prose"`） |
-| `Section` | ページ 1 区画。上下のリズムを統一 |
-| `Stack` | 縦に等間隔で積む（最頻出） |
-| `Inline` | 横に並べて折り返す（`wrap={false}` なら横スクロール） |
-| `Columns` / `Column` | 段組。既定でタブレット幅未満は縦に畳む |
-| `Tiles` | 等間隔グリッド。要素数が半端でも崩れない |
-| `Spread` | 両端に寄せる |
-| `Box` | 内側の余白・背景・角丸・影 |
-| `Scrollable` | 縮められない中身（表・コード）をその部分だけ横スクロールに |
-| `Divider` | 区切り線 |
+| `PageBlock` | The page frame. Max width plus side padding |
+| `ContentBlock` | Max width only (use `width="prose"` for body text) |
+| `Section` | One region of a page. Keeps the vertical rhythm consistent |
+| `Stack` | Stack vertically at an even interval (the one you'll use most) |
+| `Inline` | Lay out horizontally and wrap (`wrap={false}` scrolls instead) |
+| `Columns` / `Column` | Columns. Folds to a stack below tablet width by default |
+| `Tiles` | Even grid. Doesn't break on an awkward number of items |
+| `Spread` | Push to both edges |
+| `Box` | Inner padding, background, radius, shadow |
+| `Scrollable` | Scroll just this part instead of squashing a table or code block |
+| `Divider` | A rule |
 
-本文の幅には `width="prose"` を使ってください。**em 単位なので文字サイズに追従し**、
-小さい文字なら幅も自動的に狭まって、1 行の字数が一定に保たれます（和文で 40 字前後）。
+Use `width="prose"` for body text. **It's in `em`, so it follows the font
+size** — smaller text gets a narrower measure, and the number of characters per
+line stays constant.
 
-### 端末幅 — 崩れないこと、崩れていないと確かめられること
+### Screen width — not breaking, and being able to prove it
 
-スマホ表示が壊れる原因は、ほぼ「縮まない中身」です。
-利用者が `overflow-wrap` を知らなくても崩れないよう、テーマ側で受け止めます。
+Almost every broken mobile layout comes from content that won't shrink. The
+theme absorbs that, so you don't have to know `overflow-wrap` exists.
 
 ```css
-body { overflow-wrap: break-word; }          /* 折り返せない長い URL・英単語 */
-img, video, svg, iframe { max-width: 100%; } /* 実寸の大きいメディア */
-pre { overflow-x: auto; }                    /* コードは折り返さず内側でスクロール */
-.wt-gap > * { min-width: 0; }                /* flex/grid の子が縮めるように */
+body { overflow-wrap: break-word; }          /* long URLs and unbreakable words */
+img, video, svg, iframe { max-width: 100%; } /* oversized media */
+pre { overflow-x: auto; }                    /* code scrolls instead of wrapping */
+.wt-gap > * { min-width: 0; }                /* let flex/grid children shrink */
 
-@media (pointer: coarse) {                   /* 指で押す端末では小さすぎないように */
+@media (pointer: coarse) {                   /* big enough to hit with a finger */
   button, select, input, textarea { min-block-size: 2.75rem; }
 }
 ```
 
-入力欄は常に 16px 以上です。16px 未満だと **iOS Safari が触れた瞬間に画面を自動拡大**し、
-手動でしか戻せません。iPad でも起きるので「狭い画面のときだけ」では防げません。
+Inputs are always at least 16px. Below that, **iOS Safari zooms the page the
+moment you touch the field** and only the user can zoom back out. It happens on
+iPad too, so "only on narrow screens" doesn't prevent it.
 
-表のように**縮めると読めなくなる**中身は、潰さずその部分だけスクロールさせます
-（`<Scrollable label="売上の表">`）。端が切れていることを示す影が出て、
-キーボードだけでも到達できます。
+Content that becomes unreadable when squashed — tables, code — scrolls in place
+instead (`<Scrollable label="Sales">`). A shadow marks the cut-off edge, and it
+is reachable by keyboard alone.
 
-**そして、崩れていないことを数値で確かめられます。**
+**And you can prove none of it is broken.**
 
 ```bash
 npm run check -- http://localhost:5173
 ```
 
-実ブラウザを 320 / 375 / 414 / 768 / 1024px で開いて機械的に調べます。
-崩れがあれば終了コード 1 を返すので、CI にそのまま載せられます。
+It opens a real browser at 320 / 375 / 414 / 768 / 1024px and measures. It
+exits 1 when something is broken, so it drops straight into CI.
 
 ```
-  ✗ http://localhost:5173  @ 320 (小さいスマホ)
-      横に 577px はみ出しています
-        ↳ <p class="…"> が 577px 外へ  "https://example.com/very/long…"
-        → 長い文字列なら overflow-wrap、表やコードなら <Scrollable> で囲んでください
-      入力欄の文字が 16px 未満: 3 件 (name=14px, email=14px, password=14px)
-        → iOS では触れた瞬間に画面が自動拡大されます
-      タップ領域が 24px 未満: 2 件 (a 43x20 "Works", a 54x20 "Contact")
-        → 指で押しづらく、WCAG 2.1 AA の最低基準を下回ります
+  ✗ http://localhost:5173  @ 320
+      577px of horizontal overflow
+        ↳ <p class="…"> extends 577px past the edge  "https://example.com/very/long…"
+        → wrap long strings with overflow-wrap; wrap tables and code in <Scrollable>
+      inputs under 16px: 3 (name=14px, email=14px, password=14px)
+        → iOS zooms the page the moment these are focused
+      tap targets under 24px: 2 (a 43x20 "Works", a 54x20 "Contact")
+        → hard to hit, and below the WCAG 2.1 AA minimum
 ```
 
-検出するもの: 横スクロールの発生と原因要素 / タップ領域 24px 未満 /
-入力欄の 16px 未満 / 画面幅より縮まない要素 / 1 行が長すぎる本文。
+It detects: horizontal overflow and the element causing it / tap targets under
+24px / inputs under 16px / elements that won't shrink below the viewport /
+body text whose measure is too long.
 
-1 行の長さは**和文と欧文で閾値を変えています**。和文は 1 文字がほぼ 1em、
-欧文は平均 0.5em 前後で、同じ px 幅でも読みやすさが倍違うためです。
+The line-length threshold **differs for Japanese and Latin text**. A Japanese
+character is roughly 1em, a Latin one averages about 0.5em, so the same pixel
+width reads twice as long.
 
-### Astro でも使えます
+### Astro works too
 
-静的ページは Astro、動く部分だけ React の island、という構成に対応しています。
+Static pages in Astro, React islands only where things move.
 
-**注意点**: `.astro` から `client:load` の island へ **関数は渡せません**（props が
-JSON 化されるため）。そのため、関数を使わずに書ける「宣言」の形も用意しています。
+**One catch**: you **cannot pass a function** from `.astro` into a
+`client:load` island — props are serialized to JSON. So there's a declarative
+form for everything that would otherwise need a callback.
 
 ```astro
 ---
@@ -431,27 +462,29 @@ import { DataList } from "@/ui/data-list";
   ]} />
 ```
 
-独自ロジックを持たせたい島は `.tsx` でラップしてから読み込みます
-（[`apps/site/src/components/ContactForm.tsx`](apps/site/src/components/ContactForm.tsx) が例）。
-詳しくは [docs/astro-and-react.md](docs/astro-and-react.md)。
+Islands that need their own logic get wrapped in a `.tsx` first — see
+[`apps/site/src/components/ContactForm.tsx`](apps/site/src/components/ContactForm.tsx).
+More in [docs/astro-and-react.md](docs/astro-and-react.md).
 
 ---
 
-## もっと詳しく
+## More
 
 | | |
 |---|---|
-| [docs/overview.md](docs/overview.md) | 全体像と、設計をそう決めた理由 |
-| [docs/boundaries.md](docs/boundaries.md) | **何を引き受け、何を引き受けないか**（公開する前に読む） |
-| [docs/security.md](docs/security.md) | 配り方と、その安全性の根拠 |
-| [docs/development.md](docs/development.md) | このリポジトリ自体を触るとき |
-| [docs/rename.md](docs/rename.md) | `WebTemplate` から改名した経緯 |
+| [docs/overview.md](docs/overview.md) | The whole picture, and why each decision went that way |
+| [docs/boundaries.md](docs/boundaries.md) | **What is covered and what is not** (read before you ship) |
+| [docs/security.md](docs/security.md) | How this is distributed, and why that's safe |
+| [docs/development.md](docs/development.md) | Working on this repository (Japanese) |
+| [docs/rename.md](docs/rename.md) | Why it was renamed from `WebTemplate` (Japanese) |
 
-**v0.9e より前の記録（`docs/plan-*` `docs/result-*` と `ROADMAP.md`）は、
-旧名の `WebTemplate` のままです。** 当時の記録なので直していません。
+**Records written before v0.9e (`docs/plan-*`, `docs/result-*`, `ROADMAP.md`)
+still say `WebTemplate`.** They're records of the time and haven't been
+rewritten. They are in Japanese.
 
-個人のプロジェクトです。保守と対応期限は約束していません（[SECURITY.md](SECURITY.md)）。
+This is a personal project. Maintenance and response times are not promised
+([SECURITY.md](SECURITY.md)).
 
-## ライセンス
+## License
 
 MIT
