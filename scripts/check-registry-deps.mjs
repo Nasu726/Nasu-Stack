@@ -24,6 +24,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { localDep, REPO } from "./_deps.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const registry = JSON.parse(
@@ -83,7 +84,11 @@ const TOKEN_RE = TOKEN_CLASSES.map((c) => [c, new RegExp(`(?<![\\w-])${c}(?![\\w
 const problems = [];
 
 for (const item of registry.items) {
-  const declared = new Set(item.registryDependencies ?? []);
+  /* **宣言は `owner/repo` 形式で commit しています**（scripts/_deps.mjs）。
+     比べるのは部品名だけにして、書き方の違いで落ちないようにします。 */
+  const declared = new Set(
+    (item.registryDependencies ?? []).map(localDep).filter(Boolean),
+  );
   const used = new Set();
   const tokenHits = new Set();
 
@@ -103,14 +108,14 @@ for (const item of registry.items) {
         );
         continue;
       }
-      if (name !== item.name) used.add(`@nasu/${name}`);
+      if (name !== item.name) used.add(name);
     }
   }
 
-  if (tokenHits.size && !declared.has("@nasu/tokens")) {
+  if (tokenHits.size && !declared.has("tokens")) {
     problems.push(
       `${item.name}: tokens.css の class（${[...tokenHits].sort().join(", ")}）を` +
-        `使っているのに @nasu/tokens が registryDependencies にありません`,
+        `使っているのに tokens が registryDependencies にありません`,
     );
   }
 
@@ -118,6 +123,30 @@ for (const item of registry.items) {
     if (!declared.has(need)) {
       problems.push(
         `${item.name}: ${need} を import しているのに registryDependencies にありません`,
+      );
+    }
+  }
+}
+
+/* ------------------------------------------------------------------
+ * 書き方が片方に寄っていないか
+ * ------------------------------------------------------------------
+ * **commit する registry.json は `owner/repo` 形式でなければなりません。**
+ * GitHub が読むのはこのファイルだからです（`public/` は生成物なので
+ * commit していません）。`@nasu/…` に戻ると、
+ *
+ *   npx shadcn add Nasu726/Nasu-Stack/action-button
+ *   ✖ Unknown registry "@nasu"
+ *
+ * となりますが、**こちらの検査は全部緑のままです。**
+ * `@nasu` 経路しか見ていないからです。だからここで形を見ます。
+ */
+for (const item of registry.items) {
+  for (const dep of item.registryDependencies ?? []) {
+    if (localDep(dep) && !dep.startsWith(`${REPO}/`)) {
+      problems.push(
+        `${item.name}: ${dep} は commit 用の形ではありません。` +
+          `${REPO}/… と書いてください（理由は scripts/_deps.mjs）`,
       );
     }
   }

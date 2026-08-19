@@ -22,6 +22,7 @@
  *
  * どれも「置いたから大丈夫」では分かりません。出してから測ります。
  */
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -32,6 +33,18 @@ const base = (process.argv[2] ?? "").replace(/\/$/, "");
 if (!base) {
   console.error("使い方: node scripts/verify-published.mjs <公開先の URL>");
   process.exit(2);
+}
+
+const { REPO } = await import("./_deps.mjs");
+const { makeFixture } = await import("./_fixture.mjs");
+
+/** src/ の下のファイル数。**「コマンドが成功した」と「届いた」は別のこと**です。 */
+function countFiles(dir) {
+  let n = 0;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    n += e.isDirectory() ? countFiles(path.join(dir, e.name)) : 1;
+  }
+  return n;
 }
 
 const checks = [];
@@ -307,6 +320,46 @@ try {
   must("存在しない URL に 404 が返る", res.status === 404, `HTTP ${res.status}`);
 } catch (e) {
   must("存在しない URL を測れた", false, String(e).slice(0, 120));
+}
+
+/* --- 5. 設定ゼロで入るか（owner/repo 形式） ------------------------- *
+ * **これは公開後にしか確かめられません。** GitHub が読むのは既定ブランチの
+ * registry.json なので、手元の枝では試せません。
+ *
+ * ここが緑なら、利用者は components.json も registries も要りません。
+ * shadcn のディレクトリに載っていなくても部品が入ります。
+ *
+ * 依存まで辿らせます。**依存が 1 つでも `@nasu/…` に戻っていたら落ちます**
+ *（Unknown registry "@nasu"）。 */
+const zeroConf = path.join(root, ".verify-published-zeroconf");
+try {
+  makeFixture(zeroConf, { project: true });
+  execFileSync(
+    process.execPath,
+    [
+      path.join(root, "node_modules", "shadcn", "dist", "index.js"),
+      "add",
+      `${REPO}/action-button`,
+      "--yes",
+    ],
+    { cwd: zeroConf, encoding: "utf8", stdio: "pipe" },
+  );
+  const n = fs.existsSync(path.join(zeroConf, "src"))
+    ? countFiles(path.join(zeroConf, "src"))
+    : 0;
+  must(
+    `設定ゼロで入る（npx shadcn add ${REPO}/action-button）`,
+    n === 10,
+    `${n} ファイル`,
+  );
+} catch (e) {
+  must(
+    `設定ゼロで入る（npx shadcn add ${REPO}/action-button）`,
+    false,
+    (String(e.stdout ?? "") + String(e.stderr ?? e)).slice(-300),
+  );
+} finally {
+  fs.rmSync(zeroConf, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
 }
 
 /* --- まとめ --------------------------------------------------------- */
