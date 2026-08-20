@@ -1,9 +1,9 @@
 ---
-title: 書きかけのメモ（公開されてはいけない）
-description: "draft の旗が付いているので、一覧・sitemap・RSS のどこにも出てはいけません。"
+title: A half-written note (must never be published)
+description: "It carries the draft flag, so it must not appear in the index, the sitemap, or the RSS feed."
 date: 2026-08-10
 draft: true
 ---
 
-この記事が公開ページに出ていたら、下書きの除外が漏れています。
-検査（verify-seo.mjs）は 3 か所すべてを見ています。
+If this article shows up on a public page, the draft exclusion has a hole in it.
+The check (verify-seo.mjs) looks at all three places.

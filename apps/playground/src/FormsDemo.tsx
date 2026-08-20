@@ -14,6 +14,7 @@ import { useOptimisticList } from "@/hooks/use-optimistic-list";
 import { useToast } from "@/components/ui/action-provider";
 import { ActionError } from "@/lib/action";
 import { Panel } from "./Panel";
+import { t } from "./lang";
 
 export function FormsDemo() {
   return (
@@ -34,31 +35,17 @@ function InputsSection() {
 
   return (
     <Panel
-      title="入力部品と formDataToObject"
+      title={t("入力部品と formDataToObject")}
       description={
         <>
-          <code className="text-fg">AsyncForm</code> は送信のとき{" "}
+          <code className="text-fg">AsyncForm</code> {t("は送信のとき")}{" "}
           <code className="text-fg">formDataToObject</code>{" "}
-          を通してから <code className="text-fg">action</code> を呼びます。
-          <strong className="text-fg">同じ名前の入力は配列に畳まれ</strong>、
-          チェックの外れているチェックボックスも空文字で届きます。
-          下のフォームを送ると、<code className="text-fg">action</code>{" "}
-          が実際に受け取った値がそのまま出ます。
+          {t("を通してから")} <code className="text-fg">action</code> {t("を呼びます。")}
+          <strong className="text-fg">{t("同じ名前の入力は配列に畳まれ")}</strong>{t("、\r\n          チェックの外れているチェックボックスも空文字で届きます。\r\n          下のフォームを送ると、")}<code className="text-fg">action</code>{" "}
+          {t("が実際に受け取った値がそのまま出ます。")}
         </>
       }
-      code={`<AsyncForm action={(values) => api.save(values)}>…</AsyncForm>
-
-// values は畳んだあとの形で届きます
-{
-  title: "打ち合わせの記録",
-  langs: ["ts", "rs"],   // <select multiple> で 2 つ選んだ
-  tags:  ["web"],        // 同じ name のチェックボックス
-  plan:  "pro",
-  agree: ""              // チェックを外したまま送った
-}
-
-// 自分で <form> を書くときは、直接呼べます
-const values = formDataToObject(new FormData(formEl));`}
+      code={t("<AsyncForm action={(values) => api.save(values)}>…</AsyncForm>\n\n// values は畳んだあとの形で届きます\n{\n  title: \"打ち合わせの記録\",\n  langs: [\"ts\", \"rs\"],   // <select multiple> で 2 つ選んだ\n  tags:  [\"web\"],        // 同じ name のチェックボックス\n  plan:  \"pro\",\n  agree: \"\"              // チェックを外したまま送った\n}\n\n// 自分で <form> を書くときは、直接呼べます\nconst values = formDataToObject(new FormData(formEl));")}
     >
       <Stack space="lg">
         <Box className="max-w-md">
@@ -68,34 +55,34 @@ const values = formDataToObject(new FormData(formEl));`}
               setSent(values);
               if (!values.plan) {
                 throw new ActionError("validation", {
-                  displayMessage: "入力内容を確認してください",
-                  fields: { plan: "プランを選んでください" },
+                  displayMessage: t("入力内容を確認してください"),
+                  fields: { plan: t("プランを選んでください") },
                 });
               }
               return values;
             }}
-            submitLabel="送信して中身を見る"
-            successMessage="下に送信された値を出しました"
+            submitLabel={t("送信して中身を見る")}
+            successMessage={t("下に送信された値を出しました")}
             resetOnSuccess={false}
           >
-            <Field name="title" label="件名" required />
+            <Field name="title" label={t("件名")} required />
 
             <SelectField
               name="team"
-              label="チーム"
-              placeholder="選択してください"
+              label={t("チーム")}
+              placeholder={t("選択してください")}
               options={[
-                { value: "design", label: "デザイン" },
-                { value: "dev", label: "開発" },
+                { value: "design", label: t("デザイン") },
+                { value: "dev", label: t("開発") },
                 { value: "qa", label: "QA" },
               ]}
             />
 
             <SelectField
               name="langs"
-              label="使う言語（複数選択）"
+              label={t("使う言語（複数選択）")}
               multiple
-              hint="複数選べます（パソコンでは Ctrl / ⌘ を押しながらクリック）"
+              hint={t("複数選べます（パソコンでは Ctrl / ⌘ を押しながらクリック）")}
               options={[
                 { value: "ts", label: "TypeScript" },
                 { value: "py", label: "Python" },
@@ -106,32 +93,32 @@ const values = formDataToObject(new FormData(formEl));`}
 
             <CheckboxGroup
               name="tags"
-              label="タグ（複数）"
+              label={t("タグ（複数）")}
               inline
               options={[
                 { value: "web", label: "Web" },
-                { value: "game", label: "ゲーム" },
-                { value: "ml", label: "機械学習" },
+                { value: "game", label: t("ゲーム") },
+                { value: "ml", label: t("機械学習") },
               ]}
             />
 
             <RadioGroup
               name="plan"
-              label="プラン"
+              label={t("プラン")}
               required
               options={[
-                { value: "free", label: "無料" },
+                { value: "free", label: t("無料") },
                 { value: "pro", label: "Pro" },
-                { value: "team", label: "チーム" },
+                { value: "team", label: t("チーム") },
               ]}
             />
 
-            <DateField name="due" label="期限" hint="ブラウザ標準の日付入力です" />
+            <DateField name="due" label={t("期限")} hint={t("ブラウザ標準の日付入力です")} />
 
-            <CheckboxField name="agree" label="規約に同意する" />
+            <CheckboxField name="agree" label={t("規約に同意する")} />
           </AsyncForm>
           <p className="mt-xs text-xs text-muted-fg">
-            見本です。押しても実際には何も送信されません。
+            {t("見本です。押しても実際には何も送信されません。")}
           </p>
         </Box>
 
@@ -139,7 +126,7 @@ const values = formDataToObject(new FormData(formEl));`}
           <Box padding="sm" background="muted" radius="md">
             <Stack space="2xs">
               <span className="text-xs font-medium text-muted-fg">
-                実際に送信された値
+                {t("実際に送信された値")}
               </span>
               <pre className="overflow-x-auto text-[11px] leading-relaxed">
                 <code>{JSON.stringify(sent, null, 2)}</code>
@@ -167,18 +154,18 @@ interface Row {
 const ROWS: Row[] = Array.from({ length: 14 }, (_, i) => ({
   id: i + 1,
   date: `2026-0${(i % 8) + 1}-${String((i % 27) + 1).padStart(2, "0")}`,
-  title: `案件 ${String.fromCharCode(65 + i)}`,
-  status: ["進行中", "完了", "停止"][i % 3],
+  title: t("案件 {0}").replace("{0}", String.fromCharCode(65 + i)),
+  status: [t("進行中"), t("完了"), t("停止")][i % 3],
   amount: (i + 1) * 1300,
 }));
 
 const COLUMNS: TableColumn<Row>[] = [
-  { key: "date", label: "日付", sortable: true },
-  { key: "title", label: "案件", sortable: true },
-  { key: "status", label: "状態", sortable: true },
+  { key: "date", label: t("日付"), sortable: true },
+  { key: "title", label: t("案件"), sortable: true },
+  { key: "status", label: t("状態"), sortable: true },
   {
     key: "amount",
-    label: "金額",
+    label: t("金額"),
     sortable: true,
     align: "end",
     get: (r) => `¥${r.amount.toLocaleString("ja-JP")}`,
@@ -190,25 +177,13 @@ function SelectionSection() {
 
   return (
     <Panel
-      title="行選択"
+      title={t("行選択")}
       description={
         <>
-          選択は<strong className="text-fg">キーで保持</strong>するので、
-          ページを移っても並べ替えても残ります。
-          ヘッダのチェックは「いま表示している行」だけが対象です。
-          他のページの分を含めた合計を「N 件選択中」に出します。
-          Shift+クリックで範囲選択、チェックのクリックは行クリックに伝播しません。
+          {t("選択は")}<strong className="text-fg">{t("キーで保持")}</strong>{t("するので、\r\n          ページを移っても並べ替えても残ります。\r\n          ヘッダのチェックは「いま表示している行」だけが対象です。\r\n          他のページの分を含めた合計を「N 件選択中」に出します。\r\n          Shift+クリックで範囲選択、チェックのクリックは行クリックに伝播しません。")}
         </>
       }
-      code={`<DataTable
-  rows={rows}
-  columns={columns}
-  getKey={(r) => r.id}     // selectable のときは必須
-  selectable
-  selectionActions={(keys, clear) => (
-    <Button size="sm" onClick={() => bulkDelete(keys)}>削除</Button>
-  )}
-/>`}
+      code={t("<DataTable\n  rows={rows}\n  columns={columns}\n  getKey={(r) => r.id}     // selectable のときは必須\n  selectable\n  selectionActions={(keys, clear) => (\n    <Button size=\"sm\" onClick={() => bulkDelete(keys)}>削除</Button>\n  )}\n/>")}
     >
       <DataTable
         rows={ROWS}
@@ -216,7 +191,7 @@ function SelectionSection() {
         getKey={(r) => r.id}
         pageSize={5}
         selectable
-        caption="案件の一覧"
+        caption={t("案件の一覧")}
         onRowClick={(r) => toast.show({ tone: "info", title: r.title })}
         selectionActions={(keys, clear) => (
           <Button
@@ -225,12 +200,12 @@ function SelectionSection() {
             onClick={() => {
               toast.show({
                 tone: "success",
-                title: `${keys.size} 件を処理しました`,
+                title: t("{0} 件を処理しました").replace("{0}", String(keys.size)),
               });
               clear();
             }}
           >
-            まとめて処理
+            {t("まとめて処理")}
           </Button>
         )}
       />
@@ -249,9 +224,9 @@ interface Todo {
 }
 
 let serverTodos: Todo[] = [
-  { id: 1, title: "レイアウトを直す", done: true },
-  { id: 2, title: "フォームを繋ぐ", done: false },
-  { id: 3, title: "端末幅を確かめる", done: false },
+  { id: 1, title: t("レイアウトを直す"), done: true },
+  { id: 2, title: t("フォームを繋ぐ"), done: false },
+  { id: 3, title: t("端末幅を確かめる"), done: false },
 ];
 let nextServerId = 100;
 
@@ -265,7 +240,7 @@ function OptimisticSection() {
       await wait(500);
       return [...serverTodos];
     },
-    getKey: (t) => t.id,
+    getKey: (todo) => todo.id,
   });
 
   return (
@@ -273,15 +248,13 @@ function OptimisticSection() {
       title="useOptimisticList"
       description={
         <>
-          追加・削除・更新をサーバーの応答を待たずに反映し、失敗したら
-          <strong className="text-fg">その操作だけ</strong>取り消します。
-          「配列を控えて戻す」実装だと、同時に走った他の操作まで巻き戻ります。
-          保留中の行は薄く表示されます。
+          {t("追加・削除・更新をサーバーの応答を待たずに反映し、失敗したら")}
+          <strong className="text-fg">{t("その操作だけ")}</strong>{t("取り消します。\r\n          「配列を控えて戻す」実装だと、同時に走った他の操作まで巻き戻ります。\r\n          保留中の行は薄く表示されます。")}
         </>
       }
       code={`const list = useOptimisticList({
   load: (_, ctx) => jsonRequest<Todo[]>("/api/todos", { ctx }),
-  getKey: (t) => t.id,
+  getKey: (todo) => todo.id,
 });
 
 list.add(item,  (i, ctx) => api.create(i, ctx));
@@ -293,8 +266,8 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="やることを追加"
-            aria-label="やることの題名"
+            placeholder={t("やることを追加")}
+            aria-label={t("やることの題名")}
             className="min-w-0 flex-1 rounded-md border border-input bg-card px-3 py-2 text-base"
           />
           <Button
@@ -310,7 +283,7 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
                 await wait(900);
                 if (/fail/i.test(i.title)) {
                   throw new ActionError("create failed", {
-                    displayMessage: `「${i.title}」の追加に失敗しました`,
+                    displayMessage: t("「{0}」の追加に失敗しました").replace("{0}", i.title),
                   });
                 }
                 const saved = { ...i, id: nextServerId++ };
@@ -319,16 +292,16 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
               });
             }}
           >
-            追加
+            {t("追加")}
           </Button>
         </Inline>
 
         <Stack space="2xs" dividers>
-          {list.items.map((t) => {
-            const state = list.pendingOf(t.id);
+          {list.items.map((todo) => {
+            const state = list.pendingOf(todo.id);
             return (
               <Inline
-                key={t.id}
+                key={todo.id}
                 space="xs"
                 wrap={false}
                 className={state ? "opacity-50" : undefined}
@@ -338,14 +311,14 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
                 <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-xs">
                   <input
                     type="checkbox"
-                    checked={t.done}
+                    checked={todo.done}
                     className="size-5 shrink-0 accent-primary"
                     onChange={() =>
-                      void list.update(t, { done: !t.done }, async (i) => {
+                      void list.update(todo, { done: !todo.done }, async (i) => {
                         await wait(700);
                         if (/fail/i.test(i.title)) {
                           throw new ActionError("update failed", {
-                            displayMessage: `「${i.title}」の更新に失敗しました`,
+                            displayMessage: t("「{0}」の更新に失敗しました").replace("{0}", i.title),
                           });
                         }
                         serverTodos = serverTodos.map((x) =>
@@ -356,36 +329,36 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
                     }
                   />
                   <span
-                    className={`min-w-0 flex-1 text-sm ${t.done ? "text-muted-fg line-through" : ""}`}
+                    className={`min-w-0 flex-1 text-sm ${todo.done ? "text-muted-fg line-through" : ""}`}
                   >
-                    {t.title}
+                    {todo.title}
                   </span>
                 </label>
                 {state && (
                   <span className="shrink-0 text-[11px] text-muted-fg">
                     {state === "add"
-                      ? "追加中"
+                      ? t("追加中")
                       : state === "remove"
-                        ? "削除中"
-                        : "更新中"}
+                        ? t("削除中")
+                        : t("更新中")}
                   </span>
                 )}
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() =>
-                    void list.remove(t, async (i) => {
+                    void list.remove(todo, async (i) => {
                       await wait(900);
                       if (/fail/i.test(i.title)) {
                         throw new ActionError("delete failed", {
-                          displayMessage: `「${i.title}」の削除に失敗しました`,
+                          displayMessage: t("「{0}」の削除に失敗しました").replace("{0}", i.title),
                         });
                       }
                       serverTodos = serverTodos.filter((x) => x.id !== i.id);
                     })
                   }
                 >
-                  削除
+                  {t("削除")}
                 </Button>
               </Inline>
             );
@@ -394,19 +367,19 @@ list.update(t, { done: true }, (i, ctx) => api.update(i, ctx));`}
 
         <Inline space="xs">
           <Button size="sm" variant="outline" onClick={list.refetch}>
-            再取得（保留中は消えません）
+            {t("再取得（保留中は消えません）")}
           </Button>
           <span className="self-center text-xs text-muted-fg">
-            保留中: {list.hasPending ? "あり" : "なし"}
+            {t("保留中:")} {list.hasPending ? t("あり") : t("なし")}
           </span>
         </Inline>
 
         <Inline space="xs">
           <span className="text-xs text-muted-fg">
             <strong className="text-fg">
-              このデモの偽サーバーは、題名に fail を含むものだけ拒否します。
+              {t("このデモの偽サーバーは、題名に fail を含むものだけ拒否します。")}
             </strong>
-            部品の仕様ではありません。失敗したときの戻り方を見るための細工です。
+            {t("部品の仕様ではありません。失敗したときの戻り方を見るための細工です。")}
           </span>
         </Inline>
       </Stack>

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Box, ContentBlock, Stack } from "@/components/ui/layout";
 import { Scrollable } from "@/components/ui/scrollable";
+import { t } from "./lang";
 
 /**
  * カタログ 1 項目の枠。
@@ -43,7 +44,7 @@ export function Panel({
 /** コード例。長い行は折り返さず、この中だけを横スクロールさせます。 */
 export function Code({ children }: { children: string }) {
   return (
-    <Scrollable label="コード例">
+    <Scrollable label={t("コード例")}>
       <Box as="pre" padding="sm" background="muted" radius="md">
         <code className="text-[11px] leading-relaxed text-muted-fg">
           {children}

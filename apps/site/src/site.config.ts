@@ -20,14 +20,14 @@ export const SITE = {
      自分のサイトにするときは、ここと about.astro を書き換えてください。 */
   name: "Example Studio",
   description:
-    "静的なページは Astro、動く部分だけ React。Nasu Stack で組んだサイトの見本です。",
+    "Static pages in Astro, React only where things move. A sample site built with Nasu Stack.",
   author: "Example Studio",
   /**
    * 既定の OGP 画像。**無いと SNS に貼ったとき白い箱が出るだけになります。**
    * ページごとに差し替えたいときは Base.astro に image を渡してください。
    */
   ogImage: "/og.png",
-  locale: "ja",
+  locale: "en",
 } as const;
 
 /**

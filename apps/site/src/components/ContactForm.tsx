@@ -31,7 +31,7 @@ const send = ENDPOINT
   : async (values: unknown) => {
       // 受け口が未設定のときの受け皿。中身はコンソールへ。
       // eslint-disable-next-line no-console
-      console.info("[ContactForm] PUBLIC_CONTACT_ENDPOINT が未設定です", values);
+      console.info("[ContactForm] PUBLIC_CONTACT_ENDPOINT is not set", values);
       await new Promise((r) => setTimeout(r, 600));
       return { ok: true, mocked: true };
     };
@@ -41,12 +41,12 @@ export function ContactForm() {
     <>
       <AsyncForm
         action={send}
-        submitLabel="送信する"
-        successMessage="お問い合わせを受け付けました"
+        submitLabel="Send"
+        successMessage="Thanks — we have your message"
       >
-        <Field name="name" label="お名前" required />
-        <Field name="email" label="メールアドレス" type="email" required />
-        <Field name="message" label="本文" multiline rows={5} />
+        <Field name="name" label="Name" required />
+        <Field name="email" label="Email" type="email" required />
+        <Field name="message" label="Message" multiline rows={5} />
         {/* 人には見えず、キーボードでも読み上げでも到達しない、bot 用のおとり */}
         <HoneypotField />
       </AsyncForm>
@@ -56,7 +56,7 @@ export function ContactForm() {
           本当に送られるようになったら出てはいけません。 */}
       {!ENDPOINT && (
         <p className="mt-xs text-xs text-muted-fg">
-          この見本は送信先が未設定です。押しても実際には送信されません。
+          This sample has no endpoint configured. Pressing Send does not send anything.
         </p>
       )}
     </>

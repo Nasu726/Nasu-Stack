@@ -1,6 +1,7 @@
 {
-  "name": "nasu",
-  "homepage": "https://github.com/Nasu726/Nasu-Stack",
-  "registry": "https://nasu726.github.io/Nasu-Stack/r/{name}.json",
-  "description": "余白と非同期の状態を部品の側が引き受ける、日本語のサイト/アプリ用レジストリ。レイアウト・フォーム・ナビ・SEO と、端末幅の崩れを機械で測る検査を含みます。"
+  "name": "@nasu",
+  "homepage": "https://nasu726.github.io/Nasu-Stack/",
+  "url": "https://nasu726.github.io/Nasu-Stack/r/{name}.json",
+  "description": "Backend-agnostic React and Astro components that own async state and layout constraints: one function gives you loading, failure, double-submit, and abort. Includes a screen-width checker you can run in CI.",
+  "logo": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='#5b2a86'/><rect x='8' y='8' width='16' height='3' rx='1.5' fill='#fff'/><rect x='8' y='14' width='16' height='3' rx='1.5' fill='#fff' fill-opacity='.72'/><rect x='8' y='20' width='10' height='3' rx='1.5' fill='#fff' fill-opacity='.44'/></svg>"
 }

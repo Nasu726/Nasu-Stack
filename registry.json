@@ -22,7 +22,7 @@
       "title": "アップロードの契約とヘルパ",
       "description": "進捗つきアップロード。fetch は送信の進捗を取れないため XHR を使いますが、uploadWithProgress が隠します。中核の Action 契約は変えていません。",
       "registryDependencies": [
-        "@nasu/action"
+        "Nasu726/Nasu-Stack/action"
       ],
       "files": [
         {
@@ -81,7 +81,7 @@
       "title": "追加テーマ 3 種",
       "description": "warm / editorial / vivid。色だけでなく角丸・影・書体・余白の広さまで一括で切り替わります。自分のテーマを足すときの雛型にもなります。",
       "registryDependencies": [
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -97,7 +97,7 @@
       "title": "ActionDefaults コンテキスト",
       "description": "onError を書かなかったアクションの受け皿。ActionProvider が値を供給します。",
       "registryDependencies": [
-        "@nasu/action"
+        "Nasu726/Nasu-Stack/action"
       ],
       "files": [
         {
@@ -113,8 +113,8 @@
       "title": "レイアウト・プリミティブ",
       "description": "Box / Stack / Inline / Columns / Tiles / Spread / PageBlock / ContentBlock / Section / Divider。余白は 9 段階が既定だが段階外の値も書ける。コンポーネントは外側の余白を持たない。",
       "registryDependencies": [
-        "@nasu/utils",
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -130,8 +130,8 @@
       "title": "Scrollable",
       "description": "表やコードのように縮められない中身を、その部分だけ横スクロールさせます。端の影とキーボード到達つき。",
       "registryDependencies": [
-        "@nasu/utils",
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -147,10 +147,10 @@
       "title": "Toast",
       "description": "画面隅の通知。ToastProvider + useToast。tone / 自動消去 / アクションボタン / スクリーンリーダー対応つき。",
       "registryDependencies": [
-        "@nasu/layout",
-        "@nasu/spinner",
-        "@nasu/utils",
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/layout",
+        "Nasu726/Nasu-Stack/spinner",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -166,10 +166,10 @@
       "title": "ActionProvider",
       "description": "アプリの一番外側に 1 回置くだけ。onError を書き忘れたアクションの失敗が握り潰されず、画面隅の通知になります。",
       "registryDependencies": [
-        "@nasu/action-defaults",
-        "@nasu/toast",
-        "@nasu/confirm-dialog",
-        "@nasu/action"
+        "Nasu726/Nasu-Stack/action-defaults",
+        "Nasu726/Nasu-Stack/toast",
+        "Nasu726/Nasu-Stack/confirm-dialog",
+        "Nasu726/Nasu-Stack/action"
       ],
       "files": [
         {
@@ -185,8 +185,8 @@
       "title": "useAction",
       "description": "書き込み系の非同期処理。二重送信防止・中断・自動リトライ・成功状態の自動リセットを内蔵。",
       "registryDependencies": [
-        "@nasu/action",
-        "@nasu/action-defaults"
+        "Nasu726/Nasu-Stack/action",
+        "Nasu726/Nasu-Stack/action-defaults"
       ],
       "files": [
         {
@@ -202,7 +202,7 @@
       "title": "useResource",
       "description": "読み取り系の非同期処理。依存キーの変化で再取得し、アンマウント時に中断します。",
       "registryDependencies": [
-        "@nasu/action"
+        "Nasu726/Nasu-Stack/action"
       ],
       "files": [
         {
@@ -218,7 +218,7 @@
       "title": "アイコン",
       "description": "Spinner / CheckIcon / AlertIcon。",
       "registryDependencies": [
-        "@nasu/utils"
+        "Nasu726/Nasu-Stack/utils"
       ],
       "files": [
         {
@@ -234,12 +234,12 @@
       "title": "ActionButton",
       "description": "関数を渡すだけで idle/pending/success/error の 4 状態を持つボタン。連打防止と確認ダイアログつき。",
       "registryDependencies": [
-        "@nasu/use-action",
-        "@nasu/action-defaults",
-        "@nasu/confirm-dialog",
-        "@nasu/spinner",
-        "@nasu/utils",
-        "@nasu/action"
+        "Nasu726/Nasu-Stack/use-action",
+        "Nasu726/Nasu-Stack/action-defaults",
+        "Nasu726/Nasu-Stack/confirm-dialog",
+        "Nasu726/Nasu-Stack/spinner",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/action"
       ],
       "files": [
         {
@@ -255,9 +255,9 @@
       "title": "Dialog",
       "description": "モーダルとシート。フォーカスの閉じ込め・Esc・背面のスクロール停止つき。",
       "registryDependencies": [
-        "@nasu/layout",
-        "@nasu/utils",
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/layout",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -273,9 +273,9 @@
       "title": "ConfirmDialog",
       "description": "native <dialog> による確認ダイアログ。フォーカスの閉じ込め・背景の暗転・Esc・最前面表示をブラウザに任せます。Provider が無ければ window.confirm に落ちます。",
       "registryDependencies": [
-        "@nasu/action-button",
-        "@nasu/layout",
-        "@nasu/dialog"
+        "Nasu726/Nasu-Stack/action-button",
+        "Nasu726/Nasu-Stack/layout",
+        "Nasu726/Nasu-Stack/dialog"
       ],
       "files": [
         {
@@ -291,10 +291,10 @@
       "title": "AsyncBoundary",
       "description": "読込中 / エラー / 空 / データありの 4 分岐を 1 箇所に閉じ込めます。スケルトン同梱。",
       "registryDependencies": [
-        "@nasu/action",
-        "@nasu/action-button",
-        "@nasu/spinner",
-        "@nasu/utils"
+        "Nasu726/Nasu-Stack/action",
+        "Nasu726/Nasu-Stack/action-button",
+        "Nasu726/Nasu-Stack/spinner",
+        "Nasu726/Nasu-Stack/utils"
       ],
       "files": [
         {
@@ -310,12 +310,12 @@
       "title": "AsyncForm + Field",
       "description": "送信関数を 1 つ渡すだけのフォーム。同名の値を配列に畳むので複数選択も壊れません。フィールド単位のエラー表示と自動クリアつき。",
       "registryDependencies": [
-        "@nasu/use-action",
-        "@nasu/action-defaults",
-        "@nasu/action-button",
-        "@nasu/spinner",
-        "@nasu/utils",
-        "@nasu/action"
+        "Nasu726/Nasu-Stack/use-action",
+        "Nasu726/Nasu-Stack/action-defaults",
+        "Nasu726/Nasu-Stack/action-button",
+        "Nasu726/Nasu-Stack/spinner",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/action"
       ],
       "files": [
         {
@@ -331,10 +331,10 @@
       "title": "入力部品",
       "description": "SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField。ラベル全体をタップ領域にし、入力欄は 16px 以上。RadioGroup は fieldset + legend。",
       "registryDependencies": [
-        "@nasu/async-form",
-        "@nasu/layout",
-        "@nasu/utils",
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/async-form",
+        "Nasu726/Nasu-Stack/layout",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -350,10 +350,10 @@
       "title": "DataList",
       "description": "取得・スケルトン・空状態・再試行つきのリスト。columns 指定で関数なし（Astro island）でも使えます。",
       "registryDependencies": [
-        "@nasu/use-resource",
-        "@nasu/async-boundary",
-        "@nasu/utils",
-        "@nasu/action"
+        "Nasu726/Nasu-Stack/use-resource",
+        "Nasu726/Nasu-Stack/async-boundary",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/action"
       ],
       "files": [
         {
@@ -369,9 +369,9 @@
       "title": "ThemeProvider + ThemeSwitcher",
       "description": "data-theme と .dark を付け替えるだけでトンマナ一式を切り替えます。初期描画のちらつき防止スクリプト同梱。",
       "registryDependencies": [
-        "@nasu/tokens",
-        "@nasu/utils",
-        "@nasu/inline-script"
+        "Nasu726/Nasu-Stack/tokens",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/inline-script"
       ],
       "files": [
         {
@@ -403,9 +403,9 @@
       "title": "Tabs",
       "description": "切り替えて見せる。矢印キー・roving tabindex・はみ出し時の横スクロールつき。",
       "registryDependencies": [
-        "@nasu/scrollable",
-        "@nasu/utils",
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/scrollable",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -421,8 +421,8 @@
       "title": "Disclosure / Accordion",
       "description": "details/summary ベース。JavaScript 無しで開閉します。",
       "registryDependencies": [
-        "@nasu/utils",
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -452,9 +452,9 @@
       "title": "DropdownMenu / NavDropdown",
       "description": "命令のメニューと、リンクの下ろし物。role を取り違えないよう別部品にしています。",
       "registryDependencies": [
-        "@nasu/use-popover",
-        "@nasu/utils",
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/use-popover",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -470,10 +470,10 @@
       "title": "SiteHeader / NavLink / SkipLink",
       "description": "サイトのヘッダ。狭い画面のメニューは details なので JavaScript 無しで開閉します。",
       "registryDependencies": [
-        "@nasu/layout",
-        "@nasu/utils",
-        "@nasu/tokens",
-        "@nasu/base"
+        "Nasu726/Nasu-Stack/layout",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens",
+        "Nasu726/Nasu-Stack/base"
       ],
       "files": [
         {
@@ -489,7 +489,7 @@
       "title": "prose.css",
       "description": "本文（Markdown）の見た目。幅は ContentBlock の担当なので持ちません。",
       "registryDependencies": [
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -505,7 +505,7 @@
       "title": "Frame / Img",
       "description": "画像の場所を先に取ってレイアウトシフトを防ぐ箱。",
       "registryDependencies": [
-        "@nasu/utils"
+        "Nasu726/Nasu-Stack/utils"
       ],
       "files": [
         {
@@ -534,7 +534,7 @@
       "title": "buildMeta",
       "description": "title / canonical / OGP / JSON-LD を組み立てる純粋な関数。相対 URL を絶対に直します。",
       "registryDependencies": [
-        "@nasu/inline-script"
+        "Nasu726/Nasu-Stack/inline-script"
       ],
       "files": [
         {
@@ -564,10 +564,10 @@
       "title": "SiteFooter",
       "description": "ページ下端。リンク群に見出しを付け、当たり判定を 44px 確保します。",
       "registryDependencies": [
-        "@nasu/layout",
-        "@nasu/utils",
-        "@nasu/tokens",
-        "@nasu/base"
+        "Nasu726/Nasu-Stack/layout",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens",
+        "Nasu726/Nasu-Stack/base"
       ],
       "files": [
         {
@@ -583,7 +583,7 @@
       "title": "createSubmit",
       "description": "フォームを送信先へ繋ぎます。タイムアウト・通信断の翻訳・検証エラーの吸収・おとりの欄。",
       "registryDependencies": [
-        "@nasu/action"
+        "Nasu726/Nasu-Stack/action"
       ],
       "files": [
         {
@@ -599,7 +599,7 @@
       "title": "HoneypotField",
       "description": "bot 用のおとりの欄。人にも読み上げにもキーボードにも到達させません。",
       "registryDependencies": [
-        "@nasu/submit"
+        "Nasu726/Nasu-Stack/submit"
       ],
       "files": [
         {
@@ -615,14 +615,14 @@
       "title": "DataTable",
       "description": "並べ替え・ページング・行選択。狭い画面では 1 行 = 1 カードに組み替えます（列定義の label が必須）。選択はキーで保持するのでページや並べ替えをまたいで残ります。",
       "registryDependencies": [
-        "@nasu/use-resource",
-        "@nasu/async-boundary",
-        "@nasu/scrollable",
-        "@nasu/action-button",
-        "@nasu/layout",
-        "@nasu/utils",
-        "@nasu/action",
-        "@nasu/tokens"
+        "Nasu726/Nasu-Stack/use-resource",
+        "Nasu726/Nasu-Stack/async-boundary",
+        "Nasu726/Nasu-Stack/scrollable",
+        "Nasu726/Nasu-Stack/action-button",
+        "Nasu726/Nasu-Stack/layout",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/action",
+        "Nasu726/Nasu-Stack/tokens"
       ],
       "files": [
         {
@@ -638,11 +638,11 @@
       "title": "AsyncSelect",
       "description": "検索つきセレクト。debounce と前の要求の自動中断つき。WAI-ARIA の combobox パターンに従い、↑↓ Enter Esc Home End で操作できます。画面下部では候補が上に出ます。",
       "registryDependencies": [
-        "@nasu/use-resource",
-        "@nasu/spinner",
-        "@nasu/utils",
-        "@nasu/action",
-        "@nasu/use-popover"
+        "Nasu726/Nasu-Stack/use-resource",
+        "Nasu726/Nasu-Stack/spinner",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/action",
+        "Nasu726/Nasu-Stack/use-popover"
       ],
       "files": [
         {
@@ -658,12 +658,12 @@
       "title": "FileDrop",
       "description": "ドラッグ&ドロップ・進捗バー・失敗した分だけ再送。1 ファイルずつ送るので部分的な失敗から復帰できます。本物の input を残しキーボードでも使えます。",
       "registryDependencies": [
-        "@nasu/upload",
-        "@nasu/action-button",
-        "@nasu/spinner",
-        "@nasu/layout",
-        "@nasu/utils",
-        "@nasu/action"
+        "Nasu726/Nasu-Stack/upload",
+        "Nasu726/Nasu-Stack/action-button",
+        "Nasu726/Nasu-Stack/spinner",
+        "Nasu726/Nasu-Stack/layout",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/action"
       ],
       "files": [
         {
@@ -679,9 +679,9 @@
       "title": "useOptimisticList",
       "description": "楽観更新と、失敗した操作だけのロールバック。基準の配列 + 保留中の差分で持つので、同時に走った他の操作を巻き戻しません。",
       "registryDependencies": [
-        "@nasu/action",
-        "@nasu/action-defaults",
-        "@nasu/use-resource"
+        "Nasu726/Nasu-Stack/action",
+        "Nasu726/Nasu-Stack/action-defaults",
+        "Nasu726/Nasu-Stack/use-resource"
       ],
       "files": [
         {

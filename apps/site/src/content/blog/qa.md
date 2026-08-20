@@ -1,20 +1,21 @@
 ---
-title: "Q&A: <div> と <section> の使い分け"
-description: 記事の題名に & や < が入っていても、RSS と sitemap が壊れないことを確かめるための記事です。
+title: "Q&A: <div> vs <section>"
+description: An article whose title contains & and <, to prove the RSS feed and sitemap do not break.
 date: 2026-07-15
-tags: [HTML, アクセシビリティ]
+tags: [HTML, Accessibility]
 ---
 
-## この記事の役目
+## What this article is for
 
-題名に `&` と `<` が入っています。**エスケープを忘れるとフィードが壊れる**ので、
-その確認のために置いてあります。読者側のリーダーは、壊れたフィードを
-たいてい何も言わずに購読解除します。だから機械で確かめます。
+The title contains `&` and `<`. **Forget to escape those and the feed breaks**,
+so this exists to catch that. A reader's feed app usually unsubscribes from a
+broken feed without saying anything. So it gets checked mechanically.
 
-## `<div>` と `<section>` の違い
+## The difference between `<div>` and `<section>`
 
-`<section>` は「見出しを持つひとまとまり」です。見出しが無いなら `<div>` が正しい。
-迷ったら `<div>` にしてください。意味のないところに `<section>` を置くと、
-読み上げの目次に空の項目が並びます。
+A `<section>` is "a chunk that has a heading". If there is no heading, `<div>`
+is the correct choice. When in doubt, use `<div>`. Putting a `<section>`
+somewhere meaningless fills the screen-reader outline with empty entries.
 
-> 意味づけは、迷ったら弱いほうを選ぶ。強い意味づけを間違えるほうが害が大きい。
+> With semantics, when in doubt pick the weaker one. Getting a strong meaning
+> wrong does more harm.

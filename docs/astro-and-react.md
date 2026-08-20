@@ -1,112 +1,118 @@
-# Astro と React をどう分けているか
+# How Astro and React are split
 
-「静的なら Astro、動的なら React」という理解でいると、この設計は不自然に見えます。
-ここで前提を書いておきます。
+If you're holding "Astro for static, React for dynamic" in your head, this
+design looks strange. Here are the assumptions.
+
+*[日本語版はこちら](astro-and-react.ja.md)*
 
 ---
 
-## 前提: 2 つは同じプロジェクトに共存します
+## Premise: the two live in the same project
 
-**Astro は「React の代わり」ではありません。** Astro は
-「ページの大部分を静的 HTML にして、**必要な部分だけ**フレームワークを動かす」
-ための仕組みで、その「必要な部分」に React を差し込むのが本来の使い方です。
+**Astro is not a replacement for React.** Astro is a way to serve most of a
+page as static HTML and run a framework **only where it's needed** — and
+putting React into that "where it's needed" is exactly what it's for.
 
-このリポジトリの `apps/site` がまさにそれです。
+`apps/site` in this repository is precisely that:
 
 ```astro
 <DataList client:load loader={{ url: "/works.json" }} />
 <ContactForm client:load />
 ```
 
-ページ本体は JS 0 バイトで配信され、この 2 か所だけが React として起動します。
-**選ぶ単位はプロジェクトではなく、ページの中の部分**です。
+The page itself ships with zero bytes of JS, and only those two spots boot as
+React. **The unit of choice is a part of a page, not a project.**
 
-だから「Astro 用」と「React 用」に部品を割ると、
-1 つのページの中で 2 セットを使い分けることになります。
-
----
-
-## いま分かれている軸
-
-分けてはいますが、フレームワークでは分けていません。
-
-```
-lib/*.ts          純粋な関数（どこでも動く）
-                  action / seo / feed / utils
-       ↑
-components/ui/*.tsx   React（Astro からも静的に描画できる）
-       ↑
-Seo.astro など        Astro 専用の薄い包み（10 行程度）
-```
-
-**React の部品は、Astro の中でも `client:` を付けずに使えます。**
-その場合は静的 HTML として書き出されるだけで、JavaScript は 1 バイトも増えません。
-実測でも確かめてあります（`<astro-slot>` に包まれず、`Stack` の gap は 24px のまま）。
-
-`SiteHeader` の狭い画面のメニューが `<details>` なのも同じ理由です。
-JS を必要としない作りにしてあるので、Astro に置いても島にする必要がありません。
+So splitting the components into "for Astro" and "for React" would mean using
+two different sets within one page.
 
 ---
 
-## フレームワークで割ると何が起きるか
+## The axis they're actually split on
 
-割る案（`components/astro/*.astro` と `components/react/*.tsx` を両方持つ）
-には、はっきりした代償があります。
+They are split — just not by framework.
 
-| | 割った場合 |
+```
+lib/*.ts              pure functions (run anywhere)
+                      action / seo / feed / utils
+       ↑
+components/ui/*.tsx   React (renders statically from Astro too)
+       ↑
+Seo.astro etc.        thin Astro-only wrappers (~10 lines)
+```
+
+**React components work inside Astro without a `client:` directive.** In that
+case they're emitted as static HTML and add zero bytes of JavaScript. That's
+measured, not assumed (no `<astro-slot>` wrapper, and `Stack`'s gap stays
+24px).
+
+It's also why `SiteHeader`'s narrow-screen menu is a `<details>`: it needs no
+JS, so placing it in Astro doesn't require making it an island.
+
+---
+
+## What splitting by framework would cost
+
+Keeping both `components/astro/*.astro` and `components/react/*.tsx` has a
+clear price:
+
+| | If split |
 |---|---|
-| 実装 | 同じ部品が 2 つ。片方を直してもう片方が古いまま、が起きる |
-| 検査 | いまの 214 件の判定が 2 倍に。**しかも 2 セットとも維持しないと意味がない** |
-| ずれ | このリポジトリが繰り返し踏んだ失敗が、そのまま増える |
+| Implementation | Two of every component. Fixing one and leaving the other stale becomes normal |
+| Checks | Every assertion doubles — **and both sets have to be maintained or the split means nothing** |
+| Drift | The failure this repository hit over and over, adopted on purpose |
 
-最後の点が一番重いです。この開発で見つけたバグの多くは
-**「同じ値が 2 か所にあった」**ことが原因でした。
+The last one is the heaviest. Most bugs found during this project came from
+**the same value existing in two places.**
 
-- ヘッダの高さとアンカーの逃げ幅 → `--header-h` に集約
-- タブの一覧が 3 か所 → `tabs.mjs` に集約
-- 下書きの除外が 3 か所 → `getPublishedPosts()` に集約
-- 入力欄の class が 4 か所 → `inputClass()` に集約
+- Header height vs. anchor scroll offset → collapsed into `--header-h`
+- The tab list in three places → collapsed into `tabs.mjs`
+- Draft exclusion in three places → collapsed into `getPublishedPosts()`
+- Input classes in four places → collapsed into `inputClass()`
 
-部品そのものを 2 セットに割るのは、この失敗を**設計として採用する**ことになります。
-
----
-
-## 割ることの利点も本当にあります
-
-公平に書くと、Astro 専用の部品には利点があります。
-
-- props に要素を書ける（`brand={<a href="/">…</a>}` が通る）
-- スロットが自由（React の island は props が JSON 化されます）
-- React のランタイムを一切含まない
-
-実際、この制約は踏みました。`.astro` から `brand` に `<a>` を渡そうとして
-ビルドが落ち、`brandHref`（文字列）を足して回避しています。
+Splitting the components in two would be **adopting that failure as
+architecture.**
 
 ---
 
-## 結論: 「純粋な部分」と「薄い包み」で割る
+## The upside of splitting is real
 
-いまの方針はこうです。
+To be fair, Astro-only components would gain:
 
-1. **判断やデータの組み立ては、フレームワークを知らない純粋な関数にする**
-   （`buildMeta` / `buildRss` / `Action`）
-2. **UI は React で 1 セットだけ持つ**（Astro からは静的に描ける）
-3. **フレームワーク固有の事情は、薄い包みで吸収する**（`Seo.astro` は 30 行）
+- Elements as props (`brand={<a href="/">…</a>}` would work)
+- Free-form slots (React island props are serialized to JSON)
+- No React runtime at all
 
-包みが厚くなってきたら、そのときは分ける判断が正しくなります。
-いまの実測では `Seo.astro` が 30 行、`brandHref` が 26 行で、
-2 セット持つ費用には見合いません。
+That constraint has actually bitten. Passing `<a>` as `brand` from `.astro`
+broke the build, and the workaround was adding `brandHref` (a string).
 
-### `.astro` から React の部品を使うときの決まり
+---
 
-**props に渡せるのは JSON になる値だけです。** 関数も要素も渡せません。
+## Conclusion: split on "pure" vs. "thin wrapper"
+
+The current policy:
+
+1. **Decisions and data assembly go in pure functions that know no framework**
+   (`buildMeta`, `buildRss`, `Action`)
+2. **The UI exists once, in React** (Astro can render it statically)
+3. **Framework-specific details get absorbed by a thin wrapper**
+   (`Seo.astro` is 30 lines)
+
+Once the wrappers get thick, splitting becomes the right call. Measured today,
+`Seo.astro` is 30 lines and `brandHref` is 26 — nowhere near the cost of
+maintaining two sets.
+
+### Rules for using React components from `.astro`
+
+**Props can only be values that survive JSON.** No functions, no elements.
 
 ```astro
 <SiteHeader brand={SITE.name} brandHref="/" items={NAV} />   ✅
-<SiteHeader brand={<a href="/">{SITE.name}</a>} />           ❌ ビルドが落ちます
-<DataList loader={{ url: "/works.json", method: "GET" }} />  ✅ 宣言なら渡せる
-<DataList loader={async () => fetch("/works.json")} />       ❌ 関数は渡せない
+<SiteHeader brand={<a href="/">{SITE.name}</a>} />           ❌ breaks the build
+<DataList loader={{ url: "/works.json", method: "GET" }} />  ✅ declarative form
+<DataList loader={async () => fetch("/works.json")} />       ❌ functions don't pass
 ```
 
-これは v0.2 で `ActionSpec`（`{url, method}` で書ける宣言形）を足した理由でもあります。
-**同じ制約が、部品の設計をずっと縛っています。**
+This is also why `ActionSpec` — the declarative `{url, method}` form — was
+added in v0.2. **The same constraint has shaped the component design ever
+since.**

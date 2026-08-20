@@ -20,8 +20,13 @@
 `docs/plan-*.md` と `docs/result-*.md` は各版の計画と結果です。過去の判断の
 理由を知りたいときだけ読めば足ります。
 
-**いま動いている版の結果は [`docs/result-v09e.md`](result-v09e.md) です**
-（その前は [`result-v09d.md`](result-v09d.md)）。
+**いま動いている版の結果は [`docs/result-v09f.md`](result-v09f.md) です**
+（その前は [`result-v09e.md`](result-v09e.md)）。
+
+**v0.9f で、外から来た人が読む面を英語にしました。**
+`README.md` / `SECURITY.md` / `docs/boundaries|overview|security|astro-and-react.md`
+は英語で、日本語版は `*.ja.md` です。カタログは英語が既定で `?lang=ja`。
+**この引き継ぎと `plan-*` / `result-*` は日本語のままです**（読むのはこちらだけなので）。
 **v0.9e で `WebTemplate` から `Nasu Stack` へ改名しました**
 （経緯は [`rename.md`](rename.md)。過去の記録は当時の名前のままです）。
 この 2 つで直したものは、ほぼ全部「検査が緑のまま壊れていた」ものでした。
@@ -44,8 +49,8 @@
 
 ## 3. いまどこまで来ているか
 
-- `main` … v0.9d まで（PR #8 でマージ済み）
-- `claude/v0.9e` … **ここが最新です**（外部レビューの P1 と改名、Public Beta）
+- `main` … v0.9e まで（PR #9 / #10 でマージ済み）
+- `claude/v0.9e` … **ここが最新です**（枝の名前は v0.9e のまま。中身は v0.9f）
 
 **公開済みです。** https://nasu726.github.io/Nasu-Stack/
 （`/catalog/` に部品のカタログ、`/demo/` にデモサイト、`/r/*.json` にレジストリ）
@@ -86,7 +91,7 @@
 
 ```bash
 pnpm install
-pnpm verify           # 25 工程（独立したものは並列。約 3 分）。型・ビルド・配布物・実ブラウザ
+pnpm verify           # 27 工程（独立したものは並列。約 3 分）。型・ビルド・配布物・実ブラウザ
 pnpm verify:create    # 入口の検査 106 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 ```
@@ -162,6 +167,17 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
    「左端に揃える」です。幅を持たない子が中身の幅まで縮みます
 - **`client:idle` は、タブが見えていないと発火しません。** 押される場所
    （テーマの切り替えなど）に使うと、開いた直後に無反応になります
+- **同じことを 2 言語で書いたら、機械で突き合わせてください。**
+   ずれるのは**英語版が古くなる方向**です（書いている人が日本語話者なので）。
+   意味は見られないので、`check-translations.mjs` は**打てば動くものだけ**
+   比べます。v0.9f では、その検査自身が CRLF のせいでコマンドを 1 つも
+   見ていませんでした
+- **日本語で見ている限り、訳し漏れには気づけません。**
+   訳が無い文字列は日本語のまま出るので壊れて見えず、
+   英語で開いた人にだけ混ざって見えます（`check-catalog-lang.mjs`）
+- **和文は全角なので、行長の上限に当たりません。**
+   v0.9f で訳したら、器いっぱいに伸びる段落が 8 件出てきました。
+   端末幅の検査は**両方の言語で**回します
 - **文字列を目で見て判断しないでください。** 逃がし処理が効いているかは、
    実際に走らせて「破れなかったか」で見ます。v0.9e では、書いたばかりの
    逃がし処理が**何もしない処理**になっていて、走らせる検査だけが気づきました
@@ -215,10 +231,14 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
 
 **v0.9c 〜 v0.9e は終わっています。** 残っているのは次です。
 
-1. **`main` へマージ** → `pages.yml` が走って公開されます
+1. **`main` へマージ** → `pages.yml` が走って公開されます。
+   マージするまで `verify-published` の「設定ゼロで入る」は赤いのが正しい
+   状態です（GitHub は既定ブランチの `registry.json` を読むため）
 2. **実際に何人かに使ってもらう。** コードだけでは見つからないものが
    毎回出ています（v0.9c〜e で、作者の実機指摘 13 件 + 外部レビュー 20 件以上）
-3. **shadcn のディレクトリへ PR**（[手順](shadcn-directory.md)）
+3. shadcn のディレクトリは**急がなくてよくなりました。**
+   `npx shadcn add Nasu726/Nasu-Stack/<名前>` が設定ゼロで動きます。
+   出すときの要件と entry の形は [手順](shadcn-directory.md) に
 
 ### v1.x へ回したもの
 

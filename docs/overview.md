@@ -1,115 +1,124 @@
-# Nasu Stack — 全体像
+# Nasu Stack — the whole picture
 
-**作ったものの説明ではなく、なぜこうなっているかを書きます。**
-前者はコードを読めば分かりますが、後者は書かないと失われます。
+**This describes why things are the way they are, not what was built.** The
+second is recoverable by reading the code; the first is lost unless it's
+written down.
+
+*[日本語版はこちら](overview.ja.md)*
 
 ---
 
-## 1. 何のための道具か
+## 1. What this is for
 
-Web を人力で作ると品質は確実に出せますが、毎回同じところで手間がかかります。
-その「毎回同じところ」を部品側が引き受けて、**創作に使える時間を増やす**ための土台です。
+Building for the web by hand gets you the quality you want, but the same parts
+cost you time on every project. This takes those parts over so **more of your
+time goes into the work that's actually yours.**
 
-WordPress / Wix / Elementor より自由度が高く、素の Astro / Next.js より最初の壁が低い。
-その間を狙っています。
+More freedom than the visual site builders, a lower first wall than plain Astro
+or Next.js. That gap is the target.
 
-### 対象にしている人
+### Who it's for
 
 | | |
 |---|---|
-| 主な対象 | プログラミング初心者〜中級者。**少しはコードを触れる人** |
-| 副次的 | 自由度を求める開発者 |
-| 対象外 | **コードを一度も書かない人**。そこは v0 / Lovable / Base44 が既に埋めています |
+| Primary | Beginners through intermediate developers — **people who can touch code a little** |
+| Secondary | Developers who want the freedom |
+| Not for | **People who never write code.** That space is already served |
 
-「少しは触れる」を下限にしたのが、この設計の最も大きな分岐点です。
-ここを含めるとビジュアルエディタが必須になり、開発規模が一桁変わります。
+Setting the floor at "can touch code a little" is the single biggest fork in
+this design. Including people below it would require a visual editor, and that
+is an order of magnitude more project.
 
-### 段階的な自由度
+### Freedom in stages
 
-> 最初は楽に作り、慣れたらコードで自由に触る。
+> Start easy. Reach into the code once you want to.
 
-これを「乗り換え」ではなく**「降りる」**形で実装しています。
-
-```
-<ActionButton action={...}>      ← 何も考えなくていい層
-      ↓ 物足りなくなったら
-<Button onClick={...}> + useAction()   ← 状態だけ借りる層
-      ↓ さらに
-useState / fetch                  ← 素の React
-```
-
-どの層で止まっても壊れません。レイアウトも同じ構造です。
+This is implemented as **stepping down**, not switching over.
 
 ```
-<Stack space="lg">   ← 決まった段階から選ぶ
+<ActionButton action={...}>            ← the layer where you think about nothing
+      ↓ once that isn't enough
+<Button onClick={...}> + useAction()   ← borrow just the state
+      ↓ further
+useState / fetch                       ← plain React
+```
+
+Stopping at any layer leaves you with something that works. Layout has the same
+shape:
+
+```
+<Stack space="lg">   ← pick from a fixed scale
       ↓
-<Box padding={...}>  ← もう少し細かく
+<Box padding={...}>  ← a little finer
       ↓
-className="..."      ← 素の Tailwind
+className="..."      ← plain Tailwind
 ```
 
 ---
 
-## 2. 何を引き受けて、何を引き受けないか
+## 2. What is taken over, and what is not
 
-### 引き受けるもの
+### Taken over
 
-初心者が必ず詰まる 2 箇所です。**性質がまったく違うので分けて考えます。**
+The two places beginners reliably get stuck. **They're completely different in
+character, so they're handled separately.**
 
-| | 困りごと | いつ詰まるか |
+| | The trouble | When it hits |
 |---|---|---|
-| **配置** | 幅・余白・並びが決められない | 作り始めた直後 |
-| **状態** | 押した後・送った後・失敗した時が書けない | 見た目ができた後 |
+| **Layout** | Can't decide widths, spacing, arrangement | Right after you start |
+| **State** | Can't write what happens after the click, after the submit, after the failure | Once it looks right |
 
-前者は「動かないが見える」段階、後者は「見えるが動かない」段階の問題です。
-両方で必ず詰まるので、どちらか片方だけでは「サイトが作れる」に届きません。
+The first is the "doesn't move but you can see it" stage; the second is the
+"you can see it but it doesn't move" stage. Everyone hits both, so covering
+only one doesn't add up to "I can build a site".
 
-### 引き受けないもの
+### Not taken over
 
-**見た目だけのセクション集は作りません。**
-ヒーロー・料金表・特徴の 3 カラム——この手のものは 2026 年時点で
-2,500 個以上が $149〜399 で流通していて、作る価値がありません。
+**No purely presentational section libraries.** Heroes, pricing tables,
+three-column feature grids — as of 2026 there are more than 2,500 of those on
+sale, and building more has no value.
 
-作るのは**骨格と配線**です。見た目には出ないのに、抜けると壊れるもの。
+What gets built is **the skeleton and the wiring**: the things that don't show
+up visually but break when missing.
 
-- 見出しの階層（`h1` は 1 つ、飛び級しない）
-- landmark（`header` / `main` / `footer` / `nav`）とスキップリンク
-- 画像が場所を先に取っていること
-- キーボードで全部操作できること
-- 狭い画面で崩れないこと
+- Heading hierarchy (one `h1`, no skipped levels)
+- Landmarks (`header` / `main` / `footer` / `nav`) and a skip link
+- Images reserving their space before they load
+- Everything reachable by keyboard
+- Nothing breaking on a narrow screen
 
-### なぜそこが空白なのか
+### Why that gap exists
 
-調べたところ、市場はこう分かれていました。
+The market splits like this:
 
-| | 状況 |
+| | State |
 |---|---|
-| 見た目だけの部品 | 2,500 個以上が流通。**飽和** |
-| 機能つきの部品 | Supabase UI / Convex Components など。**特定のバックエンド専用** |
-| **その間** | バックエンドに依存せず、状態と配線だけを引き受けるもの → **空白** |
+| Presentational components | 2,500+ on sale. **Saturated** |
+| Components with behavior | Supabase UI, Convex Components, … **tied to one backend** |
+| **In between** | Backend-agnostic, owning only state and wiring → **empty** |
 
-このリポジトリはそこを埋めています。
+This fills that gap.
 
 ---
 
-## 3. 4 つの層
+## 3. The four layers
 
 ```
 ┌─────────────────────────────────────────┐
-│  トンマナ層  tokens.css + themes.css      │  色・角丸・影・書体・余白を data-theme で切替
+│  Theme      tokens.css + themes.css     │  color, radius, shadow, type, spacing via data-theme
 ├─────────────────────────────────────────┤
-│  レイアウト層  Stack / Columns / Tiles   │  余白は 9 段階。外側の余白は部品が持たない
+│  Layout     Stack / Columns / Tiles     │  9 spacing steps. Components own no outer margin
 ├─────────────────────────────────────────┤
-│  部品層       ActionButton / AsyncForm   │  状態を全部持つ。バックエンド非依存
-│               SiteHeader / Dialog / Tabs  │  ARIA とキーボードは部品の担当
+│  Component  ActionButton / AsyncForm    │  holds all the state. Backend-agnostic
+│             SiteHeader / Dialog / Tabs  │  ARIA and keyboard are ours
 ├─────────────────────────────────────────┤
-│  契約層       Action / ActionSpec        │  (input, ctx) => Promise<output> だけ
+│  Contract   Action / ActionSpec         │  just (input, ctx) => Promise<output>
 └─────────────────────────────────────────┘
                     ↕
-        あなたの API / Supabase / Convex / 何でも
+        your API / Supabase / Convex / whatever
 ```
 
-利用者が覚える契約は実質これだけです。
+In practice the only contract you have to learn is this:
 
 ```ts
 type Action<TInput, TOutput> = (
@@ -120,172 +129,177 @@ type Action<TInput, TOutput> = (
 
 ---
 
-## 4. 設計を決めている 6 つの考え
+## 4. The six ideas the design rests on
 
-### (1) 配置で苦しむ原因は「自由度」ではなく「選択肢が無限にあること」
+### (1) Layout hurts because the options are infinite, not because there's freedom
 
-余白を決めるとき、初心者は `8px` と `12px` のどちらが正しいか判断できません。
-**ビジュアルエディタでドラッグしても、選択肢が無限であることは変わりません。**
-Wix で作ったサイトが整って見えないのはこれが理由です。
+Choosing spacing, a beginner cannot tell whether `8px` or `12px` is right.
+**Dragging things in a visual editor doesn't change that the options are
+infinite.** That's why sites built in Wix often still don't look composed.
 
-効くのは操作方法を変えることではなく、**選べる値を減らすこと**。
-SEEK 社の Braid Design System が先例で、原則は 1 つです。
+What works is not changing the input method but **reducing the values you can
+pick.** SEEK's Braid Design System got there first, and the principle is one
+line:
 
-> コンポーネントは自分の周囲の余白を持たない。余白は全てレイアウトコンポーネントが所有する。
+> A component never carries margin around itself. Spacing is owned entirely by
+> layout components.
 
-**これはコードのままで実現でき、ビジュアルエディタより桁違いに安い。**
-しかも生成物は最初からきれいなコードです。
+**This is achievable in plain code, at a fraction of the cost of a visual
+editor.** And what comes out is clean code from the start.
 
-### (2) 制約は「壁」ではなく「既定値」にする
+### (2) Constraints are defaults, not walls
 
-段階しか使えないと、今度は「あと 2px だけ詰めたい」で詰まります。
+If only the scale works, you get stuck the first time you want 2px less.
 
 ```ts
 type Space = SpaceToken | (string & {});
 ```
 
-補完には 9 段階だけが出ますが、`space="13px"` も `clamp(1rem, 5vw, 4rem)` も通ります。
-**既定値で支え、必要なら外れられる。** この 2 つは両立します。
+Autocomplete offers the nine steps, but `space="13px"` and
+`clamp(1rem, 5vw, 4rem)` both work. **Supported by defaults, free to step
+outside.** Those two are compatible.
 
-### (3) エスケープハッチを必ず 1 段下に置く
+### (3) Always put an escape hatch one level down
 
-上の「降りる」構造です。どの層で止まっても壊れないこと。
+The "stepping down" structure above. Stopping at any layer must leave something
+that works.
 
-### (4) 無くても動く。あると良くなる
+### (4) Works without it. Better with it
 
-`ActionProvider` が無くても部品は動きます（通知が出なくなるだけ）。
-`ConfirmProvider` が無ければ `window.confirm` に落ちます。
-**依存を必須にしないので、部分的に取り込めます。**
+Components work without `ActionProvider` (you just lose the notifications).
+Without `ConfirmProvider` it falls back to `window.confirm`. **Nothing is a
+required dependency, so you can adopt this partially.**
 
-### (5) 同じ値を 2 か所に置かない
+### (5) Never put the same value in two places
 
-**この開発で見つけたバグの大半がここです。**
+**Most of the bugs found during this project came from here.**
 
-| ずれていたもの | 起きたこと |
+| What drifted | What happened |
 |---|---|
-| ヘッダの高さとアンカーの逃げ幅 | `#contact` へ飛ぶと見出しが 64px 隠れた |
-| タブの一覧が 3 か所 | 新しい画面が検査から漏れ、320px で一度も検査されていなかった |
-| 下書きの除外が 3 か所 | 漏れても**自分の文章なので気づけない** |
-| 入力欄の class が 4 か所 | テーマを変えると 1 つだけ違う見た目に |
-| `registryDependencies` の漏れ 9 件 | **このリポジトリでは絶対に再現しない**。壊れるのは利用者の手元だけ |
+| Header height vs. anchor scroll offset | Jumping to `#contact` hid the heading behind 64px |
+| The tab list, in three places | A new screen never entered the checks and was never tested at 320px |
+| Draft exclusion, in three places | When it leaks, **it's your own writing, so you can't notice** |
+| Input field classes, in four places | Change the theme and exactly one of them looks wrong |
+| Nine missing `registryDependencies` | **Never reproducible in this repo.** It only breaks for the user |
 
-だから `create` 用のテンプレートは **commit せず、原本から生成**しています。
-手で編集する余地が無ければ、ずれようがありません。
+That's why the `create` templates are **generated from the source, not
+committed**. With no room to edit by hand, there is nothing to drift.
 
-### (6) JavaScript 無しで動くなら、そちらを選ぶ
+### (6) If it works without JavaScript, choose that
 
-狭い画面のメニューは `<dialog>` ではなく `<details>` です。
+The narrow-screen menu is `<details>`, not `<dialog>`.
 
-| | `<details>` | `useState` で自作 |
+| | `<details>` | Hand-rolled with `useState` |
 |---|---|---|
-| JS 無しで開閉 | ○ | × |
-| キーボード | ○ | 自分で書く |
-| 読み上げの開閉状態 | ○ | 自分で書く |
-| Ctrl+F が閉じた中身を見つける | ○ | × |
+| Opens without JS | yes | no |
+| Keyboard | yes | write it yourself |
+| Expanded state for screen readers | yes | write it yourself |
+| Ctrl+F finds text inside when closed | yes | no |
 
-**JavaScript を切ったブラウザで開くことを実測で確かめています。**
-
----
-
-## 5. いま作ってあるもの
-
-配布アイテム **38**。`npx shadcn add @nasu/…` で個別に足せます。
-
-| 層 | 中身 |
-|---|---|
-| トンマナ | `tokens.css` / `themes.css` / `prose.css` / `ThemeProvider`（4 テーマ・ちらつき防止） |
-| レイアウト | Box / Stack / Inline / Columns / Column / Tiles / Spread / ContentBlock / PageBlock / Divider / Section |
-| ナビ | SiteHeader / NavLink / SkipLink / SiteFooter |
-| 開閉 | Dialog（中央・シート）/ Tabs / Disclosure / Accordion / DropdownMenu / NavDropdown |
-| 入力 | AsyncForm / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
-| 表示 | DataList / DataTable / AsyncBoundary / Toast / ConfirmDialog / Scrollable / Frame / Img |
-| 契約と配線 | Action / ActionSpec / ActionError / jsonRequest / upload / **createSubmit** |
-| フック | useAction / useResource / useOptimisticList / usePopover |
-| 生成 | `buildMeta`（SEO・OGP・JSON-LD）/ `buildSitemap` / `buildRss` / `buildRobots` |
-| 検査 | `check-responsive.mjs`（**利用者にも配られます**） |
-| 入口 | `create-nasu-stack`（Astro 版 / Vite 版） |
-| 雛型 | ランディング / 会社概要 / お問い合わせ / ブログ（一覧・記事・RSS・sitemap・404） |
-| 受け口 | Cloudflare Worker の見本（CORS のプリフライト込み） |
+**Verified by actually opening the pages with JavaScript disabled.**
 
 ---
 
-## 6. 検査についての考え方
+## 5. What exists today
 
-判定は **242 + 29 件**、`pnpm verify` は 19 工程あります。多すぎるように見えますが、
-理由があります。
+**40 registry items.** Add them individually with
+`npx shadcn add Nasu726/Nasu-Stack/<name>`.
 
-### 印字するだけの検査は、検査ではない
-
-途中まで、86 個の測定が全部 `log()` でした。数字を出すだけで、
-**壊れても `pnpm verify` は緑のまま**通っていました。
-それまでに見つけたバグは全部、人がその印字を読んで気づいたものです。
-
-**人が毎回 80 行以上の数字を読む前提の仕組みは、部品が増えるほど破綻します。**
-
-### 何を判定にして、何をしないか
-
-| | 扱い |
+| Layer | Contents |
 |---|---|
-| 壊れたら困る性質（タップ領域 24px 以上・role・フォーカスの戻り先） | 判定にする |
-| トークンから決まる値（余白が段階のどれか・本文の幅） | 判定にする |
-| 配置で変わる値（要素の絶対座標） | **しない。**「動いた／動かない」という関係を見る |
-
-厳しすぎる判定は、無関係な変更で落ちて、やがて誰も見なくなります。
-
-### 判定を足しただけでは、落ちるかどうか分からない
-
-**わざと壊して確かめます。**
-
-| 壊した内容 | 結果 |
-|---|---|
-| `Tabs` の tabIndex を全部 0 に | ✓ roving tabindex の判定だけ落ちた |
-| `formDataToObject` を `Object.fromEntries` に戻す | ✓ 複数値の判定 2 件だけ落ちた |
-| `NavLink` の `min-h-11` を消す | **✗ 落ちなかった** |
-
-3 つ目で検査側の穴が見つかりました。WCAG のインライン例外を
-`display.startsWith("inline")` と書いていて、ナビのリンク（`inline-flex`）まで
-除外していたのです。この手順を踏まなければ、穴は残ったままでした。
-
-### 推測ではなく、その状態を作って測る
-
-- 画像が場所を取っているか → **画像の読み込みを遮断して**測る
-  （属性から推測する方式は、速い環境では 1 件も検出できませんでした）
-- 背面がスクロールしないか → `window.scrollBy` ではなく**ホイール入力**を送る
-  （前者はプログラム操作なので `overflow: hidden` でも動きます）
-- フォームが本当に送られたか → **受け口サーバを立てて、届いた中身を見る**
-- 生成した雛型が動くか → **install → build → 配信 → 実ブラウザ**
+| Theme | `tokens.css` / `themes.css` / `prose.css` / `ThemeProvider` (4 themes, no flash) |
+| Layout | Box / Stack / Inline / Columns / Column / Tiles / Spread / ContentBlock / PageBlock / Divider / Section |
+| Nav | SiteHeader / NavLink / SkipLink / SiteFooter |
+| Disclosure | Dialog (center, sheet) / Tabs / Disclosure / Accordion / DropdownMenu / NavDropdown |
+| Input | AsyncForm / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
+| Display | DataList / DataTable / AsyncBoundary / Toast / ConfirmDialog / Scrollable / Frame / Img |
+| Contract and wiring | Action / ActionSpec / ActionError / jsonRequest / upload / **createSubmit** |
+| Hooks | useAction / useResource / useOptimisticList / usePopover |
+| Generation | `buildMeta` (SEO, OGP, JSON-LD) / `buildSitemap` / `buildRss` / `buildRobots` |
+| Checks | `check-responsive.mjs` (**shipped to users too**) |
+| Entry point | `create-nasu-stack` (Astro, blog, and Vite templates) |
+| Templates | Landing / about / contact / blog (index, article, RSS, sitemap, 404) |
+| Receiver | A Cloudflare Worker example (including the CORS preflight) |
 
 ---
 
-## 7. 踏んだ失敗から決めた規則
+## 6. How the checks are thought about
 
-| 規則 | きっかけ |
+`pnpm verify` is 25 stages; `pnpm verify:create` is 106 assertions. It looks
+like a lot. There's a reason.
+
+### A check that only prints is not a check
+
+For a while, 86 measurements were all `log()`. They printed numbers, and
+**`pnpm verify` stayed green when things broke.** Every bug found until then
+was found by a human reading that output.
+
+**Anything that depends on a human reading 80+ lines of numbers every time
+falls apart as the component count grows.**
+
+### What becomes an assertion, and what doesn't
+
+| | Treatment |
 |---|---|
-| 画面がタブや分岐で切り替わるなら、検査対象も切り替える | 「検査は通っている」と「検査対象に入っている」は別のこと |
-| `registryDependencies` は機械で突き合わせる | 手元では絶対に再現せず、利用者のところだけで壊れる |
-| 黙って縮退しない | sitemap が取れないときは理由を印字する。でないと「全部見たつもり」になる |
-| `.astro` の props に渡せるのは JSON になる値だけ | 要素も関数も渡せない。`ActionSpec` も `brandHref` も同じ理由 |
-| 表の中で `w-full` は効かない | 列幅は中身から決まるので循環する。`min-width` を使う |
-| `new AbortController().signal` を渡すのは中断できるふり | 誰かが `abort()` を呼ばないと意味がない |
-| flex の子は `min-width: auto`。縮めるには `min-w-0` | **3 回踏みました**（Inline / 表 / ヘッダ） |
-| 嘘の断定をしない | CORS の失敗は通信断と区別できないので、両方を含む言い方にする |
+| Properties that matter when broken (tap target ≥ 24px, roles, focus restore) | assert |
+| Values determined by tokens (which spacing step, body measure) | assert |
+| Values that change with arrangement (absolute coordinates) | **no.** Assert the relationship — moved / didn't move |
+
+Assertions that are too strict fail on unrelated changes, and eventually nobody
+looks at them.
+
+### Adding an assertion doesn't tell you it can fail
+
+**Break it on purpose and confirm.**
+
+| What was broken | Result |
+|---|---|
+| Set every `Tabs` tabIndex to 0 | ✓ only the roving-tabindex assertion failed |
+| Reverted `formDataToObject` to `Object.fromEntries` | ✓ only the two multi-value assertions failed |
+| Removed `min-h-11` from `NavLink` | **✗ nothing failed** |
+
+The third one exposed a hole in the check itself. The WCAG inline exception was
+written as `display.startsWith("inline")`, which also excluded nav links
+(`inline-flex`). Without this step, the hole would still be there.
+
+### Produce the state and measure it — don't infer it
+
+- Do images reserve space? → **block image loading** and measure
+  (inferring from attributes detected zero cases on a fast machine)
+- Does the background stay put? → send **wheel input**, not `window.scrollBy`
+  (the latter is programmatic and works even with `overflow: hidden`)
+- Was the form really submitted? → **stand up a receiver and look at what arrived**
+- Does the generated template work? → **install → build → serve → real browser**
 
 ---
 
-## 8. これから
+## 7. Rules that came from actual mistakes
+
+| Rule | What prompted it |
+|---|---|
+| If the screen switches by tab or branch, the checks must switch too | "the check passes" and "it's in the check's scope" are different things |
+| Cross-check `registryDependencies` mechanically | Never reproducible locally; breaks only at the user |
+| Never degrade silently | When the sitemap can't be fetched, print why — otherwise you "covered everything" |
+| `.astro` props only take JSON-able values | No elements, no functions. Same reason for `ActionSpec` and `brandHref` |
+| `w-full` does nothing inside a table | Column width comes from content, so it's circular. Use `min-width` |
+| Passing `new AbortController().signal` is pretend-abortable | It means nothing unless someone calls `abort()` |
+| Flex children are `min-width: auto`. `min-w-0` to shrink | **Hit three times** (Inline, tables, header) |
+| Never assert something false | A CORS failure is indistinguishable from a dropped connection, so say both |
+
+---
+
+## 8. What's next
 
 | | |
 |---|---|
-| v0.9 | レジストリの静的ホスティング / カタログをドキュメントサイトに / Renovate |
-| 以降 | ダッシュボード雛型 / `Field` のリアルタイム検証 / 認証・課金のアダプタ |
-| 当面やらない | **ビジュアル編集。** 対象を「少しは触れる人」に決めたため。やるとしても、制約された部品が揃った後に「限られた選択肢から選ぶ UI」として載せる形にします |
+| v0.9 | Static registry hosting / catalog as a docs site / Renovate |
+| After | Dashboard template / live validation for `Field` / auth and billing adapters |
+| Not for now | **Visual editing.** The audience floor is "can touch code a little". If it ever happens, it comes after the constrained components exist, as a UI that picks from limited options |
 
-### 未検証のまま残していること
+### Still unverified
 
-- ~~**Windows。**~~ v0.9a で実機確認しました（Windows 11 / Node 24.13 / pnpm 10.28）。
-  **コードを読んで書いた対応のうち 2 つは間違っていました。**「読んで正しそう」と
-  「動く」は別だ、という記録として残します
-- **`npx shadcn add` の実インストール。** レジストリを公開していないため。
-  `verify-install.mjs` が同じ依存解決を再現して代替しています
-- **404 のステータス。** `404.html` を置いてもステータスを 404 にしない
-  静的ホスティングがあります
+- **The 404 status.** Some static hosts serve `404.html` with a 200. Measured
+  on the live deployment every time (`verify-published.mjs` prints the value)
+- **How this feels to people who aren't the author.** The catalog and demo have
+  been reviewed on real devices, and outside review has run twice, but nobody
+  has yet started a project with it and reported back

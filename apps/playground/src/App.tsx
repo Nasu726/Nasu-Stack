@@ -26,6 +26,7 @@ import { NavDemo } from "./NavDemo";
 import { TextDemo } from "./TextDemo";
 import * as api from "./fake-api";
 import { TABS, normalizeTab } from "./tabs.mjs";
+import { LANG, langHref, t } from "./lang";
 
 type Tab = string;
 
@@ -79,9 +80,9 @@ function NotBuilt({ tab }: { tab: string }) {
   }, [tab]);
 
   return (
-    <Panel title="この章はまだ準備中です" description={null}>
+    <Panel title={t("この章はまだ準備中です")} description={null}>
       <p className="text-sm text-muted-fg">
-        まだ中身がありません。他のタブをご覧ください。
+        {t("まだ中身がありません。他のタブをご覧ください。")}
       </p>
     </Panel>
   );
@@ -155,7 +156,17 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
               **shrink-0 を付けてはいけません。** 320px ではトンマナの
               4 ボタンが入り切らず、15px はみ出しました（実測）。
               ThemeSwitcher は自分で折り返せるので、縮めるほうを許します。 */}
-          <div className="order-2 ms-auto min-w-0 lg:order-3 lg:ms-0">
+          <div className="order-2 ms-auto flex min-w-0 items-center gap-xs lg:order-3 lg:ms-0">
+            {/* 言語。**ただのリンクです。** 状態も context も持ちません。
+                ?lang= を読んで 1 度決めるだけなので、切り替えは再読込で足ります
+                （lang.ts に理由を書いてあります）。 */}
+            <a
+              href={langHref(LANG === "ja" ? "en" : "ja")}
+              hrefLang={LANG === "ja" ? "en" : "ja"}
+              className="inline-flex min-h-11 shrink-0 items-center rounded-md px-xs text-xs text-muted-fg underline underline-offset-4 hover:text-fg"
+            >
+              {LANG === "ja" ? "English" : "日本語"}
+            </a>
             <ThemeSwitcher />
           </div>
 
@@ -163,7 +174,7 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
               自分で使わない部品は必ず腐るので、手書きの button 列から
               差し替えました（矢印キー・roving tabindex が付きます）。 */}
           <Tabs
-            items={TABS.map((t) => ({ value: t.key, label: t.label }))}
+            items={TABS.map((tab) => ({ value: tab.key, label: t(tab.label) }))}
             value={tab}
             onValueChange={(k) => {
               onTab(k);
@@ -172,7 +183,7 @@ function Header({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
               u.searchParams.set("tab", k);
               window.history.replaceState(null, "", u);
             }}
-            label="カタログの章"
+            label={t("カタログの章")}
             idPrefix="catalog"
             panelId="catalog-panel"
             // basis-full で 2 段目へ落とします。**縮めません。**
@@ -207,19 +218,15 @@ function Intro() {
     <Columns space="xl" collapseBelow="desktop" alignY="end">
       <Column width="1/2">
         <h1 className="text-3xl leading-tight sm:text-4xl">
-          余白は迷わせない。
+          {t("余白は迷わせない。")}
           <br />
-          状態は書かせない。
+          {t("状態は書かせない。")}
         </h1>
       </Column>
       <Column>
         <ContentBlock width="prose" align="start" className="text-sm">
           <p className="leading-relaxed text-muted-fg">
-            余白は 9 段階が既定なので配置で迷いません。ただし 9 段階は制限ではなく、
-            段階に無い値もそのまま書けます。
-            非同期処理は関数を 1 つ渡すだけで、読込中・成功・失敗・空・二重送信・中断が付いてきます。
-            上のスイッチでトンマナ（見た目の系統）を切り替えると、
-            色・角丸・影・書体・余白の広さまで一斉に変わります。
+            {t("余白は 9 段階が既定なので配置で迷いません。ただし 9 段階は制限ではなく、\r\n            段階に無い値もそのまま書けます。\r\n            非同期処理は関数を 1 つ渡すだけで、読込中・成功・失敗・空・二重送信・中断が付いてきます。\r\n            上のスイッチでトンマナ（見た目の系統）を切り替えると、\r\n            色・角丸・影・書体・余白の広さまで一斉に変わります。")}
           </p>
         </ContentBlock>
       </Column>
@@ -235,22 +242,20 @@ function ButtonSection() {
       title="ActionButton"
       description={
         <>
-          <code className="text-fg">action</code> に関数を渡すだけ。
-          押している間の無効化、連打の防止、成功の表示、失敗時のメッセージ、
-          自動リトライが最初から入っています。
+          <code className="text-fg">action</code> {t("に関数を渡すだけ。\r\n          押している間の無効化、連打の防止、成功の表示、失敗時のメッセージ、\r\n          自動リトライが最初から入っています。")}
         </>
       }
-      code={`<ActionButton action={() => api.save(form)}>\n  保存する\n</ActionButton>`}
+      code={t("<ActionButton action={() => api.save(form)}>\n  保存する\n</ActionButton>")}
     >
       <Inline space="lg" alignY="start">
-        <Labeled label="成功する">
-          <ActionButton action={api.save} labels={{ success: "保存しました" }}>
-            保存する
+        <Labeled label={t("成功する")}>
+          <ActionButton action={api.save} labels={{ success: t("保存しました") }}>
+            {t("保存する")}
           </ActionButton>
         </Labeled>
 
-        <Labeled label="失敗する">
-          <ActionButton action={api.alwaysFail}>送信する</ActionButton>
+        <Labeled label={t("失敗する")}>
+          <ActionButton action={api.alwaysFail}>{t("送信する")}</ActionButton>
         </Labeled>
 
         {/* variant を変えたときの成功表示。**検査対象として必要です。**
@@ -262,45 +267,45 @@ function ButtonSection() {
           <ActionButton
             action={api.save}
             variant="outline"
-            labels={{ success: "できました" }}
+            labels={{ success: t("できました") }}
           >
-            控えめに実行
+            {t("控えめに実行")}
           </ActionButton>
         </Labeled>
 
-        <Labeled label="2 回失敗 → 自動で 3 回目">
+        <Labeled label={t("2 回失敗 → 自動で 3 回目")}>
           <ActionButton action={api.flaky} retry={3} retryDelay={400}>
-            同期する
+            {t("同期する")}
           </ActionButton>
         </Labeled>
 
-        <Labeled label="確認つき">
+        <Labeled label={t("確認つき")}>
           <ActionButton
             action={api.save}
             variant="danger"
-            confirm="本当に削除しますか？"
-            labels={{ success: "削除しました" }}
+            confirm={t("本当に削除しますか？")}
+            labels={{ success: t("削除しました") }}
           >
-            削除する
+            {t("削除する")}
           </ActionButton>
         </Labeled>
 
         {/* 下の 2 つは**検査のために置いてあります。**
             どちらも「action が何回呼ばれたか」を画面に出します。
             見た目のデモではないので、数だけ読めれば十分です。 */}
-        <Labeled label="callback が投げる">
+        <Labeled label={t("callback が投げる")}>
           <CallCounted
             id="cb"
             retry={3}
             // action は成功する。**その後の onSuccess が投げる。**
             // 成功済みの副作用を retry で繰り返してはいけない。
             onSuccess={() => {
-              throw new Error("callback がわざと失敗します");
+              throw new Error(t("callback がわざと失敗します"));
             }}
           />
         </Labeled>
 
-        <Labeled label="guard が遅い">
+        <Labeled label={t("guard が遅い")}>
           <CallCounted
             id="guard"
             // 非同期の guard。await している間に鍵がかかっていないと、
@@ -313,7 +318,7 @@ function ButtonSection() {
         </Labeled>
       </Inline>
       <p className="text-xs text-muted-fg">
-        見本です。押しても実際には何も送信されません。
+        {t("見本です。押しても実際には何も送信されません。")}
       </p>
     </Panel>
   );
@@ -347,10 +352,10 @@ function CallCounted({
           return { ok: true };
         }}
       >
-        実行する
+        {t("実行する")}
       </ActionButton>
       <span className="text-xs text-muted-fg" data-testid={`calls-${id}`}>
-        呼ばれた回数: {count}
+        {t("呼ばれた回数:")} {count}
       </span>
     </Stack>
   );
@@ -380,41 +385,38 @@ function FormSection() {
       title="AsyncForm + Field"
       description={
         <>
-          送信関数を 1 つ渡すだけ。
-          <code className="text-fg">ActionError</code> の{" "}
-          <code className="text-fg">fields</code> に入れたエラーは、
-          対応する入力欄の下へ自動で表示され、打ち直すと消えます。
-          メールを空欄にするか <code>a@example.com</code> を入れると、
-          失敗したときの表示を確認できます。
+          {t("送信関数を 1 つ渡すだけ。")}
+          <code className="text-fg">ActionError</code> {t("の")}{" "}
+          <code className="text-fg">fields</code> {t("に入れたエラーは、\r\n          対応する入力欄の下へ自動で表示され、打ち直すと消えます。\r\n          メールを空欄にするか")} <code>a@example.com</code> {t("を入れると、\r\n          失敗したときの表示を確認できます。")}
         </>
       }
-      code={`<AsyncForm action={api.signup} submitLabel="アカウントを作成">\n  <Field name="email" label="メールアドレス" type="email" required />\n</AsyncForm>`}
+      code={t("<AsyncForm action={api.signup} submitLabel=\"アカウントを作成\">\n  <Field name=\"email\" label=\"メールアドレス\" type=\"email\" required />\n</AsyncForm>")}
     >
       <ContentBlock width="28rem" align="start">
         <AsyncForm
           action={api.signup}
-          submitLabel="アカウントを作成"
-          successMessage="登録が完了しました"
+          submitLabel={t("アカウントを作成")}
+          successMessage={t("登録が完了しました")}
         >
-          <Field name="name" label="お名前" placeholder="山田 太郎" required />
+          <Field name="name" label={t("お名前")} placeholder={t("山田 太郎")} required />
           <Field
             name="email"
-            label="メールアドレス"
+            label={t("メールアドレス")}
             type="email"
             placeholder="you@example.jp"
-            hint="確認メールを送ります"
+            hint={t("確認メールを送ります")}
             required
           />
           <Field
             name="password"
-            label="パスワード"
+            label={t("パスワード")}
             type="password"
-            hint="8 文字以上"
+            hint={t("8 文字以上")}
             required
           />
         </AsyncForm>
         <p className="mt-xs text-xs text-muted-fg">
-          見本です。押しても実際には何も送信されません。
+          {t("見本です。押しても実際には何も送信されません。")}
         </p>
       </ContentBlock>
     </Panel>
@@ -435,7 +437,7 @@ function ListSection() {
   return (
     <Panel
       title="DataList / AsyncBoundary"
-      description="取得・スケルトン・空状態・失敗と再試行を 1 コンポーネントに閉じ込めています。下のボタンで各状態を確認できます。"
+      description={t("取得・スケルトン・空状態・失敗と再試行を 1 コンポーネントに閉じ込めています。下のボタンで各状態を確認できます。")}
       code={`<DataList\n  loader={(_, ctx) => jsonRequest<Task[]>("/api/tasks", { ctx })}\n  renderItem={(t) => <span>{t.title}</span>}\n/>`}
     >
       <Inline space="xs">
@@ -446,24 +448,24 @@ function ListSection() {
             variant={which === k ? "primary" : "outline"}
             onClick={() => setWhich(k)}
           >
-            {k === "ok" ? "データあり" : k === "empty" ? "空" : "失敗"}
+            {k === "ok" ? t("データあり") : k === "empty" ? t("空") : t("失敗")}
           </Button>
         ))}
       </Inline>
 
       <DataList
         key={which}
-        title="タスク"
+        title={t("タスク")}
         loader={loader}
         deps={[which]}
-        getKey={(t) => t.id}
-        renderItem={(t) => (
+        getKey={(task) => task.id}
+        renderItem={(task) => (
           <Spread space="sm">
-            <span className={t.done ? "text-muted-fg line-through" : ""}>
-              {t.title}
+            <span className={task.done ? "text-muted-fg line-through" : ""}>
+              {task.title}
             </span>
             <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-fg">
-              {t.owner}
+              {task.owner}
             </span>
           </Spread>
         )}
@@ -479,18 +481,18 @@ function AbortSection() {
 
   return (
     <Panel
-      title="中断とスケルトン"
-      description="6 秒かかる処理です。実行中に「中断」を押すとリクエストが止まり、状態が idle に戻ります。ctx.signal を fetch に渡すだけで実現できます。"
+      title={t("中断とスケルトン")}
+      description={t("6 秒かかる処理です。実行中に「中断」を押すとリクエストが止まり、状態が idle に戻ります。ctx.signal を fetch に渡すだけで実現できます。")}
     >
       <Inline space="sm">
         <Button
           onClick={() => void slow.run(undefined)}
           disabled={slow.isPending}
         >
-          {slow.isPending ? "処理中…" : "重い処理を実行"}
+          {slow.isPending ? t("処理中…") : t("重い処理を実行")}
         </Button>
         <Button variant="outline" onClick={slow.abort} disabled={!slow.isPending}>
-          中断
+          {t("中断")}
         </Button>
         <span className="text-xs text-muted-fg" data-testid="abort-status">
           status: {slow.status}
@@ -501,13 +503,13 @@ function AbortSection() {
         state={slow}
         loading={
           slow.isPending ? undefined : (
-            <p className="text-sm text-muted-fg">実行するとここに結果が出ます</p>
+            <p className="text-sm text-muted-fg">{t("実行するとここに結果が出ます")}</p>
           )
         }
         skeletonRows={3}
         isEmpty={() => false}
       >
-        {() => <p className="text-sm text-success">処理が完了しました</p>}
+        {() => <p className="text-sm text-success">{t("処理が完了しました")}</p>}
       </AsyncBoundary>
     </Panel>
   );
@@ -544,45 +546,38 @@ function GuardRaceSection() {
 
   return (
     <Panel
-      title="guard を待っている間の中断"
+      title={t("guard を待っている間の中断")}
       description={
         <>
           <code className="text-fg">guard</code>{" "}
-          が非同期のとき、待っている間に中断したり画面を離れたりできます。
-          <strong className="text-fg">そのあと action が始まってはいけません。</strong>
-          削除・決済・送信だと、利用者が「やめた」と思った後に起きます。
-          下の guard は <strong className="text-fg">中断を自分では見ていません</strong>——
-          それでも止まります。下の数字が増えなければ止まっています。
+          {t("が非同期のとき、待っている間に中断したり画面を離れたりできます。")}
+          <strong className="text-fg">{t("そのあと action が始まってはいけません。")}</strong>
+          {t("削除・決済・送信だと、利用者が「やめた」と思った後に起きます。\r\n          下の guard は")} <strong className="text-fg">{t("中断を自分では見ていません")}</strong>{t("——\r\n          それでも止まります。下の数字が増えなければ止まっています。")}
         </>
       }
-      code={`const state = useAction(api.remove, {
-  // ctx.signal を渡せば、guard の中の通信も一緒に止まります
-  guard: async (input, ctx) => confirmSomething(input, ctx),
-});
-
-state.abort();   // guard を待っている間でも効きます`}
+      code={t("const state = useAction(api.remove, {\n  // ctx.signal を渡せば、guard の中の通信も一緒に止まります\n  guard: async (input, ctx) => confirmSomething(input, ctx),\n});\n\nstate.abort();   // guard を待っている間でも効きます")}
     >
       <Inline space="md" alignY="start">
         {alive ? (
           <SlowGuard onCall={() => setCalls((n) => n + 1)} />
         ) : (
-          <span className="text-xs text-muted-fg">画面から消しました</span>
+          <span className="text-xs text-muted-fg">{t("画面から消しました")}</span>
         )}
         <Stack space="2xs" align="start">
           <Button size="sm" variant="outline" onClick={() => setAlive((v) => !v)}>
-            {alive ? "画面から消す" : "戻す"}
+            {alive ? t("画面から消す") : t("戻す")}
           </Button>
           <span className="text-xs text-muted-fg" data-testid="guard-calls">
-            action が呼ばれた回数: {calls}
+            {t("action が呼ばれた回数:")} {calls}
           </span>
           <span className="text-xs text-muted-fg" data-testid="unhandled-rejections">
-            握られなかった失敗: {rejections}
+            {t("握られなかった失敗:")} {rejections}
           </span>
         </Stack>
       </Inline>
 
       <p className="text-xs text-muted-fg">
-        見本です。押しても実際には何も送信されません。
+        {t("見本です。押しても実際には何も送信されません。")}
       </p>
     </Panel>
   );
@@ -617,10 +612,10 @@ function SlowGuard({ onCall }: { onCall: () => void }) {
           onClick={() => void state.run(undefined)}
           disabled={state.isPending}
         >
-          {state.isPending ? "確認中…" : "確認してから実行"}
+          {state.isPending ? t("確認中…") : t("確認してから実行")}
         </Button>
         <Button variant="outline" onClick={state.abort} disabled={!state.isPending}>
-          確認中にやめる
+          {t("確認中にやめる")}
         </Button>
       </Inline>
       <span className="text-xs text-muted-fg" data-testid="guard-status">
@@ -638,12 +633,10 @@ function ToastSection() {
 
   return (
     <Panel
-      title="ActionProvider — 書き忘れの受け皿"
+      title={t("ActionProvider — 書き忘れの受け皿")}
       description={
         <>
-          <code className="text-fg">onError</code> を書かなかったアクションが失敗すると、
-          画面隅に通知が出ます。エラー処理の書き忘れが握り潰されなくなります。
-          個別に <code className="text-fg">onError</code> を書いた場合はそちらが優先され、通知は出ません。
+          <code className="text-fg">onError</code> {t("を書かなかったアクションが失敗すると、\r\n          画面隅に通知が出ます。エラー処理の書き忘れが握り潰されなくなります。\r\n          個別に")} <code className="text-fg">onError</code> {t("を書いた場合はそちらが優先され、通知は出ません。")}
         </>
       }
       code={`<ActionProvider>\n  <App />\n</ActionProvider>`}
@@ -652,30 +645,30 @@ function ToastSection() {
         <ActionButton
           action={async () => {
             await new Promise((r) => setTimeout(r, 600));
-            throw new Error("在庫の取得に失敗しました");
+            throw new Error(t("在庫の取得に失敗しました"));
           }}
           showError={false}
           variant="outline"
         >
-          onError を書かずに失敗させる
+          {t("onError を書かずに失敗させる")}
         </ActionButton>
 
         <ActionButton
           action={async () => {
             await new Promise((r) => setTimeout(r, 600));
-            throw new Error("これは通知されない");
+            throw new Error(t("これは通知されない"));
           }}
           onError={(e) => {
             toast.show({
               tone: "warning",
-              title: "自前で処理しました",
+              title: t("自前で処理しました"),
               description: e.displayMessage,
             });
           }}
           showError={false}
           variant="outline"
         >
-          onError を自分で書く
+          {t("onError を自分で書く")}
         </ActionButton>
 
         <Button
@@ -683,13 +676,13 @@ function ToastSection() {
           onClick={() =>
             toast.show({
               tone: "success",
-              title: "保存しました",
-              description: "3 件の変更を反映しました",
-              action: { label: "元に戻す", onClick: () => {} },
+              title: t("保存しました"),
+              description: t("3 件の変更を反映しました"),
+              action: { label: t("元に戻す"), onClick: () => {} },
             })
           }
         >
-          通知を直接出す
+          {t("通知を直接出す")}
         </Button>
       </Inline>
     </Panel>
@@ -714,13 +707,11 @@ function EmbeddedPreview() {
 
           <Stack space="xs">
             <h1 className="text-2xl leading-tight">
-              幅を変えても崩れません
+              {t("幅を変えても崩れません")}
             </h1>
             <ContentBlock width="prose" align="start" className="text-sm">
               <p className="leading-relaxed text-muted-fg">
-                段組は狭い画面で自動的に縦へ畳み、タイルは列数が変わり、
-                タグは折り返します。長い URL も折れます。
-                https://example.com/very/long/path/that/never/breaks/anywhere
+                {t("段組は狭い画面で自動的に縦へ畳み、タイルは列数が変わり、\r\n                タグは折り返します。長い URL も折れます。\r\n                https://example.com/very/long/path/that/never/breaks/anywhere")}
               </p>
             </ContentBlock>
           </Stack>
@@ -739,24 +730,24 @@ function EmbeddedPreview() {
           </Columns>
 
           <Tiles columns={{ mobile: 1, tablet: 2, desktop: 3 }} space="sm">
-            {["A", "B", "C"].map((t) => (
+            {["A", "B", "C"].map((n) => (
               <div
-                key={t}
+                key={n}
                 className="rounded-md border border-border bg-card px-sm py-xs text-xs"
               >
-                カード {t}
+                {t("カード")} {n}
               </div>
             ))}
           </Tiles>
 
           <Inline space="xs">
-            {["TypeScript", "React", "Astro", "Tailwind", "アクセシビリティ"].map(
-              (t) => (
+            {["TypeScript", "React", "Astro", "Tailwind", t("アクセシビリティ")].map(
+              (tag) => (
                 <span
-                  key={t}
+                  key={tag}
                   className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-fg"
                 >
-                  {t}
+                  {tag}
                 </span>
               ),
             )}

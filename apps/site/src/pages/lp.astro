@@ -37,44 +37,44 @@ import featureC from "../assets/feature-c.png";
 const FEATURES = [
   {
     image: featureA,
-    title: "余白で迷わない",
-    body: "余白は 9 段階から選ぶだけ。段階の外の値も書けるので、慣れたら自由に詰められます。",
+    title: "No spacing decisions",
+    body: "Pick from nine spacing steps. Values outside them still work, so you can tighten things up once you know what you want.",
   },
   {
     image: featureB,
-    title: "状態を書かない",
-    body: "送信中・成功・失敗・二重送信の防止まで、部品の側が引き受けます。渡すのは関数 1 つです。",
+    title: "No state to write",
+    body: "Submitting, success, failure, and the double-submit guard are all handled for you. You hand over one function.",
   },
   {
     image: featureC,
-    title: "狭い画面で崩れない",
-    body: "長い URL も列の多い表も、土台の側で受け止めます。崩れは目視ではなく数値で検査します。",
+    title: "Nothing breaks when narrow",
+    body: "Long URLs and wide tables are absorbed by the foundation. Breakage is checked with numbers, not by eye.",
   },
 ];
 
 const FAQ = [
   {
-    summary: "コードを書けなくても使えますか？",
+    summary: "Can I use this without writing code?",
     content:
-      "少しは触れることを前提にしています。まったく書かない方向けには、自然言語から作る別の道具のほうが向いています。",
+      "It assumes you can touch code a little. If you never write any, a tool that builds from plain language will suit you better.",
   },
   {
-    summary: "あとから自由に直せますか？",
+    summary: "Can I change things freely afterwards?",
     content:
-      "できます。出てくるのは普通の TypeScript と CSS で、独自の保存形式はありません。合わなくなったら部品ごと書き換えてください。",
+      "Yes. What comes out is ordinary TypeScript and CSS, with no proprietary save format. When a component stops fitting, rewrite it.",
   },
   {
-    summary: "バックエンドは何を使えばいいですか？",
+    summary: "Which backend should I use?",
     content:
-      "何でも構いません。部品が知っているのは (入力, ctx) => Promise<出力> という契約だけで、その先には触れません。",
+      "Whichever you like. All a component knows is the contract (input, ctx) => Promise<output>. It never reaches past that.",
   },
 ];
 import { withBase } from "@/lib/base";
 ---
 
 <Base
-  title="迷わず作って、あとから自由に直せる"
-  description="余白と非同期の状態を部品が引き受けます。出てくるのは普通のコードなので、あとから自由に直せます。"
+  title="Build without stalling, change it freely later"
+  description="Spacing and async state are handled for you. What comes out is ordinary code, so you can change it freely later."
 >
   <SkipLink />
   <SiteHeader
@@ -91,25 +91,25 @@ import { withBase } from "@/lib/base";
         <Column>
           <Stack space="md">
             <h1 class="text-4xl leading-tight">
-              迷わず作って、<br />あとから自由に直せる。
+              Build without stalling.<br />Change it freely later.
             </h1>
             <p class="max-w-prose text-base leading-relaxed text-muted-fg">
-              初心者が必ず詰まる 2 箇所——<strong class="text-fg">配置</strong>と
-              <strong class="text-fg">非同期の状態</strong>——を部品が引き受けます。
-              出てくるのは普通の TypeScript なので、慣れたらそのまま書き換えられます。
+              The two places beginners always get stuck — <strong class="text-fg">layout</strong> and
+              <strong class="text-fg">async state</strong> — are handled by the components.
+              What comes out is ordinary TypeScript, so you can rewrite it as soon as you want to.
             </p>
             <Inline space="sm">
               <a
                 href={withBase("/contact/")}
                 class="inline-flex min-h-11 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-fg hover:opacity-90"
               >
-                相談してみる
+                Get in touch
               </a>
               <a
                 href={withBase("/blog/")}
                 class="inline-flex min-h-11 items-center rounded-md border border-border px-5 text-sm hover:bg-muted"
               >
-                作り方を読む
+                Read how it works
               </a>
             </Inline>
           </Stack>
@@ -127,7 +127,7 @@ import { withBase } from "@/lib/base";
     <PageBlock width="content" gutter="md" className="py-3xl">
       <Stack space="3xl">
         <Section space="lg">
-          <h2 class="text-2xl">3 つの引き受けかた</h2>
+          <h2 class="text-2xl">Three things it takes over</h2>
           <Tiles columns={{ mobile: 1, tablet: 3, desktop: 3 }} space="lg">
             {
               FEATURES.map((f) => (
@@ -144,7 +144,7 @@ import { withBase } from "@/lib/base";
         </Section>
 
         <Section space="lg">
-          <h2 class="text-2xl">よくある質問</h2>
+          <h2 class="text-2xl">Questions we get</h2>
           <ContentBlock width="prose">
             {/* <details> なので JavaScript 無しで開閉します。
                 Ctrl+F のページ内検索も、閉じた中身を見つけてくれます。 */}
@@ -153,16 +153,16 @@ import { withBase } from "@/lib/base";
         </Section>
 
         <Section space="md">
-          <h2 class="text-2xl">まずは 1 枚作ってみる</h2>
+          <h2 class="text-2xl">Start with one page</h2>
           <p class="max-w-prose text-sm leading-relaxed text-muted-fg">
-            このページ自体が雛型です。中身を差し替えるところから始められます。
+            This page is itself one of the templates. Start by swapping out the content.
           </p>
           <Inline space="sm">
             <a
               href={withBase("/contact/")}
               class="inline-flex min-h-11 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-fg hover:opacity-90"
             >
-              相談してみる
+              Get in touch
             </a>
           </Inline>
         </Section>

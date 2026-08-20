@@ -12,6 +12,7 @@ import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { toNamespace } from "./_deps.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "public", "r");
@@ -55,8 +56,9 @@ for (const item of registry.items) {
     ...(item.devDependencies
       ? { devDependencies: item.devDependencies }
       : {}),
+    /* **公開用だけ `@nasu/…` へ直します。** 理由は scripts/_deps.mjs に。 */
     ...(item.registryDependencies
-      ? { registryDependencies: item.registryDependencies }
+      ? { registryDependencies: item.registryDependencies.map(toNamespace) }
       : {}),
     ...(item.cssVars ? { cssVars: item.cssVars } : {}),
     ...(item.css ? { css: item.css } : {}),

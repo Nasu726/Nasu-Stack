@@ -20,7 +20,7 @@ import { withBase } from "@/lib/base";
 ---
 
 <Base
-  title="Nasu Stack — 静的サイトの例"
+  title="Nasu Stack — a static site example"
   description={SITE.description}
   theme="editorial"
 >
@@ -38,13 +38,13 @@ import { withBase } from "@/lib/base";
     <Stack space="3xl">
       <Section space="sm">
         <h1 class="text-4xl leading-tight">
-          静的なページは Astro。<br />動く部分だけ React。
+          Static pages in Astro.<br />React only where things move.
         </h1>
         <p class="max-w-lg text-sm leading-relaxed text-muted-fg">
-          このページの本文は完全な静的 HTML です。下の 2 箇所だけが island
-          として読み込まれるので、トップの表示は JavaScript を待ちません。
-          トンマナは同じトークンを共有しているため、Astro 側と React
-          側で見た目がずれません。
+          Everything you are reading is fully static HTML. Only the two spots
+          below load as islands, so the first paint never waits for JavaScript.
+          Both sides share the same theme tokens, so the Astro half and the
+          React half cannot drift apart visually.
         </p>
       </Section>
 
@@ -52,8 +52,8 @@ import { withBase } from "@/lib/base";
       <Section space="sm" id="works">
         <h2 class="text-2xl">Works</h2>
         <p class="max-w-prose text-xs text-muted-fg">
-          関数の代わりに <code>{"{ url, method }"}</code> を渡しています。
-          .astro から props は JSON 化されるため、この形なら島に渡せます。
+          Instead of a function, this passes <code>{"{ url, method }"}</code>.
+          Props from .astro are serialized to JSON, so this is the form that survives.
         </p>
         {/* **base は自分で付けます。** 下の `url` は props に渡す文字列であって、
             道具が書き換える対象ではありません。付け忘れると、サブパスに
@@ -75,7 +75,7 @@ import { withBase } from "@/lib/base";
       <Section space="sm" id="contact">
         <h2 class="text-2xl">Contact</h2>
         <p class="max-w-prose text-xs text-muted-fg">
-          独自のバリデーションを持つのでラッパ (.tsx) 経由で読み込んでいます。
+          It has validation of its own, so it is loaded through a .tsx wrapper.
         </p>
         <div class="max-w-md">
           <ContactForm client:load />

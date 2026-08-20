@@ -12,6 +12,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { tsconfig } from "./_fixture.mjs";
+import { localDep } from "./_deps.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const rDir = path.join(root, "public", "r");
@@ -42,9 +43,8 @@ function collect(name) {
   resolved.add(name);
   for (const d of item.dependencies ?? []) npmDeps.add(d);
   for (const dep of item.registryDependencies ?? []) {
-    // "@nasu/use-action" → "use-action"
-    const local = dep.startsWith("@") ? dep.split("/").slice(1).join("/") : dep;
-    if (items.has(local)) collect(local);
+    const local = localDep(dep);
+    if (local && items.has(local)) collect(local);
     else console.warn(`  ! 外部依存はスキップ: ${dep}`);
   }
 }

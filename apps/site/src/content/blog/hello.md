@@ -1,17 +1,18 @@
 ---
-title: Nasu Stack で最初のサイトを作る
-description: レイアウト部品と状態を持つ部品を組み合わせて、静的サイトを 1 枚作るまでの流れです。
+title: Building your first site with Nasu Stack
+description: From layout components and stateful components to one finished static page.
 date: 2026-08-01
-tags: [はじめに, Astro]
+tags: [Getting started, Astro]
 ---
 
-## なぜ余白から始めるのか
+## Why start with spacing
 
-サイトを作り始めて最初に止まるのは、たいてい**余白**です。
-`8px` と `12px` のどちらが正しいかは、経験が無いと判断できません。
-判断できないまま進めると、画面ごとに違う数字が入り、あとから直せなくなります。
+The first thing that stops you when you start building a site is almost always
+**spacing**. Whether `8px` or `12px` is right is not something you can decide
+without experience. Push on without deciding and every screen ends up with a
+different number, and by then it is too late to fix.
 
-だから最初に決まった段階を用意して、その中から選ぶようにしています。
+So the steps are decided up front, and you pick from them.
 
 ```tsx
 <Stack space="lg">
@@ -22,33 +23,33 @@ tags: [はじめに, Astro]
 </Stack>
 ```
 
-### 段階の外にも出られます
+### You can step outside the scale
 
-決まった段階しか使えないと、今度は「あと 2px だけ詰めたい」で詰まります。
-`space="13px"` のような値も書けるようにしてあります。
-**既定値で支え、必要なら外れられる**——この 2 つは両立します。
+If the scale were all you had, the first time you wanted 2px less you would be
+stuck again. Values like `space="13px"` work too. **Supported by defaults, free
+to step outside** — those two are compatible.
 
-## 次に読むもの
+## What to read next
 
-- レイアウト部品の一覧
-- 非同期の状態をどう持つか
-- 端末幅で崩れないための土台
+- The list of layout components
+- How async state is held
+- The foundation that keeps narrow screens from breaking
 
-## 記事に画像を入れるとき
+## Putting images in an article
 
-**相対パスで書いてください。**
+**Write them as relative paths.**
 
 ```markdown
-![レイアウトの図](./diagram.png)     ← 寸法が自動で付く
-![レイアウトの図](/img/diagram.png)  ← 付かない。読み込みで本文がずれる
+![A layout diagram](./diagram.png)     ← dimensions get added automatically
+![A layout diagram](/img/diagram.png)  ← they do not. The text shifts on load
 ```
 
-![レイアウトの図](./diagram.png)
+![A layout diagram](./diagram.png)
 
-Astro は相対パスの画像だけを処理して、`width` と `height` を付けてくれます。
-寸法が付けば、画像が届く前から場所が確保されるので、
-**読んでいる最中に文章が下へずれません。**
+Astro only processes images given as relative paths, and it adds `width` and
+`height` for you. With dimensions in place, the space is reserved before the
+image arrives, so **the text never jumps down while you are reading.**
 
-`public/` に置いて `/img/…` と書くと処理されず、素の `<img>` のまま出ます。
-`pnpm check` はこれを検出します（画像の読み込みを止めて、
-場所が取られているかを実際に測っています）。
+Put it in `public/` and write `/img/…` and it is left alone, emitted as a bare
+`<img>`. `pnpm check` detects that — it blocks image loading and measures
+whether the space was actually reserved.

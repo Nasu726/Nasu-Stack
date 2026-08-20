@@ -21,6 +21,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { REGISTRY_URL } from "./_site.mjs";
 import { writeSnippets } from "./build-snippets.mjs";
+import { localDep } from "./_deps.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const registryRoot = path.join(root, "registry", "nasu");
@@ -93,7 +94,7 @@ function resolve(names, seen = new Set()) {
     if (!item) throw new Error(`registry.json に ${name} がありません`);
     seen.add(name);
     resolve(
-      (item.registryDependencies ?? []).map((d) => d.replace(/^@nasu\//, "")),
+      (item.registryDependencies ?? []).map(localDep).filter(Boolean),
       seen,
     );
   }

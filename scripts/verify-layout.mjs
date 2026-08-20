@@ -43,6 +43,36 @@ must(
   `実測 ${gaps.gap} / 段階 ${gaps.stepsPx.join(" ")}`,
 );
 
+/* --- 1.5 Tailwind の max-w-prose も同じトークンを見るか -----------
+   `ContentBlock width="prose"` は --width-prose を直接使いますが、
+   `max-w-prose` は接続しないと Tailwind 標準の 65ch になります。
+   ch はフォント依存なので、Windows では 40em 以下、Linux の CI では
+   41em になり、同じ英語の段落が環境によって通ったり落ちたりしました。 */
+const proseWidth = await page.evaluate(() => {
+  const actual = document.createElement("p");
+  actual.className = "max-w-prose text-sm";
+  actual.style.position = "absolute";
+  actual.style.visibility = "hidden";
+
+  const expected = document.createElement("p");
+  expected.className = "text-sm";
+  expected.style.position = "absolute";
+  expected.style.visibility = "hidden";
+  expected.style.width = "var(--width-prose)";
+
+  document.body.append(actual, expected);
+  const actualPx = parseFloat(getComputedStyle(actual).maxWidth);
+  const expectedPx = expected.getBoundingClientRect().width;
+  actual.remove();
+  expected.remove();
+  return { actualPx, expectedPx };
+});
+must(
+  "max-w-prose が本文幅のトークンと一致する",
+  Math.abs(proseWidth.actualPx - proseWidth.expectedPx) <= 0.5,
+  `max-w-prose=${Math.round(proseWidth.actualPx)}px / --width-prose=${Math.round(proseWidth.expectedPx)}px`,
+);
+
 /* --- 2. テーマを変えると余白そのものが変わるか --------------------- */
 await page.evaluate(() => {
   document.documentElement.dataset.theme = "warm";

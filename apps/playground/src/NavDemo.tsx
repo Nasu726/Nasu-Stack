@@ -9,11 +9,12 @@ import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { useToast } from "@/components/ui/toast";
 import { Inline, Stack } from "@/components/ui/layout";
+import { t } from "./lang";
 
 const NAV = [
-  { href: "#a", label: "製品" },
-  { href: "#b", label: "料金" },
-  { href: "#c", label: "会社概要" },
+  { href: "#a", label: t("製品") },
+  { href: "#b", label: t("料金") },
+  { href: "#c", label: t("会社概要") },
   // external の見本。**実際に飛ぶ先なので、実在して差し支えない URL にします。**
   // example.com は表記用に予約された名前ですが、IANA の説明ページが本当に出ます。
   { href: "https://github.com/Nasu726/Nasu-Stack", label: "GitHub", external: true },
@@ -43,32 +44,26 @@ function HeaderSection() {
       title="SiteHeader / SkipLink"
       description={
         <>
-          狭い画面のメニューは <code className="text-fg">&lt;details&gt;</code>{" "}
-          です。<strong className="text-fg">JavaScript が 1 行も要りません。</strong>
-          Astro に置くとき <code className="text-fg">client:</code>{" "}
-          を付けなくても開閉します。読み込みの遅い回線で「押しても何も起きない数秒」が
-          生まれないのが理由です。Esc で閉じる処理だけ JS
-          で足していますが、無くてももう一度押せば閉じます。
+          {t("狭い画面のメニューは")} <code className="text-fg">&lt;details&gt;</code>{" "}
+          {t("です。")}<strong className="text-fg">{t("JavaScript が 1 行も要りません。")}</strong>
+          {t("Astro に置くとき")} <code className="text-fg">client:</code>{" "}
+          {t("を付けなくても開閉します。読み込みの遅い回線で「押しても何も起きない数秒」が\r\n          生まれないのが理由です。Esc で閉じる処理だけ JS\r\n          で足していますが、無くてももう一度押せば閉じます。")}
         </>
       }
-      code={`<SkipLink />
-<SiteHeader
-  brand="Example Studio"
-  items={[{ href: "/works", label: "Works" }]}
-  currentPath={Astro.url.pathname}   // ルーターに依存しない
-  actions={<ThemeSwitcher />}
-/>`}
+      code={t("<SkipLink />\n<SiteHeader\n  brand=\"Example Studio\"\n  items={[{ href: \"/works\", label: \"Works\" }]}\n  currentPath={Astro.url.pathname}   // ルーターに依存しない\n  actions={<ThemeSwitcher />}\n/>")}
     >
       <Stack space="xs">
-        <p className="text-xs text-muted-fg">
-          下は実物です（sticky は切ってあります）。画面を狭くするとハンバーガーに変わります。
+        {/* **行長を止めます。** 器いっぱいだと英語で 1 行 150 字を超えます
+            （和文は全角なので上限に当たらず、訳すまで気づけませんでした）。 */}
+        <p className="max-w-[var(--width-prose)] text-xs text-muted-fg">
+          {t("下は実物です（sticky は切ってあります）。画面を狭くするとハンバーガーに変わります。")}
         </p>
-        <p className="text-xs text-muted-fg">
-          このヘッダは <code className="text-fg">z-30</code>{" "}
-          です。ページの一部として埋め込むときは、
-          <strong className="text-fg">外側の枠をそれより手前に置いてください。</strong>
-          このカタログ自身のヘッダを <code className="text-fg">z-40</code>{" "}
-          にしているのはそのためです。
+        <p className="max-w-[var(--width-prose)] text-xs text-muted-fg">
+          {t("このヘッダは")} <code className="text-fg">z-30</code>{" "}
+          {t("です。ページの一部として埋め込むときは、")}
+          <strong className="text-fg">{t("外側の枠をそれより手前に置いてください。")}</strong>
+          {t("このカタログ自身のヘッダを")} <code className="text-fg">z-40</code>{" "}
+          {t("にしているのはそのためです。")}
         </p>
         {/* **overflow-hidden を付けてはいけません。** 角丸のために付けたく
             なりますが、狭い画面でハンバーガーを開くと、下へ伸びたメニューが
@@ -81,11 +76,11 @@ function HeaderSection() {
             currentPath="#b"
             sticky={false}
             width="full"
-            actions={<SkipLink href="#catalog-panel">本文へ</SkipLink>}
+            actions={<SkipLink href="#catalog-panel">{t("本文へ")}</SkipLink>}
           />
           <div className="p-md text-xs text-muted-fg">
-            ヘッダの下の中身。「料金」に{" "}
-            <code className="text-fg">aria-current="page"</code> が付いています。
+            {t("ヘッダの下の中身。「料金」に")}{" "}
+            <code className="text-fg">aria-current="page"</code> {t("が付いています。")}
           </div>
         </div>
       </Stack>
@@ -105,53 +100,46 @@ function DialogSection() {
       title="Dialog"
       description={
         <>
-          ブラウザ標準の <code className="text-fg">&lt;dialog&gt;</code>{" "}
-          を使うので、フォーカスの閉じ込め・背面の無効化・Esc・最前面表示は
-          ブラウザ任せです。
+          {t("ブラウザ標準の")} <code className="text-fg">&lt;dialog&gt;</code>{" "}
+          {t("を使うので、フォーカスの閉じ込め・背面の無効化・Esc・最前面表示は\r\n          ブラウザ任せです。")}
           <strong className="text-fg">
-            ただし背面のスクロールだけは止まらない
+            {t("ただし背面のスクロールだけは止まらない")}
           </strong>
-          ので、そこだけ自分で止めています。開閉で画面が横に揺れないよう、
-          スクロールバーの幅は常に確保してあります。
+          {t("ので、そこだけ自分で止めています。開閉で画面が横に揺れないよう、\r\n          スクロールバーの幅は常に確保してあります。")}
         </>
       }
-      code={`<Dialog open={open} onOpenChange={setOpen} title="設定">
-  中身
-</Dialog>
-
-// 端から出すシート（狭い画面のメニューなどに）
-<Dialog placement="sheet-right" ... />`}
+      code={t("<Dialog open={open} onOpenChange={setOpen} title=\"設定\">\n  中身\n</Dialog>\n\n// 端から出すシート（狭い画面のメニューなどに）\n<Dialog placement=\"sheet-right\" ... />")}
     >
       <Inline space="xs">
-        <Button onClick={() => setCenter(true)}>中央に出す</Button>
+        <Button onClick={() => setCenter(true)}>{t("中央に出す")}</Button>
         <Button variant="outline" onClick={() => setSheet(true)}>
-          右から出す
+          {t("右から出す")}
         </Button>
       </Inline>
 
       <Dialog
         open={center}
         onOpenChange={setCenter}
-        title="通知の設定"
-        description="ここは説明文です。読み上げにも渡されます。"
+        title={t("通知の設定")}
+        description={t("ここは説明文です。読み上げにも渡されます。")}
         footer={
           <Inline space="xs" align="end">
             <Button variant="outline" onClick={() => setCenter(false)}>
-              閉じる
+              {t("閉じる")}
             </Button>
             <Button
               onClick={() => {
                 setCenter(false);
-                toast.show({ tone: "success", title: "保存しました" });
+                toast.show({ tone: "success", title: t("保存しました") });
               }}
             >
-              保存する
+              {t("保存する")}
             </Button>
           </Inline>
         }
       >
         <p className="text-sm text-muted-fg">
-          この裏側は押せません。Tab を何度押してもここから出ません。
+          {t("この裏側は押せません。Tab を何度押してもここから出ません。")}
         </p>
       </Dialog>
 
@@ -159,7 +147,7 @@ function DialogSection() {
         open={sheet}
         onOpenChange={setSheet}
         placement="sheet-right"
-        title="シート"
+        title={t("シート")}
       >
         <Stack space="xs">
           {NAV.map((n) => (
@@ -191,47 +179,40 @@ function TabsSection() {
       title="Tabs"
       description={
         <>
-          このカタログ上部のタブも、これに差し替えました。
-          <strong className="text-fg">矢印キーで移動できるのが本体</strong>で、
-          Tab キーで止まるのは選択中の 1 つだけです（roving tabindex）。
-          入りきらないときは潰さずに横スクロールします。
+          {t("このカタログ上部のタブも、これに差し替えました。")}
+          <strong className="text-fg">{t("矢印キーで移動できるのが本体")}</strong>{t("で、\r\n          Tab キーで止まるのは選択中の 1 つだけです（roving tabindex）。\r\n          入りきらないときは潰さずに横スクロールします。")}
         </>
       }
-      code={`<Tabs items={items} value={tab} onValueChange={setTab}>
-  <TabPanel value="a">…</TabPanel>
-</Tabs>
-
-// 切り替えが重いときは manual（Enter を押すまで切り替えない）
-<Tabs activation="manual" ... />`}
+      code={t("<Tabs items={items} value={tab} onValueChange={setTab}>\n  <TabPanel value=\"a\">…</TabPanel>\n</Tabs>\n\n// 切り替えが重いときは manual（Enter を押すまで切り替えない）\n<Tabs activation=\"manual\" ... />")}
     >
       <Stack space="md">
         <Tabs
           items={[
-            { value: "a", label: "概要" },
-            { value: "b", label: "詳細" },
-            { value: "c", label: "使えない", disabled: true },
-            { value: "d", label: "履歴" },
+            { value: "a", label: t("概要") },
+            { value: "b", label: t("詳細") },
+            { value: "c", label: t("使えない"), disabled: true },
+            { value: "d", label: t("履歴") },
           ]}
-          label="例"
+          label={t("例")}
         >
           <TabPanel value="a">
-            <p className="text-sm text-muted-fg">
-              ← → で移動、Home / End で端へ。無効なタブは飛ばします。
+            <p className="max-w-[var(--width-prose)] text-sm text-muted-fg">
+              {t("← → で移動、Home / End で端へ。無効なタブは飛ばします。")}
             </p>
           </TabPanel>
           <TabPanel value="b">
             <input
               className="w-full rounded-md border border-input bg-card px-3 py-2 text-base"
-              placeholder="何か入力して、別のタブへ行って戻ってみてください"
+              placeholder={t("何か入力して、別のタブへ行って戻ってみてください")}
             />
           </TabPanel>
           <TabPanel value="c">
-            <p className="text-sm text-muted-fg">ここには来られません。</p>
+            <p className="text-sm text-muted-fg">{t("ここには来られません。")}</p>
           </TabPanel>
           <TabPanel value="d">
             <p className="text-sm text-muted-fg">
-              既定では隠すだけなので、上の入力は残っています。
-              <code className="text-fg">unmountInactive</code> を付けると消えます。
+              {t("既定では隠すだけなので、上の入力は残っています。")}
+              <code className="text-fg">unmountInactive</code> {t("を付けると消えます。")}
             </p>
           </TabPanel>
         </Tabs>
@@ -239,15 +220,15 @@ function TabsSection() {
         <Tabs
           items={Array.from({ length: 12 }, (_, i) => ({
             value: `t${i}`,
-            label: `タブ ${i + 1}`,
+            label: t("タブ {0}").replace("{0}", String(i + 1)),
           }))}
           value={manual}
           onValueChange={setManual}
           activation="manual"
-          label="たくさんある例"
+          label={t("たくさんある例")}
         />
-        <p className="text-xs text-muted-fg">
-          ↑ 12 個あるので横スクロールします（manual: 矢印で動かしても切り替わりません）
+        <p className="max-w-[var(--width-prose)] text-xs text-muted-fg">
+          {t("↑ 12 個あるので横スクロールします（manual: 矢印で動かしても切り替わりません）")}
         </p>
       </Stack>
     </Panel>
@@ -262,40 +243,37 @@ function DisclosureSection() {
       title="Disclosure / Accordion"
       description={
         <>
-          <code className="text-fg">&lt;details&gt;</code> です。
-          <strong className="text-fg">JavaScript を切っても開閉します。</strong>
-          Ctrl+F のページ内検索が閉じた中身も見つけてくれるのも、
-          自前で作ると失うものです。1 つだけ開く動きは{" "}
-          <code className="text-fg">name</code> 属性でブラウザに任せています。
+          <code className="text-fg">&lt;details&gt;</code> {t("です。")}
+          <strong className="text-fg">{t("JavaScript を切っても開閉します。")}</strong>
+          {t("Ctrl+F のページ内検索が閉じた中身も見つけてくれるのも、\r\n          自前で作ると失うものです。1 つだけ開く動きは")}{" "}
+          <code className="text-fg">name</code> {t("属性でブラウザに任せています。")}
         </>
       }
-      code={`<Disclosure summary="送料について">3,000 円以上で無料です。</Disclosure>
-
-<Accordion items={[{ summary: "…", content: "…" }]} />`}
+      code={t("<Disclosure summary=\"送料について\">3,000 円以上で無料です。</Disclosure>\n\n<Accordion items={[{ summary: \"…\", content: \"…\" }]} />")}
     >
       <Stack space="md">
         <div className="rounded-lg border border-border bg-card px-md">
-          <Disclosure summary="単体で使う（複数開けます）">
-            <p>中身です。矢印は開くと 180 度回ります。</p>
+          <Disclosure summary={t("単体で使う（複数開けます）")}>
+            <p>{t("中身です。矢印は開くと 180 度回ります。")}</p>
           </Disclosure>
-          <Disclosure summary="もう 1 つ">
-            <p>両方開けます。</p>
+          <Disclosure summary={t("もう 1 つ")}>
+            <p>{t("両方開けます。")}</p>
           </Disclosure>
         </div>
 
         <Accordion
           items={[
             {
-              summary: "支払い方法は？",
-              content: "カードと銀行振込です。",
+              summary: t("支払い方法は？"),
+              content: t("カードと銀行振込です。"),
               defaultOpen: true,
             },
-            { summary: "返品できますか？", content: "8 日以内なら可能です。" },
-            { summary: "領収書は出ますか？", content: "マイページから出せます。" },
+            { summary: t("返品できますか？"), content: t("8 日以内なら可能です。") },
+            { summary: t("領収書は出ますか？"), content: t("マイページから出せます。") },
           ]}
         />
         <p className="text-xs text-muted-fg">
-          ↑ こちらは 1 つ開くと他が閉じます（JS ではなく HTML の機能です）
+          {t("↑ こちらは 1 つ開くと他が閉じます（JS ではなく HTML の機能です）")}
         </p>
       </Stack>
     </Panel>
@@ -312,42 +290,37 @@ function MenuSection() {
       title="DropdownMenu / NavDropdown"
       description={
         <>
-          見た目は同じでも別部品にしています。
+          {t("見た目は同じでも別部品にしています。")}
           <strong className="text-fg">
-            押すと何かが起きるのか、どこかへ行くのか
+            {t("押すと何かが起きるのか、どこかへ行くのか")}
           </strong>
-          で読み上げが変わるためです。
+          {t("で読み上げが変わるためです。")}
           <code className="text-fg">role="menu"</code>{" "}
-          はアプリの命令用で、リンクの集まりに付けると「リンクだと分からなくなる」
-          という壊れ方をします。
+          {t("はアプリの命令用で、リンクの集まりに付けると「リンクだと分からなくなる」\r\n          という壊れ方をします。")}
         </>
       }
-      code={`// 命令 → role="menu" / "menuitem"
-<DropdownMenu label="操作" items={[{ label: "複製", onSelect: dup }]} />
-
-// リンク → ただの <ul><li><a>
-<NavDropdown label="製品" items={[{ label: "料金", href: "/pricing" }]} />`}
+      code={t("// 命令 → role=\"menu\" / \"menuitem\"\n<DropdownMenu label=\"操作\" items={[{ label: \"複製\", onSelect: dup }]} />\n\n// リンク → ただの <ul><li><a>\n<NavDropdown label=\"製品\" items={[{ label: \"料金\", href: \"/pricing\" }]} />")}
     >
       <Inline space="md" alignY="center">
         <DropdownMenu
-          label="操作"
+          label={t("操作")}
           items={[
-            { label: "複製する", onSelect: () => toast.show({ tone: "success", title: "複製しました" }) },
-            { label: "書き出す", onSelect: () => toast.show({ tone: "info", title: "書き出しました" }) },
+            { label: t("複製する"), onSelect: () => toast.show({ tone: "success", title: t("複製しました") }) },
+            { label: t("書き出す"), onSelect: () => toast.show({ tone: "info", title: t("書き出しました") }) },
             { separator: true },
             {
-              label: "削除する",
+              label: t("削除する"),
               tone: "danger",
-              onSelect: () => toast.show({ tone: "danger", title: "削除しました" }),
+              onSelect: () => toast.show({ tone: "danger", title: t("削除しました") }),
             },
           ]}
         />
         <NavDropdown
-          label="製品"
+          label={t("製品")}
           items={[
-            { label: "機能一覧", href: "#features" },
-            { label: "料金", href: "#pricing", current: true },
-            { label: "導入事例", href: "#cases" },
+            { label: t("機能一覧"), href: "#features" },
+            { label: t("料金"), href: "#pricing", current: true },
+            { label: t("導入事例"), href: "#cases" },
           ]}
         />
       </Inline>
@@ -365,12 +338,12 @@ function MenuSection() {
  * 6 列でも壊れないことを確かめられる形にしておきます。
  */
 const FOOTER_GROUPS = [
-  { label: "プロダクト", items: [{ href: "#a", label: "機能一覧" }, { href: "#b", label: "料金" }] },
-  { label: "開発者向け", items: [{ href: "#c", label: "ドキュメント" }, { href: "#d", label: "API" }] },
-  { label: "コミュニティ", items: [{ href: "#e", label: "フォーラム" }] },
-  { label: "サポート", items: [{ href: "#f", label: "問い合わせ" }] },
-  { label: "会社情報", items: [{ href: "#g", label: "会社概要" }] },
-  { label: "利用規約・法務", items: [{ href: "#h", label: "プライバシー" }] },
+  { label: t("プロダクト"), items: [{ href: "#a", label: t("機能一覧") }, { href: "#b", label: t("料金") }] },
+  { label: t("開発者向け"), items: [{ href: "#c", label: t("ドキュメント") }, { href: "#d", label: "API" }] },
+  { label: t("コミュニティ"), items: [{ href: "#e", label: t("フォーラム") }] },
+  { label: t("サポート"), items: [{ href: "#f", label: t("問い合わせ") }] },
+  { label: t("会社情報"), items: [{ href: "#g", label: t("会社概要") }] },
+  { label: t("利用規約・法務"), items: [{ href: "#h", label: t("プライバシー") }] },
 ];
 
 function FooterSection() {
@@ -381,22 +354,16 @@ function FooterSection() {
       title="SiteFooter"
       description={
         <>
-          <strong className="text-fg">縮むのはリンクの列ではなく説明文です。</strong>
-          説明文は何行になっても読めますが、リンクの列は縦に割れると
-          「まとまり」が見えなくなります。列が増えて器に収まらなくなったら、
-          説明文を潰さずに次の行へ落とします。
+          <strong className="text-fg">{t("縮むのはリンクの列ではなく説明文です。")}</strong>
+          {t("説明文は何行になっても読めますが、リンクの列は縦に割れると\r\n          「まとまり」が見えなくなります。列が増えて器に収まらなくなったら、\r\n          説明文を潰さずに次の行へ落とします。")}
         </>
       }
-      code={`<SiteFooter
-  brand="Example Studio"
-  groups={[{ label: "サイト", items: [{ href: "/blog", label: "ブログ" }] }]}
-  note="© 2026 Example Studio"
-/>`}
+      code={t("<SiteFooter\n  brand=\"Example Studio\"\n  groups={[{ label: \"サイト\", items: [{ href: \"/blog\", label: \"ブログ\" }] }]}\n  note=\"© 2026 Example Studio\"\n/>")}
     >
       <Inline space="xs" alignY="center">
         {[
-          [true, "6 列"],
-          [false, "2 列"],
+          [true, t("6 列")],
+          [false, t("2 列")],
         ].map(([v, label]) => (
           <Button
             key={String(v)}
@@ -409,14 +376,14 @@ function FooterSection() {
           </Button>
         ))}
         <span className="text-xs text-muted-fg">
-          どちらでも、はみ出さず、列が縦に割れません
+          {t("どちらでも、はみ出さず、列が縦に割れません")}
         </span>
       </Inline>
 
       <div className="rounded-lg border border-border" data-testid="footer-demo">
         <SiteFooter
           brand="Example Studio"
-          description="静的なページは Astro、動く部分だけ React。この部品で組んだサイトの見本です。"
+          description={t("静的なページは Astro、動く部分だけ React。この部品で組んだサイトの見本です。")}
           groups={many ? FOOTER_GROUPS : FOOTER_GROUPS.slice(0, 2)}
           note="© 2026 Example Studio"
           width="narrow"
