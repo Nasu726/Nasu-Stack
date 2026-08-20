@@ -250,7 +250,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 
 ## 6. How the checks are thought about
 
-`pnpm verify` is 29 stages; `pnpm verify:create` is 106 assertions. It looks
+`pnpm verify` is 29 stages; `pnpm verify:create` is 112 assertions. It looks
 like a lot. There's a reason.
 
 ### A check that only prints is not a check

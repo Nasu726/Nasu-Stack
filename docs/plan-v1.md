@@ -7,7 +7,7 @@ public contract を Stable として出すための release engineering だけ�
 
 - `registry.json` から配る item 名、公開 export、semantic color token
 - `Action` / hooks / components が [`boundaries.md`](boundaries.md) の範囲で持つ契約
-- `create-nasu-stack` の 3 種の template と既存の CLI option
+- `create-nasu-stack` の 3 種の template と `--lang` を含む CLI option
 - breaking change は次の major version まで入れない
 
 Stable は無欠陥、永続的な保守、または Nasu Stack が責任を持たない server/domain
@@ -25,6 +25,8 @@ bot 対策は引き続き利用者側の責任です。
    `verify` / `verify-create` が成功した後だけ asset を作る
 6. 日本語 README の catalog は `?lang=ja`、demo は `/demo/ja/` を指し、
    Astro demo 自体も英語版と同じ範囲を日本語で生成する
+7. create CLI は最初に English / 日本語を選び、続く対話と生成する案内文書を
+   その言語に揃える。次に「まっさらな状態から / 雛型を使う」で分けて選ぶ
 
 ## version を変えないもの
 
@@ -36,7 +38,7 @@ bot 対策は引き続き利用者側の責任です。
 
 ## PRに含めないもの
 
-- POST-01〜07、新機能、public contract の追加
+- POST-01〜07、component / hook の新機能や public contract の追加
 - `v1.0.0` tag とGitHub Releaseそのもの
 - npm publish
 

@@ -102,7 +102,7 @@ Astro 側のページ一覧は **sitemap.xml から取ります**（手で並べ
 | **このリポジトリの開発用スクリプト** | Linux / macOS / **Windows 11** で動作確認済み |
 
 Windows は実機確認しています（Windows 11 / Node 24.13 / pnpm 10.28）。
-`pnpm verify` 29 工程と `pnpm verify:create` 106 判定が緑です。
+`pnpm verify` 29 工程と `pnpm verify:create` 112 判定が緑です。
 子プロセスの起動と停止は [`scripts/_proc.mjs`](../scripts/_proc.mjs) が唯一の定義で、
 **なぜ OS ごとに違うのかはそこに書いてあります**（`.cmd` は shell 無しで
 spawn できない / Windows にプロセスグループが無い）。

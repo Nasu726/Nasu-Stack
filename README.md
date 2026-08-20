@@ -59,7 +59,12 @@ theme; the content is yours.
 The [demo site](https://nasu726.github.io/Nasu-Stack/demo/) is exactly this, so
 **you can look before you choose.**
 
-Add `--template <kind> --yes` to skip the prompts.
+The setup asks for **English or Japanese first**, then **From scratch or Use a
+template**. Its terminal messages, `README.md`, `HowToUse.md`, and environment
+variable guidance use the selected language.
+
+Add `--lang en --template <kind> --yes` to skip the prompts. Use `--lang ja`
+for Japanese guidance.
 
 > **Not published to npm.** This is a personal project and I can't promise
 > ongoing maintenance, so I don't want to hold an npm name. `npx` takes a
