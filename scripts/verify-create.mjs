@@ -176,6 +176,9 @@ const PAGES = {
     wantArticles.length > 0 && extra.length === 0,
     extra.length ? `原本から漏れています: ${extra.join(", ")}` : gotArticles.join(" "),
   );
+
+  const r4 = create("my-site-ja", ["--template", "astro", "--lang", "ja"]);
+  must("2.6 日本語の案内を指定して生成できる", r4.ok, r4.out.trim().slice(-120));
 }
 
 /* ===== 4〜5. 上書き事故の防止 =================================== */
@@ -384,6 +387,70 @@ for (const { name, kind } of CASES) {
   must(`    ${kind}: README から HowToUse.md へ辿れる`, readme.includes("HowToUse.md"));
 }
 
+{
+  const en = fs.readFileSync(path.join(work, "my-site", "HowToUse.md"), "utf8");
+  const enReadme = fs.readFileSync(path.join(work, "my-site", "README.md"), "utf8");
+  const ja = fs.readFileSync(path.join(work, "my-site-ja", "HowToUse.md"), "utf8");
+  const jaReadme = fs.readFileSync(path.join(work, "my-site-ja", "README.md"), "utf8");
+  must(
+    "7.41 --lang に合わせて README / HowToUse を生成する",
+    en.includes("How to use my-site") && enReadme.includes("Built with Nasu Stack") &&
+      ja.includes("my-site-ja の使い方") && jaReadme.includes("Nasu Stack から作りました"),
+  );
+  must(
+    "     コマンドを実行する場所が両言語の案内にある",
+    en.includes("project root directory") && en.includes("contains `package.json`") &&
+      ja.includes("プロジェクトのルートディレクトリ") && ja.includes("`package.json` がある場所"),
+  );
+}
+
+/* ===== 7.415. 対話が 言語 → 始め方 → 種類 の順か ================ */
+{
+  const { chooseLanguage, chooseInteractiveKind } = await import(
+    new URL(`file://${CLI}`).href
+  );
+  const fakeReadline = (answers) => ({
+    question: async () => answers.shift() ?? "",
+  });
+
+  const languageLines = [];
+  const lang = await chooseLanguage(fakeReadline(["2"]), (line) => languageLines.push(line));
+  must(
+    "7.415 最初の選択肢で English / 日本語を選べる",
+    lang === "ja" && languageLines.some((line) => line.includes("Language / 言語")) &&
+      languageLines.some((line) => line.includes("English: ")) &&
+      languageLines.some((line) => line.includes("日本語: ")),
+  );
+
+  const enLines = [];
+  const enKind = await chooseInteractiveKind(
+    fakeReadline(["1", "2"]),
+    "en",
+    (line) => enLines.push(line),
+  );
+  must(
+    "     英語では From scratch → Astro / Vite の順に選べる",
+    enKind === "vite" &&
+      enLines.findIndex((line) => line.includes("From scratch: ")) <
+        enLines.findIndex((line) => line.includes("Website (Astro): ")) &&
+      enLines.every((line) => !/^\s+\d+\./.test(line) || line.includes(": ")),
+  );
+
+  const jaLines = [];
+  const jaKind = await chooseInteractiveKind(
+    fakeReadline(["2", ""]),
+    "ja",
+    (line) => jaLines.push(line),
+  );
+  must(
+    "     日本語では 雛型を使う → ブログ の順に選べる",
+    jaKind === "blog" &&
+      jaLines.findIndex((line) => line.includes("雛型を使う: ")) <
+        jaLines.findIndex((line) => line.includes("ブログ・複数ページのサイト（Astro）: ")) &&
+      jaLines.every((line) => !/^\s+\d+\./.test(line) || line.includes(": ")),
+  );
+}
+
 /* ===== 7.42. 秘密の値が commit されない形になっているか ============ */
 /**
  * このテンプレートはフォームの送信先など環境変数を扱う導線を持っています。
@@ -420,7 +487,9 @@ for (const { name, kind } of CASES) {
   );
   const real = new Set([...css.matchAll(/--space-([a-z0-9]+):/g)].map((m) => m[1]));
   const md = fs.readFileSync(path.join(work, "my-site", "HowToUse.md"), "utf8");
-  const line = md.split(/\r?\n/).find((l) => l.startsWith("小さいほうから")) ?? "";
+  const line = md
+    .split(/\r?\n/)
+    .find((l) => l.startsWith("From smallest to largest:")) ?? "";
   const documented = [...line.matchAll(/`([a-z0-9]+)`/g)].map((m) => m[1]);
   const unknown = documented.filter((t) => !real.has(t));
   must(
@@ -458,7 +527,7 @@ for (const { name, kind } of CASES) {
   const r = create("typo-site", ["--templat", "blog"]);
   must(
     "7.47 知らない指定を黙って無視しない",
-    !r.ok && /知らない指定/.test(r.out ?? ""),
+    !r.ok && /Unknown option|知らない指定/.test(r.out ?? ""),
     (r.out ?? "").trim().slice(-80),
   );
   must(

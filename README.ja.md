@@ -55,7 +55,12 @@ npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
 
 [デモサイト](https://nasu726.github.io/Nasu-Stack/demo/ja/)がこれです。**中身を見てから決められます。**
 
-対話を飛ばすなら `--template <種類> --yes` を付けます。
+最初に **English / 日本語**、次に **まっさらな状態から / 雛型を使う**を選びます。
+ターミナルの表示と、生成される `README.md`・`HowToUse.md`・環境変数の案内は
+選んだ言語に揃います。
+
+対話を飛ばすなら `--lang ja --template <種類> --yes` を付けます。英語の案内は
+`--lang en` です。
 
 > **npm には publish していません。** 個人的なプロジェクトとして続けるので、
 > 継続的な保守を約束できないためです。npm は URL の tarball をそのまま受け取れます。

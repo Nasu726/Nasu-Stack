@@ -66,6 +66,11 @@
 | `blog` | ブログ・LP・会社概要・問い合わせ・RSS・sitemap・404 | **`apps/site` から生成します**（下記） |
 | `vite` | React のアプリ | `packages/create-nasu-stack/scaffold/vite/` |
 
+対話では最初に English / 日本語、次に「まっさらな状態から / 雛型を使う」を
+選びます。非対話では `--lang en|ja --template astro|blog|vite --yes` です。
+選んだ言語はターミナルだけでなく、生成する `README.md`、`HowToUse.md`、
+`.env.example` にも使います。
+
 `blog` の中身は `apps/site`（公開しているデモ）から
 `scripts/build-create-template.mjs` が写します。**手でコピーして commit しません。**
 2 か所に置くと「デモは直したが雛型は古いまま」が静かに起きます。
@@ -95,7 +100,7 @@
 ```bash
 pnpm install
 pnpm verify           # 29 工程（独立したものは並列）。型・ビルド・配布物・実ブラウザ
-pnpm verify:create    # 入口の検査 106 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
+pnpm verify:create    # 入口の検査 112 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 pnpm release:build    # package versionに対応するGitHub Release用tarball + SHA-256
 ```
@@ -213,7 +218,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
 ## 6. まだ確認できていないこと
 
 - ~~**Windows の実機。**~~ v0.9a で確認しました（いまは `pnpm verify` 25 工程 /
-  `pnpm verify:create` 106 判定が緑です）。**コードを読んで書いた対応のうち
+  `pnpm verify:create` 112 判定が緑です）。**コードを読んで書いた対応のうち
   2 つは実際には間違っていました**（詳細は `docs/result-v09a.md`）
 - ~~**`npx shadcn add` の実インストール。**~~ v0.9a で本物の CLI を通しました。
   **利用者の `components.json` に `registries` の宣言が要ります**（無いと

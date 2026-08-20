@@ -238,7 +238,7 @@ type Space = SpaceToken | (string & {});
 
 ## 6. 検査についての考え方
 
-`pnpm verify` は 29 工程、`pnpm verify:create` は 106 判定あります。
+`pnpm verify` は 29 工程、`pnpm verify:create` は 112 判定あります。
 多すぎるように見えますが、理由があります。
 
 ### 印字するだけの検査は、検査ではない

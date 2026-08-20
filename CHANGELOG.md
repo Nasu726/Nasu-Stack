@@ -13,7 +13,7 @@ First Stable release.
 - Registry item names and the public exports copied by those items
 - Documented component, hook, action, and transport contracts
 - Semantic CSS token names and their accessibility requirements
-- The existing `create-nasu-stack` templates and command-line options
+- The `create-nasu-stack` templates and command-line options, including `--lang`
 
 Breaking changes to this surface wait for the next major release. Source copied
 into an application through shadcn belongs to that application and remains free
@@ -25,8 +25,9 @@ to edit; Nasu Stack does not silently update it.
 - Async action, resource, optimistic update, form, table, select, and toast
   contracts with browser-level regression checks
 - Astro, blog, and Vite starter templates
-- English and Japanese documentation, catalog entry points, and Astro demo routes
-- A release gate covering 29 verification stages and 106 generated-project
+- English and Japanese documentation, catalog entry points, Astro demo routes,
+  and language-selected guidance from `create-nasu-stack`
+- A release gate covering 29 verification stages and 112 generated-project
   assertions, including real Chromium, npm install/build, and the real shadcn CLI
 
 ### Outside the contract
