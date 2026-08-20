@@ -69,8 +69,12 @@ async function call({ env = FULL, origin = ORIGIN, type = "application/json", bo
       headers: { ...(origin ? { origin } : {}), ...(type ? { "content-type": type } : {}), ...headers },
       body: typeof body === "string" ? body : JSON.stringify(body),
     });
-    const res = await worker.fetch(req, env);
-    return { status: res.status, sent };
+    try {
+      const res = await worker.fetch(req, env);
+      return { status: res.status, sent, threw: null };
+    } catch (threw) {
+      return { status: null, sent, threw };
+    }
   } finally {
     globalThis.fetch = real;
   }
@@ -107,6 +111,30 @@ for (const key of ["ALLOWED_ORIGIN", "MAIL_API_KEY", "MAIL_TO", "MAIL_FROM"]) {
   const r = await call({ type: "text/plain" });
   must("JSON でなければ 415", r.status === 415, `HTTP ${r.status}`);
   must("  そのときメールは送らない", r.sent.length === 0, `${r.sent.length} 回`);
+
+  const jsonp = await call({ type: "application/jsonp" });
+  must("application/jsonp は JSON として扱わない", jsonp.status === 415, `HTTP ${jsonp.status}`);
+  must("  jsonp ではメールを送らない", jsonp.sent.length === 0, `${jsonp.sent.length} 回`);
+
+  const vendor = await call({ type: "application/problem+json; charset=utf-8" });
+  must("application/*+json は受け付ける", vendor.status === 200, `HTTP ${vendor.status}`);
+}
+
+/* ===== JSON として合法でも型が違う入力 ========================== */
+{
+  const cases = [
+    ["null", null],
+    ["array", []],
+    ["name が number", { ...BODY, name: 1 }],
+    ["email が array", { ...BODY, email: [] }],
+    ["message が object", { ...BODY, message: {} }],
+  ];
+  for (const [label, body] of cases) {
+    const r = await call({ body });
+    must(`${label} は 400`, r.status === 400, `HTTP ${r.status}`);
+    must(`  ${label} で例外を外へ投げない`, r.threw === null, String(r.threw ?? ""));
+    must(`  ${label} でメールを送らない`, r.sent.length === 0, `${r.sent.length} 回`);
+  }
 }
 
 /* ===== 大きさ ==================================================== */

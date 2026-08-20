@@ -13,15 +13,17 @@
 | 順 | ファイル | 何が書いてあるか |
 |----|----------|------------------|
 | 1 | `docs/overview.md` | 目的・対象・4 つの層・設計を決めている 6 つの考え・検査の哲学 |
-| 2 | `ROADMAP.md` | 版ごとに作ったものと、**踏んだ罠の記録** |
-| 3 | `docs/astro-and-react.md` | Astro と React が 1 つのプロジェクトで共存する理由 |
-| 4 | `registry/nasu/lib/action.ts` | 利用者が覚えるただ 1 つの契約 |
+| 2 | `docs/boundaries.md` | **Nasu Stack・アプリ・サーバの責任分界と escape hatch** |
+| 3 | `ROADMAP.md` | 版ごとに作ったものと、**踏んだ罠の記録** |
+| 4 | `docs/astro-and-react.md` | Astro と React が 1 つのプロジェクトで共存する理由 |
+| 5 | `registry/nasu/lib/action.ts` | 利用者が覚えるただ 1 つの契約 |
 
 `docs/plan-*.md` と `docs/result-*.md` は各版の計画と結果です。過去の判断の
 理由を知りたいときだけ読めば足ります。
 
-**いま動いている版の結果は [`docs/result-v09f.md`](result-v09f.md) です**
-（その前は [`result-v09e.md`](result-v09e.md)）。
+**いま動いているレビュー対応は [`plan-v09f-review.md`](plan-v09f-review.md) と
+[`result-v09f-review.md`](result-v09f-review.md) です。** 前回マージの結果は
+[`result-v09f.md`](result-v09f.md) に履歴として残しています。
 
 **v0.9f で、外から来た人が読む面を英語にしました。**
 `README.md` / `SECURITY.md` / `docs/boundaries|overview|security|astro-and-react.md`
@@ -49,8 +51,8 @@
 
 ## 3. いまどこまで来ているか
 
-- `main` … v0.9e まで（PR #9 / #10 でマージ済み）
-- `claude/v0.9e` … **ここが最新です**（枝の名前は v0.9e のまま。中身は v0.9f）
+- `main` … 英語対応までマージ済み（PR #11 / `acc7828`）
+- `codex/v0.9f` … **v1.0 リリース前レビューの BLOCKER-01〜10 対応**
 
 **公開済みです。** https://nasu726.github.io/Nasu-Stack/
 （`/catalog/` に部品のカタログ、`/demo/` にデモサイト、`/r/*.json` にレジストリ）
@@ -91,7 +93,7 @@
 
 ```bash
 pnpm install
-pnpm verify           # 27 工程（独立したものは並列。約 3 分）。型・ビルド・配布物・実ブラウザ
+pnpm verify           # 29 工程（独立したものは並列）。型・ビルド・配布物・実ブラウザ
 pnpm verify:create    # 入口の検査 106 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 ```

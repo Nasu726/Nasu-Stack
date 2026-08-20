@@ -11,7 +11,7 @@ export interface ToastOptions {
   tone?: ToastTone;
   title: React.ReactNode;
   description?: React.ReactNode;
-  /** 自動で閉じるまでの ms。0 で閉じません。既定 5000（danger は 8000）。 */
+  /** 自動で閉じるまでの ms。0 で閉じません。操作付きは既定 0、それ以外は 5000（danger は 8000）。 */
   duration?: number;
   /** 右側に置くボタン（「再試行」など）。 */
   action?: { label: string; onClick: () => void };
@@ -62,7 +62,7 @@ export function ToastProvider({
       const id = nextId.current++;
       const tone = options.tone ?? "info";
       const duration =
-        options.duration ?? (tone === "danger" ? 8000 : 5000);
+        options.duration ?? (options.action ? 0 : tone === "danger" ? 8000 : 5000);
 
       setItems((prev) => {
         const next = [...prev, { ...options, tone, id }];

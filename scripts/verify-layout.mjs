@@ -207,11 +207,44 @@ must(
   shown.join(" | ").slice(0, 40) || "(通知なし)",
 );
 
-/* --- 8. 通知が自動で消えるか（success は 5s） --------------------- */
+/* --- 8. 操作付き通知は、操作できるまで残るか -----------------------
+   読み終える速さを部品側が決めると、ゆっくり読む人ほど操作を失います。
+   action がある通知は duration を明示しない限り閉じず、利用者が
+   操作するか閉じるまで残すのが安全側の既定です。 */
 await toastPage.getByRole("button", { name: "通知を直接出す" }).click();
 await toastPage.waitForTimeout(400);
 const before = await toastPage.locator('[role="status"]').count();
 must("通知を直接出せる", before > 0, `${before} 件`);
+await toastPage.waitForTimeout(5000);
+const actionAfterDefaultDuration = toastPage.getByRole("button", { name: "元に戻す" });
+must(
+  "操作付き通知は duration 未指定なら自動で消えない",
+  await actionAfterDefaultDuration.isVisible().catch(() => false),
+  `5.4 秒後の通知 ${await toastPage.locator('[role="status"]').count()} 件`,
+);
+if (await actionAfterDefaultDuration.isVisible().catch(() => false)) {
+  await actionAfterDefaultDuration.focus();
+  must(
+    "時間が経った後も通知の action へキーボードフォーカスできる",
+    await actionAfterDefaultDuration.evaluate((button) => button === document.activeElement),
+  );
+  await toastPage.keyboard.press("Enter");
+  must(
+    "時間が経った後も Enter で通知の action を実行できる",
+    (await toastPage.locator('[data-testid="toast-undo-count"]').textContent()) === "1",
+  );
+}
+
+await toastPage.locator('[data-testid="toast-duration-run"]').evaluate((button) => button.click());
+await toastPage.waitForTimeout(500);
+const explicitDurationToast = toastPage
+  .locator('[role="status"]')
+  .filter({ hasText: "explicit-duration-probe" });
+must(
+  "duration を明示した操作付き通知は指定どおり自動で消える",
+  (await explicitDurationToast.count()) === 0,
+  `0.5 秒後に ${await explicitDurationToast.count()} 件`,
+);
 
 /* --- 9. 広い画面で、本文が器の右端まで届いているか ------------------
    ----------------------------------------------------------------

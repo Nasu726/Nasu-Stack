@@ -1,98 +1,168 @@
-# What is covered, and what is not
+# Responsibility boundaries
 
-**These components don't make your app safe. They make the safe choice easier
-to reach.** Below is what you get by dropping them in, and what stays your job.
+**Nasu Stack keeps beginners from being stranded without locking experienced
+developers in.** It turns decisions that recur in web development into safe
+defaults, explicit constraints, and small primitives. It does not make every
+decision on behalf of the application.
+
+This document is the public contract for where Nasu Stack's responsibility
+ends. When a feature is proposed, the first question is:
+
+> Whose decision is this, and where must Nasu Stack stop deciding?
 
 *[日本語版はこちら](boundaries.ja.md)*
 
-## The table
+## The four rules
 
-| We cover | You must write (server side) |
-|---|---|
-| Screen state (loading, success, failure, empty) | **Authentication** — who is this |
-| Double-submit guard, abort, timeout | **Authorization** — are they allowed to |
-| Screen readers, keyboard, screen width | **Server-side validation** (the browser side can be bypassed) |
-| Browser-side input checks (**advice**) | CSRF, rate limiting |
-| Telling you where secrets go | Upload validation (size, type, **magic bytes**) |
-| Keeping raw server text off the screen | What ends up in your logs |
+1. **Safe by default.** The first path should not fail in a way that an
+   unfamiliar user cannot diagnose.
+2. **Explicit boundary.** A client-side convenience is never described as a
+   server-side guarantee.
+3. **Escape hatch.** A default may guide you, but it must not trap you. Step
+   down from a component to a hook, or from a hook to plain React and browser
+   APIs.
+4. **Reusable primitive or contract.** Nasu Stack owns recurring wiring, not
+   the application's business decisions.
 
----
+These rules apply together. A safe default without an escape hatch becomes a
+lock. An escape hatch without a safe default leaves beginners to rediscover
+the same failures.
 
-## Easy to misread
+## Who owns each decision
+
+| Area | Nasu Stack owns | Your app or domain owns | Your server or infrastructure owns |
+|---|---|---|---|
+| Shipped source | The documented behavior, types, dependencies, and checks of each registry item | Which items to copy, how to compose them, and the behavior of any modified copy | Deployment and runtime compatibility |
+| Layout and accessibility | Responsive defaults and the component's semantics, focus, keyboard, and screen-reader behavior | Content, labels, heading order across the page, and whether a chosen composition makes sense | Any platform-specific rendering or assistive-technology policy |
+| Async UI state | Loading, success, failure, double-submit protection, passing an abort signal, and preventing a cancelled or stale result from returning to the UI | What success means, which message to show, and whether the user should be offered cancellation | Whether work can actually be cancelled, rolled back, or committed atomically |
+| Input and data | Browser-side guidance and runtime checks for Nasu Stack's own public contracts | Domain rules and the shape you expect from an API | Authentication, authorization, authoritative validation, CSRF protection, and response schemas |
+| JSON transport | Treating an empty successful response as empty, accepting JSON media types, and failing closed on malformed or non-JSON bodies | Mapping a parsed value into a domain type, or using a different transport helper | Correct status codes, media types, response bodies, and safe error reporting |
+| Retry | A bounded retry mechanism and a controlled failure when retry policy code is invalid | Opting in only when repeating the operation is safe | Idempotency, deduplication, transaction handling, and rate limits |
+| Uploads | Immediate browser feedback about the selected file | Product limits and the experience after acceptance or rejection | Size and type enforcement, magic-byte inspection, malware handling, storage, and authorization |
+| Example receivers | A small, fail-closed integration example and its documented limitations | Adapting the example to the application's fields and provider | Production authentication, authorization, rate limiting, bot protection, logging, and secret management |
+
+Nasu Stack is responsible for the registry source it ships. Because shadcn
+copies that source into your repository, **a modified copy belongs to your
+application**. You can change anything; the changed behavior is then outside
+the guarantees of the original item.
+
+## What the contracts mean
+
+### Cancellation prevents stale UI, not server-side work
+
+An `Action` receives an `AbortSignal`. Nasu Stack aborts that signal when it
+owns the cancellation and ignores a result from an operation that has already
+been cancelled or superseded.
+
+That does **not** prove that the request stopped, undo a database write, recall
+an email, or roll back a payment. The server must implement those semantics.
+Treat abort as a request to stop, not proof that nothing happened.
+
+### `jsonRequest` validates the transport, not your domain
+
+`jsonRequest` accepts an empty `204`, `205`, or empty successful body as
+`undefined`. A non-empty successful body must use `application/json` or an
+`application/*+json` media type and contain valid JSON; otherwise it fails
+closed with `BAD_RESPONSE`.
+
+Parsing JSON only establishes that it is JSON. It does not establish that the
+value is the object your application expects. Validate untrusted response
+values at the boundary where your domain starts. If the endpoint intentionally
+returns text, use `fetch` or a purpose-built helper instead.
+
+### Browser validation is feedback, not authority
+
+Fields, `FileDrop`, and the form helpers can give immediate feedback and keep
+invalid data from being submitted accidentally. A caller can bypass all of
+them. The server remains authoritative for every value and permission.
+
+### Retry requires an idempotency decision
+
+Only enable `retry` for an operation where repeating the same request is safe.
+Payments, order creation, and sending mail usually are not. The first request
+may have reached the server even when its response was lost.
+
+When such an operation must be retried, pair it with a server-side mechanism
+that treats repeated requests as one, such as an `Idempotency-Key`. The client
+cannot infer that guarantee.
+
+### Accessibility is shared across the composition
+
+Nasu Stack owns the semantics and interactions inside a shipped component.
+It cannot choose an accurate label, repair a page-wide heading hierarchy, or
+decide whether the content order expresses your intent. Components provide an
+accessible path; the application must preserve it when composing and editing
+them.
+
+When the browser already provides the required semantics and keyboard model,
+Nasu Stack uses that native control as the foundation instead of imitating it.
+It also does not remove an available action merely because a default timer
+elapsed: a toast with an action has no auto-dismiss timer unless the application
+explicitly chooses a `duration`. It can still be dismissed, cleared, or evicted
+when the provider's `max` queue is full. The application owns the wording and
+any deliberate time limit or queue size it sets.
+
+## Easy-to-misread conveniences
 
 ### `FileDrop`'s `accept` and `maxSize`
 
 **These are not a defense.** They look at the file extension and the type the
-browser guessed — both of which the sender controls. Rename `virus.exe` to
-`photo.png` and it passes.
+browser guessed, both of which the sender controls. Rename `virus.exe` to
+`photo.png` and it can pass.
 
-The point of rejecting here is to tell someone immediately that they picked the
-wrong file. **On the receiving server, always check size, type, and the actual
-magic bytes.** For images that includes recognizing SVG for what it is.
+The browser check exists to tell someone immediately that they picked the
+wrong file. On the receiving server, check size, type, and the actual magic
+bytes. For images, that includes recognizing SVG for what it is.
 
 ### `HoneypotField`
 
-It thins out naive bots. **It is not a substitute for authentication,
-authorization, CSRF protection, or rate limiting.** Anyone targeting you
-specifically will walk past it.
+It reduces naive bot submissions. It is not a substitute for authentication,
+authorization, CSRF protection, rate limiting, or dedicated bot protection.
 
 ### `EndpointSpec.defaults`
 
-These are values the client sends, so **if the same key exists in the input,
-the input wins.** Don't put authorization values like `role`, `tenantId`, or
-`userId` here. Who someone is gets decided on the server.
+These are values the client sends, so if the same key exists in the input, the
+input wins. Do not put authorization values such as `role`, `tenantId`, or
+`userId` here. Identity and authority are decided on the server.
 
-### `headers` sent from the browser
+### Headers and environment variables in the browser
 
 `EndpointSpec.headers`, `createSubmit({ headers })`, and
-`uploadWithProgress(..., { headers })` are **sent from the browser.**
+`uploadWithProgress(..., { headers })` are sent from the browser.
 
 ```ts
 // This is not a secret
 headers: { Authorization: `Bearer ${SERVICE_API_KEY}` }
 ```
 
-Devtools, network logs, and browser extensions can all read it. When the other
-side needs a server key, **put your own server (a Worker, say) in between** and
-call from there.
-
-### Environment variables starting with `PUBLIC_` or `VITE_`
-
-**They ship to the browser.** Anyone can read them. Don't put keys in them.
-
-### `retry`
-
-Only add it to operations where **doing the same thing twice changes nothing.**
-Payments, order creation, and sending mail are not such operations. If the
-first request reached the server and only the response was lost, a retry
-**makes it happen again.**
-
-If you need it there, design it together with a server-side mechanism that
-treats identical requests as one (an `Idempotency-Key`, for example). This side
-alone cannot tell the difference.
-
----
+Developer tools, network logs, and browser extensions can read them. Values in
+environment variables starting with `PUBLIC_` or `VITE_` also ship to the
+browser. When the other service requires a secret, put a server you control in
+between and call it from there.
 
 ## Where secrets go
 
 | Location | Who can read it | What belongs there |
 |---|---|---|
-| `PUBLIC_*` / `VITE_*` env vars | **Anyone** | Public URLs, public keys |
-| `headers` sent from the browser | **Anyone** | Tokens that are safe to publish |
-| Written directly in the code | **Anyone** (it ships) | Nothing |
-| Server-side secret (Worker, etc.) | Only you | API keys, destinations, auth keys |
+| `PUBLIC_*` / `VITE_*` environment variables | **Anyone** | Public URLs and public keys |
+| Headers sent from the browser | **Anyone** | Tokens that are safe to publish |
+| Written directly in browser code | **Anyone** | Nothing secret |
+| Server-side secret storage | Only authorized operators and services | API keys, destinations, and authentication keys |
 
-**When in doubt, ask whether you'd write it on a public page.** If you
-wouldn't, it doesn't belong in the browser.
+When in doubt, ask whether you would print the value on a public page. If not,
+it does not belong in the browser.
 
----
+## Not provided by Nasu Stack
 
-## Not covered right now
+- An authentication or authorization system
+- A database, ORM, transaction manager, or server-side application framework
+- Authoritative server-side validation or domain schemas
+- CSRF protection, rate limiting, bot protection, or upload-content inspection
+- A guarantee that cancelling a browser operation reverses server-side effects
+- A guarantee that an application remains accessible or secure after its copied
+  source is modified
 
-- Rate limiting and bot protection for the contact receiver
-  (`examples/receivers/` is a worked example, not a service)
-- Authentication and authorization
-- Server-side validation (what's in the templates is only a sample)
-
-These are also listed under "What is not promised" in
+Nasu Stack may provide primitives or integration examples for these concerns.
+Doing so does not transfer their production responsibility to this project.
+Security reporting and the narrower list of security promises are in
 [`../SECURITY.md`](../SECURITY.md).

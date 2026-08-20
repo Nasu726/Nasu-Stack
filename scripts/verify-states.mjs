@@ -127,7 +127,9 @@ mustEq("5 回連打しても実行は 1 回だけ", successCount, 1);
 /* 3. 失敗パス --------------------------------------------------- */
 await page.getByRole("button", { name: "送信する" }).click();
 await page.waitForTimeout(1100);
-const alertText = (await page.getByRole("alert").first().textContent())?.trim();
+const alerts = page.getByRole("alert");
+const alertText =
+  (await alerts.count()) > 0 ? (await alerts.first().textContent())?.trim() : "";
 must(
   "失敗すると role=alert に文言が出る",
   !!alertText && alertText.length > 0,
@@ -160,6 +162,41 @@ must(
   afterTyping.length < fieldErrors.length,
   `${fieldErrors.length} 件 → ${afterTyping.length} 件`,
 );
+
+/* 5.5 AsyncForm が async onSuccess の Promise を返すか ------------
+   fixture は name=async-callback のときだけ、await 後に例外を投げます。
+   Promise を wrapper が捨てると pageerror（unhandled rejection）へ出ます。
+   正しく返せば useAction の callSafely が受け止め、成功状態は維持されます。 */
+await page.fill('input[name="name"]', "async-callback");
+await page.fill('input[name="email"]', "ok@nasu.dev");
+await page.fill('input[name="password"]', "longenoughpassword");
+await page.getByRole("button", { name: "アカウントを作成" }).click();
+await page.waitForTimeout(1300);
+must(
+  "AsyncForm の async onSuccess が失敗しても送信は成功のまま",
+  await page.getByText("登録が完了しました").isVisible(),
+);
+
+/* 5.6 不正な retryDelay は制御された error になる ------------------
+   callback の throw は上の「失敗する」で pageerror にならないことを見ます。
+   数値の境界は別です。NaN / Infinity / 負数を setTimeout に渡すと、
+   実行環境ごとの暗黙変換で即時 retry になり得るため、すべて明示的に拒否します。 */
+for (const [id, label] of [
+  ["nan", "NaN"],
+  ["infinity", "Infinity"],
+  ["negative", "負数"],
+]) {
+  await page
+    .getByTestId(`retry-delay-${id}-run`)
+    .evaluate((button) => button.click());
+  await page.waitForTimeout(100);
+  const seen = await page.getByTestId(`retry-delay-${id}-state`).textContent();
+  must(
+    `retryDelay=${label} は INVALID_RETRY_DELAY になる`,
+    seen === "error:INVALID_RETRY_DELAY",
+    seen,
+  );
+}
 
 /* 6. 一覧の失敗 → 再試行 ---------------------------------------- */
 await page.getByRole("button", { name: "失敗", exact: true }).click();

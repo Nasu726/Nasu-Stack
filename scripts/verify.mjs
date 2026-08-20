@@ -162,6 +162,7 @@ await group([
      サーバの文言が漏れていても画面には何か出ますし、既定値が上書き
      されても送信そのものは成功します。実ブラウザでは出てきません。 */
   ["単体: エラー文言 / 既定値 / accept", "node", ["scripts/verify-action-unit.mjs"]],
+  ["単体: useResource の query key", "node", ["scripts/verify-resource-key-unit.mjs"]],
   /* 受け口。**「403 が返った」ではなく「メールが 0 回だった」を見ます。**
      応答を読めなくても、副作用はサーバで起きているためです。 */
   ["単体: 受け口の入口", "node", ["scripts/verify-receiver-unit.mjs"]],
@@ -239,6 +240,7 @@ if (!ready.every(Boolean)) {
 const browserSteps = [
   ["実ブラウザ: 非同期の状態", "node", ["scripts/verify-states.mjs"]],
   ["実ブラウザ: レイアウトと通知", "node", ["scripts/verify-layout.mjs"]],
+  ["実ブラウザ: テーマの配色と選択操作", "node", ["scripts/verify-theme-accessibility.mjs"]],
   ["実ブラウザ: 壊しにくる中身", "node", ["scripts/audit-stress.mjs"]],
   ["実ブラウザ: 部品 (v0.4)", "node", ["scripts/verify-parts.mjs"]],
   ["実ブラウザ: 入力/選択/楽観更新 (v0.5)", "node", ["scripts/verify-forms.mjs"]],

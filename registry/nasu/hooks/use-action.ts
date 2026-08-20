@@ -241,7 +241,14 @@ export function useAction<TInput = void, TOutput = unknown>(
         }
 
         if (!lastError) {
-          const maxAttempts = (opts.retry ?? dflt.retry ?? 0) + 1;
+          const requestedRetries = opts.retry ?? dflt.retry ?? 0;
+          // retry は「もう一度副作用を起こす」指定です。NaN / Infinity / 負数を
+          // 暗黙の回数として扱わず、安全側の 0 回へ寄せます。
+          const retries =
+            Number.isFinite(requestedRetries) && requestedRetries > 0
+              ? Math.floor(requestedRetries)
+              : 0;
+          const maxAttempts = retries + 1;
 
           /* ここが retry の境界です。**action 本体だけを繰り返します。**
              callback はこの中に入れません（下のコメント参照）。 */
@@ -270,10 +277,25 @@ export function useAction<TInput = void, TOutput = unknown>(
               const isLast = attempt === maxAttempts - 1;
               if (isLast) break;
 
-              const delay =
-                typeof opts.retryDelay === "function"
-                  ? opts.retryDelay(attempt)
-                  : (opts.retryDelay ?? 500);
+              let delay: number;
+              try {
+                delay =
+                  typeof opts.retryDelay === "function"
+                    ? opts.retryDelay(attempt)
+                    : (opts.retryDelay ?? 500);
+                if (!Number.isFinite(delay) || delay < 0) {
+                  throw new ActionError("retryDelay は 0 以上の有限値にしてください", {
+                    displayMessage: "再実行の待ち時間が正しくありません。設定を確認してください。",
+                    code: "INVALID_RETRY_DELAY",
+                    cause: { delay, attempt },
+                  });
+                }
+              } catch (rawPolicy) {
+                // policy callback も利用者が渡す実行境界です。catch の中から
+                // reject を逃がすと ActionButton の `void run()` が拾えません。
+                lastError = toActionError(rawPolicy);
+                break;
+              }
               await sleep(delay, controller.signal);
               if (stale()) {
                 aborted = true;

@@ -215,7 +215,11 @@ await reset();
 }
 {
   const r = await send({ url: `${API}/html` }, { a: 1 });
-  must("8. 200 + HTML でも落ちない", r.ok, JSON.stringify(r).slice(0, 60));
+  must(
+    "8. 200 + HTML は成功にせず BAD_RESPONSE にする",
+    !r.ok && r.code === "BAD_RESPONSE",
+    JSON.stringify(r).slice(0, 100),
+  );
 }
 
 /* ===== 9. 通信できない ========================================== */

@@ -142,6 +142,7 @@ function TableSection() {
         pageSize={5}
         caption={t("案件の一覧")}
         onRowClick={(r) => toast.show({ tone: "info", title: r.title })}
+        rowActionLabel={t("詳細を開く")}
       />
     </Panel>
   );
@@ -171,7 +172,7 @@ const USERS: User[] = [
 ];
 
 function SelectSection() {
-  const [picked, setPicked] = React.useState<User | null>(null);
+  const [picked, setPicked] = React.useState<User | null>(USERS[1]);
 
   return (
     <Panel
@@ -182,12 +183,17 @@ function SelectSection() {
           {t("の依存キーにしているため）。古い応答が新しい応答を上書きする競合は、\r\n          この層で既に解けています。↑↓ Enter Esc Home End で操作できます。")}
         </>
       }
-      code={t("<AsyncSelect\n  label=\"担当者\"\n  loader={(q, ctx) => jsonRequest<User[]>(`/api/users?q=${q}`, { ctx })}\n  getKey={(u) => u.id}\n  getLabel={(u) => u.name}\n  onChange={setOwner}\n/>")}
+      code={t("<AsyncSelect\n  label=\"担当者\"\n  name=\"ownerId\"\n  loader={(q, ctx) => jsonRequest<User[]>(`/api/users?q=${q}`, { ctx })}\n  getKey={(u) => u.id}\n  getLabel={(u) => u.name}\n  getFormValue={(u) => `user_${u.id}`}\n  onChange={setOwner}\n/>")}
     >
-      <Stack space="sm">
-        <div className="max-w-sm">
+      <form
+        data-testid="async-select-contract"
+        onSubmit={(event) => event.preventDefault()}
+      >
+        <Stack space="sm">
+          <div className="max-w-sm">
           <AsyncSelect<User>
             label={t("担当者")}
+            name="ownerId"
             placeholder={t("名前で検索")}
             hint={t("入力すると絞り込みます（応答に 350ms かかる想定にしてあります）")}
             loader={async (q, ctx) => {
@@ -203,6 +209,7 @@ function SelectSection() {
             }}
             getKey={(u) => u.id}
             getLabel={(u) => u.name}
+            getFormValue={(u) => `user_${u.id}`}
             renderItem={(u) => (
               <span className="flex items-baseline justify-between gap-2">
                 <span>{u.name}</span>
@@ -212,11 +219,23 @@ function SelectSection() {
             value={picked}
             onChange={setPicked}
           />
-        </div>
-        <p className="text-xs text-muted-fg">
-          {t("選択中:")} {picked ? `${picked.name}（${picked.team}）` : t("なし")}
-        </p>
-      </Stack>
+          </div>
+          <Inline space="xs">
+            <Button type="button" size="sm" onClick={() => setPicked(USERS[2])}>
+              {t("親から Bob に変更")}
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => setPicked(null)}>
+              {t("親からクリア")}
+            </Button>
+            <Button type="reset" size="sm" variant="ghost">
+              {t("フォームをリセット")}
+            </Button>
+          </Inline>
+          <p className="text-xs text-muted-fg" data-testid="async-select-picked">
+            {t("選択中:")} {picked ? `${picked.name}（${picked.team}）` : t("なし")}
+          </p>
+        </Stack>
+      </form>
     </Panel>
   );
 }

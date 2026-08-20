@@ -200,7 +200,7 @@
       "name": "use-resource",
       "type": "registry:hook",
       "title": "useResource",
-      "description": "読み取り系の非同期処理。依存キーの変化で再取得し、アンマウント時に中断します。",
+      "description": "読み取り系の非同期処理。有限・構造的な query key の変化で再取得し、アンマウント時に中断します。",
       "registryDependencies": [
         "Nasu726/Nasu-Stack/action"
       ],
@@ -613,7 +613,7 @@
       "name": "data-table",
       "type": "registry:block",
       "title": "DataTable",
-      "description": "並べ替え・ページング・行選択。狭い画面では 1 行 = 1 カードに組み替えます（列定義の label が必須）。選択はキーで保持するのでページや並べ替えをまたいで残ります。",
+      "description": "並べ替え・ページング・行選択。狭い画面では 1 行 = 1 カードに組み替えます。行 action は明示的な button でも pointer でも同じ処理へ到達でき、選択はページや並べ替えをまたいで残ります。",
       "registryDependencies": [
         "Nasu726/Nasu-Stack/use-resource",
         "Nasu726/Nasu-Stack/async-boundary",
@@ -636,7 +636,7 @@
       "name": "async-select",
       "type": "registry:block",
       "title": "AsyncSelect",
-      "description": "検索つきセレクト。debounce と前の要求の自動中断つき。WAI-ARIA の combobox パターンに従い、↑↓ Enter Esc Home End で操作できます。画面下部では候補が上に出ます。",
+      "description": "検索つきセレクト。debounce と前の要求の自動中断つき。query ではなく選択値を form へ送り、controlled / uncontrolled・親からの変更・native reset に対応します。WAI-ARIA の combobox パターンでキーボード操作できます。",
       "registryDependencies": [
         "Nasu726/Nasu-Stack/use-resource",
         "Nasu726/Nasu-Stack/spinner",

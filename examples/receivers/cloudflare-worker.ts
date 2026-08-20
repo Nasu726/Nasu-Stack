@@ -52,6 +52,31 @@ interface ContactInput {
   message?: string;
 }
 
+/**
+ * TypeScript の `as ContactInput` は実行時には何もしません。
+ * JSON として正しくても null / array / number は届くので、ここで境界を狭めます。
+ * 未知の field は拒否しません。domain が必要とする 3 field の型だけが、この
+ * receiver 見本の責任だからです。
+ */
+function isContactInput(value: unknown): value is ContactInput {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const input = value as Record<string, unknown>;
+  return ["name", "email", "message"].every(
+    (key) => input[key] === undefined || typeof input[key] === "string",
+  );
+}
+
+/** application/json と application/*+json だけを受けます。 */
+function isJsonMediaType(value: string): boolean {
+  const type = value.split(";", 1)[0]?.trim().toLowerCase() ?? "";
+  return (
+    type === "application/json" ||
+    (type.startsWith("application/") && type.endsWith("+json"))
+  );
+}
+
 /* ================================================================
  * 返し方
  * ============================================================== */
@@ -194,20 +219,24 @@ export default {
 
     if (!originOk(request, env)) return json({ message: "許可されていません" }, 403, env);
 
-    const type = (request.headers.get("content-type") ?? "").toLowerCase();
-    if (!type.startsWith("application/json")) {
+    const type = request.headers.get("content-type") ?? "";
+    if (!isJsonMediaType(type)) {
       return json({ message: "application/json で送ってください" }, 415, env);
     }
 
     const raw = await readCapped(request, MAX_BYTES);
     if (raw === null) return json({ message: "本文が大きすぎます" }, 413, env);
 
-    let input: ContactInput;
+    let value: unknown;
     try {
-      input = JSON.parse(raw) as ContactInput;
+      value = JSON.parse(raw) as unknown;
     } catch {
       return json({ message: "本文を読み取れませんでした" }, 400, env);
     }
+    if (!isContactInput(value)) {
+      return json({ message: "本文の形式が正しくありません" }, 400, env);
+    }
+    const input = value;
 
     /* 検証。fields に入れて返すと、AsyncForm が
        それぞれの入力欄の下に出してくれます。 */
