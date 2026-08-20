@@ -38,10 +38,13 @@ maintenance can't be promised.
 Instead, a **tarball URL** is distributed:
 
 ```bash
-npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz my-site
 ```
 
 npm accepts a tarball URL directly (measured, not assumed).
+The Stable URL includes the version and points at an asset the release workflow
+refuses to overwrite. A new release gets a new URL instead of reusing cached
+contents under the same command.
 
 The choice buys more than convenience:
 
@@ -71,26 +74,20 @@ If this ever does go to npm, these come first:
 ## 3. What you can check, as someone using it
 
 Even with everything hardened on this side, **all you can confirm is that you
-typed the real URL.** Two things help:
+typed the real URL.** These rules help:
 
-- **Use a versioned GitHub Release asset when you need to reproduce a specific
-  release.** The Pages URL is the convenient latest-version entry point and
-  changes when `main` is deployed
+- **Stable installs use a versioned GitHub Release asset.** A release cannot be
+  overwritten, and the URL changes with the version
+- **The Pages tarball is only a latest-main preview.** Its contents change at
+  the same URL, and npm/npx may reuse URL-cached contents, so it is not the
+  canonical Stable install command
 - **The SHA-256 of the distributed tarball is published alongside it**
-  (`create-nasu-stack.tgz.sha256`), so you can compare before you run anything
+  (`create-nasu-stack-1.0.0.tgz.sha256`), so you can compare before you run
+  anything
 - **Every URL is https** — the registry JSON and the tarball alike
 
 ```bash
-# Download once, verify that file, and run that same file.
-curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz
-curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz.sha256
-sha256sum -c create-nasu-stack.tgz.sha256
-npx ./create-nasu-stack.tgz my-site
-```
-
-For v1.0.0, the versioned files are published under the release tag:
-
-```bash
+# For v1.0.0, download once, verify that file, and run that same file.
 curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz
 curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz.sha256
 sha256sum -c create-nasu-stack-1.0.0.tgz.sha256
@@ -101,9 +98,8 @@ The release workflow verifies the tag against the package version and refuses
 to overwrite an existing GitHub Release. The Pages and Release tarballs are
 built through the same packer, so their construction cannot drift silently.
 
-**Piping the URL straight into npx verifies nothing.** That form fetches again
-at run time, so what you checked and what you ran are not necessarily the same
-bytes.
+**The one-line npx command does not verify the checksum.** Use the download,
+check, and local-run form above when you need to verify the exact bytes first.
 
 ---
 

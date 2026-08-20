@@ -79,10 +79,10 @@ logo: z.string(),           // SVG かどうかすら見ていない
 
 ディレクトリに載ると「npm にもあるだろう」と思われます。**ありません。**
 
-入口の CLI は tarball の URL のままです。
+入口の CLI は version 付き GitHub Release asset の URL です。
 
 ```bash
-npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz my-site
 ```
 
 `npx create-nasu-stack` は**空いている名前**なので、打つと他人のコードが動きます。

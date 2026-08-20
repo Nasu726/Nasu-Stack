@@ -30,11 +30,14 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 
 ### 新しく作る
 
-コマンドは 1 つです。**聞かれるのは「どこから始めるか」だけ**です。
+コマンドは 1 つです。最初に言語、次にどこから始めるかを選びます。
 
 ```bash
-npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz my-site
 ```
+
+Stable の入口には version 付き GitHub Release URL を使います。版ごとに URL が
+変わるため、npm/npx が同じコマンドに紐づいた古い版を再利用しません。
 
 #### まっさらから始める
 

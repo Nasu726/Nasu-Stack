@@ -125,9 +125,10 @@ pnpm release:build
 ```
 
 このコマンドは tag と version の整合を検査し、`release/` に version 付き
-tarball、SHA-256、source commit を記録する manifest を作ります。Pages の
-`create-nasu-stack.tgz` は最新 main を指す mutable な入口です。後から同じ版を
-確認するときは GitHub Release の version 付き asset を使います。
+tarball、SHA-256、source commit を記録する manifest を作ります。
+Stable の正式な入口は GitHub Release の version 付き asset です。Pages の
+`create-nasu-stack.tgz` は最新 main の smoke と明示的な preview にだけ使います。
+同じ URL で内容が変わるため、利用者向けの導入コマンドにはしません。
 
 release PR の head へ tag は打ちません。main へ merge した commit の Pages
 deploy と公開先 smoke が成功してから、その検査済み commit へ `vX.Y.Z` tag を

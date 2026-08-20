@@ -11,6 +11,7 @@ import {
   createNasuStackVersion,
   packCreateNasuStack,
 } from "./_pack-create.mjs";
+import { RELEASE_VERSION, TARBALL_URL } from "./_site.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const readJson = (file) =>
@@ -30,6 +31,32 @@ if (!/^\d+\.\d+\.\d+$/.test(rootVersion)) {
 const tag = process.argv[2] || `v${rootVersion}`;
 if (tag !== `v${rootVersion}`) {
   throw new Error(`tagとpackage versionがずれています: ${tag} / ${rootVersion}`);
+}
+if (RELEASE_VERSION !== rootVersion) {
+  throw new Error(
+    `Stable入口のversionがずれています: URL=${RELEASE_VERSION} / package=${rootVersion}`,
+  );
+}
+const expectedTarballUrl =
+  `https://github.com/Nasu726/Nasu-Stack/releases/download/v${rootVersion}/` +
+  `create-nasu-stack-${rootVersion}.tgz`;
+if (TARBALL_URL !== expectedTarballUrl) {
+  throw new Error(`Stable入口のURLが違います: ${TARBALL_URL}`);
+}
+
+for (const file of [
+  "README.md",
+  "README.ja.md",
+  "SECURITY.md",
+  "SECURITY.ja.md",
+  "docs/security.md",
+  "docs/security.ja.md",
+  "docs/shadcn-directory.md",
+  "packages/create-nasu-stack/index.mjs",
+]) {
+  if (!fs.readFileSync(path.join(root, file), "utf8").includes(TARBALL_URL)) {
+    throw new Error(`${file} がversion付きStable入口を案内していません`);
+  }
 }
 
 const changelog = fs.readFileSync(path.join(root, "CHANGELOG.md"), "utf8");

@@ -15,7 +15,7 @@
  * ----------------------------------------------------------------
  *   public/r/<name>.json            shadcn CLI が読むレジストリ
  *   public/r/index.json             一覧
- *   public/create-nasu-stack.tgz   入口の CLI（npm レジストリには置きません）
+ *   public/create-nasu-stack.tgz   最新 main の確認用 CLI
  *   public/create-nasu-stack.tgz.sha256
  *   public/404.html                 存在しない URL のときに出るページ
  *   public/index.html               入口の案内（v0.9b でドキュメントサイトに差し替え）
@@ -26,7 +26,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { pnpm } from "./_proc.mjs";
 import { packCreateNasuStack } from "./_pack-create.mjs";
-import { PUBLIC_BASE, REGISTRY_URL, TARBALL_URL } from "./_site.mjs";
+import {
+  LATEST_TARBALL_URL,
+  PUBLIC_BASE,
+  REGISTRY_URL,
+  TARBALL_SHA256_URL,
+  TARBALL_URL,
+} from "./_site.mjs";
 import { REPO } from "./_deps.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -51,13 +57,12 @@ run([path.join(root, "scripts/build-registry.mjs")]);
  * **npm には publish しません。** 個人的なプロジェクトとして続けるので、
  * 継続的な保守を約束できないためです。理由と代償は docs/security.md に。
  *
- * npm は URL の tarball をそのまま受け取れるので、
- * `npx https://…/create-nasu-stack.tgz my-site` が成立します。
+ * npm は URL の tarball をそのまま受け取れます。Stable の案内は version 付き
+ * GitHub Release asset、ここで作る Pages 版は最新 main の smoke 用です。
  * npm アカウントという攻撃面が増えず、名前の取り合いにも巻き込まれません。
  */
-/* 版を含まない名前に揃えます。README に載る URL が版ごとに変わると、
-   案内を直し忘れた瞬間に「動かない URL」が残るためです。
-   版は tarball の中の package.json にあります。 */
+/* Pages 側は意図的に版を含まない latest channel です。Stable の入口には使わず、
+   deploy 後の外部 smoke と、main の最新版を明示して試す用途だけにします。 */
 const packed = packCreateNasuStack({
   destination: pub,
   filename: "create-nasu-stack.tgz",
@@ -145,7 +150,9 @@ things beginners reliably get stuck on: layout and async state.</p>
 
 <h2>Start a new project</h2>
 <pre><code>npx ${TARBALL_URL} my-site</code></pre>
-<p>The <a href="./create-nasu-stack.tgz.sha256">SHA-256</a> is published next to it, so you can verify before you run it.</p>
+<p>The versioned GitHub Release asset is the Stable entry point. Its
+<a href="${TARBALL_SHA256_URL}">SHA-256</a> is published next to it.</p>
+<p>The <a href="${LATEST_TARBALL_URL}">latest-main preview</a> is mutable and is not the Stable install URL.</p>
 
 <h2>Add components to an existing project</h2>
 <p>No configuration needed — dependencies come along automatically.</p>
