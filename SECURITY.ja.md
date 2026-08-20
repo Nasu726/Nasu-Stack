@@ -24,13 +24,14 @@ Web サイトの部品を配る**雛型**です。
 掲載無しで動きます。将来載せたとしても npm には出しません
 （ディレクトリに載せるのに npm は要らないためです）。
 
-配っているのは次の 3 つだけです。
+配っているのは、次のプロジェクト管理下のものだけです。
 
 | | |
 |---|---|
 | `https://nasu726.github.io/Nasu-Stack/r/*.json` | shadcn CLI が読むレジストリ |
-| `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | 入口の CLI |
-| 同 `.sha256` | 上の tarball のハッシュ |
+| `https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz` | 上書きしない Stable の入口 |
+| `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | 内容が変わる最新 main の確認用 |
+| 同 `.sha256` | それぞれの tarball のハッシュ |
 
 **npm に `create-nasu-stack` という名前では出していません。**
 その名前は空いているので、`npx create-nasu-stack` と打つと
@@ -42,27 +43,26 @@ tarball は打つ前に照合できます。
 1 度落として、それを確かめて、**その同じファイルを実行**します。
 
 ```bash
-curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz
-curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz.sha256
-sha256sum -c create-nasu-stack.tgz.sha256   # OK と出たら
-npx ./create-nasu-stack.tgz my-site
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz.sha256
+sha256sum -c create-nasu-stack-1.0.0.tgz.sha256   # OK と出たら
+npx ./create-nasu-stack-1.0.0.tgz my-site
 ```
 
 （Windows の PowerShell なら
-`Get-FileHash create-nasu-stack.tgz -Algorithm SHA256` で出した値を、
+`Get-FileHash create-nasu-stack-1.0.0.tgz -Algorithm SHA256` で出した値を、
 `.sha256` の中身と見比べてください。）
 
-**README の 1 行（URL を直接 npx する形）では確かめられません。**
-あの形は URL からもう一度取り直して実行するので、
-**確かめたものと実行したものが同じとは限りません。**
+**README の 1 行では checksum を検証しません。** 実行前に同じファイルを
+確かめる必要があるときは、上の 4 行を使ってください。
 
 **これは「誰が作ったか」を示しません。** 示せるのは
 「取れたものが、こちらが出したものと同じか」だけです。
 
 ## 約束していないこと
 
-**これは Public Beta です。** 引き受けている範囲と、あなたが書く必要がある
-ものの一覧は [`docs/boundaries.ja.md`](docs/boundaries.ja.md) にあります。
+**文書化した公開範囲は Stable です。** 引き受けている範囲と、あなたが書く
+必要があるものの一覧は [`docs/boundaries.ja.md`](docs/boundaries.ja.md) にあります。
 
 - **継続的な保守を約束していません。** 個人のプロジェクトです
 - 脆弱性への**対応期限を約束していません**

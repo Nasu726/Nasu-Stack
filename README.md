@@ -32,11 +32,14 @@ reliably get stuck on: **layout** and **async state**.
 
 ### Start a new project
 
-One command. **The only thing it asks is where you want to start from.**
+One command. It asks for your language first, then how you want to start.
 
 ```bash
-npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz my-site
 ```
+
+The versioned GitHub Release URL is the Stable entry point. Each release gets a
+new URL, so npm/npx cannot reuse an older release cached under the same command.
 
 #### Start from scratch
 

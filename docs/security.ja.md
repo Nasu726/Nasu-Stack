@@ -169,10 +169,12 @@ gh api -X POST repos/Nasu726/Nasu-Stack/rulesets \
 代わりに **tarball の URL** を配ります。
 
 ```bash
-npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz my-site
 ```
 
 npm は URL の tarball をそのまま受け取れます（v0.9a で実測）。
+Stable の URL には version が入り、release workflow は同じ asset を上書きしません。
+次の版は別の URL になるため、同じコマンドに紐づいた古い cache を再利用しません。
 
 この選び方には、面倒を避ける以上の意味があります。
 
@@ -200,25 +202,18 @@ tarball の URL だけを案内しています。
 ## 5. 利用者の側から見た守り
 
 こちらが固めても、**利用者は「本物の URL を打った」ことしか確かめられません。**
-できることは 2 つです。
+守る規則は次です。
 
-- **特定の版をあとから再現するときは、version 付き GitHub Release asset を使う。**
-  Pages の URL は便利な最新版の入口で、`main` の deploy ごとに変わります
-- **配布物の SHA-256 を一緒に出す**（`create-nasu-stack.tgz.sha256`）。
+- **Stable の導入には version 付き GitHub Release asset を使う。** 同じ Release は
+  上書きせず、version と一緒に URL も変わります
+- **Pages の tarball は最新 main の確認用に限る。** 同じ URL で内容が変わり、
+  npm/npx が URL の古い cache を使うことがあるため、Stable の正式な導線にはしません
+- **配布物の SHA-256 を一緒に出す**（`create-nasu-stack-1.0.0.tgz.sha256`）。
   打つ前に照合できます
 - **URL を https に限る。** レジストリの JSON も tarball も同じです
 
 ```bash
-# 1 度落として、それを確かめて、**その同じファイルを実行**します。
-curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz
-curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz.sha256
-sha256sum -c create-nasu-stack.tgz.sha256
-npx ./create-nasu-stack.tgz my-site
-```
-
-v1.0.0 の version 付き配布物は release tag の下に置きます。
-
-```bash
+# v1.0.0 を 1 度落とし、確かめて、**その同じファイルを実行**します。
 curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz
 curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz.sha256
 sha256sum -c create-nasu-stack-1.0.0.tgz.sha256
@@ -229,8 +224,8 @@ release workflow は tag と package version の一致を検査し、既存の G
 Release を上書きしません。Pages と Release の tarball は同じ pack 処理を通すため、
 同じ版なのに組み立て方だけが静かに分岐する経路も作りません。
 
-**URL を直接 npx する形では確かめられません。** 取り直して実行するので、
-確かめたものと実行したものが同じとは限りません。
+**1 行の npx command では checksum を検証しません。** 先に実行する byte を
+確かめたいときは、上の download・照合・local 実行の形を使います。
 
 ---
 

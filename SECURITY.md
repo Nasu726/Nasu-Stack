@@ -25,13 +25,14 @@ to be — `npx shadcn add Nasu726/Nasu-Stack/<name>` works without any listing.
 If it is ever listed, it still won't go to npm (the directory doesn't require
 it).
 
-Only three things are distributed:
+Only these project-owned artifacts are distributed:
 
 | | |
 |---|---|
 | `https://nasu726.github.io/Nasu-Stack/r/*.json` | the registry the shadcn CLI reads |
-| `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | the starter CLI |
-| the matching `.sha256` | the hash of that tarball |
+| `https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz` | the immutable Stable starter CLI |
+| `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | the mutable latest-main preview |
+| the matching `.sha256` | the hash of each tarball |
 
 **Nothing is published to npm under the name `create-nasu-stack`.** That name
 is unclaimed, so typing `npx create-nasu-stack` **runs somebody else's code.**
@@ -43,27 +44,26 @@ You can verify the tarball before you run it.
 Download it once, verify that file, and **run that same file**:
 
 ```bash
-curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz
-curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz.sha256
-sha256sum -c create-nasu-stack.tgz.sha256   # once this says OK
-npx ./create-nasu-stack.tgz my-site
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz.sha256
+sha256sum -c create-nasu-stack-1.0.0.tgz.sha256   # once this says OK
+npx ./create-nasu-stack-1.0.0.tgz my-site
 ```
 
 (On Windows PowerShell, compare the output of
-`Get-FileHash create-nasu-stack.tgz -Algorithm SHA256` against the contents of
+`Get-FileHash create-nasu-stack-1.0.0.tgz -Algorithm SHA256` against the contents of
 the `.sha256` file.)
 
-**The one-liner in the README cannot verify anything.** That form fetches from
-the URL again at run time, so **what you checked and what you ran are not
-necessarily the same bytes.**
+**The one-liner in the README does not verify the checksum.** Use the four lines
+above when you need to verify the exact bytes before running them.
 
 **This does not tell you who made it.** All it tells you is whether what you
 got matches what was published here.
 
 ## What is not promised
 
-**This is a Public Beta.** What is covered, and what you have to write
-yourself, is listed in [`docs/boundaries.md`](docs/boundaries.md).
+**The documented public surface is Stable.** What is covered, and what you have
+to write yourself, is listed in [`docs/boundaries.md`](docs/boundaries.md).
 
 - **Ongoing maintenance is not promised.** It's a personal project
 - **No response deadline** is promised for vulnerabilities

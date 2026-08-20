@@ -22,5 +22,12 @@ export const PUBLIC_BASE = "https://nasu726.github.io/Nasu-Stack";
 /** shadcn CLI の `registries` に書く形。`{name}` は CLI が置き換えます。 */
 export const REGISTRY_URL = `${PUBLIC_BASE}/r/{name}.json`;
 
-/** 入口の CLI。npm には publish しないので、tarball を直に指します。 */
-export const TARBALL_URL = `${PUBLIC_BASE}/create-nasu-stack.tgz`;
+/** Pages に置く最新 main の確認用 CLI。内容が変わるため Stable の入口にはしません。 */
+export const LATEST_TARBALL_URL = `${PUBLIC_BASE}/create-nasu-stack.tgz`;
+
+/** Stable の入口。版ごとに URL を変え、npm/npx の URL cache と衝突させません。 */
+export const RELEASE_VERSION = "1.0.0";
+export const TARBALL_URL =
+  `https://github.com/Nasu726/Nasu-Stack/releases/download/v${RELEASE_VERSION}/` +
+  `create-nasu-stack-${RELEASE_VERSION}.tgz`;
+export const TARBALL_SHA256_URL = `${TARBALL_URL}.sha256`;

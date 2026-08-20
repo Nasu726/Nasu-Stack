@@ -3,8 +3,8 @@
  * create-nasu-stack — 動くところから始める
  * ================================================================
  *
- *   npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
- *   npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site --lang en --template astro --yes
+ *   npx https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz my-site
+ *   npx https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz my-site --lang en --template astro --yes
  *
  * 部品をいくら揃えても、**始められなければ届きません。**
  * ここが「誰でも簡単に作れる」への最後の一段です。
