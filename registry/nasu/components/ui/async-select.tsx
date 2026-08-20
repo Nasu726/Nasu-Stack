@@ -13,9 +13,11 @@ import { Spinner } from "@/components/ui/spinner";
  * ```tsx
  * <AsyncSelect
  *   label="担当者"
+ *   name="ownerId"
  *   loader={(q, ctx) => jsonRequest<User[]>(`/api/users?q=${q}`, { ctx })}
  *   getKey={(u) => u.id}
  *   getLabel={(u) => u.name}
+ *   getFormValue={(u) => `user_${u.id}`}
  *   onChange={setOwner}
  * />
  * ```
@@ -38,7 +40,10 @@ export interface AsyncSelectProps<T> {
   getLabel: (item: T) => string;
   /** 候補 1 件の描画。省略時は getLabel。 */
   renderItem?: (item: T) => React.ReactNode;
+  /** 選択値を親で持つ controlled 指定。省略すると内部で持ちます。 */
   value?: T | null;
+  /** uncontrolled 時の初期値。form.reset() でもこの値へ戻ります。 */
+  defaultValue?: T | null;
   onChange?: (item: T | null) => void;
   placeholder?: string;
   hint?: string;
@@ -48,7 +53,10 @@ export interface AsyncSelectProps<T> {
   debounce?: number;
   /** 空文字でも検索するか。既定 true（開いた瞬間に一覧が出ます）。 */
   searchOnEmpty?: boolean;
+  /** FormData に入れる名前。検索文字列ではなく、選択値を送ります。 */
   name?: string;
+  /** FormData 用の値。既定は String(getKey(item))。 */
+  getFormValue?: (item: T) => string;
   className?: string;
 }
 
@@ -59,6 +67,7 @@ export function AsyncSelect<T>({
   getLabel,
   renderItem,
   value,
+  defaultValue,
   onChange,
   placeholder,
   hint,
@@ -67,18 +76,67 @@ export function AsyncSelect<T>({
   debounce = 250,
   searchOnEmpty = true,
   name,
+  getFormValue,
   className,
 }: AsyncSelectProps<T>) {
   const id = React.useId();
   const listId = `${id}-list`;
 
+  const controlled = value !== undefined;
+  const [innerValue, setInnerValue] = React.useState<T | null>(
+    defaultValue ?? null,
+  );
+  const selected = controlled ? (value ?? null) : innerValue;
+
   const [open, setOpen] = React.useState(false);
-  const [text, setText] = React.useState("");
+  const [text, setText] = React.useState(() => {
+    const initial = controlled ? (value ?? null) : (defaultValue ?? null);
+    return initial ? getLabel(initial) : "";
+  });
   const [query, setQuery] = React.useState("");
   const [active, setActive] = React.useState(0);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
   const listRef = React.useRef<HTMLUListElement>(null);
+  const getLabelRef = React.useRef(getLabel);
+  getLabelRef.current = getLabel;
+
+  /* 入力で選択を外した直後、親が value=null を返す render だけは
+     query を空に戻しません。表示中の検索語と選択値は別の状態です。 */
+  const preserveQueryForNullRef = React.useRef(false);
+
+  function changeSelected(next: T | null) {
+    if (!controlled) setInnerValue(next);
+    onChange?.(next);
+  }
+
+  /* controlled value は初期値だけでなく、親からの変更にも追従します。 */
+  React.useEffect(() => {
+    if (!controlled) return;
+    if (value === null && preserveQueryForNullRef.current) {
+      preserveQueryForNullRef.current = false;
+      return;
+    }
+    preserveQueryForNullRef.current = false;
+    setText(value ? getLabelRef.current(value) : "");
+  }, [controlled, value]);
+
+  /* native form.reset() は React state を変えません。AsyncForm も成功後に
+     この経路を使うため、選択と表示を同じ初期値へ戻します。 */
+  React.useEffect(() => {
+    const form = inputRef.current?.form;
+    if (!form) return;
+    const reset = () => {
+      const next = defaultValue ?? null;
+      preserveQueryForNullRef.current = false;
+      if (!controlled) setInnerValue(next);
+      onChange?.(next);
+      setText(next ? getLabelRef.current(next) : "");
+      setOpen(false);
+    };
+    form.addEventListener("reset", reset);
+    return () => form.removeEventListener("reset", reset);
+  }, [controlled, defaultValue, onChange]);
 
   const loaderRef = React.useRef(loader);
   loaderRef.current = loader;
@@ -118,11 +176,12 @@ export function AsyncSelect<T>({
   function close() {
     setOpen(false);
     // 選び直さずに閉じたときは、選択中の値の表示へ戻す
-    setText(value ? getLabel(value) : "");
+    setText(selected ? getLabel(selected) : "");
   }
 
   function choose(item: T) {
-    onChange?.(item);
+    preserveQueryForNullRef.current = false;
+    changeSelected(item);
     setText(getLabel(item));
     setOpen(false);
     inputRef.current?.focus();
@@ -196,10 +255,22 @@ export function AsyncSelect<T>({
       </label>
 
       <div ref={wrapRef} className="relative">
+        {name && (
+          <input
+            type="hidden"
+            name={name}
+            disabled={disabled}
+            value={
+              selected
+                ? (getFormValue?.(selected) ?? String(getKey(selected)))
+                : ""
+            }
+            readOnly
+          />
+        )}
         <input
           ref={inputRef}
           id={id}
-          name={name}
           type="text"
           role="combobox"
           autoComplete="off"
@@ -217,7 +288,10 @@ export function AsyncSelect<T>({
           onChange={(e) => {
             setText(e.target.value);
             setOpen(true);
-            if (value) onChange?.(null);
+            if (selected) {
+              preserveQueryForNullRef.current = controlled;
+              changeSelected(null);
+            }
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}

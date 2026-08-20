@@ -9,7 +9,7 @@ import {
   toActionError,
 } from "@/lib/action";
 import { useActionDefaults } from "@/lib/action-defaults";
-import { useResource } from "@/hooks/use-resource";
+import { useResource, type ResourceKey } from "@/hooks/use-resource";
 
 /**
  * useOptimisticList — 楽観更新と、失敗時のロールバック
@@ -57,7 +57,7 @@ export interface UseOptimisticListOptions<T> {
   /** 各項目のキー。**必須です。** これが無いと差分を追跡できません。 */
   getKey: (item: T) => React.Key;
   /** 再取得のきっかけになる値。 */
-  deps?: readonly unknown[];
+  deps?: ResourceKey;
   /**
    * 操作が失敗したときに呼ばれます。
    * 既定では `ActionProvider` の通知へ流します。
@@ -100,6 +100,7 @@ export function useOptimisticList<T>({
   const resource = useResource<T[]>(deps, load);
   const [base, setBase] = React.useState<T[]>([]);
   const [pending, setPending] = React.useState<Op<T>[]>([]);
+  const mountedRef = React.useRef(true);
 
   const defaults = useActionDefaults();
   const getKeyRef = React.useRef(getKey);
@@ -131,6 +132,7 @@ export function useOptimisticList<T>({
   }, [base, pending]);
 
   const dropOp = React.useCallback((id: number) => {
+    if (!mountedRef.current) return;
     setPending((p) => p.filter((o) => o.id !== id));
   }, []);
 
@@ -160,28 +162,51 @@ export function useOptimisticList<T>({
     [],
   );
 
-  /* --- 中断 ------------------------------------------------------
-     画面から消えたのに保存が走り続けるのを防ぎます。
-     毎回 `new AbortController().signal` を渡すだけでは、その controller は
-     誰にも中断されないので、実質「中断できない」のと同じでした。
-     ここでは書き込み全体をひとつの controller にぶら下げ、
-     アンマウント時にまとめて中断します。 */
-  const abortRef = React.useRef<AbortController | null>(null);
-  if (abortRef.current === null) abortRef.current = new AbortController();
+  /* --- operation ごとの中断と stale 判定 -----------------------
+     AbortSignal は「中断してほしい」という連絡であって、成功を不可能にする
+     保証ではありません。transport や server が無視して成功を返すこともあります。
+
+     そのため各 operation に controller と cancelled の記録を持たせます。
+     pending add を削除したら両方を更新し、遅れて成功しても base へ commit しません。
+     **server で create 済みのデータまで取り消したとは断定しません。** そこは
+     domain 側の取消・idempotency の責任で、次の refetch には現れ得ます。 */
+  const controllersRef = React.useRef(new Map<number, AbortController>());
+  const cancelledRef = React.useRef(new Set<number>());
+
   React.useEffect(() => {
-    // StrictMode は開発中に mount → unmount → mount を通します。
-    // 一度中断された controller を使い回すと、以降の保存が全部中断扱いになるので
-    // 中断済みなら作り直します。
-    if (abortRef.current?.signal.aborted) abortRef.current = new AbortController();
-    return () => abortRef.current?.abort();
+    mountedRef.current = true;
+    const controllers = controllersRef.current;
+    return () => {
+      mountedRef.current = false;
+      for (const controller of controllers.values()) controller.abort();
+      controllers.clear();
+    };
   }, []);
 
-  const ctx = (): ActionContext => ({
-    signal: (abortRef.current ??= new AbortController()).signal,
-  });
+  const startOp = React.useCallback((id: number): ActionContext => {
+    const controller = new AbortController();
+    controllersRef.current.set(id, controller);
+    return { signal: controller.signal };
+  }, []);
 
-  /** アンマウントによる中断は、利用者に見せるべき失敗ではありません。 */
-  const isUnmountAbort = () => abortRef.current?.signal.aborted === true;
+  const isStaleOp = React.useCallback(
+    (id: number) => !mountedRef.current || cancelledRef.current.has(id),
+    [],
+  );
+
+  const finishOp = React.useCallback((id: number) => {
+    controllersRef.current.delete(id);
+    cancelledRef.current.delete(id);
+  }, []);
+
+  const cancelOp = React.useCallback(
+    (id: number) => {
+      cancelledRef.current.add(id);
+      controllersRef.current.get(id)?.abort();
+      dropOp(id);
+    },
+    [dropOp],
+  );
 
   /* --- 追加 ------------------------------------------------------ */
   const add = React.useCallback(
@@ -189,18 +214,23 @@ export function useOptimisticList<T>({
       const id = ++opCounter;
       const tempKey = getKeyRef.current(item);
       setPending((p) => [...p, { id, kind: "add", tempKey, item }]);
+      const opCtx = startOp(id);
 
       try {
-        const saved = await save(item, ctx());
+        const saved = await save(item, opCtx);
+        if (isStaleOp(id)) return;
         // サーバーが本物を返したらそれを、返さなければ楽観的な値をそのまま採用
         setBase((b) => [...b, (saved as T) ?? item]);
         dropOp(id);
       } catch (raw) {
+        if (isStaleOp(id)) return;
         dropOp(id); // この操作だけ取り消す。他の保留中はそのまま。
-        if (!isUnmountAbort()) report(toActionError(raw), "add");
+        report(toActionError(raw), "add");
+      } finally {
+        finishOp(id);
       }
     },
-    [dropOp, report],
+    [dropOp, finishOp, isStaleOp, report, startOp],
   );
 
   /* --- 削除 ------------------------------------------------------ */
@@ -214,23 +244,28 @@ export function useOptimisticList<T>({
         (o) => o.kind === "add" && o.tempKey === key,
       );
       if (pendingAdd) {
-        dropOp(pendingAdd.id);
+        cancelOp(pendingAdd.id);
         return;
       }
 
       const id = ++opCounter;
       setPending((p) => [...p, { id, kind: "remove", key }]);
+      const opCtx = startOp(id);
 
       try {
-        await save(item, ctx());
+        await save(item, opCtx);
+        if (isStaleOp(id)) return;
         setBase((b) => b.filter((x) => getKeyRef.current(x) !== key));
         dropOp(id);
       } catch (raw) {
+        if (isStaleOp(id)) return;
         dropOp(id);
-        if (!isUnmountAbort()) report(toActionError(raw), "remove");
+        report(toActionError(raw), "remove");
+      } finally {
+        finishOp(id);
       }
     },
-    [pending, dropOp, report],
+    [cancelOp, pending, dropOp, finishOp, isStaleOp, report, startOp],
   );
 
   /* --- 更新 ------------------------------------------------------ */
@@ -238,11 +273,14 @@ export function useOptimisticList<T>({
     async (item: T, patch: Partial<T>, save: Action<T, T | void>) => {
       const key = getKeyRef.current(item);
       return serialize(key, async () => {
+        if (!mountedRef.current) return;
         const id = ++opCounter;
         setPending((p) => [...p, { id, kind: "update", key, patch }]);
+        const opCtx = startOp(id);
 
         try {
-          const saved = await save({ ...item, ...patch }, ctx());
+          const saved = await save({ ...item, ...patch }, opCtx);
+          if (isStaleOp(id)) return;
           setBase((b) =>
             b.map((x) =>
               getKeyRef.current(x) === key
@@ -252,12 +290,15 @@ export function useOptimisticList<T>({
           );
           dropOp(id);
         } catch (raw) {
+          if (isStaleOp(id)) return;
           dropOp(id);
-          if (!isUnmountAbort()) report(toActionError(raw), "update");
+          report(toActionError(raw), "update");
+        } finally {
+          finishOp(id);
         }
       });
     },
-    [serialize, dropOp, report],
+    [serialize, dropOp, finishOp, isStaleOp, report, startOp],
   );
 
   const pendingOf = React.useCallback(

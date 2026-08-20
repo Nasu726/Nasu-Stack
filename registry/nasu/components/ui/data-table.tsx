@@ -77,6 +77,11 @@ export interface DataTableProps<T> {
   /** 行をクリックしたとき。 */
   onRowClick?: (row: T) => void;
   /**
+   * onRowClick と同じ処理へ keyboard から到達する button の文言。
+   * 行ごとに名前を変える場合は関数を渡します。既定「詳細を開く」。
+   */
+  rowActionLabel?: string | ((row: T) => string);
+  /**
    * 行を選べるようにします。**`getKey` が必須になります。**
    * index をキーにすると、並べ替えた瞬間に選択が別の行へずれるためです。
    */
@@ -102,6 +107,7 @@ export function DataTable<T>({
   pageSize = 10,
   mobile = "cards",
   onRowClick,
+  rowActionLabel = "詳細を開く",
   selectable = false,
   selected,
   onSelectedChange,
@@ -176,7 +182,9 @@ export function DataTable<T>({
   );
 
   const remote = useResource<TablePage<T>>(
-    [page, pageSize, sort, dir],
+    // query key は有限・構造的な値だけです。未選択は undefined の暗黙変換に
+    // 任せず null と明示し、null と別の値が衝突しないようにします。
+    [page, pageSize, sort ?? null, dir],
     React.useCallback(
       (_: void, ctx) => {
         if (!resolved) return Promise.resolve({ rows: [], total: 0 });
@@ -244,6 +252,28 @@ export function DataTable<T>({
     setSelection(new Set());
   };
 
+  const actionLabel = (row: T) =>
+    typeof rowActionLabel === "function" ? rowActionLabel(row) : rowActionLabel;
+
+  /* 行クリックは pointer の近道です。行内の interactive element から
+     発生した click まで詳細表示に流すと、選択やリンクが二重動作します。 */
+  const runPointerAction = (
+    event: React.MouseEvent<HTMLElement>,
+    row: T,
+  ) => {
+    if (!onRowClick) return;
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest(
+        "a,button,input,select,textarea,summary,[role=button],[role=link]",
+      )
+    ) {
+      return;
+    }
+    onRowClick(row);
+  };
+
   return (
     <Stack space="sm" className={className}>
       {caption && (
@@ -303,6 +333,11 @@ export function DataTable<T>({
                           onSort={() => toggleSort(c.key)}
                         />
                       ))}
+                      {onRowClick && (
+                        <th className="w-px px-sm py-xs">
+                          <span className="sr-only">行の操作</span>
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -313,7 +348,11 @@ export function DataTable<T>({
                           "border-b border-border last:border-0",
                           onRowClick && "cursor-pointer hover:bg-muted",
                         )}
-                        onClick={onRowClick ? () => onRowClick(row) : undefined}
+                        onClick={
+                          onRowClick
+                            ? (event) => runPointerAction(event, row)
+                            : undefined
+                        }
                       >
                         {selectable && (
                           <td className="px-sm py-xs">
@@ -337,6 +376,14 @@ export function DataTable<T>({
                             {renderCell(row, c)}
                           </td>
                         ))}
+                        {onRowClick && (
+                          <td className="px-sm py-xs text-right">
+                            <RowActionButton
+                              label={actionLabel(row)}
+                              onSelect={() => onRowClick(row)}
+                            />
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -370,7 +417,11 @@ export function DataTable<T>({
                     background="card"
                     border
                     radius="lg"
-                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    onClick={
+                      onRowClick
+                        ? (event) => runPointerAction(event, row)
+                        : undefined
+                    }
                     className={onRowClick ? "cursor-pointer" : undefined}
                   >
                     <Stack space="2xs">
@@ -396,6 +447,13 @@ export function DataTable<T>({
                             </span>
                           </Spread>
                         ))}
+                      {onRowClick && (
+                        <RowActionButton
+                          label={actionLabel(row)}
+                          onSelect={() => onRowClick(row)}
+                          wide
+                        />
+                      )}
                     </Stack>
                   </Box>
                 ))}
@@ -409,6 +467,30 @@ export function DataTable<T>({
         )}
       </AsyncBoundary>
     </Stack>
+  );
+}
+
+function RowActionButton({
+  label,
+  onSelect,
+  wide = false,
+}: {
+  label: string;
+  onSelect: () => void;
+  wide?: boolean;
+}) {
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      className={wide ? "w-full" : undefined}
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect();
+      }}
+    >
+      {label}
+    </Button>
   );
 }
 

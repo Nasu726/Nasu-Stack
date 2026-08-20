@@ -10,6 +10,97 @@ import {
   toActionError,
 } from "@/lib/action";
 
+/** query key に使える有限・構造的な値。関数や class instance は含みません。 */
+export type ResourceKeyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly ResourceKeyValue[]
+  | { readonly [key: string]: ResourceKeyValue };
+export type ResourceKey = readonly ResourceKeyValue[];
+
+/**
+ * query key を、object の key 順に依存しない型付き文字列へ変えます。
+ * unsupported 値を JSON.stringify の暗黙変換で null や空 object にせず、
+ * 呼び出した場所で原因が分かる TypeError にします。
+ */
+export function serializeResourceKey(key: ResourceKey): string {
+  if (!Array.isArray(key)) {
+    throw new TypeError("useResource の key は配列にしてください");
+  }
+  return encodeKeyValue(key, "$", new WeakSet<object>());
+}
+
+function encodeKeyValue(
+  value: unknown,
+  path: string,
+  ancestors: WeakSet<object>,
+): string {
+  if (value === null) return "null";
+  if (typeof value === "string") return `s:${JSON.stringify(value)}`;
+  if (typeof value === "boolean") return value ? "b:1" : "b:0";
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new TypeError(`${path} は有限の number にしてください`);
+    }
+    return Object.is(value, -0) ? "n:-0" : `n:${String(value)}`;
+  }
+
+  if (Array.isArray(value)) {
+    if (ancestors.has(value)) {
+      throw new TypeError(`${path} に循環参照があります`);
+    }
+    ancestors.add(value);
+    try {
+      const encoded: string[] = [];
+      for (let index = 0; index < value.length; index++) {
+        if (!Object.hasOwn(value, index)) {
+          throw new TypeError(`${path}[${index}] は空欄にせず、値を明示してください`);
+        }
+        encoded.push(encodeKeyValue(value[index], `${path}[${index}]`, ancestors));
+      }
+      return `a:[${encoded.join(",")}]`;
+    } finally {
+      ancestors.delete(value);
+    }
+  }
+
+  if (typeof value === "object") {
+    const object = value as Record<string, unknown>;
+    const proto = Object.getPrototypeOf(object);
+    if (proto !== Object.prototype && proto !== null) {
+      throw new TypeError(`${path} は plain object にしてください`);
+    }
+    if (Object.getOwnPropertySymbols(object).length > 0) {
+      throw new TypeError(`${path} に symbol key は使えません`);
+    }
+    if (ancestors.has(object)) {
+      throw new TypeError(`${path} に循環参照があります`);
+    }
+    ancestors.add(object);
+    try {
+      return `o:{${Object.keys(object)
+        .sort()
+        .map(
+          (name) =>
+            `${JSON.stringify(name)}:${encodeKeyValue(
+              object[name],
+              `${path}.${name}`,
+              ancestors,
+            )}`,
+        )
+        .join(",")}}`;
+    } finally {
+      ancestors.delete(object);
+    }
+  }
+
+  throw new TypeError(
+    `${path} に ${typeof value} は使えません。JSON 互換の有限値にしてください`,
+  );
+}
+
 export interface UseResourceOptions<TOutput> {
   /** false の間は取得しません（依存データ待ちなど）。既定 true。 */
   enabled?: boolean;
@@ -42,10 +133,11 @@ export interface UseResourceResult<TOutput> {
  *   jsonRequest<User[]>(`/api/users?page=${page}`, { ctx }));
  * ```
  *
- * @param key 依存キー。この配列が変わると再取得します（useEffect の依存と同じ役割）。
+ * @param key query key。有限の JSON 互換値を構造比較し、同じ構造なら参照や
+ * object の key 順が違っても再取得しません。
  */
 export function useResource<TOutput>(
-  key: readonly unknown[],
+  key: ResourceKey,
   loader: Action<void, TOutput>,
   options: UseResourceOptions<TOutput> = {},
 ): UseResourceResult<TOutput> {
@@ -69,7 +161,7 @@ export function useResource<TOutput>(
   const [nonce, setNonce] = React.useState(0);
   const refetch = React.useCallback(() => setNonce((n) => n + 1), []);
 
-  const serializedKey = JSON.stringify(key);
+  const serializedKey = serializeResourceKey(key);
 
   React.useEffect(() => {
     if (!enabled) {

@@ -65,6 +65,8 @@ const PANELS: Record<string, React.ReactNode> = {
       <AbortSection />
       <GuardRaceSection />
       <ToastSection />
+      <RetryDelayProbe />
+      <ToastDurationProbe />
     </Stack>
   ),
 };
@@ -255,7 +257,17 @@ function ButtonSection() {
         </Labeled>
 
         <Labeled label={t("失敗する")}>
-          <ActionButton action={api.alwaysFail}>{t("送信する")}</ActionButton>
+          <ActionButton
+            action={api.alwaysFail}
+            retry={1}
+            retryDelay={() => {
+              // policy callback も利用者が渡す境界です。ここから例外が出ても
+              // run() の Promise を未処理のまま外へ逃がしてはいけません。
+              throw new Error(t("callback がわざと失敗します"));
+            }}
+          >
+            {t("送信する")}
+          </ActionButton>
         </Labeled>
 
         {/* variant を変えたときの成功表示。**検査対象として必要です。**
@@ -361,6 +373,67 @@ function CallCounted({
   );
 }
 
+/**
+ * 不正な retryDelay が run() の未処理 rejection にならないことを測る治具。
+ * 見本として見せる UI ではないので hidden にし、検査は DOM から直接起動します。
+ * 例外 callback は上の実例で、値の境界はここでそれぞれ退行を止めます。
+ */
+function RetryDelayProbe() {
+  return (
+    <div hidden data-testid="retry-delay-probe">
+      <RetryDelayCase id="nan" delay={Number.NaN} />
+      <RetryDelayCase id="infinity" delay={Number.POSITIVE_INFINITY} />
+      <RetryDelayCase id="negative" delay={-1} />
+    </div>
+  );
+}
+
+function RetryDelayCase({ id, delay }: { id: string; delay: number }) {
+  const state = useAction(
+    async () => {
+      throw new Error("retry-delay probe");
+    },
+    { retry: 1, retryDelay: () => delay },
+  );
+
+  return (
+    <>
+      <button
+        type="button"
+        data-testid={`retry-delay-${id}-run`}
+        onClick={() => void state.run()}
+      >
+        run
+      </button>
+      <output data-testid={`retry-delay-${id}-state`}>
+        {state.status}:{state.error?.code ?? ""}
+      </output>
+    </>
+  );
+}
+
+/** duration を明示した操作付き通知まで永続化しないことを測る治具。 */
+function ToastDurationProbe() {
+  const toast = useToast();
+  return (
+    <div hidden data-testid="toast-duration-probe">
+      <button
+        type="button"
+        data-testid="toast-duration-run"
+        onClick={() =>
+          toast.show({
+            title: "explicit-duration-probe",
+            duration: 200,
+            action: { label: "probe-action", onClick: () => {} },
+          })
+        }
+      >
+        run
+      </button>
+    </div>
+  );
+}
+
 /** 見出しつきの縦組み。デモで「何を試しているか」を示すためだけの薄い包み。 */
 function Labeled({
   label,
@@ -397,6 +470,13 @@ function FormSection() {
           action={api.signup}
           submitLabel={t("アカウントを作成")}
           successMessage={t("登録が完了しました")}
+          onSuccess={async (_data, input) => {
+            if (input.name !== "async-callback") return;
+            await Promise.resolve();
+            // AsyncForm がこの Promise を return しないと、useAction の
+            // callSafely へ届かず unhandled rejection になります。
+            throw new Error(t("callback がわざと失敗します"));
+          }}
         >
           <Field name="name" label={t("お名前")} placeholder={t("山田 太郎")} required />
           <Field
@@ -630,6 +710,7 @@ function SlowGuard({ onCall }: { onCall: () => void }) {
    探す人が見るのはこちらのはずです。 */
 function ToastSection() {
   const toast = useToast();
+  const [undoCount, setUndoCount] = React.useState(0);
 
   return (
     <Panel
@@ -678,12 +759,16 @@ function ToastSection() {
               tone: "success",
               title: t("保存しました"),
               description: t("3 件の変更を反映しました"),
-              action: { label: t("元に戻す"), onClick: () => {} },
+              action: {
+                label: t("元に戻す"),
+                onClick: () => setUndoCount((count) => count + 1),
+              },
             })
           }
         >
           {t("通知を直接出す")}
         </Button>
+        <span hidden data-testid="toast-undo-count">{undoCount}</span>
       </Inline>
     </Panel>
   );

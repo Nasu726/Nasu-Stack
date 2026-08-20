@@ -25,19 +25,19 @@
   --card-fg: oklch(0.26 0.02 55);
   --muted: oklch(0.955 0.014 80);
   --muted-fg: oklch(0.53 0.03 60);
-  --primary: oklch(0.62 0.17 42);
+  --primary: oklch(0.575 0.17 42);
   --primary-fg: oklch(0.99 0.005 85);
   --accent: oklch(0.94 0.035 70);
   --accent-fg: oklch(0.38 0.08 45);
   --danger: oklch(0.55 0.19 22);
   --danger-fg: oklch(0.99 0 0);
-  --success: oklch(0.57 0.12 145);
+  --success: oklch(0.55 0.12 145);
   --success-fg: oklch(0.99 0 0);
   --warning: oklch(0.74 0.15 80);
   --warning-fg: oklch(0.24 0.05 80);
   --border: oklch(0.9 0.018 75);
   --input: oklch(0.9 0.018 75);
-  --ring: oklch(0.62 0.17 42);
+  --ring: oklch(0.575 0.17 42);
 
   --radius: 1rem;
   --shadow-color: 30deg 30% 40%;
@@ -148,7 +148,7 @@
   --accent-fg: oklch(0.34 0.14 300);
   --danger: oklch(0.56 0.22 15);
   --danger-fg: oklch(0.99 0 0);
-  --success: oklch(0.6 0.16 160);
+  --success: oklch(0.53 0.16 160);
   --success-fg: oklch(0.99 0 0);
   --warning: oklch(0.76 0.16 85);
   --warning-fg: oklch(0.22 0.05 85);

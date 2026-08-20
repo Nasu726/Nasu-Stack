@@ -169,6 +169,7 @@ export function ThemeSwitcher({
   themes?: boolean;
 }) {
   const { theme, setTheme, resolvedMode, setMode } = useTheme();
+  const themeGroupName = React.useId();
 
   return (
     <div className={cn("flex min-w-0 flex-wrap items-center gap-2", className)}>
@@ -178,28 +179,36 @@ export function ThemeSwitcher({
           縮むことも折り返すこともできず、画面の外へ突き抜けます
           （実測: 320px のヘッダに置いて 15px はみ出し）。 */}
       {themes && (
-        <div
-          role="radiogroup"
-          aria-label="デザインテーマ"
-          className="flex min-w-0 flex-wrap gap-1 rounded-lg border border-border bg-card p-1"
-        >
-          {THEMES.map((t) => (
-            <button
-              key={t}
-              role="radio"
-              aria-checked={theme === t}
-              onClick={() => setTheme(t)}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                theme === t
-                  ? "bg-primary text-primary-fg"
-                  : "text-muted-fg hover:bg-muted hover:text-fg",
-              )}
-            >
-              {THEME_LABELS[t]}
-            </button>
-          ))}
-        </div>
+        <fieldset className="m-0 min-w-0 border-0 p-0">
+          <legend className="sr-only">デザインテーマ</legend>
+          <div className="flex min-w-0 flex-wrap gap-1 rounded-lg border border-border bg-card p-1">
+            {THEMES.map((t) => (
+              <label key={t} className="relative">
+                {/* 選択・Tab・矢印・循環は native radio に任せます。
+                    見た目だけを隠し、フォーカスは隣の表示へ描きます。 */}
+                <input
+                  type="radio"
+                  name={themeGroupName}
+                  value={t}
+                  checked={theme === t}
+                  onChange={() => setTheme(t)}
+                  className="peer sr-only"
+                />
+                <span
+                  className={cn(
+                    "inline-flex wt-tap items-center rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                    "peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring",
+                    theme === t
+                      ? "bg-primary text-primary-fg"
+                      : "text-muted-fg hover:bg-muted hover:text-fg",
+                  )}
+                >
+                  {THEME_LABELS[t]}
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
       )}
 
       <button

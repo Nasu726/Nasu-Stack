@@ -54,6 +54,39 @@ const WIDTHS = [
 ];
 
 /**
+ * HTML だけ届き、外部 CSS がまだ読めていない画面を測らないための入口。
+ *
+ * 全体検査は複数の Chromium を並列で立てます。負荷が高いときに最初の
+ * stylesheet だけ一時的に読めず、素の button（高さ 21px）や input
+ *（13.33px）を「レイアウト崩れ」と報告したことがありました。実装の赤と
+ * 読込の赤を混ぜず、1 回だけ読み直しても届かなければ理由を名指しします。
+ *
+ * link が無い inline CSS / CSS-in-JS のページは、そのまま検査できます。
+ */
+async function gotoWithStyles(page, url, waitUntil) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await page.goto(url, { waitUntil, timeout: 30000 });
+    const linked = await page.locator('link[rel="stylesheet"]').count();
+    if (linked === 0) return;
+
+    try {
+      await page.waitForFunction(
+        () =>
+          [...document.querySelectorAll('link[rel="stylesheet"]')].every(
+            (link) => link.sheet !== null,
+          ),
+        undefined,
+        { timeout: 5000 },
+      );
+      return;
+    } catch {
+      // 1 回目だけ再読込します。永続的な 404 を黙って通してはいけません。
+    }
+  }
+  throw new Error("stylesheet を読み込めませんでした（再読込後も未適用）");
+}
+
+/**
  * ページ内で走らせる検査。
  * ブラウザ側で実行されるので、外の変数は参照できません。
  */
@@ -347,7 +380,7 @@ export async function checkImageSizing(urls, { width = 375 } = {}) {
       route.request().resourceType() === "image" ? route.abort() : route.continue(),
     );
     try {
-      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+      await gotoWithStyles(page, url, "domcontentloaded");
       await page.waitForTimeout(300);
       const unsized = await page.evaluate(() =>
         [...document.querySelectorAll("img")]
@@ -444,7 +477,7 @@ export async function checkUrls(urls, { widths = WIDTHS } = {}) {
         hasTouch: w < 768,
       });
       try {
-        await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+        await gotoWithStyles(page, url, "networkidle");
         await page.waitForTimeout(400);
         const result = await page.evaluate(inspect, w);
         report.push({ url, width: w, label, ...result });

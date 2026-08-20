@@ -17,6 +17,31 @@ time goes into the work that's actually yours.**
 More freedom than the visual site builders, a lower first wall than plain Astro
 or Next.js. That gap is the target.
 
+### The slogan is a design test
+
+> Keep beginners from being stranded. Don't lock experienced developers in.
+
+"Keep beginners from being stranded" does not mean removing every choice. It
+means the first path has a safe default, failures are visible and diagnosable,
+and unfamiliar users are not expected to rediscover known pitfalls.
+
+"Don't lock experienced developers in" does not mean avoiding constraints. It
+means each constraint states what it protects and leaves a supported way to
+step down to a lower layer or plain platform code.
+
+Every design is tested against four things:
+
+| Test | Question |
+|---|---|
+| Safe default | Can the first path avoid a known, hard-to-diagnose failure? |
+| Explicit boundary | Are we clear about what this does **not** guarantee? |
+| Escape hatch | Can someone leave the default without replacing the whole stack? |
+| Primitive or contract | Are we taking over recurring wiring rather than a domain decision? |
+
+The deciding question is **"whose decision should this be, and where should
+Nasu Stack stop?"** The complete ownership map is the public contract in
+[`boundaries.md`](boundaries.md).
+
 ### Who it's for
 
 | | |
@@ -225,7 +250,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 
 ## 6. How the checks are thought about
 
-`pnpm verify` is 25 stages; `pnpm verify:create` is 106 assertions. It looks
+`pnpm verify` is 29 stages; `pnpm verify:create` is 106 assertions. It looks
 like a lot. There's a reason.
 
 ### A check that only prints is not a check

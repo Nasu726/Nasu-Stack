@@ -134,6 +134,12 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
   // 3. 行クリックに伝播しないか（伝播すると Toast が出る）
   const toasts = await page.locator('[role="status"],[role="alert"]').count();
   must("3. チェックのクリックが行クリックへ伝播しない", toasts === 0, `通知 ${toasts} 件`);
+  const firstBox = page.locator('table tbody input[type="checkbox"]').first();
+  await firstBox.focus();
+  await page.keyboard.press("Space");
+  await page.keyboard.press("Space");
+  const afterSpaceToasts = await page.locator('[role="status"],[role="alert"]').count();
+  must("   チェックの Space も行 action へ伝播しない", afterSpaceToasts === 0, `通知 ${afterSpaceToasts} 件`);
 
   // 2. ページを移っても残るか
   await page.getByRole("button", { name: "次へ" }).first().click();
@@ -256,6 +262,21 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
     "6. 追加が失敗しても、同時に走った削除が取り消されない",
     !items.includes("fail-add-me") && !items.some((t) => /レイアウトを直す/.test(t)),
     JSON.stringify(items),
+  );
+
+  // 7. 保留中の追加を利用者が削除したあと、create が成功しても復活しないか。
+  // save はわざと AbortSignal を見ません。abort だけに頼る実装では落ちず、
+  // operation の cancelled/stale 判定が無ければ約 900ms 後に復活します。
+  await input.fill("cancel-pending-add");
+  await page.getByRole("button", { name: "追加" }).click();
+  const cancelledRow = page
+    .getByText("cancel-pending-add", { exact: true })
+    .locator("xpath=../..");
+  await cancelledRow.getByRole("button", { name: "削除" }).click();
+  await page.waitForTimeout(1200);
+  must(
+    "7. 保留中の追加を削除したら、create 成功後も復活しない",
+    (await page.getByText("cancel-pending-add", { exact: true }).count()) === 0,
   );
 
   // 8. 再取得しても保留中が消えないか

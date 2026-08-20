@@ -95,6 +95,22 @@ const openParts = (width = 1100, height = 900) =>
     `${firstCell?.trim()} → ${firstCell2?.trim()}`,
   );
 
+  /* 行全体を role=button にすると checkbox と意味が入れ子になります。
+     表の意味を保ったまま、同じ onRowClick へ届く明示 button を見ます。 */
+  const firstRow = page.locator("tbody tr").filter({ hasText: "案件 A" });
+  const rowAction = firstRow.getByRole("button", { name: "詳細を開く" });
+  const actionCount = await rowAction.count();
+  must("   desktop の行 action に Tab で到達できる button がある", actionCount === 1, `${actionCount} 件`);
+  if (actionCount === 1) {
+    await rowAction.focus();
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(200);
+    const notice = (
+      await page.locator('[role="status"],[role="alert"]').allTextContents()
+    ).join(" ");
+    must("   desktop の行 action を Enter で実行できる", notice.includes("案件 A"), notice);
+  }
+
   /* ===== 6. ページング ============================================ */
   const pager = await page.getByText(/^\d+ \/ \d+$/).first().textContent();
   await page.getByRole("button", { name: "次へ" }).click();
@@ -128,12 +144,86 @@ const openParts = (width = 1100, height = 900) =>
     r.カードの列名.length >= 4,
     JSON.stringify(r.カードの列名),
   );
+  const cardAction = page.getByRole("button", { name: "詳細を開く" }).first();
+  const cardActionVisible = (await cardAction.count()) > 0 && await cardAction.isVisible();
+  must("   mobile カードにも同じ semantic action がある", cardActionVisible);
+  if (cardActionVisible) {
+    await cardAction.focus();
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(200);
+    const notice = (
+      await page.locator('[role="status"],[role="alert"]').allTextContents()
+    ).join(" ");
+    must("   mobile の行 action を Enter で実行できる", /案件 [A-E]/.test(notice), notice);
+  }
   await page.close();
 }
 
-/* ===== 8. AsyncSelect: キーボード操作と APG 属性 ================= */
+/* ===== 8. AsyncSelect: controlled / FormData / reset ============ */
 {
   const page = await openParts();
+  const input = page.getByRole("combobox", { name: /担当者/ });
+  const formValue = () =>
+    page.evaluate(() => {
+      const form = document.querySelector('[data-testid="async-select-contract"]');
+      return form instanceof HTMLFormElement
+        ? new FormData(form).get("ownerId")
+        : null;
+    });
+  const waitForContract = (expectedText, expectedFormValue) =>
+    page.waitForFunction(
+      ([text, formValue]) => {
+        const input = document.querySelector('[role="combobox"]');
+        const form = document.querySelector('[data-testid="async-select-contract"]');
+        return (
+          input instanceof HTMLInputElement &&
+          input.value === text &&
+          form instanceof HTMLFormElement &&
+          new FormData(form).get("ownerId") === formValue
+        );
+      },
+      [expectedText, expectedFormValue],
+    );
+
+  mustEq("8. 初期 value の label が入力欄に出る", await input.inputValue(), "Aoi Tanaka");
+  mustEq("   FormData には getFormValue の値が入る", await formValue(), "user_2");
+
+  await page.getByRole("button", { name: "親から Bob に変更" }).click();
+  await waitForContract("Bob Carter", "user_3");
+  mustEq("   親から value を変えると label も変わる", await input.inputValue(), "Bob Carter");
+  mustEq("   親からの変更後も FormData は選択値", await formValue(), "user_3");
+
+  await page.getByRole("button", { name: "親からクリア" }).click();
+  await waitForContract("", "");
+  mustEq("   親から null にすると表示が空になる", await input.inputValue(), "");
+  mustEq("   選択なしの FormData は空文字", await formValue(), "");
+
+  /* controlled value を null にする render が、直前に入力した query を
+     空文字で上書きしないこと。表示文字と選択値は別の契約です。 */
+  await page.getByRole("button", { name: "親から Bob に変更" }).click();
+  await waitForContract("Bob Carter", "user_3");
+  await input.fill("千葉");
+  await waitForContract("千葉", "");
+  mustEq("   入力中に controlled value が null になっても query を保つ", await input.inputValue(), "千葉");
+  mustEq("   query は選択値として FormData に送らない", await formValue(), "");
+
+  await page.getByRole("option", { name: /千葉 みなと/ }).waitFor();
+  await page.keyboard.press("Enter");
+  await waitForContract("千葉 みなと", "user_4");
+  mustEq("   選択後の FormData は選択値", await formValue(), "user_4");
+  await page.getByRole("button", { name: "フォームをリセット" }).click();
+  await waitForContract("", "");
+  mustEq("   native form reset で表示を空にする", await input.inputValue(), "");
+  mustEq("   native form reset で選択値も空にする", await formValue(), "");
+  const picked = await page.getByTestId("async-select-picked").textContent();
+  must("   controlled onChange にも reset が届く", /なし/.test(picked ?? ""), picked);
+  await page.close();
+}
+
+/* ===== 9. AsyncSelect: キーボード操作と APG 属性 ================= */
+{
+  const page = await openParts();
+  await page.getByRole("button", { name: "親からクリア" }).click();
   const input = page.getByRole("combobox", { name: /担当者/ });
   await input.click();
   await page.waitForTimeout(700);
@@ -149,7 +239,7 @@ const openParts = (width = 1100, height = 900) =>
       fontSize: el ? parseFloat(getComputedStyle(el).fontSize) : null,
     };
   });
-  mustEq("8. combobox の aria-expanded", attrs.expanded, "true");
+  mustEq("9. combobox の aria-expanded", attrs.expanded, "true");
   mustEq("   aria-autocomplete", attrs.autocomplete, "list");
   must("   aria-controls がある", attrs.controls);
   must("   候補が出る", attrs.options > 0, `${attrs.options} 件`);
@@ -173,7 +263,7 @@ const openParts = (width = 1100, height = 900) =>
   const chosen = await page.getByText(/^選択中:/).textContent();
   // 開いた時点で先頭（0）が選ばれているので、↓ を 2 回押すと 2 になります
   must(
-    "9. ↓ を 2 回で aria-activedescendant が 3 番目（index 2）を指す",
+    "10. ↓ を 2 回で aria-activedescendant が 3 番目（index 2）を指す",
     activeIdx.endsWith("-opt-2"),
     activeIdx,
   );
@@ -183,7 +273,7 @@ const openParts = (width = 1100, height = 900) =>
     chosen?.trim(),
   );
 
-  /* ===== 10. 前の要求が中断されるか（打ち直し） ================== */
+  /* ===== 11. 前の要求が中断されるか（打ち直し） ================== */
   await input.click();
   await input.fill("");
   await input.type("Bo", { delay: 30 });
@@ -196,16 +286,17 @@ const openParts = (width = 1100, height = 900) =>
     .allTextContents();
   // 古い応答が新しい応答を上書きしていたら "Bo" の結果が残ります
   must(
-    "10. 打ち直すと前の要求が中断され、古い候補が残らない",
+    "11. 打ち直すと前の要求が中断され、古い候補が残らない",
     finalOptions.length > 0 && finalOptions.every((t) => !/^Bo/i.test(t.trim())),
     JSON.stringify(finalOptions.slice(0, 3)),
   );
   await page.close();
 }
 
-/* ===== 11. 320px 最下部で候補が画面内に収まるか ================== */
+/* ===== 12. 320px 最下部で候補が画面内に収まるか ================== */
 {
   const page = await openParts(320, 600);
+  await page.getByRole("button", { name: "親からクリア" }).click();
   // AsyncSelect が画面の下端に来るまでスクロール
   await page.evaluate(() => {
     const el = document.querySelector('[role="combobox"]');
@@ -230,7 +321,7 @@ const openParts = (width = 1100, height = 900) =>
       出た向き: lr.top < ir.top ? "上" : "下",
     };
   });
-  must("11. 320px の最下部でも候補が画面内に収まる", r?.画面内に収まる, JSON.stringify(r));
+  must("12. 320px の最下部でも候補が画面内に収まる", r?.画面内に収まる, JSON.stringify(r));
   await page.close();
 }
 

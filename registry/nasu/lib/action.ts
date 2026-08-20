@@ -279,7 +279,11 @@ export async function jsonRequest<T>(
  *   - 200 だが HTML（プロキシや静的ホスティングの設定ミス）
  *   - 204 No Content
  *
- * どれも「失敗」ではないので、落とさずに受け止めます。
+ * 空の成功応答は `undefined` として受け止めます。一方、関数名が
+ * `jsonRequest` なのに中身のある HTML / text を成功にすると、保存先の設定が
+ * 間違っていても「完了しました」と表示します。そこは `BAD_RESPONSE` で
+ * fail closed にします。text が必要なら、呼び出し側が通常の `fetch` などを
+ * 明示的に選びます。
  */
 async function readBody<T>(res: Response): Promise<T | undefined> {
   if (res.status === 204 || res.status === 205) return undefined;
@@ -288,10 +292,18 @@ async function readBody<T>(res: Response): Promise<T | undefined> {
   const text = await res.text();
   if (text.trim() === "") return undefined;
 
-  if (!type.includes("json")) {
-    // JSON でないと分かっているものを JSON.parse しません。
-    // 中身は使えないので、そのまま文字列として返します。
-    return text as unknown as T;
+  const mediaType = type.split(";", 1)[0]?.trim().toLowerCase() ?? "";
+  const isJson =
+    mediaType === "application/json" ||
+    (mediaType.startsWith("application/") && mediaType.endsWith("+json"));
+
+  if (!isJson) {
+    throw new ActionError("JSON ではない応答が返りました", {
+      displayMessage:
+        "サーバーから予期しない形式の応答が返りました。送信先の設定を確認してください。",
+      code: "BAD_RESPONSE",
+      cause: { contentType: type, text: text.slice(0, 200) },
+    });
   }
 
   try {

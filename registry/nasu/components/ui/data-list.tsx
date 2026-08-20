@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { type ActionSpec, resolveAction } from "@/lib/action";
-import { useResource } from "@/hooks/use-resource";
+import { useResource, type ResourceKey } from "@/hooks/use-resource";
 import { AsyncBoundary } from "@/components/ui/async-boundary";
 
 /** 関数を使わずに 1 行の見た目を決めるための列定義（Astro island 用）。 */
@@ -23,7 +23,7 @@ export interface DataListProps<T> {
    */
   loader: ActionSpec<void, T[]>;
   /** 再取得のきっかけになる値。ページ番号や検索語を入れます。 */
-  deps?: readonly unknown[];
+  deps?: ResourceKey;
   /**
    * 1 件分の描画。React から使うときはこちら。
    * 省略した場合は columns（または全プロパティ）から自動生成します。

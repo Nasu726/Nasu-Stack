@@ -138,9 +138,11 @@ export function AsyncForm<TOutput = unknown>({
   );
 
   const state = useAction<FormValues, TOutput>(resolved, {
-    onSuccess: (data, input) => {
+    onSuccess: async (data, input) => {
       if (resetOnSuccess) formRef.current?.reset();
-      onSuccess?.(data, input);
+      // Promise を return/await して、useAction の callSafely まで届けます。
+      // 捨てると async callback の rejection だけが window へ逃げます。
+      await onSuccess?.(data, input);
     },
     // フィールド単位で画面内に出せるエラー（入力ミス等）は通知しない。
     // それ以外（通信断・サーバー障害など）は ActionProvider へ流して、
