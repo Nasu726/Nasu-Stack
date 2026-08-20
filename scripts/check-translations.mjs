@@ -71,6 +71,13 @@ function runnables(text) {
   return { cmds, urls: [...new Set(urls)] };
 }
 
+/** 言語版への導線だけを、同じ行き先として比較します。 */
+function comparableUrl(url) {
+  return url
+    .replace("/Nasu-Stack/catalog/?lang=ja", "/Nasu-Stack/catalog/")
+    .replace("/Nasu-Stack/demo/ja/", "/Nasu-Stack/demo/");
+}
+
 for (const [en, ja] of PAIRS) {
   for (const f of [en, ja]) {
     if (!fs.existsSync(path.join(root, f))) {
@@ -89,9 +96,18 @@ for (const [en, ja] of PAIRS) {
   const ra = runnables(a);
   const rb = runnables(b);
 
+  if (en === "README.md") {
+    if (!b.includes("https://nasu726.github.io/Nasu-Stack/catalog/?lang=ja")) {
+      problems.push("README.ja.md のcatalogが日本語表示を指定していません");
+    }
+    if (!b.includes("https://nasu726.github.io/Nasu-Stack/demo/ja/")) {
+      problems.push("README.ja.md のdemoが日本語routeを指していません");
+    }
+  }
+
   for (const [label, xa, xb] of [
     ["コマンド", ra.cmds, rb.cmds],
-    ["URL", ra.urls, rb.urls],
+    ["URL", ra.urls.map(comparableUrl), rb.urls.map(comparableUrl)],
   ]) {
     const only = (x, y) => x.filter((v) => !y.includes(v));
     for (const v of only(xa, xb)) problems.push(`${en} にしかない${label}: ${v}`);

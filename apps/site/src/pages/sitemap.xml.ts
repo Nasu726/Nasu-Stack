@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { buildSitemap } from "@/lib/feed";
-import { getPublishedPosts } from "../lib/posts";
+import { getPublishedPosts, postSlug } from "../lib/posts";
 import { SITE } from "../site.config";
 import { withBase } from "@/lib/base";
 
@@ -10,7 +10,8 @@ import { withBase } from "@/lib/base";
  * sitemap にだけ下書きが残る、という漏れ方をします。
  */
 export const GET: APIRoute = async () => {
-  const posts = await getPublishedPosts();
+  const posts = await getPublishedPosts("en");
+  const postsJa = await getPublishedPosts("ja");
 
   const xml = buildSitemap(SITE.url, [
     /* **base を付けます。** sitemap が出すのは絶対 URL なので、
@@ -22,7 +23,17 @@ export const GET: APIRoute = async () => {
     { path: withBase("/contact/"), changefreq: "yearly", priority: 0.7 },
     { path: withBase("/blog/"), changefreq: "weekly", priority: 0.8 },
     ...posts.map((p) => ({
-      path: withBase(`/blog/${p.id}/`),
+      path: withBase(`/blog/${postSlug(p)}/`),
+      lastmod: p.data.updated ?? p.data.date,
+      priority: 0.6,
+    })),
+    { path: withBase("/ja/"), changefreq: "weekly", priority: 1 },
+    { path: withBase("/ja/lp/"), changefreq: "monthly", priority: 0.9 },
+    { path: withBase("/ja/about/"), changefreq: "yearly", priority: 0.5 },
+    { path: withBase("/ja/contact/"), changefreq: "yearly", priority: 0.7 },
+    { path: withBase("/ja/blog/"), changefreq: "weekly", priority: 0.8 },
+    ...postsJa.map((p) => ({
+      path: withBase(`/ja/blog/${postSlug(p)}/`),
       lastmod: p.data.updated ?? p.data.date,
       priority: 0.6,
     })),

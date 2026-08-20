@@ -53,7 +53,20 @@ const CASES = [
 /** 検査するページ。ブログ付きは入口だけ見ても意味がありません。 */
 const PAGES = {
   astro: ["/"],
-  blog: ["/", "/lp/", "/about/", "/contact/", "/blog/", "/blog/hello/"],
+  blog: [
+    "/",
+    "/lp/",
+    "/about/",
+    "/contact/",
+    "/blog/",
+    "/blog/hello/",
+    "/ja/",
+    "/ja/lp/",
+    "/ja/about/",
+    "/ja/contact/",
+    "/ja/blog/",
+    "/ja/blog/hello/",
+  ],
   vite: ["/"],
 };
 

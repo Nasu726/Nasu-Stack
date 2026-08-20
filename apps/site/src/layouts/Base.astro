@@ -9,14 +9,21 @@ import type { MetaInput } from "@/lib/seo";
 interface Props extends Omit<MetaInput, "site" | "siteName"> {
   /** 既定のトンマナ。ページ単位で変えられます。 */
   theme?: "neutral" | "warm" | "editorial" | "vivid";
+  /** この言語のRSS。日本語routeは `/ja/rss.xml` を指します。 */
+  rssPath?: string;
 }
 
-const { theme = "warm", ...seo } = Astro.props;
+const {
+  theme = "warm",
+  locale = SITE.locale,
+  rssPath = "/rss.xml",
+  ...seo
+} = Astro.props;
 import { withBase } from "@/lib/base";
 ---
 
 <!doctype html>
-<html lang={SITE.locale} data-theme={theme}>
+<html lang={locale} data-theme={theme}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -29,10 +36,10 @@ import { withBase } from "@/lib/base";
       path={seo.path ?? Astro.url.pathname}
       author={seo.author ?? SITE.author}
       image={seo.image ?? SITE.ogImage}
-      locale={SITE.locale}
+      locale={locale}
     />
 
-    <link rel="alternate" type="application/rss+xml" title={SITE.name} href={withBase("/rss.xml")} />
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href={withBase(rssPath)} />
 
     {/* 保存済みの明暗を描画前に適用してちらつきを防ぐ。
         処理の定義は theme-provider.tsx にしかありません（二重管理を避けるため）。

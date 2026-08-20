@@ -1,0 +1,75 @@
+/**
+ * GitHub Releaseへ置くversioned assetを組み立てます。
+ *
+ *   pnpm release:build                 # package versionからtagを決める
+ *   pnpm release:build -- v1.0.0       # tag workflowでは一致も検査する
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  createNasuStackVersion,
+  packCreateNasuStack,
+} from "./_pack-create.mjs";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const readJson = (file) =>
+  JSON.parse(fs.readFileSync(path.join(root, file), "utf8"));
+
+const rootVersion = readJson("package.json").version;
+const cliVersion = createNasuStackVersion();
+if (rootVersion !== cliVersion) {
+  throw new Error(
+    `release versionがずれています: root=${rootVersion} / create-nasu-stack=${cliVersion}`,
+  );
+}
+if (!/^\d+\.\d+\.\d+$/.test(rootVersion)) {
+  throw new Error(`Stable releaseに使えないversionです: ${rootVersion}`);
+}
+
+const tag = process.argv[2] || `v${rootVersion}`;
+if (tag !== `v${rootVersion}`) {
+  throw new Error(`tagとpackage versionがずれています: ${tag} / ${rootVersion}`);
+}
+
+const changelog = fs.readFileSync(path.join(root, "CHANGELOG.md"), "utf8");
+if (!changelog.includes(`## [${rootVersion}]`)) {
+  throw new Error(`CHANGELOG.mdに${rootVersion}の項目がありません`);
+}
+const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
+const readmeJa = fs.readFileSync(path.join(root, "README.ja.md"), "utf8");
+if (!readme.includes("Nasu Stack 1.0 is Stable")) {
+  throw new Error("README.mdがStable表記になっていません");
+}
+if (!readmeJa.includes("Nasu Stack 1.0 は Stable")) {
+  throw new Error("README.ja.mdがStable表記になっていません");
+}
+
+const destination = path.join(root, "release");
+if (path.dirname(destination) !== root || path.basename(destination) !== "release") {
+  throw new Error(`release出力先がroot直下ではありません: ${destination}`);
+}
+fs.rmSync(destination, { recursive: true, force: true });
+
+const filename = `create-nasu-stack-${rootVersion}.tgz`;
+const packed = packCreateNasuStack({ destination, filename });
+const manifestName = `nasu-stack-${rootVersion}-manifest.json`;
+const manifest = {
+  schemaVersion: 1,
+  project: "Nasu Stack",
+  version: rootVersion,
+  tag,
+  sourceCommit: process.env.GITHUB_SHA || null,
+  artifacts: [{ name: filename, sha256: packed.sha256, size: packed.size }],
+};
+fs.writeFileSync(
+  path.join(destination, manifestName),
+  `${JSON.stringify(manifest, null, 2)}\n`,
+  "utf8",
+);
+
+console.log(`✓ release version: ${rootVersion}`);
+console.log(`✓ tag: ${tag}`);
+console.log(`✓ asset: ${filename} (${packed.size} bytes)`);
+console.log(`✓ sha256: ${packed.sha256}`);
+console.log(`✓ manifest: ${manifestName}`);

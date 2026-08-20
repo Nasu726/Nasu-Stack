@@ -10,7 +10,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check && node src/scripts/check-responsive.mjs http://localhost:4321/ http://localhost:4321/lp/ http://localhost:4321/about/ http://localhost:4321/contact/ http://localhost:4321/blog/ http://localhost:4321/blog/hello/"
+    "check": "astro check && node src/scripts/check-responsive.mjs http://localhost:4321/ http://localhost:4321/lp/ http://localhost:4321/about/ http://localhost:4321/contact/ http://localhost:4321/blog/ http://localhost:4321/blog/hello/ http://localhost:4321/ja/ http://localhost:4321/ja/lp/ http://localhost:4321/ja/about/ http://localhost:4321/ja/contact/ http://localhost:4321/ja/blog/ http://localhost:4321/ja/blog/hello/"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.2",

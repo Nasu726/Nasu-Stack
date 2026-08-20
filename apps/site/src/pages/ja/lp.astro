@@ -1,0 +1,165 @@
+---
+import { Image } from "astro:assets";
+import Base from "../../layouts/Base.astro";
+import { SITE_JA, YEAR } from "../../site.config";
+import { NAV_JA, FOOTER_GROUPS_JA } from "../../lib/nav";
+import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { SiteFooter } from "@/components/ui/site-footer";
+import { Accordion } from "@/components/ui/disclosure";
+import { Frame } from "@/components/ui/frame";
+import {
+  PageBlock,
+  ContentBlock,
+  Stack,
+  Inline,
+  Columns,
+  Column,
+  Tiles,
+  Section,
+} from "@/components/ui/layout";
+import hero from "../../assets/hero.png";
+import featureA from "../../assets/feature-a.png";
+import featureB from "../../assets/feature-b.png";
+import featureC from "../../assets/feature-c.png";
+import { withBase } from "@/lib/base";
+
+const FEATURES = [
+  {
+    image: featureA,
+    title: "余白で迷わない",
+    body: "余白は 9 段階から選ぶだけ。段階の外の値も書けるので、慣れたら自由に詰められます。",
+  },
+  {
+    image: featureB,
+    title: "状態を書かない",
+    body: "送信中・成功・失敗・二重送信の防止まで、部品の側が引き受けます。渡すのは関数 1 つです。",
+  },
+  {
+    image: featureC,
+    title: "狭い画面で崩れない",
+    body: "長い URL も列の多い表も、土台の側で受け止めます。崩れは目視ではなく数値で検査します。",
+  },
+];
+
+const FAQ = [
+  {
+    summary: "コードを書けなくても使えますか？",
+    content:
+      "少しは触れることを前提にしています。まったく書かない方向けには、自然言語から作る別の道具のほうが向いています。",
+  },
+  {
+    summary: "あとから自由に直せますか？",
+    content:
+      "できます。出てくるのは普通の TypeScript と CSS で、独自の保存形式はありません。合わなくなったら部品ごと書き換えてください。",
+  },
+  {
+    summary: "バックエンドは何を使えばいいですか？",
+    content:
+      "何でも構いません。部品が知っているのは (入力, ctx) => Promise<出力> という契約だけで、その先には触れません。",
+  },
+];
+---
+
+<Base
+  title="迷わず作って、あとから自由に直せる"
+  description="余白と非同期の状態を部品が引き受けます。出てくるのは普通のコードなので、あとから自由に直せます。"
+  locale="ja"
+  rssPath="/ja/rss.xml"
+>
+  <SkipLink />
+  <SiteHeader
+    brand={SITE_JA.name}
+    brandHref="/ja/"
+    items={NAV_JA}
+    currentPath={Astro.url.pathname}
+  />
+
+  <main id="main" tabindex="-1">
+    <PageBlock width="content" gutter="md" className="pt-3xl">
+      <Columns space="xl" collapseBelow="tablet" alignY="center">
+        <Column>
+          <Stack space="md">
+            <h1 class="text-4xl leading-tight">
+              迷わず作って、<br />あとから自由に直せる。
+            </h1>
+            <p class="max-w-prose text-base leading-relaxed text-muted-fg">
+              初心者が必ず詰まる 2 箇所——<strong class="text-fg">配置</strong>と
+              <strong class="text-fg">非同期の状態</strong>——を部品が引き受けます。
+              出てくるのは普通の TypeScript なので、慣れたらそのまま書き換えられます。
+            </p>
+            <Inline space="sm">
+              <a
+                href={withBase("/ja/contact/")}
+                class="inline-flex min-h-11 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-fg hover:opacity-90"
+              >
+                相談してみる
+              </a>
+              <a
+                href={withBase("/ja/blog/")}
+                class="inline-flex min-h-11 items-center rounded-md border border-border px-5 text-sm hover:bg-muted"
+              >
+                作り方を読む
+              </a>
+            </Inline>
+          </Stack>
+        </Column>
+        <Column>
+          <Frame ratio="16/9" radius="xl">
+            <Image src={hero} alt="" loading="eager" fetchpriority="high" />
+          </Frame>
+        </Column>
+      </Columns>
+    </PageBlock>
+
+    <PageBlock width="content" gutter="md" className="py-3xl">
+      <Stack space="3xl">
+        <Section space="lg">
+          <h2 class="text-2xl">3 つの引き受けかた</h2>
+          <Tiles columns={{ mobile: 1, tablet: 3, desktop: 3 }} space="lg">
+            {
+              FEATURES.map((feature) => (
+                <Stack space="sm">
+                  <Frame ratio="4/3" radius="lg">
+                    <Image src={feature.image} alt="" />
+                  </Frame>
+                  <h3 class="text-base font-semibold">{feature.title}</h3>
+                  <p class="text-sm leading-relaxed text-muted-fg">{feature.body}</p>
+                </Stack>
+              ))
+            }
+          </Tiles>
+        </Section>
+
+        <Section space="lg">
+          <h2 class="text-2xl">よくある質問</h2>
+          <ContentBlock width="prose">
+            <Accordion items={FAQ} />
+          </ContentBlock>
+        </Section>
+
+        <Section space="md">
+          <h2 class="text-2xl">まずは 1 枚作ってみる</h2>
+          <p class="max-w-prose text-sm leading-relaxed text-muted-fg">
+            このページ自体が雛型です。中身を差し替えるところから始められます。
+          </p>
+          <Inline space="sm">
+            <a
+              href={withBase("/ja/contact/")}
+              class="inline-flex min-h-11 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-fg hover:opacity-90"
+            >
+              相談してみる
+            </a>
+          </Inline>
+        </Section>
+      </Stack>
+    </PageBlock>
+  </main>
+
+  <SiteFooter
+    brand={SITE_JA.name}
+    brandHref="/ja/"
+    description={SITE_JA.description}
+    groups={FOOTER_GROUPS_JA}
+    note={`© ${YEAR} ${SITE_JA.name}`}
+  />
+</Base>

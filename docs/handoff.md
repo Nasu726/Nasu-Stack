@@ -21,9 +21,10 @@
 `docs/plan-*.md` と `docs/result-*.md` は各版の計画と結果です。過去の判断の
 理由を知りたいときだけ読めば足ります。
 
-**いま動いているレビュー対応は [`plan-v09f-review.md`](plan-v09f-review.md) と
-[`result-v09f-review.md`](result-v09f-review.md) です。** 前回マージの結果は
-[`result-v09f.md`](result-v09f.md) に履歴として残しています。
+**いま動いている作業は v1.0.0 の release engineering です。** 計画は
+[`plan-v1.md`](plan-v1.md)、結果は [`result-v1.md`](result-v1.md) に残します。
+直前のreview対応は [`plan-v09f-review.md`](plan-v09f-review.md) と
+[`result-v09f-review.md`](result-v09f-review.md) です。
 
 **v0.9f で、外から来た人が読む面を英語にしました。**
 `README.md` / `SECURITY.md` / `docs/boundaries|overview|security|astro-and-react.md`
@@ -51,8 +52,8 @@
 
 ## 3. いまどこまで来ているか
 
-- `main` … 英語対応までマージ済み（PR #11 / `acc7828`）
-- `codex/v0.9f` … **v1.0 リリース前レビューの BLOCKER-01〜10 対応**
+- `main` … v1.0前reviewのBLOCKER-01〜10までmerge済み（PR #12 / `1b1528d`）
+- `codex/v1.0.0` … **version / Stable表記 / CHANGELOG / release asset経路だけ**
 
 **公開済みです。** https://nasu726.github.io/Nasu-Stack/
 （`/catalog/` に部品のカタログ、`/demo/` にデモサイト、`/r/*.json` にレジストリ）
@@ -96,7 +97,13 @@ pnpm install
 pnpm verify           # 29 工程（独立したものは並列）。型・ビルド・配布物・実ブラウザ
 pnpm verify:create    # 入口の検査 106 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
+pnpm release:build    # package versionに対応するGitHub Release用tarball + SHA-256
 ```
+
+v1.0.0はrelease PRをmergeし、Pagesのdeployと公開先smokeが成功したcommitへ
+`v1.0.0` tagを打ちます。tag workflowは同じ `verify` / `verify-create` をもう一度通し、
+`create-nasu-stack-1.0.0.tgz` をGitHub Releaseへ出します。PR headへ先にtagを
+打たないでください。
 
 公開したものを外から確かめる検査もあります。手元で試すときは
 `public/` を配ってから同じものを回します。

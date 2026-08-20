@@ -134,6 +134,10 @@
     border-block-end: 1px solid var(--border);
     padding: var(--space-2xs) var(--space-sm);
     text-align: start;
+    /* Markdown の表では <Scrollable> を差し込めないことがあります。
+       code や識別子 1 語の最小幅で表全体を押し出さないよう、狭い画面では
+       セル内で折り返せるようにします（英語の metadata 表で実測 3px 超過）。 */
+    overflow-wrap: anywhere;
   }
   .wt-prose th {
     font-weight: 600;

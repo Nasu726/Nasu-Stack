@@ -19,9 +19,11 @@ reliably get stuck on: **layout** and **async state**.
 **See it first:** [component catalog](https://nasu726.github.io/Nasu-Stack/catalog/) (every component, live) /
 [demo site](https://nasu726.github.io/Nasu-Stack/demo/) (a site built from them)
 
-> **This is a Public Beta.** The components and templates are checked in a real
-> browser, but **authentication, server-side validation, and rate limiting for
-> the contact receiver are not covered.**
+> **Nasu Stack 1.0 is Stable.** Public registry names, exports, tokens, and the
+> documented component contracts now follow semantic versioning: breaking
+> changes wait for the next major release. Stable does not expand the boundary —
+> **authentication, server-side validation, and rate limiting for the contact
+> receiver are still your application's responsibility.**
 > Read [docs/boundaries.md](docs/boundaries.md) once before you ship.
 
 ---

@@ -202,6 +202,8 @@ tarball の URL だけを案内しています。
 こちらが固めても、**利用者は「本物の URL を打った」ことしか確かめられません。**
 できることは 2 つです。
 
+- **特定の版をあとから再現するときは、version 付き GitHub Release asset を使う。**
+  Pages の URL は便利な最新版の入口で、`main` の deploy ごとに変わります
 - **配布物の SHA-256 を一緒に出す**（`create-nasu-stack.tgz.sha256`）。
   打つ前に照合できます
 - **URL を https に限る。** レジストリの JSON も tarball も同じです
@@ -213,6 +215,19 @@ curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz.sha256
 sha256sum -c create-nasu-stack.tgz.sha256
 npx ./create-nasu-stack.tgz my-site
 ```
+
+v1.0.0 の version 付き配布物は release tag の下に置きます。
+
+```bash
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz.sha256
+sha256sum -c create-nasu-stack-1.0.0.tgz.sha256
+npx ./create-nasu-stack-1.0.0.tgz my-site
+```
+
+release workflow は tag と package version の一致を検査し、既存の GitHub
+Release を上書きしません。Pages と Release の tarball は同じ pack 処理を通すため、
+同じ版なのに組み立て方だけが静かに分岐する経路も作りません。
 
 **URL を直接 npx する形では確かめられません。** 取り直して実行するので、
 確かめたものと実行したものが同じとは限りません。

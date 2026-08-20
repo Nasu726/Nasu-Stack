@@ -1,0 +1,61 @@
+---
+import Base from "../../layouts/Base.astro";
+import { SITE_JA, YEAR } from "../../site.config";
+import { NAV_JA, FOOTER_GROUPS_JA } from "../../lib/nav";
+import { ContactForm } from "../../components/ContactForm";
+import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { SiteFooter } from "@/components/ui/site-footer";
+import { PageBlock, Stack, Columns, Column, Section } from "@/components/ui/layout";
+---
+
+<Base
+  title="お問い合わせ"
+  description={`${SITE_JA.name} へのお問い合わせはこちらから。`}
+  locale="ja"
+  rssPath="/ja/rss.xml"
+>
+  <SkipLink />
+  <SiteHeader
+    brand={SITE_JA.name}
+    brandHref="/ja/"
+    items={NAV_JA}
+    currentPath={Astro.url.pathname}
+  />
+
+  <PageBlock width="content" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+    <Stack space="xl">
+      <Stack space="sm">
+        <h1 class="text-3xl">お問い合わせ</h1>
+        <p class="max-w-prose text-sm leading-relaxed text-muted-fg">
+          お仕事のご相談、不具合の報告、その他なんでもどうぞ。
+          〇営業日以内にお返事します。
+        </p>
+      </Stack>
+
+      <Columns space="xl" collapseBelow="tablet">
+        <Column width="2/3">
+          <div class="max-w-md">
+            <ContactForm locale="ja" client:load />
+          </div>
+        </Column>
+        <Column>
+          <Section space="sm">
+            <h2 class="text-base font-semibold">お返事について</h2>
+            <p class="text-sm leading-relaxed text-muted-fg">
+              入力いただいた内容は、お問い合わせへの回答にのみ使います。
+              送信できないときは、しばらく置いてからもう一度お試しください。
+            </p>
+          </Section>
+        </Column>
+      </Columns>
+    </Stack>
+  </PageBlock>
+
+  <SiteFooter
+    brand={SITE_JA.name}
+    brandHref="/ja/"
+    description={SITE_JA.description}
+    groups={FOOTER_GROUPS_JA}
+    note={`© ${YEAR} ${SITE_JA.name}`}
+  />
+</Base>

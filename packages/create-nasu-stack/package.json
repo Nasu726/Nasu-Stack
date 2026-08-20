@@ -1,6 +1,6 @@
 {
   "name": "create-nasu-stack",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Nasu Stack の初期プロジェクトを作ります",
   "type": "module",
   "license": "MIT",

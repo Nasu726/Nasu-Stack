@@ -15,11 +15,13 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 </Stack>
 ```
 
-**先に見る:** [部品のカタログ](https://nasu726.github.io/Nasu-Stack/catalog/)（全部の部品を実際に触れます） /
-[デモサイト](https://nasu726.github.io/Nasu-Stack/demo/)（この部品で組んだサイト）
+**先に見る:** [部品のカタログ](https://nasu726.github.io/Nasu-Stack/catalog/?lang=ja)（全部の部品を実際に触れます） /
+[デモサイト](https://nasu726.github.io/Nasu-Stack/demo/ja/)（この部品で組んだサイト）
 
-> **Public Beta です。** 部品と雛型は実ブラウザで検査していますが、
-> **認証・認可、サーバ側の検証、問い合わせの受け口のレート制限は引き受けていません。**
+> **Nasu Stack 1.0 は Stable です。** 公開している registry 名、export、token、
+> 文書化した部品の契約は semantic versioning に従い、破壊的変更は次の major version
+> まで入れません。Stable になっても責任範囲は広がりません。**認証・認可、
+> サーバ側の検証、問い合わせの受け口のレート制限は引き続きアプリ側の責任です。**
 > 公開する前に [docs/boundaries.ja.md](docs/boundaries.ja.md) を 1 度読んでください。
 
 ---
@@ -51,7 +53,7 @@ npx https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz my-site
 |---|---|
 | `blog` | **ブログ・LP・会社概要・問い合わせ・RSS・sitemap・404** が入った状態 |
 
-[デモサイト](https://nasu726.github.io/Nasu-Stack/demo/)がこれです。**中身を見てから決められます。**
+[デモサイト](https://nasu726.github.io/Nasu-Stack/demo/ja/)がこれです。**中身を見てから決められます。**
 
 対話を飛ばすなら `--template <種類> --yes` を付けます。
 

@@ -3,13 +3,16 @@ title: 最初の記事
 description: この記事を書き換えるところから始めてください。Markdown の書き方と、画像の入れ方の見本です。
 date: 2026-01-01
 tags: [はじめに]
+lang: ja
+route: hello
 ---
 
 この記事は `src/content/blog/hello.md` です。
 **書き換えれば、そのまま自分の記事になります。**
 
-新しい記事は、同じ場所に `.md` を足すだけです。ファイル名がそのまま
-URL になります（`my-post.md` → `/blog/my-post/`）。
+新しい記事は、同じ場所に `.md` を足すだけです。日本語の記事は
+`lang: ja` にすると `/ja/blog/…/` へ出ます。URL 名は `route` で決まり、
+省略した場合だけファイル名になります。
 
 ## 上の `---` の部分
 
@@ -21,6 +24,8 @@ URL になります（`my-post.md` → `/blog/my-post/`）。
 | `description` | 必須 | 一覧と、SNS に貼ったときに出る文 |
 | `date` | 必須 | 日付。新しい順に並びます |
 | `tags` | 任意 | 分類 |
+| `lang` | 任意 | 記事の言語。日本語は `ja`、省略時は英語 |
+| `route` | 任意 | URL 名。省略時はファイル名 |
 | `draft` | 任意 | `true` にすると**どこにも出ません** |
 
 `draft: true` の記事は、一覧にも sitemap にも RSS にも出ません。

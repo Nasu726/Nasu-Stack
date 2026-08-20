@@ -30,6 +30,14 @@ export const SITE = {
   locale: "en",
 } as const;
 
+/** 日本語routeが使う表示文。URL・名前・OGP画像は英語版と同じ定義を共有します。 */
+export const SITE_JA = {
+  ...SITE,
+  description:
+    "静的なページは Astro、動く部分だけ React。Nasu Stack で組んだサイトの見本です。",
+  locale: "ja",
+} as const;
+
 /**
  * フッタの著作権表記に使う年。**書き写しません。**
  * 静的サイトなので、ビルドした時点の年で固定されます。
