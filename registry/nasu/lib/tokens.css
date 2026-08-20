@@ -359,6 +359,10 @@
    テーマが定義した --bg などを bg-bg / text-fg のように使えるようにします。
    ============================================================ */
 @theme inline {
+  /* Tailwind 標準の max-w-prose は 65ch です。ch はフォントによって
+     実寸が変わり、英語の同じ段落が Windows では 40em 以下、Linux の
+     CI では 41em になりました。本文幅は上の 1 か所を唯一の定義にします。 */
+  --max-width-prose: var(--width-prose);
   --container-narrow: var(--width-narrow);
   --container-content: var(--width-content);
   --container-wide: var(--width-wide);
