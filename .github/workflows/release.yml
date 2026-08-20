@@ -1,0 +1,45 @@
+name: release
+
+# tagはrelease PRをmainへmergeし、Pagesの公開先smokeが成功してから打ちます。
+# PR headを先にreleaseしません。
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+# 検査は読むだけ。Releaseへ書く権限は最後のjobだけに渡します。
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    uses: ./.github/workflows/verify.yml
+
+  release:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.12.0
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # tagとpackage versionが違えばassetを作る前に止まります。
+      - name: versioned assetを組み立てる
+        run: pnpm release:build -- "${GITHUB_REF_NAME}"
+
+      # createは既存Releaseを上書きしません。同じtagでやり直してassetを
+      # 静かに差し替える経路を作らないため、存在すれば明示的に失敗します。
+      - name: GitHub Releaseを作る
+        run: gh release create "${GITHUB_REF_NAME}" release/* --verify-tag --generate-notes --title "Nasu Stack ${GITHUB_REF_NAME}"
+        env:
+          GH_TOKEN: ${{ github.token }}

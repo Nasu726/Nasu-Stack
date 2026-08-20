@@ -21,17 +21,16 @@
  *   public/index.html               入口の案内（v0.9b でドキュメントサイトに差し替え）
  */
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { pnpm } from "./_proc.mjs";
+import { packCreateNasuStack } from "./_pack-create.mjs";
 import { PUBLIC_BASE, REGISTRY_URL, TARBALL_URL } from "./_site.mjs";
 import { REPO } from "./_deps.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pub = path.join(root, "public");
-const cli = path.join(root, "packages", "create-nasu-stack");
 
 /** 検証済みの shadcn の版。最新版は案内しません（理由は build-create-template.mjs）。 */
 const SHADCN = (
@@ -56,48 +55,15 @@ run([path.join(root, "scripts/build-registry.mjs")]);
  * `npx https://…/create-nasu-stack.tgz my-site` が成立します。
  * npm アカウントという攻撃面が増えず、名前の取り合いにも巻き込まれません。
  */
-// template/ は生成物です（commit していません）。pack の前に必ず作ります。
-run([path.join(root, "scripts/build-create-template.mjs")]);
-
-// npm ではなく pnpm で pack します。**`npm.cmd` を呼ぶと同じ穴に落ちるため**
-// （Windows でバッチを spawn する話。理由は scripts/_proc.mjs に書きました）。
-//
-// `--pack-destination` は使いません。**引数にパスを載せないためです。**
-// 退路（PATH の pnpm を shell 経由で呼ぶ経路）では引数がエスケープされないので、
-// リポジトリの置き場に空白が入っているだけで壊れます
-// （`C:\Users\John Doe\...` は珍しくありません）。
-// 出た場所から移すほうが、渡す文字列が 1 つも増えません。
-const pack = pnpm(["pack"]);
-const packed = execFileSync(pack.cmd, pack.args, {
-  cwd: cli,
-  encoding: "utf8",
-  ...pack.options,
-})
-  .trim()
-  .split(/\r?\n/)
-  .pop()
-  .trim();
-
 /* 版を含まない名前に揃えます。README に載る URL が版ごとに変わると、
    案内を直し忘れた瞬間に「動かない URL」が残るためです。
    版は tarball の中の package.json にあります。 */
-const tgz = path.join(pub, "create-nasu-stack.tgz");
-// pnpm pack は絶対パスを印字します（npm はファイル名だけ）。
-// resolve なら、どちらが返ってきても正しい 1 か所を指します。
-fs.mkdirSync(pub, { recursive: true });
-fs.renameSync(path.resolve(cli, packed), tgz);
-
-/**
- * 利用者が打つ前に照合できるように、ハッシュを並べて置きます。
- *
- * **これは「誰が作ったか」を示しません。** 示せるのは
- * 「取れたものが、こちらが出したものと同じか」だけです。
- * それでも、経路の途中で差し替えられていないことは確かめられます。
- */
-const sha = createHash("sha256").update(fs.readFileSync(tgz)).digest("hex");
-fs.writeFileSync(`${tgz}.sha256`, `${sha}  create-nasu-stack.tgz\n`, "utf8");
-log(`入口: create-nasu-stack.tgz (${(fs.statSync(tgz).size / 1024) | 0} KB)`);
-log(`sha256: ${sha}`);
+const packed = packCreateNasuStack({
+  destination: pub,
+  filename: "create-nasu-stack.tgz",
+});
+log(`入口: create-nasu-stack.tgz (${(packed.size / 1024) | 0} KB)`);
+log(`sha256: ${packed.sha256}`);
 
 /* --- 3. カタログとデモ ---------------------------------------------
  * ----------------------------------------------------------------

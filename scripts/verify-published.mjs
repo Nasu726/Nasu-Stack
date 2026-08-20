@@ -152,7 +152,7 @@ async function crawl(entry, label) {
   const broken = [];
   const queue = [entry];
   /** 辿る上限。無限に広がらないための歯止めです（超えたら印字します）。 */
-  const LIMIT = 40;
+  const LIMIT = 80;
 
   while (queue.length && seen.size < LIMIT) {
     const url = queue.shift();
@@ -195,7 +195,11 @@ async function crawl(entry, label) {
   return { visited: seen.size, broken };
 }
 
-for (const [name, sub] of [["カタログ", "catalog"], ["デモ", "demo"]]) {
+for (const [name, sub] of [
+  ["カタログ", "catalog"],
+  ["デモ", "demo"],
+  ["日本語デモ", "demo/ja"],
+]) {
   const entry = `${base}/${sub}/`;
   const res = await fetch(entry).catch(() => null);
   must(`${name}（/${sub}/）が 200 で取れる`, !!res?.ok, `HTTP ${res?.status ?? "接続できず"}`);
@@ -270,7 +274,9 @@ try {
   const { TAB_KEYS } = await import("../apps/playground/src/tabs.mjs");
   const targets = [
     ...TAB_KEYS.map((k) => [`カタログ(${k})`, `catalog/?tab=${k}`]),
+    ["日本語カタログ", "catalog/?lang=ja"],
     ["デモ", "demo/"],
+    ["日本語デモ", "demo/ja/"],
   ];
   try {
     for (const [name, sub] of targets) {

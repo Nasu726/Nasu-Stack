@@ -73,6 +73,9 @@ If this ever does go to npm, these come first:
 Even with everything hardened on this side, **all you can confirm is that you
 typed the real URL.** Two things help:
 
+- **Use a versioned GitHub Release asset when you need to reproduce a specific
+  release.** The Pages URL is the convenient latest-version entry point and
+  changes when `main` is deployed
 - **The SHA-256 of the distributed tarball is published alongside it**
   (`create-nasu-stack.tgz.sha256`), so you can compare before you run anything
 - **Every URL is https** — the registry JSON and the tarball alike
@@ -84,6 +87,19 @@ curl -fsSL -O https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz.sha256
 sha256sum -c create-nasu-stack.tgz.sha256
 npx ./create-nasu-stack.tgz my-site
 ```
+
+For v1.0.0, the versioned files are published under the release tag:
+
+```bash
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz.sha256
+sha256sum -c create-nasu-stack-1.0.0.tgz.sha256
+npx ./create-nasu-stack-1.0.0.tgz my-site
+```
+
+The release workflow verifies the tag against the package version and refuses
+to overwrite an existing GitHub Release. The Pages and Release tarballs are
+built through the same packer, so their construction cannot drift silently.
 
 **Piping the URL straight into npx verifies nothing.** That form fetches again
 at run time, so what you checked and what you ran are not necessarily the same

@@ -21,6 +21,8 @@ const blog = defineCollection({
     updated: z.coerce.date().optional(),
     draft: z.boolean().default(false),
     tags: z.array(z.string()).default([]),
+    /** 言語ごとに同じURL名を使うためのroute。省略時はファイル名です。 */
+    route: z.string().optional(),
     /* 本文の言語。**読み上げの発音がここで決まります。**
        サイト全体は site.config の locale ですが、記事単位で違うことがあります
        （このデモには和文組版を見せるための日本語の記事が 1 本あります）。 */

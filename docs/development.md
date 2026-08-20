@@ -115,4 +115,23 @@ Renovate の依存更新 PR も、これが緑なら中身を見ずに上げら�
 TypeScript プロジェクトへ展開したうえで `tsc` を通します。
 オフラインでも回せるので CI に載せられます。
 
+### Stable release
+
+release PR では `package.json` と `packages/create-nasu-stack/package.json` の
+version、README の Stable 表記、`CHANGELOG.md` を同時に更新します。
+
+```bash
+pnpm release:build
+```
+
+このコマンドは tag と version の整合を検査し、`release/` に version 付き
+tarball、SHA-256、source commit を記録する manifest を作ります。Pages の
+`create-nasu-stack.tgz` は最新 main を指す mutable な入口です。後から同じ版を
+確認するときは GitHub Release の version 付き asset を使います。
+
+release PR の head へ tag は打ちません。main へ merge した commit の Pages
+deploy と公開先 smoke が成功してから、その検査済み commit へ `vX.Y.Z` tag を
+打ちます。tag workflow は既存 Release を上書きせず、`verify` と
+`verify:create` が成功した場合だけ asset を公開します。
+
 ---

@@ -3,6 +3,8 @@ title: "覚え書き: <section> と & の話"
 description: 題名に記号が入っていても、RSS と sitemap が壊れないことを確かめるための記事です。書き換えて構いません。
 date: 2026-01-05
 tags: [HTML]
+lang: ja
+route: tips
 ---
 
 題名に `<` と `&` が入っています。**この記事は消さないでおくと便利です。**

@@ -29,10 +29,12 @@ const text = async (path) => {
 
 const sitemap = await text("/sitemap.xml");
 const rss = await text("/rss.xml");
+const rssJa = await text("/ja/rss.xml");
 const robots = await text("/robots.txt");
 
 must("sitemap.xml が配信される", sitemap.status === 200, `status ${sitemap.status}`);
 must("rss.xml が配信される", rss.status === 200, `status ${rss.status}`);
+must("日本語の rss.xml が配信される", rssJa.status === 200, `status ${rssJa.status}`);
 must("robots.txt が配信される", robots.status === 200, `status ${robots.status}`);
 
 /** XML として整形式か、ブラウザの DOMParser で確かめます。 */
@@ -67,6 +69,7 @@ must(
 log("sitemap:", JSON.stringify(sm.locs));
 
 const rs = await parseXml(rss.body);
+const rsJa = await parseXml(rssJa.body);
 must("rss が XML として整形式", rs.ok, rs.error ?? "");
 must("rss に記事が入っている", rs.titles.length > 0, `${rs.titles.length} 件`);
 // & や < を素で出すと、この判定だけでなく上の「整形式」も落ちます
@@ -79,6 +82,12 @@ must(
   "rss の link が絶対 URL",
   rs.links.every((u) => u.startsWith(PUBLIC_ORIGIN)),
   JSON.stringify(rs.links),
+);
+must("日本語RSSがXMLとして整形式", rsJa.ok, rsJa.error ?? "");
+must(
+  "日本語RSSが日本語routeだけを指す",
+  rsJa.links.length > 0 && rsJa.links.every((url) => url.includes("/ja/blog/")),
+  JSON.stringify(rsJa.links),
 );
 
 must(
@@ -117,6 +126,14 @@ const PAGES = [
   "/blog/",
   "/blog/hello/",
   "/blog/qa/",
+  "/ja/",
+  "/ja/lp/",
+  "/ja/about/",
+  "/ja/contact/",
+  "/ja/blog/",
+  "/ja/blog/hello/",
+  "/ja/blog/qa/",
+  "/ja/blog/japanese-typography/",
   "/404.html",
 ];
 const metas = [];
@@ -136,11 +153,13 @@ for (const path of PAGES) {
       ldOk = false;
     }
     return {
+      htmlLang: document.documentElement.lang,
       title: document.title,
       description: get('meta[name="description"]'),
       canonical: get('link[rel="canonical"]', "href"),
       ogImage: get('meta[property="og:image"]'),
       ogType: get('meta[property="og:type"]'),
+      ogLocale: get('meta[property="og:locale"]'),
       twitterCard: get('meta[name="twitter:card"]'),
       robots: get('meta[name="robots"]'),
       ldOk,
@@ -171,23 +190,30 @@ must(
   "description が全ページに入っている",
   metas.every((m) => (m.description ?? "").length > 0),
 );
+must(
+  "日本語routeはhtml langとog:localeがja",
+  metas.every((meta) =>
+    meta.path.startsWith("/ja/")
+      ? meta.htmlLang === "ja" && meta.ogLocale === "ja"
+      : meta.htmlLang === "en" && meta.ogLocale === "en"
+  ),
+  JSON.stringify(metas.map((meta) => `${meta.path}:${meta.htmlLang}/${meta.ogLocale}`)),
+);
 must("JSON-LD が全ページで JSON として読める", metas.every((m) => m.ldOk));
 must(
   "記事ページの @type が Article、それ以外は WebSite",
-  metas.every((m) =>
-    m.path.startsWith("/blog/hello") || m.path.startsWith("/blog/qa")
-      ? m.ldType === "Article"
-      : m.ldType === "WebSite",
-  ),
+  metas.every((m) => {
+    const article = m.path.includes("/blog/") && !m.path.endsWith("/blog/");
+    return article ? m.ldType === "Article" : m.ldType === "WebSite";
+  }),
   JSON.stringify(metas.map((m) => `${m.path}:${m.ldType}`)),
 );
 must(
   "og:type が記事だけ article",
-  metas.every((m) =>
-    m.path.startsWith("/blog/hello") || m.path.startsWith("/blog/qa")
-      ? m.ogType === "article"
-      : m.ogType === "website",
-  ),
+  metas.every((m) => {
+    const article = m.path.includes("/blog/") && !m.path.endsWith("/blog/");
+    return article ? m.ogType === "article" : m.ogType === "website";
+  }),
 );
 must(
   "404 ページは検索結果に出さない（noindex）",
@@ -281,7 +307,16 @@ if (headingId) {
    違い（トップは narrow、lp と contact は content）、**狭いほうでだけ
    リンクの列が縦に折り返していました。** 広いほうしか見ていないと、
    実際に崩れているページを一度も測らないことになります。 */
-for (const path of ["/", "/lp/", "/about/", "/contact/"]) {
+for (const path of [
+  "/",
+  "/lp/",
+  "/about/",
+  "/contact/",
+  "/ja/",
+  "/ja/lp/",
+  "/ja/about/",
+  "/ja/contact/",
+]) {
   await page.goto(SITE_BASE + path, { waitUntil: "networkidle" });
   const s = await page.evaluate(() => ({
     h1: document.querySelectorAll("h1").length,

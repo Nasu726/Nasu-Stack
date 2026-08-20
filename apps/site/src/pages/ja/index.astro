@@ -1,0 +1,81 @@
+---
+import Base from "../../layouts/Base.astro";
+import { SITE_JA, YEAR } from "../../site.config";
+import { NAV_JA, FOOTER_GROUPS_JA } from "../../lib/nav";
+import { SiteFooter } from "@/components/ui/site-footer";
+import { ContactForm } from "../../components/ContactForm";
+import { DataList } from "@/components/ui/data-list";
+import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
+import { PageBlock, Section, Stack } from "@/components/ui/layout";
+import { withBase } from "@/lib/base";
+---
+
+<Base
+  title="Nasu Stack — 静的サイトの例"
+  description={SITE_JA.description}
+  theme="editorial"
+  locale="ja"
+  rssPath="/ja/rss.xml"
+>
+  <SkipLink />
+
+  <SiteHeader
+    brand={SITE_JA.name}
+    brandHref="/ja/"
+    items={NAV_JA}
+    currentPath={Astro.url.pathname}
+    width="narrow"
+  />
+
+  <PageBlock width="narrow" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
+    <Stack space="3xl">
+      <Section space="sm">
+        <h1 class="text-4xl leading-tight">
+          静的なページは Astro。<br />動く部分だけ React。
+        </h1>
+        <p class="max-w-lg text-sm leading-relaxed text-muted-fg">
+          このページの本文は完全な静的 HTML です。下の 2 箇所だけが island
+          として読み込まれるので、トップの表示は JavaScript を待ちません。
+          トンマナは同じトークンを共有しているため、Astro 側と React
+          側で見た目がずれません。
+        </p>
+      </Section>
+
+      <Section space="sm" id="works">
+        <h2 class="text-2xl">Works</h2>
+        <p class="max-w-prose text-xs text-muted-fg">
+          関数の代わりに <code>{"{ url, method }"}</code> を渡しています。
+          .astro から props は JSON 化されるため、この形なら島に渡せます。
+        </p>
+        <DataList
+          client:load
+          loader={{ url: withBase("/works.json"), method: "GET" }}
+          columns={[
+            { key: "title", primary: true },
+            { key: "stack", badge: true },
+            { key: "year", badge: true },
+          ]}
+        />
+      </Section>
+
+      <Section space="sm" id="contact">
+        <h2 class="text-2xl">Contact</h2>
+        <p class="max-w-prose text-xs text-muted-fg">
+          独自のバリデーションを持つのでラッパ (.tsx) 経由で読み込んでいます。
+        </p>
+        <div class="max-w-md">
+          <ContactForm locale="ja" client:load />
+        </div>
+      </Section>
+    </Stack>
+  </PageBlock>
+
+  <SiteFooter
+    brand={SITE_JA.name}
+    brandHref="/ja/"
+    description={SITE_JA.description}
+    groups={FOOTER_GROUPS_JA}
+    note={`© ${YEAR} ${SITE_JA.name}`}
+    width="narrow"
+  />
+</Base>

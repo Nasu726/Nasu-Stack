@@ -36,17 +36,37 @@ const send = ENDPOINT
       return { ok: true, mocked: true };
     };
 
-export function ContactForm() {
+const COPY = {
+  en: {
+    submit: "Send",
+    success: "Thanks — we have your message",
+    name: "Name",
+    email: "Email",
+    message: "Message",
+    sample: "This sample has no endpoint configured. Pressing Send does not send anything.",
+  },
+  ja: {
+    submit: "送信する",
+    success: "お問い合わせを受け付けました",
+    name: "お名前",
+    email: "メールアドレス",
+    message: "本文",
+    sample: "この見本は送信先が未設定です。押しても実際には送信されません。",
+  },
+} as const;
+
+export function ContactForm({ locale = "en" }: { locale?: keyof typeof COPY }) {
+  const copy = COPY[locale];
   return (
     <>
       <AsyncForm
         action={send}
-        submitLabel="Send"
-        successMessage="Thanks — we have your message"
+        submitLabel={copy.submit}
+        successMessage={copy.success}
       >
-        <Field name="name" label="Name" required />
-        <Field name="email" label="Email" type="email" required />
-        <Field name="message" label="Message" multiline rows={5} />
+        <Field name="name" label={copy.name} required />
+        <Field name="email" label={copy.email} type="email" required />
+        <Field name="message" label={copy.message} multiline rows={5} />
         {/* 人には見えず、キーボードでも読み上げでも到達しない、bot 用のおとり */}
         <HoneypotField />
       </AsyncForm>
@@ -56,7 +76,7 @@ export function ContactForm() {
           本当に送られるようになったら出てはいけません。 */}
       {!ENDPOINT && (
         <p className="mt-xs text-xs text-muted-fg">
-          This sample has no endpoint configured. Pressing Send does not send anything.
+          {copy.sample}
         </p>
       )}
     </>

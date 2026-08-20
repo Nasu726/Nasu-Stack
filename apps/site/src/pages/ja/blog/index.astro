@@ -1,56 +1,51 @@
 ---
-import Base from "../../layouts/Base.astro";
-import { SITE, YEAR } from "../../site.config";
-import { NAV, FOOTER_GROUPS } from "../../lib/nav";
+import Base from "../../../layouts/Base.astro";
+import { SITE_JA, YEAR } from "../../../site.config";
+import { NAV_JA, FOOTER_GROUPS_JA } from "../../../lib/nav";
 import { SiteFooter } from "@/components/ui/site-footer";
-import { getPublishedPosts, formatDate, postSlug } from "../../lib/posts";
+import { getPublishedPosts, formatDate, postSlug } from "../../../lib/posts";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { PageBlock, Stack, Inline } from "@/components/ui/layout";
-
-const posts = await getPublishedPosts("en");
-
-
 import { withBase } from "@/lib/base";
+
+const posts = await getPublishedPosts("ja");
 ---
 
 <Base
-  title="Blog"
-  description={`Articles from ${SITE.name}.`}
+  title="ブログ"
+  description={`${SITE_JA.name} の記事一覧です。`}
   type="website"
+  locale="ja"
+  rssPath="/ja/rss.xml"
 >
   <SkipLink />
   <SiteHeader
-    brand={SITE.name}
-    brandHref="/"
-    items={NAV}
+    brand={SITE_JA.name}
+    brandHref="/ja/"
+    items={NAV_JA}
     currentPath={Astro.url.pathname}
     width="narrow"
   />
 
   <PageBlock width="narrow" gutter="md" as="main" id="main" tabIndex={-1} className="py-3xl">
     <Stack space="xl">
-      <h1 class="text-3xl">Blog</h1>
+      <h1 class="text-3xl">ブログ</h1>
 
       <Stack space="lg" dividers>
         {
           posts.map((post) => {
-            const d = formatDate(post.data.date);
+            const date = formatDate(post.data.date, "ja");
             return (
               <article>
                 <Stack space="2xs">
-                  {/* 日付は必ず <time datetime> で出します。
-                      「2026年8月1日」という文字列だけでは機械が読めません。 */}
-                  <time datetime={d.iso} class="text-xs text-muted-fg">
-                    {d.text}
+                  <time datetime={date.iso} class="text-xs text-muted-fg">
+                    {date.text}
                   </time>
                   <h2 class="text-xl">
-                    <a href={withBase(`/blog/${postSlug(post)}/`)} class="hover:text-primary">
+                    <a href={withBase(`/ja/blog/${postSlug(post)}/`)} class="hover:text-primary">
                       {post.data.title}
                     </a>
                   </h2>
-                  {/* **行長を止めます。** 器いっぱいだと 48em になり、
-                      欧文の上限 40em を超えます。和文の説明文は同じ内容でも
-                      文字数が半分ほどなので、訳すまで当たりませんでした。 */}
                   <p class="max-w-[var(--width-prose)] text-sm leading-relaxed text-muted-fg">
                     {post.data.description}
                   </p>
@@ -70,15 +65,16 @@ import { withBase } from "@/lib/base";
         }
       </Stack>
 
-      {posts.length === 0 && <p class="text-sm text-muted-fg">No articles yet.</p>}
+      {posts.length === 0 && <p class="text-sm text-muted-fg">まだ記事がありません。</p>}
     </Stack>
   </PageBlock>
 
   <SiteFooter
-    brand={SITE.name}
-    description={SITE.description}
-    groups={FOOTER_GROUPS}
-    note={`© ${YEAR} ${SITE.name}`}
+    brand={SITE_JA.name}
+    brandHref="/ja/"
+    description={SITE_JA.description}
+    groups={FOOTER_GROUPS_JA}
+    note={`© ${YEAR} ${SITE_JA.name}`}
     width="narrow"
   />
 </Base>
