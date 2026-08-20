@@ -28,7 +28,13 @@ if (!/^\d+\.\d+\.\d+$/.test(rootVersion)) {
   throw new Error(`Stable releaseに使えないversionです: ${rootVersion}`);
 }
 
-const tag = process.argv[2] || `v${rootVersion}`;
+// pnpmは環境や呼び出し方によって、引数区切りの`--`もscriptへ渡します。
+// workflowと手元のどちらから実行しても、実際のtagだけを検査します。
+const releaseArgs = process.argv.slice(2).filter((argument) => argument !== "--");
+if (releaseArgs.length > 1) {
+  throw new Error(`release:buildの引数が多すぎます: ${releaseArgs.join(" ")}`);
+}
+const tag = releaseArgs[0] || `v${rootVersion}`;
 if (tag !== `v${rootVersion}`) {
   throw new Error(`tagとpackage versionがずれています: ${tag} / ${rootVersion}`);
 }
