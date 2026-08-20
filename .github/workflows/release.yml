@@ -35,7 +35,7 @@ jobs:
 
       # tagとpackage versionが違えばassetを作る前に止まります。
       - name: versioned assetを組み立てる
-        run: pnpm release:build -- "${GITHUB_REF_NAME}"
+        run: pnpm release:build "${GITHUB_REF_NAME}"
 
       # createは既存Releaseを上書きしません。同じtagでやり直してassetを
       # 静かに差し替える経路を作らないため、存在すれば明示的に失敗します。
