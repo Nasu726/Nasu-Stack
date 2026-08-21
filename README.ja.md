@@ -169,7 +169,8 @@ Web で品質を求めるとまだ人の力が重要ですが、毎回同じと�
    「乗り換え」ではなく「降りる」形にすること。
 
    ```
-   <ActionButton action={…}>  →  <Button> + useAction()  →  useState / fetch
+   <ActionButton action={…}>  →  <Button> + useAction()
+                              →  <Button> + useInteractionGuard()  →  素の React
    <Stack space="lg">         →  <Stack space="13px">    →  className="gap-[13px]"
    ```
 
@@ -235,6 +236,7 @@ type Action<TInput, TOutput> = (
 | `Toast` / `useToast` | 画面隅の通知 |
 | `ThemeProvider` / `ThemeSwitcher` | トンマナ切替。ちらつき防止スクリプトつき |
 | `useAction` / `useResource` | 書き込み系 / 読み取り系の状態管理フック |
+| `useInteractionGuard` | 同じ画面操作の重なりだけを防ぐ。いつ再許可するかは利用側が決める |
 
 <details>
 <summary><b>DataTable — 狭い画面では表をやめる</b></summary>

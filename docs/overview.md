@@ -65,7 +65,9 @@ This is implemented as **stepping down**, not switching over.
       ↓ once that isn't enough
 <Button onClick={...}> + useAction()   ← borrow just the state
       ↓ further
-useState / fetch                       ← plain React
+<Button> + useInteractionGuard()       ← prevent overlap only
+      ↓ further
+useState / useRef                      ← plain React
 ```
 
 Stopping at any layer leaves you with something that works. Layout has the same
@@ -239,7 +241,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 | Input | AsyncForm / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
 | Display | DataList / DataTable / AsyncBoundary / Toast / ConfirmDialog / Scrollable / Frame / Img |
 | Contract and wiring | Action / ActionSpec / ActionError / jsonRequest / upload / **createSubmit** |
-| Hooks | useAction / useResource / useOptimisticList / usePopover |
+| Hooks | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard** |
 | Generation | `buildMeta` (SEO, OGP, JSON-LD) / `buildSitemap` / `buildRss` / `buildRobots` |
 | Checks | `check-responsive.mjs` (**shipped to users too**) |
 | Entry point | `create-nasu-stack` (Astro, blog, and Vite templates) |
