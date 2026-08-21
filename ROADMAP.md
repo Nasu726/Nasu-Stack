@@ -8,7 +8,7 @@
 
 - [x] 候補を「既存 item へ吸収 / 独立責任 / 条件付き / public primitive にしない」へ分類
 - [x] 同期の二重操作防止に完全な Action state machine を要求しない層の原則を追加
-- [ ] 軽量 interaction guard
+- [x] 軽量 interaction guard（`useInteractionGuard`: `tryLock` / `release` だけ）
 - [ ] `layout` へ Switcher / Sidebar の判断を吸収
 - [ ] validation contract / FieldArray と server adapter 例
 - [ ] ErrorBoundary / useAutosave

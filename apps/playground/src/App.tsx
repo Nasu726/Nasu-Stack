@@ -5,6 +5,7 @@ import { DataList } from "@/components/ui/data-list";
 import { AsyncBoundary } from "@/components/ui/async-boundary";
 import { ThemeSwitcher, useTheme } from "@/components/ui/theme-provider";
 import { useAction } from "@/hooks/use-action";
+import { useInteractionGuard } from "@/hooks/use-interaction-guard";
 import {
   Column,
   Columns,
@@ -60,6 +61,7 @@ const PANELS: Record<string, React.ReactNode> = {
   state: (
     <Stack space="3xl">
       <ButtonSection />
+      <InteractionGuardSection />
       <FormSection />
       <ListSection />
       <AbortSection />
@@ -370,6 +372,60 @@ function CallCounted({
         {t("呼ばれた回数:")} {count}
       </span>
     </Stack>
+  );
+}
+
+/**
+ * 非同期の状態を要らない操作に、useAction 一式を要求しないための見本。
+ * 鍵を外す時点はドメイン側の判断なので、自動タイマーを持たせません。
+ */
+function InteractionGuardSection() {
+  const guard = useInteractionGuard();
+  const [calls, setCalls] = React.useState(0);
+
+  const tryProceed = () => {
+    if (!guard.tryLock()) return;
+    setCalls((n) => n + 1);
+  };
+
+  return (
+    <Panel
+      title="useInteractionGuard"
+      description={t("同じ画面操作の重なりだけを止めます。通信の状態、成功表示、retry、AbortSignal は持ちません。それらが必要なら useAction を選びます。いつ再び許可するかは、操作の意味を知る利用側が release() で決めます。")}
+      code={t("const next = useInteractionGuard();\n\nfunction goNext() {\n  if (!next.tryLock()) return;\n  router.push(\"/checkout\");\n}\n\n<Button onClick={goNext} disabled={next.isLocked}>\n  次へ\n</Button>\n\n// 同じ画面でやり直せるようになった時だけ\nnext.release();")}
+    >
+      <Inline space="sm" alignY="center">
+        <Button onClick={tryProceed} disabled={guard.isLocked}>
+          {guard.isLocked ? t("操作を受け付けました") : t("次へ進む")}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={guard.release}
+          disabled={!guard.isLocked}
+        >
+          {t("もう一度許可する")}
+        </Button>
+        <output
+          className="text-xs text-muted-fg"
+          data-testid="interaction-guard-state"
+          data-locked={guard.isLocked ? "true" : "false"}
+          aria-live="polite"
+        >
+          {t("通った回数:")} {calls} / {guard.isLocked ? t("停止中") : t("受付中")}
+        </output>
+      </Inline>
+
+      {/* 同じ描画の間に起きる連打を、見た目の disabled に頼らず検査します。
+          hidden なのでカタログの操作や読み上げには混ざりません。 */}
+      <button
+        type="button"
+        hidden
+        data-testid="interaction-guard-probe"
+        onClick={tryProceed}
+      >
+        probe
+      </button>
+    </Panel>
   );
 }
 

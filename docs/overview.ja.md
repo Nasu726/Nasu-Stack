@@ -62,7 +62,9 @@ WordPress / Wix / Elementor より自由度が高く、素の Astro / Next.js �
       ↓ 物足りなくなったら
 <Button onClick={...}> + useAction()   ← 状態だけ借りる層
       ↓ さらに
-useState / fetch                  ← 素の React
+<Button> + useInteractionGuard()       ← 重なりだけ止める層
+      ↓ さらに
+useState / useRef                 ← 素の React
 ```
 
 どの層で止まっても壊れません。レイアウトも同じ構造です。
@@ -227,7 +229,7 @@ type Space = SpaceToken | (string & {});
 | 入力 | AsyncForm / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
 | 表示 | DataList / DataTable / AsyncBoundary / Toast / ConfirmDialog / Scrollable / Frame / Img |
 | 契約と配線 | Action / ActionSpec / ActionError / jsonRequest / upload / **createSubmit** |
-| フック | useAction / useResource / useOptimisticList / usePopover |
+| フック | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard** |
 | 生成 | `buildMeta`（SEO・OGP・JSON-LD）/ `buildSitemap` / `buildRss` / `buildRobots` |
 | 検査 | `check-responsive.mjs`（**利用者にも配られます**） |
 | 入口 | `create-nasu-stack`（Astro / ブログ / Vite の 3 種） |

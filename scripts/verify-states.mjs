@@ -104,6 +104,49 @@ must("終わると success 表示に変わる", /保存しました/.test(succes
   must("遅い guard を 5 回連打しても action は 1 回だけ", n === 1, `${n} 回`);
 }
 
+/* 1.8. 同期操作だけなら、完全な Action を要求しない ----------------
+   ----------------------------------------------------------------
+   disabled の再描画より先に同じイベントが重なる場合でも、ref の鍵が
+   同期的に閉じる必要があります。hidden の probe は disabled にしません。
+   これで「見た目が押せない」ではなく、tryLock 自体の契約を見ます。 */
+{
+  const probe = page.getByTestId("interaction-guard-probe");
+  const state = page.getByTestId("interaction-guard-state");
+  const count = async () =>
+    Number((await state.textContent())?.match(/\d+/)?.[0] ?? -1);
+
+  await probe.evaluate((button) => {
+    for (let i = 0; i < 5; i++) button.click();
+  });
+  await page.waitForTimeout(100);
+
+  must(
+    "軽量 guard を同じ描画で 5 回呼んでも 1 回だけ通る",
+    (await count()) === 1,
+    `${await count()} 回`,
+  );
+  mustEq(
+    "鍵を取ると isLocked が true になる",
+    await state.getAttribute("data-locked"),
+    "true",
+  );
+
+  await page.getByRole("button", { name: "もう一度許可する" }).click();
+  mustEq(
+    "release すると同じ操作を再び受け付ける",
+    await state.getAttribute("data-locked"),
+    "false",
+  );
+
+  await probe.evaluate((button) => button.click());
+  await page.waitForTimeout(100);
+  must(
+    "release の後は次の 1 回が通る",
+    (await count()) === 2,
+    `${await count()} 回`,
+  );
+}
+
 /* 2. 二重送信の防止 ---------------------------------------------
    「押せない」ことではなく「連打しても 1 回しか実行されない」ことを見る。 */
 await page.waitForTimeout(2200); // idle へ戻る

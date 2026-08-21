@@ -19,6 +19,7 @@ registry/nasu/                ← 配布されるソース。ここが本体
   lib/utils.ts                  cn() / inputClass()
   scripts/check-responsive.mjs  端末幅チェック（利用者にも配られます）
   hooks/use-action.ts           書き込み系
+  hooks/use-interaction-guard.ts 同じ画面操作の同期的な再入防止だけ
   hooks/use-resource.ts         読み取り系
   components/ui/layout.tsx      レイアウト・プリミティブ
   components/ui/*.tsx           そのほかのコンポーネント
@@ -26,7 +27,7 @@ registry/nasu/                ← 配布されるソース。ここが本体
 apps/playground/              ← React + Vite のカタログ（全状態を手で確認できる）
 apps/site/                    ← Astro の静的サイト例（island 連携の確認）
 scripts/                      ← レジストリ生成・検証・スクリーンショット
-registry.json                 ← 配布定義（40 アイテム）
+registry.json                 ← 配布定義（41 アイテム）
 public/r/*.json               ← 生成物（shadcn CLI が読む）
 ```
 

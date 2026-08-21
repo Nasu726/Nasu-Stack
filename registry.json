@@ -197,6 +197,20 @@
       ]
     },
     {
+      "name": "use-interaction-guard",
+      "type": "registry:hook",
+      "title": "useInteractionGuard",
+      "description": "同じ画面操作の重なりだけを同期的に防ぎます。成功・失敗・通信・retry・中断を持たない、useAction より小さい選択肢です。",
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/nasu/hooks/use-interaction-guard.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-interaction-guard.ts"
+        }
+      ]
+    },
+    {
       "name": "use-resource",
       "type": "registry:hook",
       "title": "useResource",

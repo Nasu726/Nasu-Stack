@@ -180,7 +180,8 @@ is an order of magnitude more project.
    "switch to something else" — **step down**, in place.
 
    ```
-   <ActionButton action={…}>  →  <Button> + useAction()  →  useState / fetch
+   <ActionButton action={…}>  →  <Button> + useAction()
+                              →  <Button> + useInteractionGuard()  →  plain React
    <Stack space="lg">         →  <Stack space="13px">    →  className="gap-[13px]"
    ```
 
@@ -246,6 +247,7 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `Toast` / `useToast` | Corner notifications |
 | `ThemeProvider` / `ThemeSwitcher` | Theme switching, with a no-flash init script |
 | `useAction` / `useResource` | State hooks for writes and for reads |
+| `useInteractionGuard` | Prevents only overlapping UI attempts; the caller decides when to allow another |
 
 <details>
 <summary><b>DataTable — stop being a table when the screen is narrow</b></summary>
