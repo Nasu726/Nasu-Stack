@@ -1,5 +1,25 @@
 # ROADMAP
 
+## v2.0 — 進行中
+
+部品数ではなく、**利用者がしなくてよくなった判断の種類**を増やします。
+外部 worklist の候補は、そのまま実装せず [`docs/plan-v2.md`](docs/plan-v2.md) の
+複雑さ予算と責任境界で分類しました。
+
+- [x] 候補を「既存 item へ吸収 / 独立責任 / 条件付き / public primitive にしない」へ分類
+- [x] 同期の二重操作防止に完全な Action state machine を要求しない層の原則を追加
+- [ ] 軽量 interaction guard
+- [ ] `layout` へ Switcher / Sidebar の判断を吸収
+- [ ] validation contract / FieldArray と server adapter 例
+- [ ] ErrorBoundary / useAutosave
+- [ ] Popover foundation / Paginator / CopyButton
+- [ ] 条件を満たした behavioral recipe
+- [ ] checker の intentional-break 検証と CI の重複・実行時間改善
+- [ ] v1 → v2 migration、全 public 面、実 install、Pages smoke、immutable Release
+
+Wizard / Editable / InfiniteList は、巨大な API を先に固定せず recipe または
+Load more contract で需要と共通部分を観測します。採用しない判断も v2 の成果に含めます。
+
 ## v0.1 — 完了
 
 契約層とトンマナ層が固まり、状態を持つコンポーネントが動いています。
