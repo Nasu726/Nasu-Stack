@@ -28,6 +28,32 @@ These rules apply together. A safe default without an escape hatch becomes a
 lock. An escape hatch without a safe default leaves beginners to rediscover
 the same failures.
 
+## Complexity has a budget too
+
+Even safe features strand beginners when they introduce too many names,
+states, and settings. Before adding a component, Nasu Stack chooses the lowest
+layer that can solve the problem.
+
+| Problem | First choice |
+|---|---|
+| Semantics and interactions the browser already owns | Native HTML |
+| Value conversion or a result shape | Pure function or contract |
+| One behavior such as duplicate-activation prevention | Small hook |
+| State inseparable from presentation, focus, and ARIA | Component |
+| A safe composition of several primitives | Copy-and-own recipe |
+| Authentication, transactions, and business workflow | Application or server |
+
+A new name is added only when the behavior cannot fit an existing item and the
+decisions removed outweigh the concept users must learn. Preventing only a
+double click, for example, must not require a complete async state machine with
+retry, success presentation, and an `AbortSignal`. Conversely, stale network
+responses and unmount safety must not be presented as if a time-based guard
+provided those guarantees.
+
+When a high-level component starts growing a large API, Nasu Stack first splits
+the concern into a hook, contract, or recipe. A recipe is a safe composition to
+copy and own, not a new framework or a sealed finished product.
+
 ## Who owns each decision
 
 | Area | Nasu Stack owns | Your app or domain owns | Your server or infrastructure owns |
@@ -35,6 +61,7 @@ the same failures.
 | Shipped source | The documented behavior, types, dependencies, and checks of each registry item | Which items to copy, how to compose them, and the behavior of any modified copy | Deployment and runtime compatibility |
 | Layout and accessibility | Responsive defaults and the component's semantics, focus, keyboard, and screen-reader behavior | Content, labels, heading order across the page, and whether a chosen composition makes sense | Any platform-specific rendering or assistive-technology policy |
 | Async UI state | Loading, success, failure, double-submit protection, passing an abort signal, and preventing a cancelled or stale result from returning to the UI | What success means, which message to show, and whether the user should be offered cancellation | Whether work can actually be cancelled, rolled back, or committed atomically |
+| Re-entrant interaction | Preventing the same UI operation from overlapping within the selected primitive's documented contract | Which operations may repeat and when to enable them again | Idempotency, deduplication, and treating side effects as one operation |
 | Input and data | Browser-side guidance and runtime checks for Nasu Stack's own public contracts | Domain rules and the shape you expect from an API | Authentication, authorization, authoritative validation, CSRF protection, and response schemas |
 | JSON transport | Treating an empty successful response as empty, accepting JSON media types, and failing closed on malformed or non-JSON bodies | Mapping a parsed value into a domain type, or using a different transport helper | Correct status codes, media types, response bodies, and safe error reporting |
 | Retry | A bounded retry mechanism and a controlled failure when retry policy code is invalid | Opting in only when repeating the operation is safe | Idempotency, deduplication, transaction handling, and rate limits |

@@ -21,8 +21,10 @@
 `docs/plan-*.md` と `docs/result-*.md` は各版の計画と結果です。過去の判断の
 理由を知りたいときだけ読めば足ります。
 
-**いま動いている作業は v1.0.0 の release engineering です。** 計画は
-[`plan-v1.md`](plan-v1.md)、結果は [`result-v1.md`](result-v1.md) に残します。
+**いま動いている作業は v2.0.0 へ向けた機能整理と拡張です。** 計画と候補の採否は
+[`plan-v2.md`](plan-v2.md)、実施結果は [`result-v2.md`](result-v2.md) を正とします。
+v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
+[`result-v1.md`](result-v1.md) に残しています。
 直前のreview対応は [`plan-v09f-review.md`](plan-v09f-review.md) と
 [`result-v09f-review.md`](result-v09f-review.md) です。
 
@@ -52,8 +54,10 @@
 
 ## 3. いまどこまで来ているか
 
-- `main` … v1.0前reviewのBLOCKER-01〜10までmerge済み（PR #12 / `1b1528d`）
-- `codex/v1.0.0` … **version / Stable表記 / CHANGELOG / release asset経路だけ**
+- `main` … v1.0.0 Stable と、次回 release の tag 引数修正まで merge 済み
+- `v1.0.0` … 検査済み `6e44cfb` を指す immutable tag。GitHub Release 公開済み
+- v2 … worklist をそのまま足さず、既存 item への吸収・hook・recipe・非採用まで
+  [`plan-v2.md`](plan-v2.md) の複雑さ予算で判断する
 
 **公開済みです。** https://nasu726.github.io/Nasu-Stack/
 （`/catalog/` に部品のカタログ、`/demo/` にデモサイト、`/r/*.json` にレジストリ）
@@ -105,10 +109,15 @@ pnpm pages:build      # 公開する public/ を組み立てる（レジスト�
 pnpm release:build    # package versionに対応するGitHub Release用tarball + SHA-256
 ```
 
-v1.0.0はrelease PRをmergeし、Pagesのdeployと公開先smokeが成功したcommitへ
-`v1.0.0` tagを打ちます。tag workflowは同じ `verify` / `verify-create` をもう一度通し、
-`create-nasu-stack-1.0.0.tgz` をGitHub Releaseへ出します。PR headへ先にtagを
-打たないでください。
+v1.0.0 の release は完了しています。次回も release PR を merge し、Pages の deploy と
+公開先 smoke が成功した commit だけへ tag を打ちます。tag workflow は同じ
+`verify` / `verify-create` をもう一度通し、version 付き asset を GitHub Release へ出します。
+PR head や検査前の commit へ先に tag を打たないでください。
+
+実際の v1.0.0 tag workflow では、`pnpm` が引数区切りの `--` を script へ渡し、
+最後の Release 作成 job だけが失敗しました。製品検査は成功し、同じ hash の asset を
+既存 tag へ公開済みです。原因は PR #16 で直しました。次回は tag を打つ前に
+`release:build` を引数なし・tag 直接・`-- tag` の 3 経路で実行し、同じ失敗を防ぎます。
 
 公開したものを外から確かめる検査もあります。手元で試すときは
 `public/` を配ってから同じものを回します。
