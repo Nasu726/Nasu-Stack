@@ -198,7 +198,7 @@ is an order of magnitude more project.
 ┌─────────────────────────────────────────┐
 │  Theme      tokens.css + themes.css     │  ← color, radius, shadow, type, spacing via data-theme
 ├─────────────────────────────────────────┤
-│  Layout     Stack / Columns / Tiles     │  ← 9 spacing steps. Components own no outer margin
+│  Layout     Stack / Switcher / SidebarLayout │  ← content-aware. No outer margin
 ├─────────────────────────────────────────┤
 │  Component  ActionButton / AsyncForm    │  ← holds all the state. Backend-agnostic
 │             SiteHeader / Dialog / Tabs  │  ← nav and disclosure. ARIA and keys are ours
@@ -248,6 +248,7 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `ThemeProvider` / `ThemeSwitcher` | Theme switching, with a no-flash init script |
 | `useAction` / `useResource` | State hooks for writes and for reads |
 | `useInteractionGuard` | Prevents only overlapping UI attempts; the caller decides when to allow another |
+| `Switcher` / `SidebarLayout` | CSS-only layouts that stack when their content widths no longer fit |
 
 <details>
 <summary><b>DataTable — stop being a table when the screen is narrow</b></summary>

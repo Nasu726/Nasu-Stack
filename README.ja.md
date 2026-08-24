@@ -187,7 +187,7 @@ Web で品質を求めるとまだ人の力が重要ですが、毎回同じと�
 ┌─────────────────────────────────────────┐
 │  トンマナ層  tokens.css + themes.css     │  ← 色・角丸・影・書体・余白を data-theme で切替
 ├─────────────────────────────────────────┤
-│  レイアウト層  Stack / Columns / Tiles   │  ← 余白は 9 段階のみ。外側の余白は部品が持たない
+│  レイアウト層  Stack / Switcher / SidebarLayout │  ← 中身の成立幅で畳む。外側余白なし
 ├─────────────────────────────────────────┤
 │  部品層       ActionButton / AsyncForm   │  ← 状態を全部持つ。バックエンド非依存
 │               SiteHeader / Dialog / Tabs│  ← ナビと開閉。ARIA とキーボードは部品の担当
@@ -237,6 +237,7 @@ type Action<TInput, TOutput> = (
 | `ThemeProvider` / `ThemeSwitcher` | トンマナ切替。ちらつき防止スクリプトつき |
 | `useAction` / `useResource` | 書き込み系 / 読み取り系の状態管理フック |
 | `useInteractionGuard` | 同じ画面操作の重なりだけを防ぐ。いつ再許可するかは利用側が決める |
+| `Switcher` / `SidebarLayout` | 中身の最小幅が入らない時だけCSSで縦に畳むレイアウト |
 
 <details>
 <summary><b>DataTable — 狭い画面では表をやめる</b></summary>

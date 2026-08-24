@@ -134,7 +134,7 @@ This fills that gap.
 ┌─────────────────────────────────────────┐
 │  Theme      tokens.css + themes.css     │  color, radius, shadow, type, spacing via data-theme
 ├─────────────────────────────────────────┤
-│  Layout     Stack / Columns / Tiles     │  9 spacing steps. Components own no outer margin
+│  Layout     Stack / Switcher / SidebarLayout │  content-aware. No outer margin
 ├─────────────────────────────────────────┤
 │  Component  ActionButton / AsyncForm    │  holds all the state. Backend-agnostic
 │             SiteHeader / Dialog / Tabs  │  ARIA and keyboard are ours
@@ -235,7 +235,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 | Layer | Contents |
 |---|---|
 | Theme | `tokens.css` / `themes.css` / `prose.css` / `ThemeProvider` (4 themes, no flash) |
-| Layout | Box / Stack / Inline / Columns / Column / Tiles / Spread / ContentBlock / PageBlock / Divider / Section |
+| Layout | Box / Stack / Inline / **Switcher / SidebarLayout** / Columns / Column / Tiles / Spread / ContentBlock / PageBlock / Divider / Section |
 | Nav | SiteHeader / NavLink / SkipLink / SiteFooter |
 | Disclosure | Dialog (center, sheet) / Tabs / Disclosure / Accordion / DropdownMenu / NavDropdown |
 | Input | AsyncForm / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
