@@ -103,7 +103,7 @@ v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 
 ```bash
 pnpm install
-pnpm verify           # 29 工程（独立したものは並列）。型・ビルド・配布物・実ブラウザ
+pnpm verify           # 30 工程（独立したものは並列）。型・ビルド・配布物・実ブラウザ
 pnpm verify:create    # 入口の検査 112 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 pnpm release:build    # package versionに対応するGitHub Release用tarball + SHA-256

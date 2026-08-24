@@ -218,7 +218,7 @@ type Space = SpaceToken | (string & {});
 
 ## 5. いま作ってあるもの
 
-配布アイテム **40**。`npx shadcn add Nasu726/Nasu-Stack/<名前>` で個別に足せます。
+配布アイテム **42**。`npx shadcn add Nasu726/Nasu-Stack/<名前>` で個別に足せます。
 
 | 層 | 中身 |
 |---|---|
@@ -226,9 +226,9 @@ type Space = SpaceToken | (string & {});
 | レイアウト | Box / Stack / Inline / **Switcher / SidebarLayout** / Columns / Column / Tiles / Spread / ContentBlock / PageBlock / Divider / Section |
 | ナビ | SiteHeader / NavLink / SkipLink / SiteFooter |
 | 開閉 | Dialog（中央・シート）/ Tabs / Disclosure / Accordion / DropdownMenu / NavDropdown |
-| 入力 | AsyncForm / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
+| 入力 | AsyncForm（任意のValidator + 最初のerrorへのfocus）/ Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
 | 表示 | DataList / DataTable / AsyncBoundary / Toast / ConfirmDialog / Scrollable / Frame / Img |
-| 契約と配線 | Action / ActionSpec / ActionError / jsonRequest / upload / **createSubmit** |
+| 契約と配線 | Action / ActionSpec / ActionError / **ValidationResult / Validator / validationFailureResponse** / jsonRequest / upload / **createSubmit** |
 | フック | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard** |
 | 生成 | `buildMeta`（SEO・OGP・JSON-LD）/ `buildSitemap` / `buildRss` / `buildRobots` |
 | 検査 | `check-responsive.mjs`（**利用者にも配られます**） |
@@ -240,7 +240,7 @@ type Space = SpaceToken | (string & {});
 
 ## 6. 検査についての考え方
 
-`pnpm verify` は 29 工程、`pnpm verify:create` は 112 判定あります。
+`pnpm verify` は 30 工程、`pnpm verify:create` は 112 判定あります。
 多すぎるように見えますが、理由があります。
 
 ### 印字するだけの検査は、検査ではない

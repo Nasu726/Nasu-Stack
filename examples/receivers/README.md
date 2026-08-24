@@ -116,6 +116,10 @@ Turnstile（人かどうかを見る）と Idempotency-Key（同じ送信を 1 �
 
 `AsyncForm` と `createSubmit` は、次の形を理解します。
 
+汎用の結果型と、同じfailureを422へ変換するserver adapterは
+[validation結果契約](../../docs/validation.ja.md)にあります。この1ファイル見本は
+依存無しで貼れることを優先して同じpayloadを手で返しています。
+
 ```jsonc
 // 検証エラー（422）: それぞれの入力欄の下に出ます
 { "message": "入力内容を確認してください",

@@ -31,6 +31,7 @@ export interface UseActionOptions<TInput, TOutput> {
    * どうしても必要なら、サーバ側で同じ要求を 1 回として扱う仕組み
    * （Idempotency-Key など）と対で設計してください。
    * こちら側だけでは判断できません。
+   * `VALIDATION` / HTTP 422 は入力を直す必要があるため、自動リトライしません。
    */
   retry?: number;
   /** リトライ間隔 (ms)。関数を渡すと指数バックオフなども書けます。既定 500ms。 */
@@ -273,6 +274,16 @@ export function useAction<TInput = void, TOutput = unknown>(
               }
 
               lastError = toActionError(raw);
+
+              // 入力を直さない限り同じ結果になるvalidation failureを、delayを挟んで
+              // 自動再実行しても利用者を待たせるだけです。serverの422も同じです。
+              // network failure等のretry契約は保ちつつ、既知のvalidationはterminalにします。
+              if (
+                lastError.code === "VALIDATION" ||
+                lastError.code === 422
+              ) {
+                break;
+              }
 
               const isLast = attempt === maxAttempts - 1;
               if (isLast) break;

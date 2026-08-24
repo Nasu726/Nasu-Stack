@@ -10,7 +10,8 @@
 - [x] 同期の二重操作防止に完全な Action state machine を要求しない層の原則を追加
 - [x] 軽量 interaction guard（`useInteractionGuard`: `tryLock` / `release` だけ）
 - [x] `layout` へ Switcher / SidebarLayout の判断を吸収
-- [ ] validation contract / FieldArray と server adapter 例
+- [x] library非依存のvalidation contract / AsyncForm / server Response adapter
+- [ ] FieldArray（stable key / min-max / focus / nested path）
 - [ ] ErrorBoundary / useAutosave
 - [ ] Popover foundation / Paginator / CopyButton
 - [ ] 条件を満たした behavioral recipe

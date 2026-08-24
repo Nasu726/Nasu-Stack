@@ -229,7 +229,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 
 ## 5. What exists today
 
-**40 registry items.** Add them individually with
+**42 registry items.** Add them individually with
 `npx shadcn add Nasu726/Nasu-Stack/<name>`.
 
 | Layer | Contents |
@@ -238,9 +238,9 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 | Layout | Box / Stack / Inline / **Switcher / SidebarLayout** / Columns / Column / Tiles / Spread / ContentBlock / PageBlock / Divider / Section |
 | Nav | SiteHeader / NavLink / SkipLink / SiteFooter |
 | Disclosure | Dialog (center, sheet) / Tabs / Disclosure / Accordion / DropdownMenu / NavDropdown |
-| Input | AsyncForm / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
+| Input | AsyncForm (optional Validator + first-error focus) / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
 | Display | DataList / DataTable / AsyncBoundary / Toast / ConfirmDialog / Scrollable / Frame / Img |
-| Contract and wiring | Action / ActionSpec / ActionError / jsonRequest / upload / **createSubmit** |
+| Contract and wiring | Action / ActionSpec / ActionError / **ValidationResult / Validator / validationFailureResponse** / jsonRequest / upload / **createSubmit** |
 | Hooks | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard** |
 | Generation | `buildMeta` (SEO, OGP, JSON-LD) / `buildSitemap` / `buildRss` / `buildRobots` |
 | Checks | `check-responsive.mjs` (**shipped to users too**) |
@@ -252,7 +252,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 
 ## 6. How the checks are thought about
 
-`pnpm verify` is 29 stages; `pnpm verify:create` is 112 assertions. It looks
+`pnpm verify` is 30 stages; `pnpm verify:create` is 112 assertions. It looks
 like a lot. There's a reason.
 
 ### A check that only prints is not a check

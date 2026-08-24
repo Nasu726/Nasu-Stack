@@ -225,7 +225,8 @@ type Action<TInput, TOutput> = (
 | 名前 | 何をしてくれるか |
 |---|---|
 | `ActionButton` | 関数を渡すだけの 4 状態ボタン。連打防止・確認ダイアログ・自動リトライ |
-| `AsyncForm` + `Field` | 送信関数 1 つでフォーム完成。フィールド単位のエラー表示と自動クリア |
+| `AsyncForm` + `Field` | 送信関数1つでフォーム完成。任意のvalidation・変換済みdata・field focus・error自動クリア |
+| `ValidationResult` / `Validator` | client / serverで共有するlibrary非依存の成功・field・form結果。規則そのものは決めない |
 | `DataList` | 取得・スケルトン・空・失敗と再試行を 1 個で |
 | `AsyncBoundary` | 読込中 / エラー / 空 / データありの 4 分岐を閉じ込める |
 | `DataTable` | 並べ替え・ページング。**狭い画面では 1 行 = 1 カードに組み替え** |
@@ -238,6 +239,9 @@ type Action<TInput, TOutput> = (
 | `useAction` / `useResource` | 書き込み系 / 読み取り系の状態管理フック |
 | `useInteractionGuard` | 同じ画面操作の重なりだけを防ぐ。いつ再許可するかは利用側が決める |
 | `Switcher` / `SidebarLayout` | 中身の最小幅が入らない時だけCSSで縦に畳むレイアウト |
+
+`AsyncForm`・server `Response`・任意のschema library adapterを一緒に見る場合は、
+[validation結果契約](docs/validation.ja.md)を参照してください。
 
 <details>
 <summary><b>DataTable — 狭い画面では表をやめる</b></summary>

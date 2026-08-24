@@ -10,7 +10,7 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
 {
   const page = await open();
 
-  await page.fill('input[name="title"]', "テスト件名");
+  await page.fill('input[name="title"]', "  テスト件名  ");
   await page.selectOption('select[name="team"]', "dev");
   await page.selectOption('select[name="langs"]', ["ts", "rs", "cs"]);
   await page.check('input[name="tags"][value="web"]');
@@ -46,6 +46,11 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
     "10. 未チェックのチェックボックスもキーが届く",
     sent !== null && "agree" in sent,
     JSON.stringify(sent?.agree),
+  );
+  must(
+    "    validation success の変換済み data が action へ届く",
+    sent?.title === "テスト件名" && sent?.agree === false,
+    JSON.stringify({ title: sent?.title, agree: sent?.agree }),
   );
 
   /* ===== 12. 日付の font-size / 11. タップ領域 ================== */
@@ -104,6 +109,77 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
     "    選択群にもフィールド単位のエラーが出る",
     fieldErr.length >= 1,
     JSON.stringify(fieldErr),
+  );
+
+  const validationA11y = await page.evaluate(() => {
+    const form = document.querySelector('[data-testid="validation-form"] form');
+    const active = document.activeElement;
+    const describedBy = active?.getAttribute("aria-describedby") ?? "";
+    const described = describedBy
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+    return {
+      actionCalls: document
+        .querySelector('[data-testid="validation-form"]')
+        ?.getAttribute("data-action-calls"),
+      activeName: active?.getAttribute("name"),
+      activeInvalid: active?.getAttribute("aria-invalid"),
+      describedAlerts: described.filter((node) => node.getAttribute("role") === "alert").length,
+      allAlerts: form?.querySelectorAll('p[role="alert"]').length ?? 0,
+    };
+  });
+  must(
+    "    client validation が失敗したら action を呼ばない",
+    validationA11y.actionCalls === "0",
+    `${validationA11y.actionCalls} 回`,
+  );
+  must(
+    "    submit 後は DOM 順で最初の invalid field へ focus する",
+    validationA11y.activeName === "title",
+    validationA11y.activeName,
+  );
+  must(
+    "    focused field は aria-invalid と aria-describedby で error を辿れる",
+    validationA11y.activeInvalid === "true" && validationA11y.describedAlerts === 1,
+    JSON.stringify(validationA11y),
+  );
+  must(
+    "    field error と form error を二重表示しない",
+    validationA11y.allAlerts === 2,
+    `${validationA11y.allAlerts} 件`,
+  );
+
+  // client error を直した次の送信で server が別 field を拒否する。
+  // 前の client error と server error が同時に残らないことを見ます。
+  await page.fill('input[name="title"]', "server case");
+  await page.selectOption('select[name="team"]', "qa");
+  await page.check('input[name="plan"][value="pro"]');
+  await page.getByRole("button", { name: "送信して中身を見る" }).click();
+  await page.waitForTimeout(700);
+  const serverValidation = await page.evaluate(() => {
+    const form = document.querySelector('[data-testid="validation-form"] form');
+    return {
+      actionCalls: document
+        .querySelector('[data-testid="validation-form"]')
+        ?.getAttribute("data-action-calls"),
+      activeName: document.activeElement?.getAttribute("name"),
+      alerts: [...(form?.querySelectorAll('p[role="alert"]') ?? [])].map((node) =>
+        node.textContent?.trim(),
+      ),
+    };
+  });
+  must(
+    "    client success 後の server validation は action から戻る",
+    serverValidation.actionCalls === "1" && serverValidation.activeName === "team",
+    JSON.stringify(serverValidation),
+  );
+  must(
+    "    server error へ切り替わったら古い client error を残さない",
+    serverValidation.alerts.length === 1 &&
+      serverValidation.alerts[0]?.includes("QA チーム"),
+    JSON.stringify(serverValidation.alerts),
   );
 
   await page.close();

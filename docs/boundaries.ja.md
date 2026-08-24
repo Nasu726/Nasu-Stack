@@ -90,6 +90,18 @@ JSON として parse できても、アプリが期待する object だとは限
 Field・`FileDrop`・form helper は、その場で誤りを伝え、誤送信を減らせます。
 呼び出す側はすべてを迂回できます。全ての値と権限について、最終判断はサーバ側です。
 
+### validation結果は判定を運ぶが、判定そのものは作らない
+
+`ValidationResult` / `Validator` は、parse済みdata・field error・form errorを
+client / serverの境界で運ぶ形を揃えます。`runValidation` はNasu Stack自身の
+publicな結果形が正しいかを検査し、`validationFailureResponse` はfailureを既存の
+form transportへ変換します。
+
+どのemailが正しいか、誰がrecordを編集できるか、値が一意かは決めません。アプリが
+schema libraryを選び、domain ruleを所有します。同じvalidatorでbrowser feedbackを
+出していても、正規の判定はserverで再実行します。認証・認可・CSRF・rate limit・
+database constraint・response schemaはserverの仕事のままです。
+
 ### リトライには冪等性の判断が要る
 
 `retry` は、同じ要求を繰り返して安全な操作にだけ有効にします。

@@ -103,6 +103,19 @@ Fields, `FileDrop`, and the form helpers can give immediate feedback and keep
 invalid data from being submitted accidentally. A caller can bypass all of
 them. The server remains authoritative for every value and permission.
 
+### A validation result carries a decision; it does not make one
+
+`ValidationResult` / `Validator` standardize how parsed data, field errors, and
+form errors cross the client / server boundary. `runValidation` checks that
+Nasu Stack's own public result shape is well formed, and
+`validationFailureResponse` adapts a failure to the existing form transport.
+
+They do not decide which email is valid, whether a user may edit a record, or
+whether a value is unique. The application chooses a schema library and owns
+domain rules. The server reruns every authoritative check even when the same
+validator already gave browser feedback. Authentication, authorization, CSRF,
+rate limits, database constraints, and response schemas remain server work.
+
 ### Retry requires an idempotency decision
 
 Only enable `retry` for an operation where repeating the same request is safe.

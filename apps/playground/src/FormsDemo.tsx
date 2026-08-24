@@ -13,6 +13,7 @@ import { DataTable, type TableColumn } from "@/components/ui/data-table";
 import { useOptimisticList } from "@/hooks/use-optimistic-list";
 import { useToast } from "@/components/ui/action-provider";
 import { ActionError } from "@/lib/action";
+import type { ValidationResult, Validator } from "@/lib/validation";
 import { Panel } from "./Panel";
 import { t } from "./lang";
 
@@ -30,35 +31,79 @@ export function FormsDemo() {
  * 入力部品 + FormData の畳み込み
  * ============================================================== */
 
+interface DemoFormData {
+  title: string;
+  team: string;
+  langs: string[];
+  tags: string[];
+  plan: string;
+  due: string;
+  agree: boolean;
+}
+
+function strings(value: FormValues[string]): string[] {
+  if (Array.isArray(value)) return value.map(String);
+  return value === undefined || value === "" ? [] : [String(value)];
+}
+
+const validateDemoForm: Validator<DemoFormData, FormValues> = (
+  values,
+): ValidationResult<DemoFormData> => {
+  const title = String(values.title ?? "").trim();
+  const plan = String(values.plan ?? "");
+  const fields: Record<string, string[]> = {};
+  if (title.length < 3) {
+    fields.title = [t("件名は 3 文字以上で入力してください")];
+  }
+  if (!plan) fields.plan = [t("プランを選んでください")];
+  if (Object.keys(fields).length > 0) {
+    return {
+      ok: false,
+      message: t("入力内容を確認してください"),
+      fields,
+    };
+  }
+  return {
+    ok: true,
+    data: {
+      title,
+      team: String(values.team ?? ""),
+      langs: strings(values.langs),
+      tags: strings(values.tags),
+      plan,
+      due: String(values.due ?? ""),
+      agree: values.agree !== "",
+    },
+  };
+};
+
 function InputsSection() {
-  const [sent, setSent] = React.useState<FormValues | null>(null);
+  const [sent, setSent] = React.useState<DemoFormData | null>(null);
+  const [actionCalls, setActionCalls] = React.useState(0);
 
   return (
     <Panel
-      title={t("入力部品と formDataToObject")}
-      description={
-        <>
-          <code className="text-fg">AsyncForm</code> {t("は送信のとき")}{" "}
-          <code className="text-fg">formDataToObject</code>{" "}
-          {t("を通してから")} <code className="text-fg">action</code> {t("を呼びます。")}
-          <strong className="text-fg">{t("同じ名前の入力は配列に畳まれ")}</strong>{t("、\r\n          チェックの外れているチェックボックスも空文字で届きます。\r\n          下のフォームを送ると、")}<code className="text-fg">action</code>{" "}
-          {t("が実際に受け取った値がそのまま出ます。")}
-        </>
-      }
-      code={t("<AsyncForm action={(values) => api.save(values)}>…</AsyncForm>\n\n// values は畳んだあとの形で届きます\n{\n  title: \"打ち合わせの記録\",\n  langs: [\"ts\", \"rs\"],   // <select multiple> で 2 つ選んだ\n  tags:  [\"web\"],        // 同じ name のチェックボックス\n  plan:  \"pro\",\n  agree: \"\"              // チェックを外したまま送った\n}\n\n// 自分で <form> を書くときは、直接呼べます\nconst values = formDataToObject(new FormData(formEl));")}
+      title={t("入力部品と validation contract")}
+      description={t("AsyncForm は FormData を畳んで validate に渡します。failure なら field error を表示し、success なら変換済み data だけを action へ渡します。ブラウザ側の検査は早い feedback であり、server 側の正規の判定は置き換えません。")}
+      code={t("const validate: Validator<Profile, FormValues> = (values) => {\n  if (!values.plan) {\n    return { ok: false, fields: { plan: [\"選んでください\"] } };\n  }\n  return { ok: true, data: {\n    title: String(values.title).trim(),\n    plan: String(values.plan),\n  } };\n};\n\n<AsyncForm validate={validate} action={(profile) => api.save(profile)}>\n  …\n</AsyncForm>")}
     >
       <Stack space="lg">
-        <Box className="max-w-md">
+        <Box className="max-w-md" data-testid="validation-form" data-action-calls={actionCalls}>
           <AsyncForm
+            validate={validateDemoForm}
+            retry={2}
             action={async (values) => {
+              setActionCalls((count) => count + 1);
               await new Promise((r) => setTimeout(r, 400));
-              setSent(values);
-              if (!values.plan) {
-                throw new ActionError("validation", {
+              // server が返す field error も同じ表示先へ戻ります。
+              if (values.team === "qa") {
+                throw new ActionError("server validation", {
+                  code: 422,
                   displayMessage: t("入力内容を確認してください"),
-                  fields: { plan: t("プランを選んでください") },
+                  fields: { team: t("QA チームは現在選べません") },
                 });
               }
+              setSent(values);
               return values;
             }}
             submitLabel={t("送信して中身を見る")}
