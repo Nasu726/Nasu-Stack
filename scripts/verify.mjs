@@ -162,6 +162,7 @@ await group([
      サーバの文言が漏れていても画面には何か出ますし、既定値が上書き
      されても送信そのものは成功します。実ブラウザでは出てきません。 */
   ["単体: エラー文言 / 既定値 / accept", "node", ["scripts/verify-action-unit.mjs"]],
+  ["単体: validation 結果契約", "node", ["scripts/verify-validation-unit.mjs"]],
   ["単体: useResource の query key", "node", ["scripts/verify-resource-key-unit.mjs"]],
   /* 受け口。**「403 が返った」ではなく「メールが 0 回だった」を見ます。**
      応答を読めなくても、副作用はサーバで起きているためです。 */

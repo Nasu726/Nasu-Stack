@@ -31,6 +31,7 @@ const PAIRS = [
   ["docs/overview.md", "docs/overview.ja.md"],
   ["docs/security.md", "docs/security.ja.md"],
   ["docs/astro-and-react.md", "docs/astro-and-react.ja.md"],
+  ["docs/validation.md", "docs/validation.ja.md"],
 ];
 
 const problems = [];

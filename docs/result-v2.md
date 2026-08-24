@@ -73,8 +73,32 @@
 - [x] `sidePosition=end` の DOM / 見た目 / キーボード順が一致する検査がある
 - [x] 日英 README / overview / catalog に役割と例がある
 - [x] `pnpm verify` 29 / 29、`pnpm verify:create` 112 / 112 が成功する
-- [ ] PR CI が成功する
-- [ ] `main` へ merge される
+- [x] PR CI が成功する（verify 4m45s / verify-create 3m05s）
+- [x] `main` へ merge される（PR #19 / `6346f2d`）
+
+## Wave 3 — validation result contract
+
+### 実施
+
+- library非依存の `ValidationResult<T>` / `Validator<T, Input>` を独立itemとして追加
+- registry item は 41 → 42
+- successの変換済み`data`、field error、form-level errorだけを共通契約にした
+- `runValidation` がJavaScript / adapterから来る壊れた結果を実行時にfail closedにする
+- 複数field文言は先頭の有効な1件へ揃え、nested pathは書き換えない
+- `AsyncForm validate` はsuccess時だけactionを呼び、最初のinvalid controlへfocusする
+- `validationFailureResponse` はWeb-standard `Response`で422 payloadへ変換する
+- schema・domain rule・認証・認可・CSRF・rate limit・response schemaは所有しない
+
+### 完了条件
+
+- [x] success / field / form / transformed data / malformed resultの単体検査がある
+- [x] client failure時にactionを呼ばず、focus / ARIAでerrorを辿れる実ブラウザ検査がある
+- [x] client errorからserver errorへ切り替えても二重表示しない検査がある
+- [x] server adapterが422・safe payload・header保持・2xx拒否を満たす検査がある
+- [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
+- [x] `pnpm verify` 30 / 30、`pnpm verify:create` 112 / 112 が成功する
+- [ ] PR CIが成功する
+- [ ] `main`へmergeされる
 
 ## 実装台帳
 
@@ -82,8 +106,8 @@
 |---|---|---|---|
 | 0: 計画 / boundary | 完了 | #17 | `770d131` / verify 29工程 / verify-create 112判定 |
 | 1: 軽量 interaction guard | 完了 | #18 | `d03133e` / verify 29工程 / verify-create 112判定 |
-| 2: Switcher / SidebarLayout | 検証中 | — | この文書の Wave 2 |
-| 3: Validation contract | 未着手 | — | — |
+| 2: Switcher / SidebarLayout | 完了 | #19 | `6346f2d` / verify 29工程 / verify-create 112判定 |
+| 3: Validation contract | 実装中 | — | verify 30工程 / verify-create 112判定 / 単体17件 / form実ブラウザ27件 |
 | 4: FieldArray | 未着手 | — | — |
 | 5: ErrorBoundary / useAutosave | 未着手 | — | — |
 | 6: Popover foundation | 未着手 | — | — |

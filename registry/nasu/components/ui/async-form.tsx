@@ -2,8 +2,18 @@
 
 import * as React from "react";
 import { cn, inputClass } from "@/lib/utils";
-import { type ActionSpec, resolveAction } from "@/lib/action";
+import {
+  ActionError,
+  type Action,
+  type ActionSpec,
+  resolveAction,
+} from "@/lib/action";
 import { useActionDefaults } from "@/lib/action-defaults";
+import {
+  normalizeValidationFailure,
+  runValidation,
+  type Validator,
+} from "@/lib/validation";
 import { useAction, type UseActionOptions } from "@/hooks/use-action";
 import { Button } from "@/components/ui/action-button";
 import { AlertIcon, CheckIcon, Spinner } from "@/components/ui/spinner";
@@ -73,18 +83,12 @@ const FormContext = React.createContext<FormCtx | null>(null);
  * AsyncForm
  * ---------------------------------------------------------------- */
 
-export interface AsyncFormProps<TOutput>
+interface AsyncFormBaseProps<TOutput>
   extends Omit<
       React.FormHTMLAttributes<HTMLFormElement>,
       "onSubmit" | "action" | "onError"
     >,
     UseActionOptions<FormValues, TOutput> {
-  /**
-   * 送信時に呼ばれる関数。フォームの中身がプレーンなオブジェクトで渡ります。
-   * バリデーションに失敗したら ActionError の fields にフィールド名を入れて throw すると、
-   * 該当の入力欄の下へ自動で表示されます。
-   */
-  action: ActionSpec<FormValues, TOutput>;
   /** 送信ボタンのラベル。既定「送信する」。 */
   submitLabel?: React.ReactNode;
   /** 成功時に表示するメッセージ。 */
@@ -92,6 +96,31 @@ export interface AsyncFormProps<TOutput>
   /** 成功したらフォームを初期化するか。既定 true。 */
   resetOnSuccess?: boolean;
   children?: React.ReactNode;
+}
+
+/** validationで変換しない通常のAsyncForm。actionにはFormValuesが届きます。 */
+export interface AsyncFormProps<TOutput = unknown>
+  extends AsyncFormBaseProps<TOutput> {
+  action: ActionSpec<FormValues, TOutput>;
+  /** dataの型を変換する場合はValidatedAsyncFormProps側の必須propになります。 */
+  validate?: never;
+}
+
+/** validation successの変換済みdataをactionへ渡すAsyncForm。 */
+export interface ValidatedAsyncFormProps<TData, TOutput = unknown>
+  extends AsyncFormBaseProps<TOutput> {
+  /** lifecycle callbackの第2引数は、変換前のFormValuesのままです。 */
+  /**
+   * 送信時に呼ばれる関数。validatorが返した変換後の`data`が渡ります。
+   * バリデーションに失敗したら ActionError の fields にフィールド名を入れて throw すると、
+   * 該当の入力欄の下へ自動で表示されます。
+   */
+  action: ActionSpec<TData, TOutput>;
+  /**
+   * library 非依存の validation contract。成功時の `data` だけを action へ渡します。
+   * ブラウザ側では早い feedback のために使い、正規の判定は server 側でも行ってください。
+   */
+  validate: Validator<TData, FormValues>;
 }
 
 /**
@@ -102,6 +131,7 @@ export interface AsyncFormProps<TOutput>
  *   - FormData → オブジェクト変換
  *   - 送信中のボタン無効化・二重送信防止
  *   - フィールド単位のエラー表示と、入力し直したときのクリア
+ *   - 最初のフィールドエラーへのフォーカス（validation failureは自動retryしない）
  *   - 成功メッセージの表示と自動消去
  *
  * ```tsx
@@ -111,8 +141,15 @@ export interface AsyncFormProps<TOutput>
  * </AsyncForm>
  * ```
  */
-export function AsyncForm<TOutput = unknown>({
+export function AsyncForm<TOutput = unknown>(
+  props: AsyncFormProps<TOutput>,
+): React.ReactElement;
+export function AsyncForm<TData, TOutput = unknown>(
+  props: ValidatedAsyncFormProps<TData, TOutput>,
+): React.ReactElement;
+export function AsyncForm<TData = FormValues, TOutput = unknown>({
   action,
+  validate,
   submitLabel = "送信する",
   successMessage = "送信しました",
   resetOnSuccess = true,
@@ -126,18 +163,39 @@ export function AsyncForm<TOutput = unknown>({
   retryDelay,
   guard,
   ...formProps
-}: AsyncFormProps<TOutput>) {
+}: AsyncFormProps<TOutput> | ValidatedAsyncFormProps<TData, TOutput>) {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [cleared, setCleared] = React.useState<Set<string>>(new Set());
   const defaults = useActionDefaults();
 
   const resolved = React.useMemo(
-    () => resolveAction<FormValues, TOutput>(action),
+    () => resolveAction<TData, TOutput>(action as ActionSpec<TData, TOutput>),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [typeof action === "function" ? action : JSON.stringify(action)],
   );
 
-  const state = useAction<FormValues, TOutput>(resolved, {
+  const validatedAction = React.useMemo<Action<FormValues, TOutput>>(
+    () => async (values, ctx) => {
+      const validator = validate as Validator<TData, FormValues> | undefined;
+      if (!validator) {
+        return resolved(values as TData, ctx);
+      }
+      const result = await runValidation(validator, values);
+      if (!result.ok) {
+        const failure = normalizeValidationFailure(result);
+        throw new ActionError("validation failed", {
+          code: "VALIDATION",
+          displayMessage: failure.message ?? "validation failed",
+          fields: failure.fields,
+          cause: result,
+        });
+      }
+      return resolved(result.data, ctx);
+    },
+    [resolved, validate],
+  );
+
+  const state = useAction<FormValues, TOutput>(validatedAction, {
     onSuccess: async (data, input) => {
       if (resetOnSuccess) formRef.current?.reset();
       // Promise を return/await して、useAction の callSafely まで届けます。
@@ -174,6 +232,27 @@ export function AsyncForm<TOutput = unknown>({
   // 新しいエラーが来たらクリア済みフラグをリセット
   React.useEffect(() => {
     setCleared(new Set());
+  }, [state.error]);
+
+  // 新しい field error が来たら、DOM 順で最初の該当 control へ移します。
+  // visual order や object の index ではなく、実際の form control の順を使うので、
+  // RadioGroup や後から追加される nested field でも読み上げ順と一致します。
+  React.useEffect(() => {
+    if (!state.error || !formRef.current) return;
+    const names = new Set(Object.keys(state.error.fields ?? {}));
+    if (names.size === 0) return;
+
+    const target = Array.from(formRef.current.elements).find(
+      (control): control is HTMLElement => {
+        if (!(control instanceof HTMLElement)) return false;
+        const name = control.getAttribute("name");
+        if (!name || !names.has(name)) return false;
+        if (control.getAttribute("type") === "hidden") return false;
+        if ("disabled" in control && control.disabled === true) return false;
+        return control.tabIndex >= 0;
+      },
+    );
+    target?.focus();
   }, [state.error]);
 
   const clearField = React.useCallback((name: string) => {

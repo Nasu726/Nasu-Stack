@@ -17,6 +17,19 @@
       ]
     },
     {
+      "name": "validation",
+      "type": "registry:lib",
+      "title": "Validation 結果契約",
+      "description": "schema library を選ばず、成功データ・field error・form error の形だけを client / server で共有します。Web-standard の 422 Response adapter つき。",
+      "files": [
+        {
+          "path": "registry/nasu/lib/validation.ts",
+          "type": "registry:lib",
+          "target": "lib/validation.ts"
+        }
+      ]
+    },
+    {
       "name": "upload",
       "type": "registry:lib",
       "title": "アップロードの契約とヘルパ",
@@ -322,8 +335,9 @@
       "name": "async-form",
       "type": "registry:block",
       "title": "AsyncForm + Field",
-      "description": "送信関数を 1 つ渡すだけのフォーム。同名の値を配列に畳むので複数選択も壊れません。フィールド単位のエラー表示と自動クリアつき。",
+      "description": "送信関数を1つ渡すだけのフォーム。任意のValidatorから変換済みdataをactionへ渡し、field errorをARIAで関連付けて最初の入力へfocusします。",
       "registryDependencies": [
+        "Nasu726/Nasu-Stack/validation",
         "Nasu726/Nasu-Stack/use-action",
         "Nasu726/Nasu-Stack/action-defaults",
         "Nasu726/Nasu-Stack/action-button",

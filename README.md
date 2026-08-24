@@ -236,7 +236,8 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | Name | What it does for you |
 |---|---|
 | `ActionButton` | Four-state button from one function. Double-click guard, confirm dialog, retry |
-| `AsyncForm` + `Field` | A whole form from one submit function. Per-field errors that clear themselves |
+| `AsyncForm` + `Field` | A whole form from one submit function. Optional validation, transformed data, field focus, and errors that clear themselves |
+| `ValidationResult` / `Validator` | Library-independent success / field / form result shared by client and server; it does not define your rules |
 | `DataList` | Fetch, skeleton, empty, failure, and retry in a single component |
 | `AsyncBoundary` | Wraps the loading / error / empty / loaded fork |
 | `DataTable` | Sorting and paging. **Below tablet width it becomes one card per row** |
@@ -249,6 +250,9 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `useAction` / `useResource` | State hooks for writes and for reads |
 | `useInteractionGuard` | Prevents only overlapping UI attempts; the caller decides when to allow another |
 | `Switcher` / `SidebarLayout` | CSS-only layouts that stack when their content widths no longer fit |
+
+The [validation contract guide](docs/validation.md) shows the `AsyncForm`,
+server `Response`, and optional schema-library adapter paths together.
 
 <details>
 <summary><b>DataTable — stop being a table when the screen is narrow</b></summary>
