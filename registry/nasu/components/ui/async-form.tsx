@@ -75,6 +75,8 @@ interface FormCtx {
   isPending: boolean;
   /** 入力が変わったらそのフィールドのエラーを消す */
   clearField: (name: string) => void;
+  /** FieldArray の構造が変わったら、その path 以下の古いエラーを消す。 */
+  clearFieldTree: (name: string) => void;
 }
 
 const FormContext = React.createContext<FormCtx | null>(null);
@@ -166,6 +168,9 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
 }: AsyncFormProps<TOutput> | ValidatedAsyncFormProps<TData, TOutput>) {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [cleared, setCleared] = React.useState<Set<string>>(new Set());
+  const [clearedTrees, setClearedTrees] = React.useState<Set<string>>(
+    new Set(),
+  );
   const defaults = useActionDefaults();
 
   const resolved = React.useMemo(
@@ -223,15 +228,19 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
   const fieldErrors = React.useMemo(() => {
     const out: Record<string, string> = {};
     for (const [k, v] of Object.entries(rawFieldErrors)) {
-      if (!cleared.has(k)) out[k] = v;
+      const treeWasCleared = Array.from(clearedTrees).some(
+        (root) => k === root || k.startsWith(`${root}.`),
+      );
+      if (!cleared.has(k) && !treeWasCleared) out[k] = v;
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(rawFieldErrors), cleared]);
+  }, [JSON.stringify(rawFieldErrors), cleared, clearedTrees]);
 
   // 新しいエラーが来たらクリア済みフラグをリセット
   React.useEffect(() => {
     setCleared(new Set());
+    setClearedTrees(new Set());
   }, [state.error]);
 
   // 新しい field error が来たら、DOM 順で最初の該当 control へ移します。
@@ -264,14 +273,28 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
     });
   }, []);
 
+  const clearFieldTree = React.useCallback((name: string) => {
+    setClearedTrees((prev) => {
+      if (prev.has(name)) return prev;
+      const next = new Set(prev);
+      next.add(name);
+      return next;
+    });
+  }, []);
+
   const ctx = React.useMemo<FormCtx>(
-    () => ({ fieldErrors, isPending: state.isPending, clearField }),
-    [fieldErrors, state.isPending, clearField],
+    () => ({
+      fieldErrors,
+      isPending: state.isPending,
+      clearField,
+      clearFieldTree,
+    }),
+    [fieldErrors, state.isPending, clearField, clearFieldTree],
   );
 
   // フィールドに紐づかない、フォーム全体のエラー
   const generalError =
-    state.isError && Object.keys(fieldErrors).length === 0
+    state.isError && Object.keys(rawFieldErrors).length === 0
       ? state.error?.displayMessage
       : undefined;
 
@@ -344,6 +367,8 @@ export interface FieldState {
   describedBy?: string;
   /** 入力し直したらこのフィールドのエラーを消します。 */
   clear: () => void;
+  /** この name と `name.*` 以下のエラーをまとめて消します。 */
+  clearTree: () => void;
 }
 
 export function useFieldState(
@@ -351,6 +376,8 @@ export function useFieldState(
   options: { hint?: string } = {},
 ): FieldState {
   const ctx = React.useContext(FormContext);
+  const clearField = ctx?.clearField;
+  const clearFieldTree = ctx?.clearFieldTree;
   const id = React.useId();
   const error = ctx?.fieldErrors[name];
   const describedBy =
@@ -363,7 +390,11 @@ export function useFieldState(
     error,
     disabled: ctx?.isPending ?? false,
     describedBy,
-    clear: React.useCallback(() => ctx?.clearField(name), [ctx, name]),
+    clear: React.useCallback(() => clearField?.(name), [clearField, name]),
+    clearTree: React.useCallback(
+      () => clearFieldTree?.(name),
+      [clearFieldTree, name],
+    ),
   };
 }
 

@@ -9,6 +9,7 @@ import {
   RadioGroup,
   SelectField,
 } from "@/components/ui/form-fields";
+import { FieldArray } from "@/components/ui/field-array";
 import { DataTable, type TableColumn } from "@/components/ui/data-table";
 import { useOptimisticList } from "@/hooks/use-optimistic-list";
 import { useToast } from "@/components/ui/action-provider";
@@ -21,6 +22,7 @@ export function FormsDemo() {
   return (
     <Stack space="3xl">
       <InputsSection />
+      <FieldArraySection />
       <SelectionSection />
       <OptimisticSection />
     </Stack>
@@ -174,6 +176,148 @@ function InputsSection() {
                 {t("実際に送信された値")}
               </span>
               <pre className="overflow-x-auto text-[11px] leading-relaxed">
+                <code>{JSON.stringify(sent, null, 2)}</code>
+              </pre>
+            </Stack>
+          </Box>
+        )}
+      </Stack>
+    </Panel>
+  );
+}
+
+/* ================================================================
+ * FieldArray
+ * ============================================================== */
+
+interface MemberDraft {
+  email: string;
+}
+
+interface MembersData {
+  members: MemberDraft[];
+}
+
+const validateMembers: Validator<MembersData, FormValues> = (values) => {
+  const members = Object.entries(values)
+    .flatMap(([name, value]) => {
+      const match = /^members\.(\d+)\.email$/.exec(name);
+      return match
+        ? [{ index: Number(match[1]), email: String(value ?? "").trim() }]
+        : [];
+    })
+    .sort((a, b) => a.index - b.index);
+  const fields: Record<string, string> = {};
+  for (const member of members) {
+    if (!member.email.includes("@")) {
+      fields[`members.${member.index}.email`] = t(
+        "メールアドレスを入力してください",
+      );
+    }
+  }
+  if (members.length < 1) {
+    fields.members = t("メンバーを 1 人以上追加してください");
+  }
+  return Object.keys(fields).length > 0
+    ? { ok: false, fields }
+    : {
+        ok: true,
+        data: { members: members.map(({ email }) => ({ email })) },
+      };
+};
+
+function FieldArraySection() {
+  const [sent, setSent] = React.useState<MembersData | null>(null);
+
+  return (
+    <Panel
+      title="FieldArray"
+      description={t(
+        "繰り返し入力の stable key・nested name・min/max・focus をまとめます。追加後は新しい行、削除後は隣の行へ移り、残った入力値は index が変わっても消えません。並べ替え・永続 ID・正規の validation はアプリと server の担当です。",
+      )}
+      code={t(
+        '<FieldArray\n  name="members" label="Members" min={1} max={3}\n  defaultItems={[{ email: "" }]}\n  createItem={() => ({ email: "" })}\n  addLabel="Add member"\n  removeLabel={({ index }) => `Remove member ${index + 1}`}\n  emptyMessage="No members yet"\n>\n  {({ name, index, defaultValue }) => (\n    <Field name={`${name}.email`} label={`Member ${index + 1} email`}\n      defaultValue={defaultValue.email} />\n  )}\n</FieldArray>',
+      )}
+    >
+      <Stack space="lg">
+        <Box className="max-w-lg" data-testid="field-array-form">
+          <AsyncForm
+            validate={validateMembers}
+            action={async (data) => {
+              await new Promise((resolve) => setTimeout(resolve, 120));
+              setSent(data);
+              return data;
+            }}
+            submitLabel={t("メンバーを保存")}
+            successMessage={t("メンバーを保存しました")}
+          >
+            <FieldArray<MemberDraft>
+              name="members"
+              label={t("メンバー")}
+              hint={t("1〜3 人。行を消しても、残った入力値は保たれます。")}
+              min={1}
+              max={3}
+              defaultItems={[
+                { email: "first@example.com" },
+                { email: "second@example.com" },
+              ]}
+              createItem={() => ({ email: "" })}
+              addLabel={t("メンバーを追加")}
+              removeLabel={(item) =>
+                t("メンバー {0} を削除").replace(
+                  "{0}",
+                  String(item.index + 1),
+                )
+              }
+              emptyMessage={t("メンバーはまだいません")}
+            >
+              {(item) => (
+                <Field
+                  name={`${item.name}.email`}
+                  type="email"
+                  label={t("メンバー {0} のメール").replace(
+                    "{0}",
+                    String(item.index + 1),
+                  )}
+                  defaultValue={item.defaultValue.email}
+                />
+              )}
+            </FieldArray>
+          </AsyncForm>
+        </Box>
+
+        <Box className="max-w-lg" data-testid="field-array-empty">
+          <FieldArray<{ note: string }>
+            name="notes"
+            label={t("任意の補足")}
+            hint={t("min={0} なら空のままでも構いません。")}
+            min={0}
+            max={1}
+            createItem={() => ({ note: "" })}
+            addLabel={t("補足を追加")}
+            removeLabel={() => t("補足を削除")}
+            emptyMessage={t("補足はまだありません。必要なら追加できます。")}
+          >
+            {(item) => (
+              <Field
+                name={`${item.name}.text`}
+                label={t("補足")}
+                defaultValue={item.defaultValue.note}
+              />
+            )}
+          </FieldArray>
+        </Box>
+
+        {sent && (
+          <Box padding="sm" background="muted" radius="md">
+            <Stack space="2xs">
+              <span className="text-xs font-medium text-muted-fg">
+                {t("保存したメンバー")}
+              </span>
+              <pre
+                className="overflow-x-auto text-[11px] leading-relaxed"
+                data-testid="field-array-result"
+              >
                 <code>{JSON.stringify(sent, null, 2)}</code>
               </pre>
             </Stack>

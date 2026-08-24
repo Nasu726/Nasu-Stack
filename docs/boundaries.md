@@ -63,6 +63,7 @@ copy and own, not a new framework or a sealed finished product.
 | Async UI state | Loading, success, failure, double-submit protection, passing an abort signal, and preventing a cancelled or stale result from returning to the UI | What success means, which message to show, and whether the user should be offered cancellation | Whether work can actually be cancelled, rolled back, or committed atomically |
 | Re-entrant interaction | Preventing the same UI operation from overlapping within the selected primitive's documented contract | Which operations may repeat and when to enable them again | Idempotency, deduplication, and treating side effects as one operation |
 | Input and data | Browser-side guidance and runtime checks for Nasu Stack's own public contracts | Domain rules and the shape you expect from an API | Authentication, authorization, authoritative validation, CSRF protection, and response schemas |
+| Repeated fields | Stable UI identity, indexed names, min/max controls, and focus after add/remove | Row content, persistent IDs, ordering, and array domain rules | Authoritative cardinality, uniqueness, authorization, and database constraints |
 | JSON transport | Treating an empty successful response as empty, accepting JSON media types, and failing closed on malformed or non-JSON bodies | Mapping a parsed value into a domain type, or using a different transport helper | Correct status codes, media types, response bodies, and safe error reporting |
 | Retry | A bounded retry mechanism and a controlled failure when retry policy code is invalid | Opting in only when repeating the operation is safe | Idempotency, deduplication, transaction handling, and rate limits |
 | Uploads | Immediate browser feedback about the selected file | Product limits and the experience after acceptance or rejection | Size and type enforcement, magic-byte inspection, malware handling, storage, and authorization |
@@ -115,6 +116,15 @@ whether a value is unique. The application chooses a schema library and owns
 domain rules. The server reruns every authoritative check even when the same
 validator already gave browser feedback. Authentication, authorization, CSRF,
 rate limits, database constraints, and response schemas remain server work.
+
+### A FieldArray key is not a record identity
+
+`FieldArray` keeps a browser row stable while neighboring indexes change. Its
+key is intentionally not submitted and does not survive a reload. The app owns
+real record IDs and ordering; the server rechecks cardinality, uniqueness,
+authorization, and database constraints. Client `min` / `max` only prevent an
+awkward UI action. Reorder is outside this primitive because it needs its own
+keyboard, announcement, persistence, and conflict contract.
 
 ### Retry requires an idempotency decision
 

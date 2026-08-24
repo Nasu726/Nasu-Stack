@@ -200,7 +200,7 @@ is an order of magnitude more project.
 ├─────────────────────────────────────────┤
 │  Layout     Stack / Switcher / SidebarLayout │  ← content-aware. No outer margin
 ├─────────────────────────────────────────┤
-│  Component  ActionButton / AsyncForm    │  ← holds all the state. Backend-agnostic
+│  Component  ActionButton / AsyncForm / FieldArray │  ← stateful. Backend-agnostic
 │             SiteHeader / Dialog / Tabs  │  ← nav and disclosure. ARIA and keys are ours
 ├─────────────────────────────────────────┤
 │  Contract   Action / ActionSpec         │  ← just (input, ctx) => Promise<output>
@@ -238,6 +238,7 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `ActionButton` | Four-state button from one function. Double-click guard, confirm dialog, retry |
 | `AsyncForm` + `Field` | A whole form from one submit function. Optional validation, transformed data, field focus, and errors that clear themselves |
 | `ValidationResult` / `Validator` | Library-independent success / field / form result shared by client and server; it does not define your rules |
+| `FieldArray` | Stable repeated fields with indexed names, min/max controls, and add/remove focus; no reorder or domain rules |
 | `DataList` | Fetch, skeleton, empty, failure, and retry in a single component |
 | `AsyncBoundary` | Wraps the loading / error / empty / loaded fork |
 | `DataTable` | Sorting and paging. **Below tablet width it becomes one card per row** |
@@ -253,6 +254,8 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 
 The [validation contract guide](docs/validation.md) shows the `AsyncForm`,
 server `Response`, and optional schema-library adapter paths together.
+The [FieldArray guide](docs/field-array.md) covers nested paths, UI keys,
+focus, reset, and the lower-level `fieldArrayItemName()` path.
 
 <details>
 <summary><b>DataTable — stop being a table when the screen is narrow</b></summary>
