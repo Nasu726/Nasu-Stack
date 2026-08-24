@@ -135,6 +135,113 @@ must(
 await page.setViewportSize({ width: 1100, height: 900 });
 await page.waitForTimeout(200);
 
+/* --- 4.1 Switcher は viewport でなく、自分の器の幅を見る -----------
+   viewport は 1100px のまま、Switcher 自身だけを狭めます。
+   breakpoint 実装なら変化しないので、container-aware な契約を直接見られます。 */
+async function switcherColumns(width) {
+  const switcher = page.getByTestId("switcher-layout");
+  await switcher.evaluate((el, w) => {
+    el.style.width = `${w}px`;
+  }, width);
+  await page.waitForTimeout(150);
+  return switcher.evaluate((el) => ({
+    columns: getComputedStyle(el).gridTemplateColumns.split(" ").length,
+    overflow: el.scrollWidth - el.clientWidth,
+    childWidths: [...el.children].map((child) =>
+      Math.round(child.getBoundingClientRect().width),
+    ),
+  }));
+}
+
+const switcherWide = await switcherColumns(700);
+const switcherNarrow = await switcherColumns(500);
+must(
+  "Switcher は項目幅が取れる器では 2 列になる",
+  switcherWide.columns === 2,
+  `${switcherWide.columns} 列 / 子 ${switcherWide.childWidths.join("px, ")}px`,
+);
+must(
+  "Switcher は同じ viewport でも器が狭ければ 1 列になる",
+  switcherNarrow.columns === 1,
+  `${switcherNarrow.columns} 列 / 子 ${switcherNarrow.childWidths.join("px, ")}px`,
+);
+must(
+  "Switcher の長い内容と入力が器からはみ出さない",
+  switcherWide.overflow <= 1 && switcherNarrow.overflow <= 1,
+  `wide=${switcherWide.overflow}px narrow=${switcherNarrow.overflow}px`,
+);
+await page.getByTestId("switcher-layout").evaluate((el) => {
+  el.style.width = "";
+});
+
+/* --- 4.2 SidebarLayout も、side + 本文の成立幅で畳む --------------- */
+async function sidebarGeometry(width) {
+  const layout = page.getByTestId("sidebar-layout");
+  await layout.evaluate((el, w) => {
+    el.style.width = `${w}px`;
+  }, width);
+  await page.waitForTimeout(150);
+  return layout.evaluate((el) => ({
+    order: [...el.children].map((child) =>
+      child.getAttribute("data-sidebar-layout"),
+    ),
+    boxes: [...el.children].map((child) => {
+      const box = child.getBoundingClientRect();
+      return { x: Math.round(box.x), y: Math.round(box.y), width: Math.round(box.width) };
+    }),
+    overflow: el.scrollWidth - el.clientWidth,
+  }));
+}
+
+const sidebarWide = await sidebarGeometry(900);
+const sidebarNarrow = await sidebarGeometry(650);
+must(
+  "SidebarLayout は side と本文が入る器では横並びになる",
+  sidebarWide.boxes[0].y === sidebarWide.boxes[1].y &&
+    sidebarWide.boxes[0].x < sidebarWide.boxes[1].x,
+  JSON.stringify(sidebarWide.boxes),
+);
+must(
+  "SidebarLayout は同じ viewport でも器が狭ければ縦に畳む",
+  sidebarNarrow.boxes[0].y < sidebarNarrow.boxes[1].y,
+  JSON.stringify(sidebarNarrow.boxes),
+);
+must(
+  "SidebarLayout の長い side / 本文が器からはみ出さない",
+  sidebarWide.overflow <= 1 && sidebarNarrow.overflow <= 1,
+  `wide=${sidebarWide.overflow}px narrow=${sidebarNarrow.overflow}px`,
+);
+
+// side=end は CSS の order で見た目だけを反転せず、DOM も content → side にします。
+await page.getByRole("button", { name: "end", exact: true }).click();
+const sidebarEndWide = await sidebarGeometry(900);
+must(
+  "side=end でも DOM 順と横の見た目順が一致する",
+  sidebarEndWide.order.join(",") === "content,side" &&
+    sidebarEndWide.boxes[0].x < sidebarEndWide.boxes[1].x,
+  `${sidebarEndWide.order.join(" → ")} / ${JSON.stringify(sidebarEndWide.boxes)}`,
+);
+
+await page.getByLabel("メールアドレス", { exact: true }).focus();
+await page.keyboard.press("Tab");
+must(
+  "side=end のキーボード順も本文から side へ進む",
+  await page.getByRole("link", { name: "アカウント", exact: true }).evaluate(
+    (link) => link === document.activeElement,
+  ),
+);
+
+const sidebarEndNarrow = await sidebarGeometry(650);
+must(
+  "side=end で縦に畳んでも DOM 順と上下順が一致する",
+  sidebarEndNarrow.order.join(",") === "content,side" &&
+    sidebarEndNarrow.boxes[0].y < sidebarEndNarrow.boxes[1].y,
+  `${sidebarEndNarrow.order.join(" → ")} / ${JSON.stringify(sidebarEndNarrow.boxes)}`,
+);
+await page.getByTestId("sidebar-layout").evaluate((el) => {
+  el.style.width = "";
+});
+
 /* --- 4.5 段階に無い値も書けるか（自由度の確保） -------------------- */
 const custom = page.getByLabel("任意の余白");
 const arbitrary = [];

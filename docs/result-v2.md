@@ -52,6 +52,27 @@
 - [x] `release()` 後に次の 1 回を受け付ける検査がある
 - [x] 日英カタログに使い分けと操作できるデモがある
 - [x] `pnpm verify` 29 / 29、`pnpm verify:create` 112 / 112 が成功する
+- [x] PR CI が成功する
+- [x] `main` へ merge される（PR #18 / `d03133e`）
+
+## Wave 2 — content-aware layout
+
+### 実施
+
+- `Switcher` / `SidebarLayout` を独立 item にせず、既存 `layout` の export へ追加
+- `Switcher` は CSS Grid の `auto-fit` と項目の最小幅で列数を決める
+- `SidebarLayout` は side / 本文の成立幅と `flex-wrap` で 2 列 / 1 列を決める
+- どちらも viewport breakpoint、JavaScript の幅測定、hydration を必要としない
+- 操作状態を持つ Sidebar と誤認しないよう、配置責任だけを示す名前にした
+- `sidePosition` は CSS の見た目順だけを変えず、DOM 順も同時に変える
+
+### 完了条件
+
+- [x] 同じ viewport 内で器の幅だけを変え、横 / 縦が切り替わる検査がある
+- [x] 長い URL / 大きい入力でも縮み潰れ・overflow が無い検査がある
+- [x] `sidePosition=end` の DOM / 見た目 / キーボード順が一致する検査がある
+- [x] 日英 README / overview / catalog に役割と例がある
+- [x] `pnpm verify` 29 / 29、`pnpm verify:create` 112 / 112 が成功する
 - [ ] PR CI が成功する
 - [ ] `main` へ merge される
 
@@ -60,8 +81,8 @@
 | Wave | 状態 | PR | 証拠 |
 |---|---|---|---|
 | 0: 計画 / boundary | 完了 | #17 | `770d131` / verify 29工程 / verify-create 112判定 |
-| 1: 軽量 interaction guard | 検証中 | — | この文書の Wave 1 |
-| 2: Switcher / Sidebar | 未着手 | — | — |
+| 1: 軽量 interaction guard | 完了 | #18 | `d03133e` / verify 29工程 / verify-create 112判定 |
+| 2: Switcher / SidebarLayout | 検証中 | — | この文書の Wave 2 |
 | 3: Validation contract | 未着手 | — | — |
 | 4: FieldArray | 未着手 | — | — |
 | 5: ErrorBoundary / useAutosave | 未着手 | — | — |

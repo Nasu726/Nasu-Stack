@@ -8,8 +8,10 @@ import {
   Inline,
   PageBlock,
   Section,
+  SidebarLayout,
   Spread,
   Stack,
+  Switcher,
   Tiles,
   type SpaceToken,
 } from "@/components/ui/layout";
@@ -35,6 +37,8 @@ export function LayoutDemo() {
       <SpaceScale />
       <StackDemo />
       <InlineDemo />
+      <SwitcherDemo />
+      <SidebarLayoutDemo />
       <ColumnsDemo />
       <TilesDemo />
       <PageDemo />
@@ -177,6 +181,123 @@ function InlineDemo() {
             <Blk key={t}>{t}</Blk>
           ))}
         </Inline>
+      </Stack>
+    </Panel>
+  );
+}
+
+function SwitcherDemo() {
+  return (
+    <Panel
+      title={t("Switcher — 中身が成立する幅で切り替える")}
+      description={t("viewport の breakpoint ではなく、置かれた器の中で各項目に必要な幅が取れるかを見ます。狭ければ JavaScript 無しで 1 列になります。")}
+      code={t("<Switcher minItemWidth=\"18rem\" space=\"lg\">\n  <Profile />\n  <Settings />\n</Switcher>")}
+    >
+      <Switcher
+        minItemWidth="18rem"
+        space="lg"
+        data-testid="switcher-layout"
+      >
+        <Box padding="md" background="muted" radius="lg">
+          <Stack space="xs">
+            <strong>{t("プロフィール")}</strong>
+            <p className="text-sm text-muted-fg">
+              {t("長い内容でも、隣を縮み潰さずに必要な幅で縦へ切り替わります。")}
+            </p>
+            <code className="text-xs text-muted-fg">
+              https://example.com/teams/frontend/platform/accessibility/settings
+            </code>
+          </Stack>
+        </Box>
+        <Box padding="md" background="card" border radius="lg">
+          <Stack space="xs">
+            <label htmlFor="switcher-name" className="text-sm font-medium">
+              {t("表示名")}
+            </label>
+            <input
+              id="switcher-name"
+              defaultValue={t("なす スタック")}
+              className="min-h-11 w-full min-w-0 rounded-md border border-input bg-bg px-sm text-base"
+            />
+          </Stack>
+        </Box>
+      </Switcher>
+    </Panel>
+  );
+}
+
+function SidebarLayoutDemo() {
+  const [sidePosition, setSidePosition] =
+    React.useState<"start" | "end">("start");
+
+  const side = (
+    <Box padding="md" background="muted" radius="lg">
+      <nav aria-label={t("設定の章")}>
+        <Stack space="xs">
+          <a href="#layout-account" className="underline underline-offset-4">
+            {t("アカウント")}
+          </a>
+          <a href="#layout-notification" className="underline underline-offset-4">
+            {t("通知")}
+          </a>
+          <a href="#layout-security" className="underline underline-offset-4">
+            {t("セキュリティ")}
+          </a>
+        </Stack>
+      </nav>
+    </Box>
+  );
+
+  return (
+    <Panel
+      title={t("SidebarLayout — side と本文が入るときだけ 2 列")}
+      description={t("開閉やnavigation状態を持つ Sidebar ではなく、配置だけを持つため SidebarLayout です。side と本文の最小幅が同時に取れなければ 1 列になり、DOM 順と見た目の順は一致したままです。")}
+      code={t("<SidebarLayout\n  side={<Nav />}\n  sideWidth=\"18rem\"\n  contentMinWidth=\"30rem\"\n  sidePosition=\"start\"\n>\n  <Article />\n</SidebarLayout>")}
+    >
+      <Stack space="md">
+        <Inline space="xs" alignY="center">
+          <span className="text-xs text-muted-fg">sidePosition:</span>
+          {(["start", "end"] as const).map((position) => (
+            <Button
+              key={position}
+              size="sm"
+              variant={sidePosition === position ? "primary" : "outline"}
+              aria-pressed={sidePosition === position}
+              onClick={() => setSidePosition(position)}
+            >
+              {position}
+            </Button>
+          ))}
+        </Inline>
+
+        <SidebarLayout
+          side={side}
+          sideWidth="18rem"
+          contentMinWidth="30rem"
+          sidePosition={sidePosition}
+          space="lg"
+          data-testid="sidebar-layout"
+        >
+          <Box padding="md" background="card" border radius="lg">
+            <Stack space="sm">
+              <strong id="layout-account">{t("アカウント設定")}</strong>
+              <ContentBlock width="prose" align="start" className="text-sm">
+                <p className="text-muted-fg">
+                  {t("本文は残りを埋めます。器が足りないときだけ、side と本文がそれぞれ全幅になります。")}
+                </p>
+              </ContentBlock>
+              <label htmlFor="sidebar-email" className="text-sm font-medium">
+                {t("メールアドレス")}
+              </label>
+              <input
+                id="sidebar-email"
+                type="email"
+                defaultValue="hello@example.com"
+                className="min-h-11 w-full min-w-0 rounded-md border border-input bg-bg px-sm text-base"
+              />
+            </Stack>
+          </Box>
+        </SidebarLayout>
       </Stack>
     </Panel>
   );
@@ -345,4 +466,3 @@ function PageDemo() {
     </Panel>
   );
 }
-

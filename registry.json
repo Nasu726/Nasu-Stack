@@ -111,7 +111,7 @@
       "name": "layout",
       "type": "registry:block",
       "title": "レイアウト・プリミティブ",
-      "description": "Box / Stack / Inline / Columns / Tiles / Spread / PageBlock / ContentBlock / Section / Divider。余白は 9 段階が既定だが段階外の値も書ける。コンポーネントは外側の余白を持たない。",
+      "description": "Box / Stack / Inline / Switcher / SidebarLayout / Columns / Tiles / Spread / PageBlock / ContentBlock / Section / Divider。余白は 9 段階が既定だが段階外の値も書ける。コンポーネントは外側の余白を持たない。",
       "registryDependencies": [
         "Nasu726/Nasu-Stack/utils",
         "Nasu726/Nasu-Stack/tokens"

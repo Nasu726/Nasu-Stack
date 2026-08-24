@@ -331,6 +331,151 @@ export function Inline({
 }
 
 /* ================================================================
+ * Switcher — 子が成立する幅を基準に、横並び / 縦並びを切り替える
+ * ============================================================== */
+
+export interface SwitcherProps extends React.HTMLAttributes<HTMLElement> {
+  as?: React.ElementType;
+  space?: Responsive<Space>;
+  /**
+   * 子 1 つに確保したい最小幅。既定 18rem。
+   * "22rem" や "clamp(16rem, 30vw, 24rem)" もそのまま書けます。
+   */
+  minItemWidth?: string;
+  children?: React.ReactNode;
+}
+
+/**
+ * breakpoint ではなく、子に `minItemWidth` を確保できるかで列数を変えます。
+ * viewport ではなく置かれた器の幅を見るので、サイドパネルの中でも同じ契約です。
+ *
+ * ```tsx
+ * <Switcher minItemWidth="18rem" space="lg">
+ *   <Profile />
+ *   <Settings />
+ * </Switcher>
+ * ```
+ */
+export function Switcher({
+  as: Tag = "div",
+  space = "md",
+  minItemWidth = "18rem",
+  className,
+  style,
+  children,
+  ...props
+}: SwitcherProps) {
+  return (
+    <Tag
+      className={cn("grid w-full wt-gap", className)}
+      style={merge(
+        {
+          "--wt-min-item-width": minItemWidth,
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(min(100%, var(--wt-min-item-width)), 1fr))",
+        } as CSSVars,
+        spaceVars("gap", space),
+        style,
+      )}
+      {...props}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+/* ================================================================
+ * SidebarLayout — side と本文が成立するときだけ 2 列にする
+ * ============================================================== */
+
+export interface SidebarLayoutProps
+  extends React.HTMLAttributes<HTMLElement> {
+  as?: React.ElementType;
+  /** side に置く内容。操作やナビの意味は中に置く要素が持ちます。 */
+  side: React.ReactNode;
+  /** side の基準幅。既定 18rem。段階外の CSS 幅も書けます。 */
+  sideWidth?: string;
+  /** 本文を横へ置くために最低限必要な幅。既定 30rem。 */
+  contentMinWidth?: string;
+  /** side を論理的な先頭 / 末尾のどちらへ置くか。DOM 順も同時に変わります。 */
+  sidePosition?: "start" | "end";
+  space?: Responsive<Space>;
+  children?: React.ReactNode;
+}
+
+/**
+ * side と本文の両方に必要な幅があるときだけ横へ並べます。
+ * 狭ければ CSS の flex-wrap で自然に 1 列になり、DOM 順と見た目の順は一致します。
+ *
+ * `Sidebar` ではなく `SidebarLayout` なのは、開閉・選択・navigation を持つ
+ * 操作部品と誤認させないためです。この部品が持つのは配置だけです。
+ *
+ * ```tsx
+ * <SidebarLayout side={<Nav />} sideWidth="18rem" contentMinWidth="30rem">
+ *   <Article />
+ * </SidebarLayout>
+ * ```
+ */
+export function SidebarLayout({
+  as: Tag = "div",
+  side,
+  sideWidth = "18rem",
+  contentMinWidth = "30rem",
+  sidePosition = "start",
+  space = "lg",
+  className,
+  style,
+  children,
+  ...props
+}: SidebarLayoutProps) {
+  const sideNode = (
+    <div
+      key="side"
+      data-sidebar-layout="side"
+      className="min-w-0"
+      style={{
+        flex: "1 1 var(--wt-side-width)",
+        minInlineSize: "min(100%, var(--wt-side-width))",
+      }}
+    >
+      {side}
+    </div>
+  );
+  const contentNode = (
+    <div
+      key="content"
+      data-sidebar-layout="content"
+      className="min-w-0"
+      style={{
+        flex: "999 1 var(--wt-content-min-width)",
+        minInlineSize: "min(100%, var(--wt-content-min-width))",
+      }}
+    >
+      {children}
+    </div>
+  );
+
+  return (
+    <Tag
+      className={cn("flex w-full flex-wrap wt-gap", className)}
+      style={merge(
+        {
+          "--wt-side-width": sideWidth,
+          "--wt-content-min-width": contentMinWidth,
+        } as CSSVars,
+        spaceVars("gap", space),
+        style,
+      )}
+      {...props}
+    >
+      {sidePosition === "start"
+        ? [sideNode, contentNode]
+        : [contentNode, sideNode]}
+    </Tag>
+  );
+}
+
+/* ================================================================
  * Columns / Column — 段組。狭い画面では縦に畳む
  * ============================================================== */
 
