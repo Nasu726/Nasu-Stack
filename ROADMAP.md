@@ -11,7 +11,7 @@
 - [x] 軽量 interaction guard（`useInteractionGuard`: `tryLock` / `release` だけ）
 - [x] `layout` へ Switcher / SidebarLayout の判断を吸収
 - [x] library非依存のvalidation contract / AsyncForm / server Response adapter
-- [ ] FieldArray（stable key / min-max / focus / nested path）
+- [x] FieldArray（stable key / min-max / focus / nested path。reorderは対象外）
 - [ ] ErrorBoundary / useAutosave
 - [ ] Popover foundation / Paginator / CopyButton
 - [ ] 条件を満たした behavioral recipe

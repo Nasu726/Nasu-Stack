@@ -136,7 +136,7 @@ This fills that gap.
 ├─────────────────────────────────────────┤
 │  Layout     Stack / Switcher / SidebarLayout │  content-aware. No outer margin
 ├─────────────────────────────────────────┤
-│  Component  ActionButton / AsyncForm    │  holds all the state. Backend-agnostic
+│  Component  ActionButton / AsyncForm / FieldArray │  stateful. Backend-agnostic
 │             SiteHeader / Dialog / Tabs  │  ARIA and keyboard are ours
 ├─────────────────────────────────────────┤
 │  Contract   Action / ActionSpec         │  just (input, ctx) => Promise<output>
@@ -229,7 +229,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 
 ## 5. What exists today
 
-**42 registry items.** Add them individually with
+**43 registry items.** Add them individually with
 `npx shadcn add Nasu726/Nasu-Stack/<name>`.
 
 | Layer | Contents |
@@ -238,7 +238,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 | Layout | Box / Stack / Inline / **Switcher / SidebarLayout** / Columns / Column / Tiles / Spread / ContentBlock / PageBlock / Divider / Section |
 | Nav | SiteHeader / NavLink / SkipLink / SiteFooter |
 | Disclosure | Dialog (center, sheet) / Tabs / Disclosure / Accordion / DropdownMenu / NavDropdown |
-| Input | AsyncForm (optional Validator + first-error focus) / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
+| Input | AsyncForm (optional Validator + first-error focus) / **FieldArray** (stable key / indexed name / min-max / focus) / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
 | Display | DataList / DataTable / AsyncBoundary / Toast / ConfirmDialog / Scrollable / Frame / Img |
 | Contract and wiring | Action / ActionSpec / ActionError / **ValidationResult / Validator / validationFailureResponse** / jsonRequest / upload / **createSubmit** |
 | Hooks | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard** |

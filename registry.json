@@ -373,6 +373,25 @@
       ]
     },
     {
+      "name": "field-array",
+      "type": "registry:block",
+      "title": "FieldArray",
+      "description": "繰り返し入力のstable key・nested name・min/max・追加/削除後のfocusを引き受けます。reorderやdomain validationは扱いません。",
+      "registryDependencies": [
+        "Nasu726/Nasu-Stack/async-form",
+        "Nasu726/Nasu-Stack/action-button",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/field-array.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/field-array.tsx"
+        }
+      ]
+    },
+    {
       "name": "data-list",
       "type": "registry:block",
       "title": "DataList",

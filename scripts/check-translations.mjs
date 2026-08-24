@@ -32,6 +32,7 @@ const PAIRS = [
   ["docs/security.md", "docs/security.ja.md"],
   ["docs/astro-and-react.md", "docs/astro-and-react.ja.md"],
   ["docs/validation.md", "docs/validation.ja.md"],
+  ["docs/field-array.md", "docs/field-array.ja.md"],
 ];
 
 const problems = [];

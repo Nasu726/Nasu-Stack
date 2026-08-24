@@ -189,7 +189,7 @@ Web で品質を求めるとまだ人の力が重要ですが、毎回同じと�
 ├─────────────────────────────────────────┤
 │  レイアウト層  Stack / Switcher / SidebarLayout │  ← 中身の成立幅で畳む。外側余白なし
 ├─────────────────────────────────────────┤
-│  部品層       ActionButton / AsyncForm   │  ← 状態を全部持つ。バックエンド非依存
+│  部品層       ActionButton / AsyncForm / FieldArray │  ← 状態を持つ。バックエンド非依存
 │               SiteHeader / Dialog / Tabs│  ← ナビと開閉。ARIA とキーボードは部品の担当
 ├─────────────────────────────────────────┤
 │  契約層       Action / ActionSpec        │  ← (input, ctx) => Promise<output> だけ
@@ -227,6 +227,7 @@ type Action<TInput, TOutput> = (
 | `ActionButton` | 関数を渡すだけの 4 状態ボタン。連打防止・確認ダイアログ・自動リトライ |
 | `AsyncForm` + `Field` | 送信関数1つでフォーム完成。任意のvalidation・変換済みdata・field focus・error自動クリア |
 | `ValidationResult` / `Validator` | client / serverで共有するlibrary非依存の成功・field・form結果。規則そのものは決めない |
+| `FieldArray` | stable key・index付きname・min/max・追加/削除focusを持つ繰り返し入力。reorderやdomain ruleは持たない |
 | `DataList` | 取得・スケルトン・空・失敗と再試行を 1 個で |
 | `AsyncBoundary` | 読込中 / エラー / 空 / データありの 4 分岐を閉じ込める |
 | `DataTable` | 並べ替え・ページング。**狭い画面では 1 行 = 1 カードに組み替え** |
@@ -242,6 +243,8 @@ type Action<TInput, TOutput> = (
 
 `AsyncForm`・server `Response`・任意のschema library adapterを一緒に見る場合は、
 [validation結果契約](docs/validation.ja.md)を参照してください。
+繰り返し入力のnested path・UI key・focus・reset・1段下への降り方は、
+[FieldArrayガイド](docs/field-array.ja.md)にまとめています。
 
 <details>
 <summary><b>DataTable — 狭い画面では表をやめる</b></summary>

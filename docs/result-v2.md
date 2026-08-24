@@ -97,6 +97,30 @@
 - [x] server adapterが422・safe payload・header保持・2xx拒否を満たす検査がある
 - [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
 - [x] `pnpm verify` 30 / 30、`pnpm verify:create` 112 / 112 が成功する
+- [x] PR CIが成功する（verify 4m41s / verify-create 3m10s）
+- [x] `main`へmergeされる（PR #20 / `40c58c5`）
+
+## Wave 4 — FieldArray
+
+### 実施
+
+- `FieldArray`を独立itemとして追加し、registry itemを42 → 43にした
+- UI内だけで安定するkeyと、`members.0.email`形式の現在nameを分離した
+- add / remove / min / max / empty stateとnative form resetを持たせた
+- add後は新しい行、remove後は次・前・Add buttonの順にfocusする
+- 構造変更時は、別の行を指すようになった古いnested field errorを消す
+- 1段下では`fieldArrayItemName()`と利用側のstateを組み合わせられる
+- database ID・reorder・配列のdomain rule・server validationは所有しない
+
+### 完了条件
+
+- [x] 行削除後も残るkey / DOM入力値が安定する実ブラウザ検査がある
+- [x] min / max / empty state / add-remove focusの実ブラウザ検査がある
+- [x] nested pathがARIA / first-error focusへ届き、構造変更でstale errorを消す検査がある
+- [x] `AsyncForm` success後のnative resetでdefaultItemsへ戻る検査がある
+- [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
+- [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 43/43が成功する
+- [x] `pnpm verify` 30 / 30、`pnpm verify:create` 112 / 112が成功する
 - [ ] PR CIが成功する
 - [ ] `main`へmergeされる
 
@@ -107,8 +131,8 @@
 | 0: 計画 / boundary | 完了 | #17 | `770d131` / verify 29工程 / verify-create 112判定 |
 | 1: 軽量 interaction guard | 完了 | #18 | `d03133e` / verify 29工程 / verify-create 112判定 |
 | 2: Switcher / SidebarLayout | 完了 | #19 | `6346f2d` / verify 29工程 / verify-create 112判定 |
-| 3: Validation contract | 実装中 | — | verify 30工程 / verify-create 112判定 / 単体17件 / form実ブラウザ27件 |
-| 4: FieldArray | 未着手 | — | — |
+| 3: Validation contract | 完了 | #20 | `40c58c5` / verify 30工程 / verify-create 112判定 / 単体17件 / form実ブラウザ27件 |
+| 4: FieldArray | 実装中 | — | registry 43 item / form実ブラウザ40件 / この文書の Wave 4 |
 | 5: ErrorBoundary / useAutosave | 未着手 | — | — |
 | 6: Popover foundation | 未着手 | — | — |
 | 7: Paginator / CopyButton / Tooltip 判断 | 未着手 | — | — |

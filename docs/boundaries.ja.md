@@ -55,6 +55,7 @@ recipe は安全な組み合わせ例であり、新しい framework や変更�
 | 非同期の画面状態 | 読込中・成功・失敗、二重送信の防止、中断信号、取り消した／古い結果を画面へ戻さないこと | 成功の意味、表示する文言、中断を利用者に提供するか | 処理を実際に中断・巻き戻しできるか、原子的に確定するか |
 | 操作の再入 | 選んだ primitive が契約する範囲で、同じ画面操作が重なって走らないこと | どの操作を繰り返せるか、いつ再び許可するか | 冪等性・重複排除と、副作用を 1 回として扱う保証 |
 | 入力とデータ | ブラウザ側の助言と、Nasu Stack 自身の公開契約に対する実行時検査 | ドメイン規則と、API に期待するデータ形 | 認証・認可・正規の入力検証・CSRF 対策・レスポンス schema |
+| 繰り返し入力 | stable な UI 識別、index 付き name、min/max の操作、追加・削除後の focus | 行の内容、永続 ID、順序、配列の domain rule | 正規の件数・一意性・認可・database constraint |
 | JSON 通信 | 空の成功応答を空として扱い、JSON media type を受け入れ、不正／非 JSON の本文を fail closed にすること | parse 後の値をドメイン型へ変換すること、または別の通信手段を選ぶこと | 正しい status・media type・本文と、安全なエラー応答 |
 | リトライ | 上限のある仕組みと、不正な retry policy を制御された失敗にすること | 同じ操作を繰り返して安全な場合だけ有効にする判断 | 冪等性・重複排除・transaction・rate limit |
 | アップロード | 選んだファイルに対する、その場のブラウザ側フィードバック | プロダクト固有の上限と、受理／拒否後の体験 | 大きさ・種類・magic bytes・malware・保存・認可の検査 |
@@ -101,6 +102,14 @@ form transportへ変換します。
 schema libraryを選び、domain ruleを所有します。同じvalidatorでbrowser feedbackを
 出していても、正規の判定はserverで再実行します。認証・認可・CSRF・rate limit・
 database constraint・response schemaはserverの仕事のままです。
+
+### FieldArray の key は record の識別ではない
+
+`FieldArray` は、隣の index が変わっても browser 内の行を安定させます。その key は
+意図的に送信されず、reload も越えません。本物の record ID と順序は app が所有し、
+件数・一意性・認可・database constraint は server が再検査します。client の `min` /
+`max` は操作しづらい UI を防ぐだけです。reorder には固有の keyboard 操作、announcement、
+永続化、競合の契約が要るため、この primitive の外です。
 
 ### リトライには冪等性の判断が要る
 

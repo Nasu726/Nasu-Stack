@@ -129,7 +129,7 @@ className="..."      ← 素の Tailwind
 ├─────────────────────────────────────────┤
 │  レイアウト層  Stack / Switcher / SidebarLayout │  中身の成立幅で畳む。外側余白なし
 ├─────────────────────────────────────────┤
-│  部品層       ActionButton / AsyncForm   │  状態を全部持つ。バックエンド非依存
+│  部品層       ActionButton / AsyncForm / FieldArray │  状態を持つ。バックエンド非依存
 │               SiteHeader / Dialog / Tabs  │  ARIA とキーボードは部品の担当
 ├─────────────────────────────────────────┤
 │  契約層       Action / ActionSpec        │  (input, ctx) => Promise<output> だけ
@@ -218,7 +218,7 @@ type Space = SpaceToken | (string & {});
 
 ## 5. いま作ってあるもの
 
-配布アイテム **42**。`npx shadcn add Nasu726/Nasu-Stack/<名前>` で個別に足せます。
+配布アイテム **43**。`npx shadcn add Nasu726/Nasu-Stack/<名前>` で個別に足せます。
 
 | 層 | 中身 |
 |---|---|
@@ -226,7 +226,7 @@ type Space = SpaceToken | (string & {});
 | レイアウト | Box / Stack / Inline / **Switcher / SidebarLayout** / Columns / Column / Tiles / Spread / ContentBlock / PageBlock / Divider / Section |
 | ナビ | SiteHeader / NavLink / SkipLink / SiteFooter |
 | 開閉 | Dialog（中央・シート）/ Tabs / Disclosure / Accordion / DropdownMenu / NavDropdown |
-| 入力 | AsyncForm（任意のValidator + 最初のerrorへのfocus）/ Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
+| 入力 | AsyncForm（任意のValidator + 最初のerrorへのfocus）/ **FieldArray**（stable key / index付きname / min-max / focus）/ Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
 | 表示 | DataList / DataTable / AsyncBoundary / Toast / ConfirmDialog / Scrollable / Frame / Img |
 | 契約と配線 | Action / ActionSpec / ActionError / **ValidationResult / Validator / validationFailureResponse** / jsonRequest / upload / **createSubmit** |
 | フック | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard** |
