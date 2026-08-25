@@ -233,6 +233,7 @@ type Action<TInput, TOutput> = (
 | `ErrorBoundary` | React render failureを1つのsubtreeへ閉じ込め、読み上げ可能なfallbackとresetを提供。async errorとは分離 |
 | `Popover` | non-modalな補助内容のcontrolled/uncontrolled開閉・Esc/外側・focus復帰・viewport配置を扱う。中身のsemanticsは利用側のまま |
 | `Paginator` | URLを正にした番号navigation。現在pageと上限のあるellipsisを扱い、URLの意味とtotalはappのまま |
+| `CopyButton` | clipboardへのcopy・成功/失敗・読み上げstatus・timer cleanup・互換fallbackを扱う |
 | `DataTable` | 並べ替え・ページング。**狭い画面では 1 行 = 1 カードに組み替え** |
 | `AsyncSelect` | 検索つきセレクト。前の要求を自動で中断。キーボード操作つき |
 | `FileDrop` | ドラッグ&ドロップ・進捗・失敗した分だけ再送 |
@@ -243,6 +244,7 @@ type Action<TInput, TOutput> = (
 | `useAction` / `useResource` | 書き込み系 / 読み取り系の状態管理フック |
 | `useInteractionGuard` | 同じ画面操作の重なりだけを防ぐ。いつ再許可するかは利用側が決める |
 | `useAutosave` | 保存をdebounce・最新値へ集約し、stale responseをstateへ戻さない。競合解決はserverの責任 |
+| `useCopy` | 独自UI向けのclipboard状態だけを扱う。文字を開示してよいかは判断しない |
 | `Switcher` / `SidebarLayout` | 中身の最小幅が入らない時だけCSSで縦に畳むレイアウト |
 
 `AsyncForm`・server `Response`・任意のschema library adapterを一緒に見る場合は、
@@ -255,6 +257,8 @@ render failureからの復帰とautosave queueの責任境界は、
 no-portal境界は[Popoverガイド](docs/popover.ja.md)で説明しています。
 番号navigation・client routerによる横取り・localization・URLの責任は
 [Paginatorガイド](docs/paginator.ja.md)で説明しています。
+clipboard fallback・独自render・timer・情報開示の境界は
+[CopyButton / useCopyガイド](docs/copy-button.ja.md)にまとめています。
 
 <details>
 <summary><b>DataTable — 狭い画面では表をやめる</b></summary>

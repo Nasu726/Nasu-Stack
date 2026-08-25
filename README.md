@@ -244,6 +244,7 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `ErrorBoundary` | Contains React render failures to one subtree with an accessible fallback and reset; async errors stay separate |
 | `Popover` | Non-modal supporting content with controlled/uncontrolled state, Escape/outside dismissal, focus return, and viewport-edge positioning; content semantics stay yours |
 | `Paginator` | Link-first numbered navigation with current-page semantics and bounded ellipses; the app owns URL meaning and totals |
+| `CopyButton` | Clipboard copying with success, failure, accessible status, timer cleanup, and a compatibility fallback |
 | `DataTable` | Sorting and paging. **Below tablet width it becomes one card per row** |
 | `AsyncSelect` | Searchable select. Cancels the previous request. Keyboard support included |
 | `FileDrop` | Drag and drop, progress, retry only what failed |
@@ -254,6 +255,7 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `useAction` / `useResource` | State hooks for writes and for reads |
 | `useInteractionGuard` | Prevents only overlapping UI attempts; the caller decides when to allow another |
 | `useAutosave` | Debounces and coalesces saves, keeps stale responses out of state; conflict resolution stays on the server |
+| `useCopy` | Clipboard-only state for custom UI; it does not decide whether the text is safe to disclose |
 | `Switcher` / `SidebarLayout` | CSS-only layouts that stack when their content widths no longer fit |
 
 The [validation contract guide](docs/validation.md) shows the `AsyncForm`,
@@ -266,6 +268,8 @@ guides. The [Popover guide](docs/popover.md) explains its neutral semantics,
 focus behavior, viewport placement, and intentional no-portal boundary.
 Numbered navigation, client-router interception, localization, and URL ownership
 are covered by the [Paginator guide](docs/paginator.md).
+Clipboard fallback, custom rendering, timer behavior, and disclosure boundaries
+are in the [CopyButton / useCopy guide](docs/copy-button.md).
 
 <details>
 <summary><b>DataTable — stop being a table when the screen is narrow</b></summary>

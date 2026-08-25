@@ -195,8 +195,8 @@
 - [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
 - [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 47/47が成功する
 - [x] `pnpm verify` 30/30 / `pnpm verify:create` 112/112が成功する
-- [ ] PR CIが成功する
-- [ ] `main`へmergeされる
+- [x] PR CIが成功する（verify 4m29s / verify-create 3m02s）
+- [x] `main`へmergeされる（PR #24 / `c6dd020`）
 
 ### Wave 10へ残す観測
 
@@ -204,6 +204,31 @@
 `packages/create-nasu-stack/template`の再生成が競合した。CIの2 jobは別checkoutなので影響
 しないが、localで安全に並列化できない重複工程としてWave 10でlockまたは作業領域分離を扱う。
 単独再実行では30/30と112/112がそれぞれ成功した。
+
+## Wave 7b — CopyButton / useCopy
+
+### 実施
+
+- clipboard stateだけを持つ`useCopy`と、薄い`CopyButton`を独立itemとして追加する
+- Clipboard APIを優先し、無い・拒否された場合だけtemporary textarea fallbackを試す
+- copy中の再入をReact描画前に同期的に止める
+- success / error / reset timer / custom child / accessible statusを扱う
+- componentを使わないsupported pathとして`useCopy` / `copyText()`を公開する
+- 秘密情報・個人情報をコピーしてよいか、正確な文字列、保持時間はappの責任に残す
+
+### 完了条件
+
+- [x] Clipboard API成功と、APIなしのfallback成功を実ブラウザで検査する
+- [x] 両経路の失敗をerror / retry可能状態 / role=alertへ戻す
+- [x] 同じbrowser taskの連打でもclipboard writeが1回だけである
+- [x] 2回目のcopyが1回目のreset timerで早くidleへ戻らない
+- [x] unmountでreset timerをclearし、temporary textareaとfocus / selectionを残さない
+- [x] custom child / labels / announcements / lower-level hookを文書化する
+- [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
+- [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 49/49が成功する
+- [x] `pnpm verify` 30/30 / `pnpm verify:create` 112/112が成功する
+- [ ] PR CIが成功する
+- [ ] `main`へmergeされる
 
 ## 実装台帳
 
@@ -216,8 +241,9 @@
 | 4: FieldArray | 完了 | #21 | `63df788` / verify 30工程 / verify-create 112判定 / form実ブラウザ40件 |
 | 5: ErrorBoundary / useAutosave | 完了 | #22 | `5a5e294` / registry 45 item / state実ブラウザ53件 / verify 30工程 / verify-create 112判定 |
 | 6: Popover foundation | 完了 | #23 | `195eeb6` / registry 46 item / nav実ブラウザ64件 / verify 30工程 / verify-create 112判定 |
-| 7a: Paginator | 実装中 | — | registry 47 item / nav実ブラウザ76件 / verify 30工程 / verify-create 112判定 |
-| 7b: CopyButton / Tooltip 判断 | 未着手 | — | — |
+| 7a: Paginator | 完了 | #24 | `c6dd020` / registry 47 item / nav実ブラウザ76件 / verify 30工程 / verify-create 112判定 |
+| 7b: CopyButton / useCopy | ローカル検査済み | — | registry 49 item / state実ブラウザ65件 / verify 30工程 / verify-create 112判定 |
+| 7c: Tooltip 判断 | 未着手 | — | — |
 | 8: behavioral recipes | 未着手 | — | — |
 | 9: cursor / Load more 判断 | 未着手 | — | — |
 | 10: checker / CI 時間 | 未着手 | — | — |

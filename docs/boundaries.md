@@ -180,6 +180,18 @@ whether an out-of-range request redirects or fails, and how router state stays
 in sync. Cursor pagination and “load more” have separate ordering, stale-result,
 and duplication contracts; numbered pagination does not claim to solve them.
 
+### Clipboard state is not disclosure permission
+
+`useCopy` and `CopyButton` own one browser clipboard attempt, a compatibility
+fallback, accessible success or failure state, repeat-activation locking, and
+reset timer cleanup. They do not infer whether the supplied text is safe to
+reveal or whether a secret, personal value, or expiring token should be copied.
+
+The application owns the exact string and the policy that permits disclosure.
+A clipboard write cannot be aborted, so reset does not pretend to cancel an
+active attempt. The legacy textarea path is a compatibility fallback, not a
+way around browser permission; refusal by both paths remains an explicit error.
+
 ### Retry requires an idempotency decision
 
 Only enable `retry` for an operation where repeating the same request is safe.

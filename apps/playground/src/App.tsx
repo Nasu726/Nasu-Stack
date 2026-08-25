@@ -4,6 +4,7 @@ import { AsyncForm, Field } from "@/components/ui/async-form";
 import { DataList } from "@/components/ui/data-list";
 import { AsyncBoundary } from "@/components/ui/async-boundary";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { CopyButton } from "@/components/ui/copy-button";
 import { ThemeSwitcher, useTheme } from "@/components/ui/theme-provider";
 import { useAction } from "@/hooks/use-action";
 import { useAutosave } from "@/hooks/use-autosave";
@@ -64,6 +65,7 @@ const PANELS: Record<string, React.ReactNode> = {
     <Stack space="3xl">
       <ButtonSection />
       <InteractionGuardSection />
+      <CopySection />
       <ErrorBoundarySection />
       <AutosaveSection />
       <FormSection />
@@ -429,6 +431,88 @@ function InteractionGuardSection() {
       >
         probe
       </button>
+    </Panel>
+  );
+}
+
+/** clipboardの可否と、コピーしてよい情報かの判断を混ぜないための見本。 */
+function CopySection() {
+  const [text, setText] = React.useState("https://example.com/articles/42");
+  const [unmountProbe, setUnmountProbe] = React.useState(true);
+  const labels = {
+    copying: t("コピー中…"),
+    success: t("コピーしました"),
+    error: t("もう一度コピー"),
+  };
+  const announcements = {
+    copying: t("コピーしています"),
+    success: t("クリップボードにコピーしました"),
+    error: t("コピーできませんでした"),
+  };
+
+  return (
+    <Panel
+      title="CopyButton / useCopy"
+      description={t("Clipboard APIの成功・失敗・fallback・resetだけを扱います。コピーしてよい情報かは判断しません。秘密情報や個人情報を渡してよいかはapplication側で決めます。")}
+      code={t("<CopyButton text={shareUrl}>リンクをコピー</CopyButton>\n\n// 独自の見た目や処理なら1段下へ\nconst copy = useCopy({ resetAfter: 2000 });\nawait copy.copy(text);")}
+    >
+      <Stack space="sm" align="start">
+        <label className="flex w-full max-w-lg flex-col gap-xs text-sm font-medium">
+          {t("コピーする文字")}
+          <input
+            value={text}
+            onChange={(event) => setText(event.currentTarget.value)}
+            className="w-full rounded-md border border-input bg-bg px-sm py-xs text-base text-fg"
+            data-testid="copy-text"
+          />
+        </label>
+        <CopyButton
+          text={text}
+          labels={labels}
+          announcements={announcements}
+          resetAfter={300}
+          data-testid="copy-main"
+        >
+          {t("リンクをコピー")}
+        </CopyButton>
+
+        {/* custom render / unmount timerは通常の見本と混ぜずDOMで測ります。 */}
+        <div hidden data-testid="copy-probes">
+          <CopyButton
+            text="custom child"
+            resetAfter={null}
+            data-testid="copy-custom"
+          >
+            {({ status }) => `custom-${status}`}
+          </CopyButton>
+          <CopyButton
+            text="callback failure"
+            resetAfter={null}
+            onCopied={() => {
+              throw new Error("intentional copy callback failure");
+            }}
+            data-testid="copy-callback-failure"
+          >
+            callback copy
+          </CopyButton>
+          <button
+            type="button"
+            data-testid="copy-unmount-toggle"
+            onClick={() => setUnmountProbe((mounted) => !mounted)}
+          >
+            toggle copy probe
+          </button>
+          {unmountProbe && (
+            <CopyButton
+              text="unmount timer"
+              resetAfter={777}
+              data-testid="copy-unmount"
+            >
+              unmount copy
+            </CopyButton>
+          )}
+        </div>
+      </Stack>
     </Panel>
   );
 }

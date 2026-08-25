@@ -240,6 +240,20 @@
       ]
     },
     {
+      "name": "use-copy",
+      "type": "registry:hook",
+      "title": "useCopy",
+      "description": "Clipboard APIのcopy中・成功・失敗・resetだけを扱い、APIが無い場合はtemporary textareaのfallbackを試します。",
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/nasu/hooks/use-copy.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-copy.ts"
+        }
+      ]
+    },
+    {
       "name": "use-resource",
       "type": "registry:hook",
       "title": "useResource",
@@ -289,6 +303,24 @@
           "path": "registry/nasu/components/ui/action-button.tsx",
           "type": "registry:ui",
           "target": "components/ui/action-button.tsx"
+        }
+      ]
+    },
+    {
+      "name": "copy-button",
+      "type": "registry:ui",
+      "title": "CopyButton",
+      "description": "文字をclipboardへコピーし、copy中・成功・失敗をbuttonと読み上げstatusへ返します。秘密情報をコピーしてよいかはappの責任です。",
+      "registryDependencies": [
+        "Nasu726/Nasu-Stack/use-copy",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/copy-button.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/copy-button.tsx"
         }
       ]
     },

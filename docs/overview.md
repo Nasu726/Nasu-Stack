@@ -229,7 +229,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 
 ## 5. What exists today
 
-**47 registry items.** Add them individually with
+**49 registry items.** Add them individually with
 `npx shadcn add Nasu726/Nasu-Stack/<name>`.
 
 | Layer | Contents |
@@ -239,9 +239,9 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 | Nav | SiteHeader / NavLink / SkipLink / SiteFooter / **Paginator** |
 | Disclosure | Dialog (center, sheet) / Tabs / Disclosure / Accordion / **Popover** / DropdownMenu / NavDropdown |
 | Input | AsyncForm (optional Validator + first-error focus) / **FieldArray** (stable key / indexed name / min-max / focus) / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
-| Display | DataList / DataTable / AsyncBoundary / **ErrorBoundary** / Toast / ConfirmDialog / Scrollable / Frame / Img |
+| Display | DataList / DataTable / AsyncBoundary / **ErrorBoundary** / **CopyButton** / Toast / ConfirmDialog / Scrollable / Frame / Img |
 | Contract and wiring | Action / ActionSpec / ActionError / **ValidationResult / Validator / validationFailureResponse** / jsonRequest / upload / **createSubmit** |
-| Hooks | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard / useAutosave** |
+| Hooks | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard / useAutosave / useCopy** |
 | Generation | `buildMeta` (SEO, OGP, JSON-LD) / `buildSitemap` / `buildRss` / `buildRobots` |
 | Checks | `check-responsive.mjs` (**shipped to users too**) |
 | Entry point | `create-nasu-stack` (Astro, blog, and Vite templates) |
