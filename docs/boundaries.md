@@ -154,6 +154,20 @@ and cross-tab decisions that belong to the application. `cancel()` asks the
 transport to abort and ignores the result; as with every `AbortSignal`, that is
 not proof that the server rolled back the write.
 
+### A Popover owns disclosure mechanics, not content semantics
+
+`Popover` owns controlled or uncontrolled open wiring, outside pointer and
+Escape dismissal, focus return, and keeping its measured panel within the
+viewport. It stays non-modal and leaves focus on the trigger when it opens so
+the next Tab follows ordinary DOM order.
+
+It does not infer whether its children are a menu, listbox, dialog, tooltip, or
+ordinary supporting content. Use the specialized component whose semantics and
+keyboard model match that job. It also intentionally does not portal: an
+ancestor that clips overflow remains an application layout decision. Move the
+surface outside that container, or use `Dialog` when modal behavior and the
+browser top layer are the actual requirement.
+
 ### Retry requires an idempotency decision
 
 Only enable `retry` for an operation where repeating the same request is safe.

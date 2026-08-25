@@ -104,8 +104,12 @@ must("終わると success 表示に変わる", /保存しました/.test(succes
    **この race を見ていません。** 別に置きます。 */
 {
   const btn = page.getByTestId("calls-guard").locator("xpath=../..").getByRole("button");
-  // guard は 150ms 待つ。その間に押し切ります。
-  for (let i = 0; i < 5; i++) await btn.click({ force: true, timeout: 1000 }).catch(() => {});
+  // guard は150ms待ちます。Playwrightから5回を逐次awaitすると、CIの負荷次第で
+  // 合計150msを越え、後半が「連打」ではなく正当な次回操作になります。
+  // 同じbrowser task内で同期発火し、同一描画を本当に5回通します。
+  await btn.evaluate((button) => {
+    for (let i = 0; i < 5; i++) button.click();
+  });
   await page.waitForTimeout(1500);
   const t = await page.getByTestId("calls-guard").textContent();
   const n = Number(t.match(/\d+/)?.[0] ?? -1);

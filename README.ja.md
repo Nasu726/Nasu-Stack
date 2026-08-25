@@ -231,6 +231,7 @@ type Action<TInput, TOutput> = (
 | `DataList` | 取得・スケルトン・空・失敗と再試行を 1 個で |
 | `AsyncBoundary` | 読込中 / エラー / 空 / データありの 4 分岐を閉じ込める |
 | `ErrorBoundary` | React render failureを1つのsubtreeへ閉じ込め、読み上げ可能なfallbackとresetを提供。async errorとは分離 |
+| `Popover` | non-modalな補助内容のcontrolled/uncontrolled開閉・Esc/外側・focus復帰・viewport配置を扱う。中身のsemanticsは利用側のまま |
 | `DataTable` | 並べ替え・ページング。**狭い画面では 1 行 = 1 カードに組み替え** |
 | `AsyncSelect` | 検索つきセレクト。前の要求を自動で中断。キーボード操作つき |
 | `FileDrop` | ドラッグ&ドロップ・進捗・失敗した分だけ再送 |
@@ -249,7 +250,8 @@ type Action<TInput, TOutput> = (
 [FieldArrayガイド](docs/field-array.ja.md)にまとめています。
 render failureからの復帰とautosave queueの責任境界は、
 [ErrorBoundary](docs/error-boundary.ja.md)と[useAutosave](docs/autosave.ja.md)の
-ガイドにまとめています。
+ガイドにまとめています。`Popover`の中立なsemantics・focus・viewport配置・意図的な
+no-portal境界は[Popoverガイド](docs/popover.ja.md)で説明しています。
 
 <details>
 <summary><b>DataTable — 狭い画面では表をやめる</b></summary>

@@ -149,6 +149,28 @@
 - [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
 - [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 45/45が成功する
 - [x] `pnpm verify` 30 / 30、`pnpm verify:create` 112 / 112が成功する
+- [x] PR CIが成功する（verify 4m29s / verify-create 3m00s）
+- [x] `main`へmergeされる（PR #22 / `5a5e294`）
+
+## Wave 6 — Popover foundation
+
+### 実施
+
+- 既存`usePopover`を実寸計測・左右端補正・最大高・scroll / resize追従へ強化する
+- 小さな`Popover` componentへcontrolled / uncontrolled、trigger、Esc、outside pointer、focus復帰を載せる
+- placementは希望として扱い、viewport内へ残す必要があれば反転する
+- portalは既定にせず、DOM順序 / SSRを保ち、clipping ancestorとtop layerの境界を明記する
+- menu / listbox / dialog / tooltipのsemanticsと業務stateは所有しない
+
+### 完了条件
+
+- [x] 320pxの右端・最下部でもpanelがviewport内へ収まる実ブラウザ検査がある
+- [x] mouse / touch / keyboardで開け、Escで閉じてtriggerへfocusが戻る
+- [x] outside pointerで閉じた際に、移動先のfocusを奪わない
+- [x] controlled / uncontrolled / defaultOpenとcontentから閉じる経路を検査する
+- [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
+- [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 46/46が成功する
+- [x] `pnpm verify` 30/30 / `pnpm verify:create` 112/112が成功する
 - [ ] PR CIが成功する
 - [ ] `main`へmergeされる
 
@@ -161,8 +183,8 @@
 | 2: Switcher / SidebarLayout | 完了 | #19 | `6346f2d` / verify 29工程 / verify-create 112判定 |
 | 3: Validation contract | 完了 | #20 | `40c58c5` / verify 30工程 / verify-create 112判定 / 単体17件 / form実ブラウザ27件 |
 | 4: FieldArray | 完了 | #21 | `63df788` / verify 30工程 / verify-create 112判定 / form実ブラウザ40件 |
-| 5: ErrorBoundary / useAutosave | 実装中 | — | registry 45 item / state実ブラウザ53件 / verify 30工程 / verify-create 112判定 |
-| 6: Popover foundation | 未着手 | — | — |
+| 5: ErrorBoundary / useAutosave | 完了 | #22 | `5a5e294` / registry 45 item / state実ブラウザ53件 / verify 30工程 / verify-create 112判定 |
+| 6: Popover foundation | 実装中 | — | registry 46 item / nav実ブラウザ64件 / verify 30工程 / verify-create 112判定 |
 | 7: Paginator / CopyButton / Tooltip 判断 | 未着手 | — | — |
 | 8: behavioral recipes | 未着手 | — | — |
 | 9: cursor / Load more 判断 | 未着手 | — | — |
