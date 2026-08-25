@@ -36,6 +36,7 @@ const PAIRS = [
   ["docs/error-boundary.md", "docs/error-boundary.ja.md"],
   ["docs/autosave.md", "docs/autosave.ja.md"],
   ["docs/popover.md", "docs/popover.ja.md"],
+  ["docs/paginator.md", "docs/paginator.ja.md"],
 ];
 
 const problems = [];

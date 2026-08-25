@@ -497,6 +497,23 @@
       ]
     },
     {
+      "name": "paginator",
+      "type": "registry:ui",
+      "title": "Paginator",
+      "description": "URLを正にした番号pagination。前後link・現在page・巨大page数のellipsis・狭い器での折り返しを扱い、total取得やrouter同期はappへ残します。",
+      "registryDependencies": [
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/paginator.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/paginator.tsx"
+        }
+      ]
+    },
+    {
       "name": "disclosure",
       "type": "registry:ui",
       "title": "Disclosure / Accordion",

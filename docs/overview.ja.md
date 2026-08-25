@@ -218,13 +218,13 @@ type Space = SpaceToken | (string & {});
 
 ## 5. いま作ってあるもの
 
-配布アイテム **46**。`npx shadcn add Nasu726/Nasu-Stack/<名前>` で個別に足せます。
+配布アイテム **47**。`npx shadcn add Nasu726/Nasu-Stack/<名前>` で個別に足せます。
 
 | 層 | 中身 |
 |---|---|
 | トンマナ | `tokens.css` / `themes.css` / `prose.css` / `ThemeProvider`（4 テーマ・ちらつき防止） |
 | レイアウト | Box / Stack / Inline / **Switcher / SidebarLayout** / Columns / Column / Tiles / Spread / ContentBlock / PageBlock / Divider / Section |
-| ナビ | SiteHeader / NavLink / SkipLink / SiteFooter |
+| ナビ | SiteHeader / NavLink / SkipLink / SiteFooter / **Paginator** |
 | 開閉 | Dialog（中央・シート）/ Tabs / Disclosure / Accordion / **Popover** / DropdownMenu / NavDropdown |
 | 入力 | AsyncForm（任意のValidator + 最初のerrorへのfocus）/ **FieldArray**（stable key / index付きname / min-max / focus）/ Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
 | 表示 | DataList / DataTable / AsyncBoundary / **ErrorBoundary** / Toast / ConfirmDialog / Scrollable / Frame / Img |

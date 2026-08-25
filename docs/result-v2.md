@@ -171,8 +171,39 @@
 - [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
 - [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 46/46が成功する
 - [x] `pnpm verify` 30/30 / `pnpm verify:create` 112/112が成功する
+- [x] PR CIが成功する（verify 4m20s / verify-create 3m20s）
+- [x] `main`へmergeされる（PR #23 / `195eeb6`）
+
+## Wave 7a — Paginator
+
+### 実施
+
+- `Paginator`を独立itemとして追加し、registry itemを46 → 47にする
+- `getHref`を必須にし、client router利用時も本物のlinkを残す
+- 前後link、現在page、巨大page数でも上限のあるellipsisを扱う
+- 狭い器ではtargetを潰さず、DOM / focus順を保ったまま折り返す
+- `getPaginationItems()`を1段下のsupported pathとして公開する
+- total取得、URLの意味、router同期、cursor / Load moreのraceは所有しない
+
+### 完了条件
+
+- [x] 1 pageと2〜5 pageで不要なellipsisや移動可能なdisabled linkが無い
+- [x] 1000 pageでもDOM数が上限内で、先頭・中間・末尾の省略が正しい
+- [x] 現在位置、前後関係、disabled、link先を読み上げとDOMで辿れる
+- [x] 通常clickのcallbackと、modifier clickのnative link経路を分離する
+- [x] 320pxでdocument overflowとtargetの縮み潰れが無い
+- [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
+- [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 47/47が成功する
+- [x] `pnpm verify` 30/30 / `pnpm verify:create` 112/112が成功する
 - [ ] PR CIが成功する
 - [ ] `main`へmergeされる
+
+### Wave 10へ残す観測
+
+同じcheckoutで`pnpm verify`と`pnpm verify:create`を同時に起動すると、両方が共有する
+`packages/create-nasu-stack/template`の再生成が競合した。CIの2 jobは別checkoutなので影響
+しないが、localで安全に並列化できない重複工程としてWave 10でlockまたは作業領域分離を扱う。
+単独再実行では30/30と112/112がそれぞれ成功した。
 
 ## 実装台帳
 
@@ -184,8 +215,9 @@
 | 3: Validation contract | 完了 | #20 | `40c58c5` / verify 30工程 / verify-create 112判定 / 単体17件 / form実ブラウザ27件 |
 | 4: FieldArray | 完了 | #21 | `63df788` / verify 30工程 / verify-create 112判定 / form実ブラウザ40件 |
 | 5: ErrorBoundary / useAutosave | 完了 | #22 | `5a5e294` / registry 45 item / state実ブラウザ53件 / verify 30工程 / verify-create 112判定 |
-| 6: Popover foundation | 実装中 | — | registry 46 item / nav実ブラウザ64件 / verify 30工程 / verify-create 112判定 |
-| 7: Paginator / CopyButton / Tooltip 判断 | 未着手 | — | — |
+| 6: Popover foundation | 完了 | #23 | `195eeb6` / registry 46 item / nav実ブラウザ64件 / verify 30工程 / verify-create 112判定 |
+| 7a: Paginator | 実装中 | — | registry 47 item / nav実ブラウザ76件 / verify 30工程 / verify-create 112判定 |
+| 7b: CopyButton / Tooltip 判断 | 未着手 | — | — |
 | 8: behavioral recipes | 未着手 | — | — |
 | 9: cursor / Load more 判断 | 未着手 | — | — |
 | 10: checker / CI 時間 | 未着手 | — | — |
