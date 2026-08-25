@@ -517,13 +517,31 @@
       "name": "use-popover",
       "type": "registry:hook",
       "title": "usePopover",
-      "description": "外側クリック・Esc・出す向きの共通処理。",
+      "description": "外側pointer・Esc・実寸配置・viewport edge補正の共通処理。",
       "registryDependencies": [],
       "files": [
         {
           "path": "registry/nasu/hooks/use-popover.ts",
           "type": "registry:hook",
           "target": "hooks/use-popover.ts"
+        }
+      ]
+    },
+    {
+      "name": "popover",
+      "type": "registry:ui",
+      "title": "Popover",
+      "description": "triggerのそばへ補助内容を出し、controlled/uncontrolled開閉・Esc・外側pointer・focus復帰・viewport edgeを扱います。content semanticsは所有しません。",
+      "registryDependencies": [
+        "Nasu726/Nasu-Stack/use-popover",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/popover.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/popover.tsx"
         }
       ]
     },

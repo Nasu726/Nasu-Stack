@@ -242,6 +242,7 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `DataList` | Fetch, skeleton, empty, failure, and retry in a single component |
 | `AsyncBoundary` | Wraps the loading / error / empty / loaded fork |
 | `ErrorBoundary` | Contains React render failures to one subtree with an accessible fallback and reset; async errors stay separate |
+| `Popover` | Non-modal supporting content with controlled/uncontrolled state, Escape/outside dismissal, focus return, and viewport-edge positioning; content semantics stay yours |
 | `DataTable` | Sorting and paging. **Below tablet width it becomes one card per row** |
 | `AsyncSelect` | Searchable select. Cancels the previous request. Keyboard support included |
 | `FileDrop` | Drag and drop, progress, retry only what failed |
@@ -260,7 +261,8 @@ The [FieldArray guide](docs/field-array.md) covers nested paths, UI keys,
 focus, reset, and the lower-level `fieldArrayItemName()` path.
 Render-failure recovery and autosave queue boundaries are in the
 [ErrorBoundary](docs/error-boundary.md) and [useAutosave](docs/autosave.md)
-guides.
+guides. The [Popover guide](docs/popover.md) explains its neutral semantics,
+focus behavior, viewport placement, and intentional no-portal boundary.
 
 <details>
 <summary><b>DataTable — stop being a table when the screen is narrow</b></summary>

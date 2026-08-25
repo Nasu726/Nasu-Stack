@@ -135,6 +135,17 @@ retention、暗号化、migration、offline、cross-tabの判断が伴い、appl
 `cancel()`はtransportへabortを依頼して結果を無視しますが、ほかの`AbortSignal`と同じく、
 serverがwriteをrollbackした証明にはなりません。
 
+### Popoverは開閉の仕組みを持つが、中身のsemanticsは持たない
+
+`Popover`はcontrolled / uncontrolledな開閉の配線、外側pointerとEscで閉じること、focus
+復帰、実測したpanelをviewport内へ残すことを引き受けます。non-modalのままで、開いた
+ときはtriggerへfocusを残し、次のTabが通常のDOM順序を進むようにします。
+
+子がmenu・listbox・dialog・tooltip・単なる補足内容のどれなのかは推測しません。その仕事に
+合うsemanticsとkeyboard modelを持つ専門componentを使います。また意図的にportalしないため、
+overflowを切る祖先はapplication layoutの判断として残ります。そのcontainerの外へsurfaceを
+移すか、本当にmodalとbrowser top layerが必要なら`Dialog`を使います。
+
 ### リトライには冪等性の判断が要る
 
 `retry` は、同じ要求を繰り返して安全な操作にだけ有効にします。

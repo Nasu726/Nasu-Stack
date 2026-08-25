@@ -253,7 +253,7 @@ const active = (page) =>
 {
   const page = await openTab("nav");
 
-  await page.getByRole("button", { name: "操作" }).click();
+  await page.getByRole("button", { name: "操作", exact: true }).click();
   await page.waitForTimeout(250);
   const m0 = await active(page);
   must("12. 開くとフォーカスが先頭の項目へ移る", m0?.role === "menuitem", JSON.stringify(m0));
@@ -297,6 +297,133 @@ const active = (page) =>
     JSON.stringify(navRoles),
   );
   mustEq("    中身はただのリンク", navRoles["中身"], "a");
+
+  await page.close();
+}
+
+/* ===== Popover foundation ========================================
+   固定座標ではなく「viewportの内側」「focusの移り方」という関係を測ります。
+   320pxの右端かつ最下部へ置き、希望がbelowでも必要ならaboveへ反転することを
+   実際のtouch contextで確かめます。 */
+{
+  const page = await openTab("nav", { width: 320, height: 520 });
+  const trigger = page.getByRole("button", { name: "詳細を表示" });
+  const outside = page.getByTestId("popover-outside-action");
+
+  must(
+    "Popover A. defaultOpen のuncontrolled contentが初期描画される",
+    (await page.getByTestId("popover-default-open").count()) === 1,
+  );
+
+  // scrollIntoViewのbottomはmobile emulationのlayout / visual viewport差で
+  // 「指定した520pxの下端」に揃わないことがあります。anchor自体をfixedにし、
+  // window.innerWidth / innerHeight上の右端・最下部という前提を確実に作ります。
+  await trigger.evaluate((element) => {
+    const anchor = element.parentElement;
+    if (!anchor) return;
+    Object.assign(anchor.style, {
+      position: "fixed",
+      right: "0",
+      bottom: "0",
+      zIndex: "60",
+    });
+  });
+  await trigger.press("Enter");
+  await page.waitForTimeout(250);
+
+  const geometry = await trigger.evaluate((button) => {
+    const content = document.getElementById(button.getAttribute("aria-controls") ?? "");
+    const rect = content?.getBoundingClientRect();
+    return {
+      expanded: button.getAttribute("aria-expanded"),
+      role: content?.getAttribute("role"),
+      placement: content?.getAttribute("data-placement"),
+      rect: rect
+        ? {
+            top: Math.round(rect.top),
+            right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom),
+            left: Math.round(rect.left),
+          }
+        : null,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+    };
+  });
+  const r = geometry.rect;
+  must(
+    "Popover B. 320pxの右端・最下部でもpanelがviewport内へ収まる",
+    !!r &&
+      r.left >= 7 &&
+      r.top >= 7 &&
+      r.right <= geometry.viewport.width - 7 &&
+      r.bottom <= geometry.viewport.height - 7,
+    JSON.stringify(geometry),
+  );
+  mustEq("    aria-expanded が開閉状態を表す", geometry.expanded, "true");
+  mustEq("    below希望でも下に入らなければaboveへ反転", geometry.placement, "above");
+  mustEq("    generic contentへ誤ったroleを足さない", geometry.role, null);
+
+  // DOM順序を保つため、開いた直後のTabはcontent内の最初のbuttonへ進みます。
+  await page.keyboard.press("Tab");
+  const inside = await active(page);
+  must(
+    "Popover C. keyboardで開き、次のTabでcontentへ入れる",
+    inside?.tag === "button" && inside?.text === "内容から閉じる",
+    JSON.stringify(inside),
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(250);
+  const afterEscape = await active(page);
+  must(
+    "    Escで閉じるとtriggerへfocusが戻る",
+    afterEscape?.tag === "button" && afterEscape?.text === "詳細を表示",
+    JSON.stringify(afterEscape),
+  );
+  mustEq("    Esc後はcontentを外す", await page.getByTestId("popover-content").count(), 0);
+
+  // content自身の完了buttonで閉じた場合も、消えるbuttonへfocusを残しません。
+  await trigger.press("Enter");
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(250);
+  const afterContentClose = await active(page);
+  must(
+    "Popover D. contentのclose()でもtriggerへfocusが戻る",
+    afterContentClose?.tag === "button" && afterContentClose?.text === "詳細を表示",
+    JSON.stringify(afterContentClose),
+  );
+
+  // outside pointerは閉じるだけ。押した先のclickとfocusを奪ってはいけません。
+  await trigger.click();
+  await outside.click();
+  await page.waitForTimeout(200);
+  const afterOutside = await page.evaluate(() => ({
+    active: document.activeElement?.getAttribute("data-testid"),
+    count: document.querySelector('[data-testid="popover-outside-action"]')?.textContent?.trim(),
+    content: document.querySelector('[data-testid="popover-content"]') !== null,
+  }));
+  must(
+    "Popover E. outside pointerで閉じても移動先のfocusとclickを奪わない",
+    afterOutside.active === "popover-outside-action" &&
+      /1$/.test(afterOutside.count ?? "") &&
+      !afterOutside.content,
+    JSON.stringify(afterOutside),
+  );
+
+  // openTabは狭い幅でhasTouch=true。合成pointerではなく実際のtapを送ります。
+  await trigger.tap();
+  mustEq("Popover F. touchのtapで開く", await trigger.getAttribute("aria-expanded"), "true");
+  await outside.tap();
+  mustEq("    touchのoutside tapで閉じる", await trigger.getAttribute("aria-expanded"), "false");
+
+  const controlled = page.getByRole("button", { name: "制御されたPopover" });
+  await controlled.click();
+  mustEq("Popover G. controlled triggerから開く", await controlled.getAttribute("aria-expanded"), "true");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  mustEq("    controlledでもEscで閉じる", await controlled.getAttribute("aria-expanded"), "false");
+  await page.getByRole("button", { name: "親から開閉" }).click();
+  mustEq("    親のstateからも開ける", await controlled.getAttribute("aria-expanded"), "true");
 
   await page.close();
 }

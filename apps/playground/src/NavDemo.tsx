@@ -5,6 +5,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Tabs, TabPanel } from "@/components/ui/tabs";
 import { Accordion, Disclosure } from "@/components/ui/disclosure";
 import { DropdownMenu, NavDropdown } from "@/components/ui/dropdown-menu";
+import { Popover } from "@/components/ui/popover";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { useToast } from "@/components/ui/toast";
@@ -28,6 +29,7 @@ export function NavDemo() {
           最下部だと必ず上向きに開くので、
           「入り切らないときだけ上に出す」動きが見られません。 */}
       <MenuSection />
+      <PopoverSection />
       <DialogSection />
       <TabsSection />
       <DisclosureSection />
@@ -324,6 +326,98 @@ function MenuSection() {
           ]}
         />
       </Inline>
+    </Panel>
+  );
+}
+
+/* ================================================================ */
+
+function PopoverSection() {
+  const [controlledOpen, setControlledOpen] = React.useState(false);
+  const [outsideCount, setOutsideCount] = React.useState(0);
+
+  return (
+    <Panel
+      title="Popover"
+      description={
+        <>
+          {t("triggerのそばへ補助的な内容を出し、外側pointer・Esc・focus復帰・viewport端の補正を引き受けます。")} {" "}
+          <strong className="text-fg">
+            {t("中身のroleや選択状態は決めません。")}
+          </strong>{" "}
+          {t("命令の一覧はDropdownMenu、modalな内容はDialogを使います。portalを使わないので、Tab順序はDOMのままです。")}
+        </>
+      }
+      code={t("<Popover trigger=\"詳細\" placement=\"auto\" align=\"end\">\n  <p>最終更新は5分前です。</p>\n</Popover>\n\n// 自分のButtonを使うとき\n<Popover trigger={(props) => <Button {...props}>詳細</Button>}>…</Popover>")}
+    >
+      <Stack space="md">
+        {/* 右端・長い中身・狭いviewportを同時に測れる位置へ置きます。 */}
+        <div className="flex min-h-36 w-full items-end justify-end">
+          <Popover
+            trigger={t("詳細を表示")}
+            placement="below"
+            align="start"
+            contentClassName="w-64"
+          >
+            {({ close }) => (
+              <Stack space="sm" align="start">
+                <p data-testid="popover-content">
+                  {t("これは補足情報です。狭い画面の右端や最下部でも、読める範囲をviewport内へ残します。")}
+                </p>
+                <Button type="button" size="sm" variant="outline" onClick={close}>
+                  {t("内容から閉じる")}
+                </Button>
+              </Stack>
+            )}
+          </Popover>
+        </div>
+
+        <Inline space="xs" alignY="center">
+          <Popover
+            open={controlledOpen}
+            onOpenChange={setControlledOpen}
+            align="end"
+            trigger={(props) => (
+              <Button {...props} size="sm" variant="outline">
+                {t("制御されたPopover")}
+              </Button>
+            )}
+          >
+            <p data-testid="popover-controlled-content">
+              {t("openとonOpenChangeを親が所有しています。")}
+            </p>
+          </Popover>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setControlledOpen(!controlledOpen)}
+          >
+            {t("親から開閉")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            data-testid="popover-outside-action"
+            onClick={() => setOutsideCount((count) => count + 1)}
+          >
+            {t("外側の操作")} {outsideCount}
+          </Button>
+        </Inline>
+
+        {/* defaultOpen の契約は見た目の見本と分け、DOMで退行を測ります。 */}
+        <div hidden>
+          <Popover
+            defaultOpen
+            closeOnEscape={false}
+            closeOnOutside={false}
+            trigger="default-open-probe"
+          >
+            <span data-testid="popover-default-open">open</span>
+          </Popover>
+        </div>
+      </Stack>
     </Panel>
   );
 }
