@@ -168,6 +168,25 @@ ancestor that clips overflow remains an application layout decision. Move the
 surface outside that container, or use `Dialog` when modal behavior and the
 browser top layer are the actual requirement.
 
+### Tooltip is not a v2 public primitive
+
+Nasu Stack does not ship a `Tooltip` in v2. The geometry can reuse
+`usePopover`, but the safe interaction contract is not settled enough to make
+an easy default. The current WAI-ARIA APG [still marks its Tooltip pattern as
+work in progress without task-force consensus](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/),
+while [WCAG 2.2 SC 1.4.13](https://www.w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus.html)
+requires hover content to be dismissible, hoverable, and persistent.
+
+A tooltip is an accessible description, not the trigger's accessible name or
+the only place for instructions, an error, a disabled reason, or information
+needed to complete a task. Put essential text visibly beside the control. Use
+`Popover` for optional content that must also open deliberately on touch. A
+native disabled control cannot be relied on as a keyboard-focus trigger;
+silently adding a focusable wrapper would create a second, proxy control and
+is not a neutral default. Veterans can use `usePopover` as geometry for a
+deliberately scoped tooltip without Nasu Stack fixing that policy into a stable
+component API.
+
 ### A Paginator owns navigation shape, not page meaning
 
 `Paginator` owns a bounded list of page links and ellipses, previous and next

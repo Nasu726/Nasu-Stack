@@ -227,8 +227,39 @@
 - [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
 - [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 49/49が成功する
 - [x] `pnpm verify` 30/30 / `pnpm verify:create` 112/112が成功する
-- [ ] PR CIが成功する
-- [ ] `main`へmergeされる
+- [x] PR CIが成功する（verify 5m02s / verify-create 3m04s）
+- [x] `main`へmergeされる（PR #25 / `e883e80`）
+
+## Wave 7c — Tooltipの条件付き判断
+
+### 結論
+
+v2のpublic `Tooltip` itemは追加しない。既存`usePopover`のgeometryは再利用できたが、
+重要情報・touch・native disabled triggerを同時に安全な既定へできないため、条件を満たさない。
+
+### 根拠
+
+- WAI-ARIA APGは2026-08-25時点でも[Tooltip patternをtask forceの合意前にあるwork in
+  progress](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/)と明記している
+- [WCAG 2.2 SC 1.4.13](https://www.w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus.html)が
+  求めるdismissible・hoverable・persistentと、focus / hoverの両経路は実装できる
+- [ARIA上のtooltip](https://w3c.github.io/aria/#tooltip)は`aria-describedby`で結ぶdescriptionであり、
+  triggerのaccessible name、必須手順、error、task完了に必要な情報の代わりにはしない
+- Playwright 1.62.1 / Chromiumのprobeではnative disabled buttonへ`.focus()`してもactive elementは
+  `BODY`のまま、最初のTabは次のenabled buttonへ進む一方、pointerenterは発火した。wrapperを
+  focusableにすれば別の代理controlを作るため、黙って行う既定にはできない
+- touch contextの1回のtapではpointerenter・focus・clickがすべて発火した。click-to-pinは本来の
+  actionと競合し、hover-onlyはtouchから到達できない
+
+### 支持する経路
+
+- 必須の説明とdisabledの理由: controlの近くへvisible textとして置く
+- touchでも意図的に開く補足: `Popover`を使う
+- application固有のTooltip: `usePopover`をgeometryとして使い、appがtrigger / touch / disabled
+  policyを所有する
+
+この判断は「Tooltipは不要」という主張ではない。初心者向けのstable APIとして固定する証拠が
+足りず、誤用を促すpublic itemを増やさないという複雑さ予算の適用である。
 
 ## 実装台帳
 
@@ -242,8 +273,8 @@
 | 5: ErrorBoundary / useAutosave | 完了 | #22 | `5a5e294` / registry 45 item / state実ブラウザ53件 / verify 30工程 / verify-create 112判定 |
 | 6: Popover foundation | 完了 | #23 | `195eeb6` / registry 46 item / nav実ブラウザ64件 / verify 30工程 / verify-create 112判定 |
 | 7a: Paginator | 完了 | #24 | `c6dd020` / registry 47 item / nav実ブラウザ76件 / verify 30工程 / verify-create 112判定 |
-| 7b: CopyButton / useCopy | ローカル検査済み | — | registry 49 item / state実ブラウザ65件 / verify 30工程 / verify-create 112判定 |
-| 7c: Tooltip 判断 | 未着手 | — | — |
+| 7b: CopyButton / useCopy | 完了 | #25 | `e883e80` / registry 49 item / state実ブラウザ65件 / verify 30工程 / verify-create 112判定 |
+| 7c: Tooltip 判断 | 非採用 | — | APG WIP / disabled focus / touch tapを実測し、visible text・Popover・usePopoverへ分離 |
 | 8: behavioral recipes | 未着手 | — | — |
 | 9: cursor / Load more 判断 | 未着手 | — | — |
 | 10: checker / CI 時間 | 未着手 | — | — |

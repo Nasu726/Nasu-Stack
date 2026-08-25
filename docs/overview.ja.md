@@ -236,6 +236,10 @@ type Space = SpaceToken | (string & {});
 | 雛型 | ランディング / 会社概要 / お問い合わせ / ブログ（一覧・記事・RSS・sitemap・404） |
 | 受け口 | Cloudflare Worker の見本（CORS のプリフライト込み） |
 
+v2に`Tooltip`が無いのは意図的です。必須の手順とdisabledの理由は常時表示し、touchでも
+開く必要がある補足には`Popover`を使います。実測した理由と下位のescape hatchは
+[`boundaries.ja.md`](boundaries.ja.md#tooltipはv2のpublic-primitiveにしない)に記録しています。
+
 ---
 
 ## 6. 検査についての考え方
