@@ -146,6 +146,21 @@ serverがwriteをrollbackした証明にはなりません。
 overflowを切る祖先はapplication layoutの判断として残ります。そのcontainerの外へsurfaceを
 移すか、本当にmodalとbrowser top layerが必要なら`Dialog`を使います。
 
+### Tooltipはv2のpublic primitiveにしない
+
+Nasu Stackはv2で`Tooltip`を配りません。geometryは`usePopover`を再利用できますが、簡単で
+安全な既定にできるほどinteraction contractが固まっていません。現在のWAI-ARIA APGも
+[Tooltip patternをtask forceの合意前にあるwork in progress](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/)
+と明記し、[WCAG 2.2 SC 1.4.13](https://www.w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus.html)は
+hoverで出る内容にdismissible・hoverable・persistentを要求しています。
+
+tooltipはaccessible descriptionであって、triggerのaccessible nameでも、手順・error・disabledの
+理由・task完了に必要な情報を置く唯一の場所でもありません。必須の文はcontrolの近くへ常時表示
+します。touchでも意図的に開く必要がある補足には`Popover`を使います。native disabled controlを
+keyboard-focus triggerとして当てにできないため、focusable wrapperを黙って足すと別の代理controlを
+作ってしまい、中立な既定ではありません。必要なベテランは`usePopover`をgeometryとして使えますが、
+そのpolicyをNasu Stackのstable component APIには固定しません。
+
 ### Paginatorはnavigationの形を持つが、pageの意味は持たない
 
 `Paginator`は上限のあるpage linkとellipsis、前後の状態、読み上げ可能な現在位置を所有します。

@@ -248,6 +248,11 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 | Templates | Landing / about / contact / blog (index, article, RSS, sitemap, 404) |
 | Receiver | A Cloudflare Worker example (including the CORS preflight) |
 
+`Tooltip` is intentionally absent from v2. Essential instructions and disabled
+reasons stay visible; optional content that must work on touch uses `Popover`.
+The measured rationale and the lower-level escape hatch are recorded in
+[`boundaries.md`](boundaries.md#tooltip-is-not-a-v2-public-primitive).
+
 ---
 
 ## 6. How the checks are thought about
