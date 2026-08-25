@@ -224,6 +224,22 @@
       ]
     },
     {
+      "name": "use-autosave",
+      "type": "registry:hook",
+      "title": "useAutosave",
+      "description": "debounceとcoalescing queueで入力途中の保存をまとめ、古いresponseが最新stateを上書きしないようにします。競合解決やoffline永続化は扱いません。",
+      "registryDependencies": [
+        "Nasu726/Nasu-Stack/action"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/hooks/use-autosave.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-autosave.ts"
+        }
+      ]
+    },
+    {
       "name": "use-resource",
       "type": "registry:hook",
       "title": "useResource",
@@ -328,6 +344,24 @@
           "path": "registry/nasu/components/ui/async-boundary.tsx",
           "type": "registry:ui",
           "target": "components/ui/async-boundary.tsx"
+        }
+      ]
+    },
+    {
+      "name": "error-boundary",
+      "type": "registry:ui",
+      "title": "ErrorBoundary",
+      "description": "React render failureをsubtree単位で局所化し、accessibleなfallback・retry・resetKeys・onErrorを提供します。async errorとは分離します。",
+      "registryDependencies": [
+        "Nasu726/Nasu-Stack/action-button",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/ui/error-boundary.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/error-boundary.tsx"
         }
       ]
     },

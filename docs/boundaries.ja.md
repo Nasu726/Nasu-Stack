@@ -56,6 +56,8 @@ recipe は安全な組み合わせ例であり、新しい framework や変更�
 | 操作の再入 | 選んだ primitive が契約する範囲で、同じ画面操作が重なって走らないこと | どの操作を繰り返せるか、いつ再び許可するか | 冪等性・重複排除と、副作用を 1 回として扱う保証 |
 | 入力とデータ | ブラウザ側の助言と、Nasu Stack 自身の公開契約に対する実行時検査 | ドメイン規則と、API に期待するデータ形 | 認証・認可・正規の入力検証・CSRF 対策・レスポンス schema |
 | 繰り返し入力 | stable な UI 識別、index 付き name、min/max の操作、追加・削除後の focus | 行の内容、永続 ID、順序、配列の domain rule | 正規の件数・一意性・認可・database constraint |
+| render failure | 子孫のReact render failureの局所化、読み上げ可能なfallback、reset、reporting callbackの境界 | fallback文言、復帰条件、redaction、support ID、境界外のerror | error収集、alert、保存期間、incident対応 |
+| autosave | debounce、進行中1件、待機中の最新値1件、stale UI防止、unmount時のabort通知 | editor state、status文言、durableなlocal draft、navigation guard、競合UX | 認可、version conflict、idempotency、atomic write、durable storage |
 | JSON 通信 | 空の成功応答を空として扱い、JSON media type を受け入れ、不正／非 JSON の本文を fail closed にすること | parse 後の値をドメイン型へ変換すること、または別の通信手段を選ぶこと | 正しい status・media type・本文と、安全なエラー応答 |
 | リトライ | 上限のある仕組みと、不正な retry policy を制御された失敗にすること | 同じ操作を繰り返して安全な場合だけ有効にする判断 | 冪等性・重複排除・transaction・rate limit |
 | アップロード | 選んだファイルに対する、その場のブラウザ側フィードバック | プロダクト固有の上限と、受理／拒否後の体験 | 大きさ・種類・magic bytes・malware・保存・認可の検査 |
@@ -110,6 +112,28 @@ database constraint・response schemaはserverの仕事のままです。
 件数・一意性・認可・database constraint は server が再検査します。client の `min` /
 `max` は操作しづらい UI を防ぐだけです。reorder には固有の keyboard 操作、announcement、
 永続化、競合の契約が要るため、この primitive の外です。
+
+### render failureと非同期failureを混ぜない
+
+`ErrorBoundary`が捕捉するのは、子孫subtreeをReactがrenderしている間のfailureです。
+event handler、rejected Promise、effect、timer、Server Component、server renderingは
+捕捉しません。それぞれ復帰方法とreporting contractが違うため、1つのcomponentへ
+合わせる目的で`ActionError`と呼び替えてはいけません。
+
+既定fallbackは読み上げ可能なretry経路を残します。retryが妥当か、どの詳細なら表示して
+よいか、monitoringへどう届けるかはapplicationが所有します。独自fallbackはescape hatch
+なので、そのsemanticsとfocus挙動も利用側の責任です。
+
+### autosaveはwriteを予定するが、競合を解決しない
+
+`useAutosave`は高速入力を1 keyごとのrequestにせず、待機値を最新1件へまとめ、古い
+responseが最新client stateを上書きするのを防ぎます。2つの編集を両立させること、writeを
+idempotentにすること、どちらのversionが勝つかを決めることはできません。
+
+また、任意のform valueを`localStorage`へ黙って永続化しません。durable draftにはprivacy、
+retention、暗号化、migration、offline、cross-tabの判断が伴い、applicationの責任です。
+`cancel()`はtransportへabortを依頼して結果を無視しますが、ほかの`AbortSignal`と同じく、
+serverがwriteをrollbackした証明にはなりません。
 
 ### リトライには冪等性の判断が要る
 

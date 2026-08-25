@@ -12,7 +12,7 @@
 - [x] `layout` へ Switcher / SidebarLayout の判断を吸収
 - [x] library非依存のvalidation contract / AsyncForm / server Response adapter
 - [x] FieldArray（stable key / min-max / focus / nested path。reorderは対象外）
-- [ ] ErrorBoundary / useAutosave
+- [x] ErrorBoundary / useAutosave（render / async分離、latest-only queue、stale防止）
 - [ ] Popover foundation / Paginator / CopyButton
 - [ ] 条件を満たした behavioral recipe
 - [ ] checker の intentional-break 検証と CI の重複・実行時間改善

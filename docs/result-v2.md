@@ -121,6 +121,34 @@
 - [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
 - [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 43/43が成功する
 - [x] `pnpm verify` 30 / 30、`pnpm verify:create` 112 / 112が成功する
+- [x] PR CIが成功する（verify 4m31s / verify-create 2m57s）
+- [x] `main`へmergeされる（PR #21 / `63df788`）
+
+## Wave 5 — ErrorBoundary / useAutosave
+
+### 実施
+
+- `ErrorBoundary`をReact render failure専用itemとして追加した
+- accessibleな既定fallback、retry、resetKeys、onError / onResetを持たせた
+- callbackがthrow / rejectしてもfallbackを失わず、独自fallbackまで壊れた場合は最小表示を残す
+- event handler・Promise・effect・SSR・Server Componentのerrorは捕捉しないと明記した
+- `useAutosave`を独立hookとして追加し、debounceと「進行中1件 + 最新待機値1件」を持たせた
+- 進行中の保存を新しい編集で不用意にabortせず、途中の待機値を捨てて最新値だけを次へ送る
+- staleな成功 / 失敗responseを最新stateとcallbackへ戻さない
+- retry / flush / cancel / reset / AbortSignal / unmount cleanupを公開した
+- conflict、idempotency、durable draft、offline、navigation guardは所有しない
+- 文言とdomain stateを固定しすぎるため`SaveStatus`は独立itemにしなかった
+
+### 完了条件
+
+- [x] render failureがsiblingへ波及せず、fallbackへfocusする実ブラウザ検査がある
+- [x] retry、resetKeys、onError failure、fallback failureの復帰境界を検査する
+- [x] 高速入力が最新値1件へdebounceされる検査がある
+- [x] 保存中の編集がlatest-only queueになり、stale success / failureを無視する検査がある
+- [x] failure後のretry / 再編集、flush、cancel、reset、unmount abortを検査する
+- [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
+- [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 45/45が成功する
+- [x] `pnpm verify` 30 / 30、`pnpm verify:create` 112 / 112が成功する
 - [ ] PR CIが成功する
 - [ ] `main`へmergeされる
 
@@ -132,8 +160,8 @@
 | 1: 軽量 interaction guard | 完了 | #18 | `d03133e` / verify 29工程 / verify-create 112判定 |
 | 2: Switcher / SidebarLayout | 完了 | #19 | `6346f2d` / verify 29工程 / verify-create 112判定 |
 | 3: Validation contract | 完了 | #20 | `40c58c5` / verify 30工程 / verify-create 112判定 / 単体17件 / form実ブラウザ27件 |
-| 4: FieldArray | 実装中 | — | registry 43 item / form実ブラウザ40件 / この文書の Wave 4 |
-| 5: ErrorBoundary / useAutosave | 未着手 | — | — |
+| 4: FieldArray | 完了 | #21 | `63df788` / verify 30工程 / verify-create 112判定 / form実ブラウザ40件 |
+| 5: ErrorBoundary / useAutosave | 実装中 | — | registry 45 item / state実ブラウザ53件 / verify 30工程 / verify-create 112判定 |
 | 6: Popover foundation | 未着手 | — | — |
 | 7: Paginator / CopyButton / Tooltip 判断 | 未着手 | — | — |
 | 8: behavioral recipes | 未着手 | — | — |

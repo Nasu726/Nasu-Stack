@@ -230,6 +230,7 @@ type Action<TInput, TOutput> = (
 | `FieldArray` | stable key・index付きname・min/max・追加/削除focusを持つ繰り返し入力。reorderやdomain ruleは持たない |
 | `DataList` | 取得・スケルトン・空・失敗と再試行を 1 個で |
 | `AsyncBoundary` | 読込中 / エラー / 空 / データありの 4 分岐を閉じ込める |
+| `ErrorBoundary` | React render failureを1つのsubtreeへ閉じ込め、読み上げ可能なfallbackとresetを提供。async errorとは分離 |
 | `DataTable` | 並べ替え・ページング。**狭い画面では 1 行 = 1 カードに組み替え** |
 | `AsyncSelect` | 検索つきセレクト。前の要求を自動で中断。キーボード操作つき |
 | `FileDrop` | ドラッグ&ドロップ・進捗・失敗した分だけ再送 |
@@ -239,12 +240,16 @@ type Action<TInput, TOutput> = (
 | `ThemeProvider` / `ThemeSwitcher` | トンマナ切替。ちらつき防止スクリプトつき |
 | `useAction` / `useResource` | 書き込み系 / 読み取り系の状態管理フック |
 | `useInteractionGuard` | 同じ画面操作の重なりだけを防ぐ。いつ再許可するかは利用側が決める |
+| `useAutosave` | 保存をdebounce・最新値へ集約し、stale responseをstateへ戻さない。競合解決はserverの責任 |
 | `Switcher` / `SidebarLayout` | 中身の最小幅が入らない時だけCSSで縦に畳むレイアウト |
 
 `AsyncForm`・server `Response`・任意のschema library adapterを一緒に見る場合は、
 [validation結果契約](docs/validation.ja.md)を参照してください。
 繰り返し入力のnested path・UI key・focus・reset・1段下への降り方は、
 [FieldArrayガイド](docs/field-array.ja.md)にまとめています。
+render failureからの復帰とautosave queueの責任境界は、
+[ErrorBoundary](docs/error-boundary.ja.md)と[useAutosave](docs/autosave.ja.md)の
+ガイドにまとめています。
 
 <details>
 <summary><b>DataTable — 狭い画面では表をやめる</b></summary>

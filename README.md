@@ -241,6 +241,7 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `FieldArray` | Stable repeated fields with indexed names, min/max controls, and add/remove focus; no reorder or domain rules |
 | `DataList` | Fetch, skeleton, empty, failure, and retry in a single component |
 | `AsyncBoundary` | Wraps the loading / error / empty / loaded fork |
+| `ErrorBoundary` | Contains React render failures to one subtree with an accessible fallback and reset; async errors stay separate |
 | `DataTable` | Sorting and paging. **Below tablet width it becomes one card per row** |
 | `AsyncSelect` | Searchable select. Cancels the previous request. Keyboard support included |
 | `FileDrop` | Drag and drop, progress, retry only what failed |
@@ -250,12 +251,16 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `ThemeProvider` / `ThemeSwitcher` | Theme switching, with a no-flash init script |
 | `useAction` / `useResource` | State hooks for writes and for reads |
 | `useInteractionGuard` | Prevents only overlapping UI attempts; the caller decides when to allow another |
+| `useAutosave` | Debounces and coalesces saves, keeps stale responses out of state; conflict resolution stays on the server |
 | `Switcher` / `SidebarLayout` | CSS-only layouts that stack when their content widths no longer fit |
 
 The [validation contract guide](docs/validation.md) shows the `AsyncForm`,
 server `Response`, and optional schema-library adapter paths together.
 The [FieldArray guide](docs/field-array.md) covers nested paths, UI keys,
 focus, reset, and the lower-level `fieldArrayItemName()` path.
+Render-failure recovery and autosave queue boundaries are in the
+[ErrorBoundary](docs/error-boundary.md) and [useAutosave](docs/autosave.md)
+guides.
 
 <details>
 <summary><b>DataTable — stop being a table when the screen is narrow</b></summary>
