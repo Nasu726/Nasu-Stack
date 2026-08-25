@@ -33,6 +33,8 @@ const PAIRS = [
   ["docs/astro-and-react.md", "docs/astro-and-react.ja.md"],
   ["docs/validation.md", "docs/validation.ja.md"],
   ["docs/field-array.md", "docs/field-array.ja.md"],
+  ["docs/error-boundary.md", "docs/error-boundary.ja.md"],
+  ["docs/autosave.md", "docs/autosave.ja.md"],
 ];
 
 const problems = [];

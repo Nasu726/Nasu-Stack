@@ -64,6 +64,8 @@ copy and own, not a new framework or a sealed finished product.
 | Re-entrant interaction | Preventing the same UI operation from overlapping within the selected primitive's documented contract | Which operations may repeat and when to enable them again | Idempotency, deduplication, and treating side effects as one operation |
 | Input and data | Browser-side guidance and runtime checks for Nasu Stack's own public contracts | Domain rules and the shape you expect from an API | Authentication, authorization, authoritative validation, CSRF protection, and response schemas |
 | Repeated fields | Stable UI identity, indexed names, min/max controls, and focus after add/remove | Row content, persistent IDs, ordering, and array domain rules | Authoritative cardinality, uniqueness, authorization, and database constraints |
+| Render failure | Containing a descendant React render failure, an accessible fallback, reset, and a reporting callback boundary | Fallback wording, recovery conditions, redaction, support IDs, and errors outside the boundary | Error collection, alerting, retention, and incident response |
+| Autosave | Debounce, one in-flight save, one latest queued value, stale UI prevention, and unmount abort signaling | Editor state, status wording, durable local drafts, navigation guards, and conflict UX | Authorization, version conflicts, idempotency, atomic writes, and durable storage |
 | JSON transport | Treating an empty successful response as empty, accepting JSON media types, and failing closed on malformed or non-JSON bodies | Mapping a parsed value into a domain type, or using a different transport helper | Correct status codes, media types, response bodies, and safe error reporting |
 | Retry | A bounded retry mechanism and a controlled failure when retry policy code is invalid | Opting in only when repeating the operation is safe | Idempotency, deduplication, transaction handling, and rate limits |
 | Uploads | Immediate browser feedback about the selected file | Product limits and the experience after acceptance or rejection | Size and type enforcement, magic-byte inspection, malware handling, storage, and authorization |
@@ -125,6 +127,32 @@ real record IDs and ordering; the server rechecks cardinality, uniqueness,
 authorization, and database constraints. Client `min` / `max` only prevent an
 awkward UI action. Reorder is outside this primitive because it needs its own
 keyboard, announcement, persistence, and conflict contract.
+
+### Render failure and asynchronous failure stay separate
+
+`ErrorBoundary` catches a descendant failure while React is rendering that
+subtree. It does not catch event handlers, rejected promises, effects, timers,
+Server Components, or server rendering. Those paths have different recovery
+and reporting contracts and must not be relabeled as `ActionError` merely to
+fit one component.
+
+The default fallback preserves an accessible retry path. The application owns
+whether retrying makes sense, which details are safe to show, and how a report
+reaches monitoring. A custom fallback is an escape hatch and therefore owns
+its own semantics and focus behavior.
+
+### Autosave schedules writes; it does not resolve them
+
+`useAutosave` prevents rapid edits from becoming a request per keystroke,
+coalesces waiting values to the latest one, and refuses to let an old response
+replace the latest client state. It does not make two edits compatible, make a
+write idempotent, or decide whose version wins.
+
+It also does not silently persist arbitrary form values to `localStorage`.
+Durable drafts introduce privacy, retention, encryption, migration, offline,
+and cross-tab decisions that belong to the application. `cancel()` asks the
+transport to abort and ignores the result; as with every `AbortSignal`, that is
+not proof that the server rolled back the write.
 
 ### Retry requires an idempotency decision
 
