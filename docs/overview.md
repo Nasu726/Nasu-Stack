@@ -229,14 +229,14 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 
 ## 5. What exists today
 
-**46 registry items.** Add them individually with
+**47 registry items.** Add them individually with
 `npx shadcn add Nasu726/Nasu-Stack/<name>`.
 
 | Layer | Contents |
 |---|---|
 | Theme | `tokens.css` / `themes.css` / `prose.css` / `ThemeProvider` (4 themes, no flash) |
 | Layout | Box / Stack / Inline / **Switcher / SidebarLayout** / Columns / Column / Tiles / Spread / ContentBlock / PageBlock / Divider / Section |
-| Nav | SiteHeader / NavLink / SkipLink / SiteFooter |
+| Nav | SiteHeader / NavLink / SkipLink / SiteFooter / **Paginator** |
 | Disclosure | Dialog (center, sheet) / Tabs / Disclosure / Accordion / **Popover** / DropdownMenu / NavDropdown |
 | Input | AsyncForm (optional Validator + first-error focus) / **FieldArray** (stable key / indexed name / min-max / focus) / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
 | Display | DataList / DataTable / AsyncBoundary / **ErrorBoundary** / Toast / ConfirmDialog / Scrollable / Frame / Img |

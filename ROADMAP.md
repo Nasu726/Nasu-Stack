@@ -14,7 +14,8 @@
 - [x] FieldArray（stable key / min-max / focus / nested path。reorderは対象外）
 - [x] ErrorBoundary / useAutosave（render / async分離、latest-only queue、stale防止）
 - [x] Popover foundation（controlled/uncontrolled、focus、outside/Esc、viewport edge）
-- [ ] Paginator / CopyButton、条件を満たす場合のみ Tooltip
+- [x] Paginator（link-first、現在位置、巨大page数のellipsis、router escape hatch）
+- [ ] CopyButton、条件を満たす場合のみ Tooltip
 - [ ] 条件を満たした behavioral recipe
 - [ ] checker の intentional-break 検証と CI の重複・実行時間改善
 - [ ] v1 → v2 migration、全 public 面、実 install、Pages smoke、immutable Release

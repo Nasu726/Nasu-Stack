@@ -146,6 +146,16 @@ serverがwriteをrollbackした証明にはなりません。
 overflowを切る祖先はapplication layoutの判断として残ります。そのcontainerの外へsurfaceを
 移すか、本当にmodalとbrowser top layerが必要なら`Dialog`を使います。
 
+### Paginatorはnavigationの形を持つが、pageの意味は持たない
+
+`Paginator`は上限のあるpage linkとellipsis、前後の状態、読み上げ可能な現在位置を所有します。
+client routerが通常clickを横取りする場合も本物の`href`を必須にし、server rendering、modifier
+click、linkのコピー、JavaScriptが失敗した場合の経路を保ちます。
+
+URLをどのpageへ対応させるか、totalをどこから得るか、範囲外の要求をredirect・errorのどちらに
+するか、router stateをどう同期するかはapplicationが所有します。cursor paginationと「さらに
+読む」は並び順・stale result・重複防止の契約が別であり、番号paginationが解決したとは扱いません。
+
 ### リトライには冪等性の判断が要る
 
 `retry` は、同じ要求を繰り返して安全な操作にだけ有効にします。

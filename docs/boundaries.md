@@ -168,6 +168,18 @@ ancestor that clips overflow remains an application layout decision. Move the
 surface outside that container, or use `Dialog` when modal behavior and the
 browser top layer are the actual requirement.
 
+### A Paginator owns navigation shape, not page meaning
+
+`Paginator` owns a bounded list of page links and ellipses, previous and next
+states, and the accessible current position. A real `href` is required even
+when a client router intercepts ordinary clicks, preserving server rendering,
+modified clicks, copied links, and a path when JavaScript fails.
+
+The application owns how a URL maps to a page, where the total comes from,
+whether an out-of-range request redirects or fails, and how router state stays
+in sync. Cursor pagination and “load more” have separate ordering, stale-result,
+and duplication contracts; numbered pagination does not claim to solve them.
+
 ### Retry requires an idempotency decision
 
 Only enable `retry` for an operation where repeating the same request is safe.

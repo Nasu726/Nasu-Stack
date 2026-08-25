@@ -6,6 +6,7 @@ import { Tabs, TabPanel } from "@/components/ui/tabs";
 import { Accordion, Disclosure } from "@/components/ui/disclosure";
 import { DropdownMenu, NavDropdown } from "@/components/ui/dropdown-menu";
 import { Popover } from "@/components/ui/popover";
+import { Paginator } from "@/components/ui/paginator";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { useToast } from "@/components/ui/toast";
@@ -30,6 +31,7 @@ export function NavDemo() {
           「入り切らないときだけ上に出す」動きが見られません。 */}
       <MenuSection />
       <PopoverSection />
+      <PaginatorSection />
       <DialogSection />
       <TabsSection />
       <DisclosureSection />
@@ -416,6 +418,105 @@ function PopoverSection() {
           >
             <span data-testid="popover-default-open">open</span>
           </Popover>
+        </div>
+      </Stack>
+    </Panel>
+  );
+}
+
+/* ================================================================ */
+
+const PAGINATOR_LABELS = {
+  navigation: t("記事のページ"),
+  previous: t("前のページ"),
+  next: t("次のページ"),
+  page: (page: number) =>
+    t("ページ {0}").replace("{0}", String(page)),
+};
+
+function PaginatorSection() {
+  const [page, setPage] = React.useState(500);
+
+  return (
+    <Panel
+      title="Paginator"
+      description={
+        <>
+          {t("移動先を本物のlinkとして残したまま、現在page・前後・巨大なpage数のellipsisを扱います。")}{" "}
+          <strong className="text-fg">
+            {t("totalの取得とURLの意味はapplicationの責任です。")}
+          </strong>{" "}
+          {t("client routerはmodifierのない通常clickだけを横取りし、新しいtabで開く経路を残します。")}
+        </>
+      }
+      code={t("<Paginator\n  currentPage={page}\n  totalPages={1000}\n  getHref={(next) => `/articles?page=${next}`}\n/>\n\n// client routerを使う場合もhrefは残し、通常clickだけpreventDefaultします")}
+    >
+      <Stack space="md" id="paginator-demo">
+        <Inline space="xs" alignY="center">
+          <Button type="button" size="sm" variant="outline" onClick={() => setPage(1)}>
+            {t("先頭へ")}
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => setPage(500)}>
+            {t("中間へ")}
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => setPage(1000)}>
+            {t("末尾へ")}
+          </Button>
+        </Inline>
+
+        <Paginator
+          data-testid="paginator-large"
+          currentPage={page}
+          totalPages={1000}
+          getHref={(next) => `?tab=nav&page=${next}#paginator-demo`}
+          onPageChange={(next, event) => {
+            if (
+              event.button !== 0 ||
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey
+            ) return;
+            event.preventDefault();
+            setPage(next);
+            const url = new URL(window.location.href);
+            url.searchParams.set("page", String(next));
+            url.hash = "paginator-demo";
+            window.history.replaceState(null, "", url);
+          }}
+          labels={PAGINATOR_LABELS}
+        />
+
+        <p className="text-xs text-muted-fg">
+          {t("現在: ページ {0}").replace("{0}", String(page))}
+        </p>
+
+        {/* 小さい総page数も同じpublic componentで測ります。hiddenなのは
+            見本を重複して読ませず、DOM contractだけを回帰検査するためです。 */}
+        <div hidden>
+          <Paginator
+            data-testid="paginator-one"
+            currentPage={1}
+            totalPages={1}
+            getHref={(next) => `?page=${next}`}
+            labels={PAGINATOR_LABELS}
+          />
+          <Paginator
+            data-testid="paginator-five"
+            currentPage={3}
+            totalPages={5}
+            getHref={(next) => `?page=${next}`}
+            labels={PAGINATOR_LABELS}
+          />
+          <Paginator
+            data-testid="paginator-hostile-count"
+            currentPage={500_000_000}
+            totalPages={1_000_000_000}
+            siblingCount={1_000_000_000}
+            boundaryCount={1_000_000_000}
+            getHref={(next) => `?page=${next}`}
+            labels={PAGINATOR_LABELS}
+          />
         </div>
       </Stack>
     </Panel>
