@@ -156,6 +156,16 @@ URLをどのpageへ対応させるか、totalをどこから得るか、範囲�
 するか、router stateをどう同期するかはapplicationが所有します。cursor paginationと「さらに
 読む」は並び順・stale result・重複防止の契約が別であり、番号paginationが解決したとは扱いません。
 
+### clipboardの状態は情報開示の許可ではない
+
+`useCopy`と`CopyButton`は1回のbrowser clipboard試行、互換fallback、読み上げ可能な成功・失敗
+state、連打lock、reset timerのcleanupを所有します。渡された文字を公開して安全か、秘密情報・
+個人情報・期限つきtokenをコピーすべきかは推測しません。
+
+正確な文字列と、開示を許可するpolicyはapplicationが所有します。clipboard writeはabortできない
+ため、resetで進行中の試行を取り消したようには見せません。legacy textarea経路は互換fallbackで
+あり、browser permissionの迂回ではありません。両経路の拒否は明示的なerrorとして残します。
+
 ### リトライには冪等性の判断が要る
 
 `retry` は、同じ要求を繰り返して安全な操作にだけ有効にします。
