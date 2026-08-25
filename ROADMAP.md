@@ -17,7 +17,7 @@
 - [x] Paginator（link-first、現在位置、巨大page数のellipsis、router escape hatch）
 - [x] CopyButton / useCopy（fallback、連打、accessible status、timer cleanup）
 - [x] Tooltipの条件付き判断（v2 public itemにはせず、visible text / Popover / usePopoverへ分離）
-- [ ] 条件を満たした behavioral recipe
+- [x] 条件を満たしたbehavioral recipe（SearchListRecipe: debounce / stale除外 / abort / retry / link）
 - [ ] checker の intentional-break 検証と CI の重複・実行時間改善
 - [ ] v1 → v2 migration、全 public 面、実 install、Pages smoke、immutable Release
 

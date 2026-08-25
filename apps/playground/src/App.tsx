@@ -5,6 +5,10 @@ import { DataList } from "@/components/ui/data-list";
 import { AsyncBoundary } from "@/components/ui/async-boundary";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { CopyButton } from "@/components/ui/copy-button";
+import {
+  SearchListRecipe,
+  type SearchListItem,
+} from "@/components/recipes/search-list";
 import { ThemeSwitcher, useTheme } from "@/components/ui/theme-provider";
 import { useAction } from "@/hooks/use-action";
 import { useAutosave } from "@/hooks/use-autosave";
@@ -70,6 +74,7 @@ const PANELS: Record<string, React.ReactNode> = {
       <AutosaveSection />
       <FormSection />
       <ListSection />
+      <SearchListSection />
       <AbortSection />
       <GuardRaceSection />
       <ToastSection />
@@ -950,6 +955,140 @@ function ListSection() {
       />
     </Panel>
   );
+}
+
+/* ---------------------------------------------------------------- */
+
+function SearchListSection() {
+  const calls = React.useRef<string[]>([]);
+  const aborts = React.useRef(0);
+  const failures = React.useRef(new Map<string, number>());
+  const [, renderProbe] = React.useReducer((value) => value + 1, 0);
+
+  const search = React.useCallback(
+    async (query: string, context: { signal: AbortSignal }) => {
+      calls.current.push(query);
+      renderProbe();
+
+      await waitForSearch(
+        query === "slow" ? 900 : 140,
+        context.signal,
+        () => {
+          aborts.current += 1;
+          renderProbe();
+        },
+      );
+
+      if (query === "error") {
+        const attempt = (failures.current.get(query) ?? 0) + 1;
+        failures.current.set(query, attempt);
+        if (attempt === 1) throw new Error(t("検索に失敗しました"));
+        return [
+          {
+            id: "recovered",
+            href: "/docs/recovered",
+            title: t("再試行で取得できた結果"),
+          },
+        ];
+      }
+
+      if (query === "empty") return [];
+      if (query === "slow") {
+        return [
+          {
+            id: "old",
+            href: "/docs/old",
+            title: t("古い検索結果"),
+          },
+        ];
+      }
+      if (query === "fast") {
+        return [
+          {
+            id: "current",
+            href: "/docs/current",
+            title: t("新しい検索結果"),
+          },
+        ];
+      }
+
+      const items: SearchListItem[] = [
+        {
+          id: "boundaries",
+          href: "/docs/boundaries",
+          title: t("責任境界"),
+          description: t("認証・認可・rate limitはserverの責任として残します。"),
+        },
+        {
+          id: "long",
+          href: "/docs/search-list",
+          title:
+            "SearchResultWithAnIntentionallyLongUnbrokenIdentifierThatMustNotOverflow",
+          description: t("長い結果でも狭い画面を押し広げません。"),
+        },
+      ];
+      return items;
+    },
+    [],
+  );
+
+  return (
+    <Panel
+      title="Search list recipe"
+      description={t("入力が止まってから検索し、新しい検索語を待つ間は古い結果を隠します。前のrequestは中断し、失敗・再試行・空状態も同じ配線で扱います。検索の意味、権限、rate limit、順位付けはappとserverの責任です。")}
+      code={t("<SearchListRecipe\n  search={(query, ctx) => searchArticles(query, ctx)}\n  messages={{ label: \"記事を検索\" }}\n/>")}
+    >
+      <ContentBlock width="32rem" align="start" data-testid="search-list-demo">
+        <SearchListRecipe
+          search={search}
+          debounceMs={250}
+          messages={{
+            label: t("サイト内検索"),
+            placeholder: t("名前や説明で検索"),
+            belowMinimum: (minimum) =>
+              t("{0}文字以上入力すると検索します。").replace(
+                "{0}",
+                String(minimum),
+              ),
+            searching: t("検索中…"),
+            empty: t("一致する結果はありません。"),
+            retry: t("検索を再試行"),
+            resultCount: (count) =>
+              t("検索結果 {0} 件").replace("{0}", String(count)),
+          }}
+        />
+        <output
+          hidden
+          data-testid="search-list-probe"
+          data-calls={JSON.stringify(calls.current)}
+          data-aborts={aborts.current}
+        >
+          {calls.current.length}:{aborts.current}
+        </output>
+      </ContentBlock>
+    </Panel>
+  );
+}
+
+function waitForSearch(
+  milliseconds: number,
+  signal: AbortSignal,
+  onAbort: () => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const finish = () => {
+      signal.removeEventListener("abort", abort);
+      resolve();
+    };
+    const timer = window.setTimeout(finish, milliseconds);
+    const abort = () => {
+      window.clearTimeout(timer);
+      onAbort();
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    if (signal.aborted) abort();
+    else signal.addEventListener("abort", abort, { once: true });
+  });
 }
 
 /* ---------------------------------------------------------------- */

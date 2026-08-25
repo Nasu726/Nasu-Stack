@@ -38,6 +38,7 @@ const PAIRS = [
   ["docs/popover.md", "docs/popover.ja.md"],
   ["docs/paginator.md", "docs/paginator.ja.md"],
   ["docs/copy-button.md", "docs/copy-button.ja.md"],
+  ["docs/search-list.md", "docs/search-list.ja.md"],
 ];
 
 const problems = [];

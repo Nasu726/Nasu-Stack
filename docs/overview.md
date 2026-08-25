@@ -229,7 +229,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 
 ## 5. What exists today
 
-**49 registry items.** Add them individually with
+**50 registry items.** Add them individually with
 `npx shadcn add Nasu726/Nasu-Stack/<name>`.
 
 | Layer | Contents |
@@ -242,6 +242,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 | Display | DataList / DataTable / AsyncBoundary / **ErrorBoundary** / **CopyButton** / Toast / ConfirmDialog / Scrollable / Frame / Img |
 | Contract and wiring | Action / ActionSpec / ActionError / **ValidationResult / Validator / validationFailureResponse** / jsonRequest / upload / **createSubmit** |
 | Hooks | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard / useAutosave / useCopy** |
+| Recipes | **SearchListRecipe** (debounce / stale exclusion / abort / failure / link results; copy and own) |
 | Generation | `buildMeta` (SEO, OGP, JSON-LD) / `buildSitemap` / `buildRss` / `buildRobots` |
 | Checks | `check-responsive.mjs` (**shipped to users too**) |
 | Entry point | `create-nasu-stack` (Astro, blog, and Vite templates) |
