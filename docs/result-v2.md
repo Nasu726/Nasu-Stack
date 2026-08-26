@@ -261,6 +261,58 @@ v2のpublic `Tooltip` itemは追加しない。既存`usePopover`のgeometryは�
 この判断は「Tooltipは不要」という主張ではない。初心者向けのstable APIとして固定する証拠が
 足りず、誤用を促すpublic itemを増やさないという複雑さ予算の適用である。
 
+## Wave 8 — Search list behavioral recipe
+
+### 採否
+
+6候補を既存itemと照合した。`delete-with-confirmation`は`ActionButton confirm`、
+`settings-form`は`AsyncForm`、`upload-form`は`FileDrop`、`autosave-editor`は`useAutosave`の
+既存例を並べ直す比率が高い。`master-detail`はrouter / URL / domain APIを先に固定しすぎる。
+
+`search-list`だけは`AsyncSelect`（form valueを選ぶ）とも`DataList`（検索欄なし）とも責任が
+重ならず、debounce・古い成功結果の即時非表示・進行中requestのabort・failure / retry /
+empty・本物のresult linkという、見本だけでは繰り返し壊れる配線を持つ。copy & ownのrecipe
+として採用し、registry itemを49 → 50にする。
+
+### 実施
+
+- `SearchListRecipe`を`components/recipes/search-list.tsx`へcopyするblockとして追加する
+- `Action<string, SearchListItem[]>`だけを接続契約にし、検索backendを固定しない
+- 2文字 / 300ms / 自動retry 0を安全な既定にし、全て変更可能にする
+- queryが変わった瞬間に古い結果componentを外し、debounce後は新しいpending stateから始める
+- 前のtransportへ`AbortSignal`を通知し、遅いresponseをUIへ戻さない
+- `AsyncBoundary`へ`retryLabel`を追加し、recipeの全表示文言をlocaleに合わせられるようにする
+- serverの認可・result filter・rate limit・abuse防止・ranking・index整合性を境界外に残す
+
+### intentional break
+
+最初に`SearchResults`の`key`だけを外したが、検査は77/77のまま成功した。debounce待機分岐が
+結果component自体をunmountするためkeyは冗長だった。二重の防御に見えても証拠が無いcodeは
+残さず、keyを削除した状態を正とした。
+
+次にdebounce待機分岐を意図的に常時falseへ変更したところ、state実ブラウザ検査は77件中
+2件を正しく失敗にした。
+
+1. 最小文字数未満の途中値までactionへ流れ、`["a", "nasu"]`の2回になった
+2. 新しいqueryのdebounce中に古い成功結果が残った
+
+分岐を復旧すると77/77とpageerror 0へ戻った。checkerは見た目の存在ではなく、request回数と
+古い結果のDOM不在を測っている。
+
+### 完了条件
+
+- [x] 既存itemで足りるrecipe候補を追加せず、採否理由を残す
+- [x] 最小文字数未満0 request、高速入力1 request、進行中request abortを実ブラウザで検査する
+- [x] query変更直後から古い成功結果を1 frameも表示しない
+- [x] failure / localized retry / recovery / empty / real href / Tab focusを検査する
+- [x] 長い切れない結果を含め、320pxでdocumentとrecipeのoverflowが0
+- [x] intentional breakで対象判定が赤になることを確認する
+- [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
+- [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 50/50が成功する
+- [x] local `pnpm verify` 30/30 / `pnpm verify:create` 112/112が成功する
+- [ ] PR CIが成功する
+- [ ] `main`へmergeする
+
 ## 実装台帳
 
 | Wave | 状態 | PR | 証拠 |
@@ -275,7 +327,7 @@ v2のpublic `Tooltip` itemは追加しない。既存`usePopover`のgeometryは�
 | 7a: Paginator | 完了 | #24 | `c6dd020` / registry 47 item / nav実ブラウザ76件 / verify 30工程 / verify-create 112判定 |
 | 7b: CopyButton / useCopy | 完了 | #25 | `e883e80` / registry 49 item / state実ブラウザ65件 / verify 30工程 / verify-create 112判定 |
 | 7c: Tooltip 判断 | 非採用 | — | APG WIP / disabled focus / touch tapを実測し、visible text・Popover・usePopoverへ分離 |
-| 8: behavioral recipes | 未着手 | — | — |
+| 8: behavioral recipes | 進行中 | — | `codex/v2-search-list-recipe` / registry 50 item / state実ブラウザ77件 / verify 30工程 / verify-create 112判定 |
 | 9: cursor / Load more 判断 | 未着手 | — | — |
 | 10: checker / CI 時間 | 未着手 | — | — |
 | 11: contract audit / release | 未着手 | — | — |

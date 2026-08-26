@@ -23,6 +23,8 @@ export interface AsyncBoundaryProps<T> {
   empty?: React.ReactNode;
   /** 再試行ボタンの動作。渡すとエラー画面に「再試行」が出ます。 */
   onRetry?: () => void;
+  /** 再試行ボタンの文言。既定は「再試行」。 */
+  retryLabel?: React.ReactNode;
   className?: string;
   /** スケルトンの行数。既定 3。 */
   skeletonRows?: number;
@@ -46,6 +48,7 @@ export function AsyncBoundary<T>({
   isEmpty,
   empty,
   onRetry,
+  retryLabel = "再試行",
   className,
   skeletonRows = 3,
 }: AsyncBoundaryProps<T>) {
@@ -75,7 +78,7 @@ export function AsyncBoundary<T>({
         </div>
         {onRetry && (
           <Button size="sm" variant="outline" onClick={onRetry}>
-            再試行
+            {retryLabel}
           </Button>
         )}
       </div>

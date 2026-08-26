@@ -236,6 +236,7 @@ type Action<TInput, TOutput> = (
 | `CopyButton` | clipboardへのcopy・成功/失敗・読み上げstatus・timer cleanup・互換fallbackを扱う |
 | `DataTable` | 並べ替え・ページング。**狭い画面では 1 行 = 1 カードに組み替え** |
 | `AsyncSelect` | 検索つきセレクト。前の要求を自動で中断。キーボード操作つき |
+| `SearchListRecipe` | copy-ownedな検索配線。debounce・stale結果の非表示・前requestの中断・失敗/空状態・本物のlinkをまとめる |
 | `FileDrop` | ドラッグ&ドロップ・進捗・失敗した分だけ再送 |
 | `ConfirmDialog` / `useConfirm` | 確認ダイアログ。native `<dialog>` |
 | `ActionProvider` | エラー処理の書き忘れを握り潰さない安全網 |
@@ -259,6 +260,8 @@ no-portal境界は[Popoverガイド](docs/popover.ja.md)で説明しています
 [Paginatorガイド](docs/paginator.ja.md)で説明しています。
 clipboard fallback・独自render・timer・情報開示の境界は
 [CopyButton / useCopyガイド](docs/copy-button.ja.md)にまとめています。
+debounce・stale resultの除外・結果link・検索とserverの境界は
+[search-list recipeガイド](docs/search-list.ja.md)で説明しています。
 
 <details>
 <summary><b>DataTable — 狭い画面では表をやめる</b></summary>

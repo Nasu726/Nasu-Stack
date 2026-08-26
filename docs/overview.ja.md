@@ -218,7 +218,7 @@ type Space = SpaceToken | (string & {});
 
 ## 5. いま作ってあるもの
 
-配布アイテム **49**。`npx shadcn add Nasu726/Nasu-Stack/<名前>` で個別に足せます。
+配布アイテム **50**。`npx shadcn add Nasu726/Nasu-Stack/<名前>` で個別に足せます。
 
 | 層 | 中身 |
 |---|---|
@@ -230,6 +230,7 @@ type Space = SpaceToken | (string & {});
 | 表示 | DataList / DataTable / AsyncBoundary / **ErrorBoundary** / **CopyButton** / Toast / ConfirmDialog / Scrollable / Frame / Img |
 | 契約と配線 | Action / ActionSpec / ActionError / **ValidationResult / Validator / validationFailureResponse** / jsonRequest / upload / **createSubmit** |
 | フック | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard / useAutosave / useCopy** |
+| recipe | **SearchListRecipe**（debounce / stale除外 / abort / 失敗 / link結果。copyして所有） |
 | 生成 | `buildMeta`（SEO・OGP・JSON-LD）/ `buildSitemap` / `buildRss` / `buildRobots` |
 | 検査 | `check-responsive.mjs`（**利用者にも配られます**） |
 | 入口 | `create-nasu-stack`（Astro / ブログ / Vite の 3 種） |

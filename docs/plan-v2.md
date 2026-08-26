@@ -91,12 +91,16 @@ recipe 化・延期・責任外に分類してから実装します。
 | 候補 | 先に必要な証拠 |
 |---|---|
 | Tooltip | Popover の geometry を再利用し、重要情報を tooltip だけへ隠せない API と touch 方針を実証する |
-| Recipes | primitive を並べるだけでなく、失敗状態を含む反復可能な wiring である |
+| Recipes | **採用: SearchListRecipe。** debounceだけでなく、古い成功結果の即時非表示・request abort・failure / retry / empty・link semanticsを一体で検査できる |
 | cursor / Load more | `useResource` と Paginator で足りない cursor race を再現する。自動 infinite scroll は既定にしない |
 
-recipe の初期候補は `settings-form`、`delete-with-confirmation`、`master-detail`。
-`search-list`、`autosave-editor`、`upload-form` は土台の API が固まってから評価します。
-各 recipe は copy & own であり、新しい runtime framework にしません。
+初期候補も再評価しました。`delete-with-confirmation`は既存`ActionButton confirm`、
+`settings-form`は`AsyncForm`、`upload-form`は`FileDrop`、`autosave-editor`は`useAutosave`の
+既存例を並べ直す比率が高く、名前を増やす費用に届きません。`master-detail`はrouter・URL・
+domain APIを先に固定しすぎます。一方`search-list`は、`AsyncSelect`（値を選ぶ）とも`DataList`
+（検索欄を持たない）とも異なり、debounce中の古い結果、query切替直後の1-frame stale表示、
+進行中requestのabortという反復可能な失敗をまとめて解消するため採用します。recipeは
+copy & ownであり、新しいruntime frameworkにはしません。
 
 ### v2 の public primitive にしない
 

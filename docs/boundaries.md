@@ -66,6 +66,7 @@ copy and own, not a new framework or a sealed finished product.
 | Repeated fields | Stable UI identity, indexed names, min/max controls, and focus after add/remove | Row content, persistent IDs, ordering, and array domain rules | Authoritative cardinality, uniqueness, authorization, and database constraints |
 | Render failure | Containing a descendant React render failure, an accessible fallback, reset, and a reporting callback boundary | Fallback wording, recovery conditions, redaction, support IDs, and errors outside the boundary | Error collection, alerting, retention, and incident response |
 | Autosave | Debounce, one in-flight save, one latest queued value, stale UI prevention, and unmount abort signaling | Editor state, status wording, durable local drafts, navigation guards, and conflict UX | Authorization, version conflicts, idempotency, atomic writes, and durable storage |
+| Search recipe | Debounce, hiding stale results, abort signaling, visible async branches, and link-first result rows | Query meaning, labels, ranking, highlighting, destination URLs, and pagination UX | Authorization, result filtering, rate limits, abuse prevention, indexes, and canonical records |
 | JSON transport | Treating an empty successful response as empty, accepting JSON media types, and failing closed on malformed or non-JSON bodies | Mapping a parsed value into a domain type, or using a different transport helper | Correct status codes, media types, response bodies, and safe error reporting |
 | Retry | A bounded retry mechanism and a controlled failure when retry policy code is invalid | Opting in only when repeating the operation is safe | Idempotency, deduplication, transaction handling, and rate limits |
 | Uploads | Immediate browser feedback about the selected file | Product limits and the experience after acceptance or rejection | Size and type enforcement, magic-byte inspection, malware handling, storage, and authorization |
@@ -198,6 +199,21 @@ The application owns how a URL maps to a page, where the total comes from,
 whether an out-of-range request redirects or fails, and how router state stays
 in sync. Cursor pagination and “load more” have separate ordering, stale-result,
 and duplication contracts; numbered pagination does not claim to solve them.
+
+### A search recipe owns request wiring, not search policy
+
+`SearchListRecipe` debounces rapid input, removes a previous query's results as
+soon as the input changes, asks a superseded transport to abort, and exposes
+loading, failure, retry, empty, and linked-result states. Those are recurring
+client wiring decisions, so the recipe provides a safe composition to copy and
+own.
+
+The application owns the wording, query normalization, ranking, highlighting,
+result URL, and whether another interaction such as facets or cursor pagination
+is appropriate. The server owns authorization, filtering the records the user
+may discover, rate limiting, abuse prevention, and index consistency. Debounce
+is not a rate limit, hiding a row is not access control, and abort is not proof
+that server search work stopped.
 
 ### Clipboard state is not disclosure permission
 

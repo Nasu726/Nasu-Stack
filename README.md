@@ -247,6 +247,7 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `CopyButton` | Clipboard copying with success, failure, accessible status, timer cleanup, and a compatibility fallback |
 | `DataTable` | Sorting and paging. **Below tablet width it becomes one card per row** |
 | `AsyncSelect` | Searchable select. Cancels the previous request. Keyboard support included |
+| `SearchListRecipe` | Copy-owned debounced search wiring that hides stale results, aborts superseded requests, exposes failure/empty states, and keeps destinations as links |
 | `FileDrop` | Drag and drop, progress, retry only what failed |
 | `ConfirmDialog` / `useConfirm` | Confirmation on native `<dialog>` |
 | `ActionProvider` | A net so a forgotten error handler doesn't swallow the failure |
@@ -270,6 +271,8 @@ Numbered navigation, client-router interception, localization, and URL ownership
 are covered by the [Paginator guide](docs/paginator.md).
 Clipboard fallback, custom rendering, timer behavior, and disclosure boundaries
 are in the [CopyButton / useCopy guide](docs/copy-button.md).
+Debounce, stale-result exclusion, result links, and the search/server boundary
+are in the [search-list recipe guide](docs/search-list.md).
 
 <details>
 <summary><b>DataTable — stop being a table when the screen is narrow</b></summary>

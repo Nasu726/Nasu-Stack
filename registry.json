@@ -801,6 +801,26 @@
       ]
     },
     {
+      "name": "search-list",
+      "type": "registry:block",
+      "title": "Search list recipe",
+      "description": "検索欄とlink-firstな結果一覧のrecipe。debounce中は古い結果を隠し、前のrequestの中断・読込中・失敗・再試行・空状態まで配線します。検索の意味・権限・rate limit・順位付けはapp/serverが所有します。",
+      "registryDependencies": [
+        "Nasu726/Nasu-Stack/use-resource",
+        "Nasu726/Nasu-Stack/async-boundary",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/action",
+        "Nasu726/Nasu-Stack/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/components/recipes/search-list.tsx",
+          "type": "registry:ui",
+          "target": "components/recipes/search-list.tsx"
+        }
+      ]
+    },
+    {
       "name": "file-drop",
       "type": "registry:block",
       "title": "FileDrop",
