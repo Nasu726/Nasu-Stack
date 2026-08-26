@@ -401,7 +401,7 @@ PR #27のPages smokeで、存在する`frame.json`への単発HTTP 503だけが�
 | 7b: CopyButton / useCopy | 完了 | #25 | `e883e80` / registry 49 item / state実ブラウザ65件 / verify 30工程 / verify-create 112判定 |
 | 7c: Tooltip 判断 | 非採用 | — | APG WIP / disabled focus / touch tapを実測し、visible text・Popover・usePopoverへ分離 |
 | 8: behavioral recipes | 完了 | #27 | `0390a82` / registry 50 item / state実ブラウザ77件 / verify 30工程 / verify-create 112判定 |
-| 9: cursor / Load more 判断 | 進行中 | — | `codex/v2-load-more-list` / registry 51 item / state実ブラウザ98件 / verify 31工程 / verify-create 112判定 |
+| 9: cursor / Load more 判断 | 進行中 | #28 | `codex/v2-load-more-list` / registry 51 item / state実ブラウザ98件 / verify 31工程 / verify-create 112判定 |
 | 10: checker / CI 時間 | 一部前倒し | — | 公開GETの一時statusだけ最大3 attempt / 単体境界4 scenario。全体監査は未完了 |
 | 11: contract audit / release | 未着手 | — | — |
 
