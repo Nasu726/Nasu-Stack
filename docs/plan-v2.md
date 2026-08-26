@@ -92,7 +92,7 @@ recipe 化・延期・責任外に分類してから実装します。
 |---|---|
 | Tooltip | Popover の geometry を再利用し、重要情報を tooltip だけへ隠せない API と touch 方針を実証する |
 | Recipes | **採用: SearchListRecipe。** debounceだけでなく、古い成功結果の即時非表示・request abort・failure / retry / empty・link semanticsを一体で検査できる |
-| cursor / Load more | `useResource` と Paginator で足りない cursor race を再現する。自動 infinite scroll は既定にしない |
+| cursor / Load more | **採用: LoadMoreList / useCursorList / CursorPage。** 同期連打・stale response・失敗page retry・末尾・loopを検査し、自動 infinite scroll は含めない |
 
 初期候補も再評価しました。`delete-with-confirmation`は既存`ActionButton confirm`、
 `settings-form`は`AsyncForm`、`upload-form`は`FileDrop`、`autosave-editor`は`useAutosave`の
@@ -108,7 +108,7 @@ copy & ownであり、新しいruntime frameworkにはしません。
 |---|---|
 | Wizard | まず recipe で利用実績を集める。巨大な state / validation / router API を固定しない |
 | Editable | settings / autosave recipe で共通部分を観測してから判断する |
-| InfiniteList | 自動無限スクロールを既定にしない。必要なら Load more の contract / recipe に分解する |
+| InfiniteList | 自動無限スクロールのpublic primitiveにはしない。1 item内のLoadMoreList → useCursorList → CursorPageへ分解し、observerはapp判断に残す |
 
 延期は「不要」の意味ではありません。v2 で安定契約にする証拠が足りない、という意味です。
 
@@ -119,7 +119,7 @@ Nasu Stack は backend framework を持ちません。v2 では次の **境界�
 - validation success / field error / form error / transformed data の結果型
 - client と server のどちらでも同じ結果を返せる validator interface
 - server error を `AsyncForm` の field / form 表示へ戻す adapter
-- page / cursor の結果型と、重複しない Load more の最小 contract（採用条件を満たした場合）
+- page / cursor の結果型と、client requestを重複させないLoad more contract。item重複排除・順序・cursor発行は引き受けない
 - example receiver での fail-closed な結合例と、認証等を引き受けない明記
 
 Zod 等の schema、database transaction、認証、rate limit、idempotency store は作りません。

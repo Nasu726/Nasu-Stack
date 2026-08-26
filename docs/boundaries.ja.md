@@ -59,6 +59,7 @@ recipe は安全な組み合わせ例であり、新しい framework や変更�
 | render failure | 子孫のReact render failureの局所化、読み上げ可能なfallback、reset、reporting callbackの境界 | fallback文言、復帰条件、redaction、support ID、境界外のerror | error収集、alert、保存期間、incident対応 |
 | autosave | debounce、進行中1件、待機中の最新値1件、stale UI防止、unmount時のabort通知 | editor state、status文言、durableなlocal draft、navigation guard、競合UX | 認可、version conflict、idempotency、atomic write、durable storage |
 | 検索recipe | debounce、stale resultの非表示、abort通知、async分岐の表示、link-firstな結果行 | queryの意味、label、順位付け、highlight、移動先URL、pagination UX | 認可、結果filter、rate limit、abuse防止、index、正規record |
+| cursor読込 | 同時page request 1件、stale generation除外、失敗pageのretry、cursor loop検出、明示的なLoad moreと末尾 | item identity・overlap、文言、filter/sort操作、URL/history復元、virtualization | cursor発行、安定順序、認可、filter、cache/index整合性、rate limit、abuse防止 |
 | JSON 通信 | 空の成功応答を空として扱い、JSON media type を受け入れ、不正／非 JSON の本文を fail closed にすること | parse 後の値をドメイン型へ変換すること、または別の通信手段を選ぶこと | 正しい status・media type・本文と、安全なエラー応答 |
 | リトライ | 上限のある仕組みと、不正な retry policy を制御された失敗にすること | 同じ操作を繰り返して安全な場合だけ有効にする判断 | 冪等性・重複排除・transaction・rate limit |
 | アップロード | 選んだファイルに対する、その場のブラウザ側フィードバック | プロダクト固有の上限と、受理／拒否後の体験 | 大きさ・種類・magic bytes・malware・保存・認可の検査 |
@@ -182,6 +183,23 @@ URLをどのpageへ対応させるか、totalをどこから得るか、範囲�
 別interactionを採るかはapplicationが所有します。serverは認可、利用者が発見できるrecordの
 filter、rate limit、abuse防止、index整合性を所有します。debounceはrate limitではなく、行を
 隠すことはaccess controlではなく、abortはserverの検索処理が止まった証明ではありません。
+
+### Load moreが持つのはclient queueでありcollectionの正しさではない
+
+`LoadMoreList`は明示的なbuttonを使い、`useCursorList`はclient側で同時に1件のpage requestだけを
+所有します。依存値が変わると前collectionを即座に外し、transportへabortを依頼し、古いgenerationの
+responseを除外します。後続pageの失敗では前のitemを残し、retryは失敗cursorだけを再実行します。
+既に要求したcursorへ戻ればloopを続けずfail closedにします。空pageでも次cursorがあれば末尾では
+ありません。
+
+item identity・page間のoverlapと重複排除・文言・filter/sort操作・history復元・virtualizationは
+applicationが所有します。opaque cursorの発行・安定した順序・全pageの認可とfilter・cache/index
+整合性・rate limit・abuse防止はserverが所有します。client lockはserverの副作用を冪等にせず、
+abort signalはserver処理が止まった証明になりません。
+
+自動`IntersectionObserver` loadはstableな既定にしません。collection末尾、footerへの到達、browser
+history、scroll復元、支援技術でのnavigationを難しくすることがあります。applicationがそれらを
+判断した後にobserverを足す場合も、手動buttonを利用できる経路として残します。
 
 ### clipboardの状態は情報開示の許可ではない
 

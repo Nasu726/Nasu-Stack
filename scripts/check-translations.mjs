@@ -39,6 +39,7 @@ const PAIRS = [
   ["docs/paginator.md", "docs/paginator.ja.md"],
   ["docs/copy-button.md", "docs/copy-button.ja.md"],
   ["docs/search-list.md", "docs/search-list.ja.md"],
+  ["docs/load-more-list.md", "docs/load-more-list.ja.md"],
 ];
 
 const problems = [];

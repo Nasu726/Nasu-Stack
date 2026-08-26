@@ -67,6 +67,7 @@ copy and own, not a new framework or a sealed finished product.
 | Render failure | Containing a descendant React render failure, an accessible fallback, reset, and a reporting callback boundary | Fallback wording, recovery conditions, redaction, support IDs, and errors outside the boundary | Error collection, alerting, retention, and incident response |
 | Autosave | Debounce, one in-flight save, one latest queued value, stale UI prevention, and unmount abort signaling | Editor state, status wording, durable local drafts, navigation guards, and conflict UX | Authorization, version conflicts, idempotency, atomic writes, and durable storage |
 | Search recipe | Debounce, hiding stale results, abort signaling, visible async branches, and link-first result rows | Query meaning, labels, ranking, highlighting, destination URLs, and pagination UX | Authorization, result filtering, rate limits, abuse prevention, indexes, and canonical records |
+| Cursor loading | One active page request, stale-generation exclusion, failed-page retry, cursor-loop detection, explicit Load more and end states | Item identity and overlap, wording, filtering/sorting controls, URL/history restoration, and virtualization | Cursor issuance, stable ordering, authorization, filtering, cache/index consistency, rate limits, and abuse prevention |
 | JSON transport | Treating an empty successful response as empty, accepting JSON media types, and failing closed on malformed or non-JSON bodies | Mapping a parsed value into a domain type, or using a different transport helper | Correct status codes, media types, response bodies, and safe error reporting |
 | Retry | A bounded retry mechanism and a controlled failure when retry policy code is invalid | Opting in only when repeating the operation is safe | Idempotency, deduplication, transaction handling, and rate limits |
 | Uploads | Immediate browser feedback about the selected file | Product limits and the experience after acceptance or rejection | Size and type enforcement, magic-byte inspection, malware handling, storage, and authorization |
@@ -214,6 +215,29 @@ is appropriate. The server owns authorization, filtering the records the user
 may discover, rate limiting, abuse prevention, and index consistency. Debounce
 is not a rate limit, hiding a row is not access control, and abort is not proof
 that server search work stopped.
+
+### Load more owns a client queue, not collection truth
+
+`LoadMoreList` uses an explicit button and `useCursorList` owns one client-side
+page request at a time. A dependency change immediately removes the previous
+collection, asks its transport to abort, and excludes any response from that
+old generation. A failed later page leaves earlier items in place and retry
+requests only the failed cursor. Re-entering an already requested cursor fails
+closed instead of continuing a loop. An empty page is not the end while it
+still supplies a next cursor.
+
+The application owns item identity, overlap and deduplication, wording,
+filter/sort controls, history restoration, and virtualization. The server owns
+opaque cursor issuance, stable ordering, authorization and filtering on every
+page, cache/index consistency, rate limits, and abuse prevention. A client lock
+does not make server effects idempotent, and an abort signal does not prove that
+server work stopped.
+
+Automatic `IntersectionObserver` loading is not a stable default. It can make
+the end of the collection, footer access, browser history, scroll restoration,
+and assistive-technology navigation harder. Applications may add observation
+after making those product decisions, while preserving the manual button as a
+usable path.
 
 ### Clipboard state is not disclosure permission
 
