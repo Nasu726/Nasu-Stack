@@ -17,8 +17,8 @@
 | Wave | 状態 | PR | 証拠 |
 |---|---|---|---|
 | 0: plan / check harness | main公開済み | [#32](https://github.com/Nasu726/Nasu-Stack/pull/32) | main `55cb6c8` / Pages `33099215948` 全job成功 |
-| 1: catalog / state demo | local完了 | — | verify 34/34 / verify-create 112/112 / translation 568/568 |
-| 2: create CLI modules | 未着手 | — | — |
+| 1: catalog / state demo | main公開済み | [#33](https://github.com/Nasu726/Nasu-Stack/pull/33) | main `74a1828` / Pages `33102054224` 全job成功 |
+| 2: create CLI modules | local完了 | — | verify 34/34 / verify-create 113/113 / pack実物からnpm起動成功 |
 | 3: verifier scenarios | 未着手 | — | — |
 | 4: build / fixture helpers | 未着手 | — | — |
 | 5: public registry audit | 未着手 | — | — |
@@ -84,3 +84,43 @@ exit code 0になる。同じprocess内でも4判定中2失敗・pageerror 1件�
   module分割後の翻訳568/568を確認
 - `pnpm verify`: 34/34、state 98/98、pageerror 0、日英29 page × 5幅
 - `pnpm verify:create`: 112/112、Astro / blog / Viteのinstall、実shadcn、型、build、browserが成功
+
+### PR / main公開
+
+- PR [#33](https://github.com/Nasu726/Nasu-Stack/pull/33): `verify` 4m27s、`verify-create` 3m16s
+- squash merge: `74a182840d34735b8d74d455d9a6bacc8eabef0a`
+- main Pages run `33102054224`: verify、verify-create、build、deploy、公開smokeがすべて成功
+
+## Wave 2 — create CLI内部module
+
+### 実施
+
+- 1,385行の`packages/create-nasu-stack/index.mjs`を、publicな実行入口だけを持つ182行へ縮小
+- 設定 / UI / template定義、名前・生成先validation、引数解析、対話、scaffold、利用者向け文書を
+  変更理由ごとの内部moduleへ分離
+- `MIN_NODE`、validation、scaffold、対話関数など従来のpublic exportを入口からre-exportし、
+  option、質問順、既定言語、生成結果を維持
+- packageの`files`へ`lib`を明示し、配布tgzに内部moduleを含める
+- full verifierで実際にtgzをpackし、空の一時projectへnpm installして同梱binから
+  英語Astro生成物まで確認する
+
+### 検査が捕まえた不整合
+
+最初のlight検査で、利用者向け文書moduleに`MIN_NODE`のimportが無いことを検知した。入口の
+巨大fileでは暗黙に同じscopeだった値がmodule境界を越えていなかったためで、importを明示して
+79/79へ戻した。配布file一覧の漏れはソース起動では検知できないため、tgz実物の検査を恒久化した。
+
+最初のPR CIでは`npm exec --package=<絶対tgz path>`がWindowsだけでbinを起動し、Linuxでは
+projectを作らず成功終了したため7.49が赤になった。空の一時projectへtgzをnpm installした
+2回目も、Linuxの`npm exec`はexit 0のままローカルbinを実行しなかった。npmで展開した
+packageのbin mappingを検証し、そのtargetをNodeで直接起動する形へ分け、npmのcommand推論と
+配布物の完全性を混同しない検査にした。
+
+### local検証
+
+- 全内部moduleの`node --check`: 成功
+- create light: 79/79
+- `pnpm verify:create`: 113/113。packしたtgzのnpm起動、3 templateのnpm install、audit、
+  real shadcn、typecheck、build、production browser、responsiveが成功
+- `pnpm verify`: 34/34、registry 51 item / 53 file、state 98/98、pageerror 0、
+  translation 568/568、日英29 page × 5幅
