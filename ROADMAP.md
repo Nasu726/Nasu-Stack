@@ -1,6 +1,6 @@
 # ROADMAP
 
-## v2.0 — 進行中
+## v2.0 — 完了
 
 部品数ではなく、**利用者がしなくてよくなった判断の種類**を増やします。
 外部 worklist の候補は、そのまま実装せず [`docs/plan-v2.md`](docs/plan-v2.md) の
@@ -20,7 +20,12 @@
 - [x] 条件を満たしたbehavioral recipe（SearchListRecipe: debounce / stale除外 / abort / retry / link）
 - [x] LoadMoreList / useCursorList / CursorPage contract（手動button、重複・stale・retry・末尾）
 - [x] checker の intentional-break検証、false-green排除、CI重複とlocal writer競合の改善
-- [ ] v1 → v2 migration、全 public 面、実 install、Pages smoke、immutable Release
+- [x] v1 → v2 migration、全 public 面、実 install、Pages smoke、immutable Release
+
+`v2.0.0` は PR #30 の検査済み main commit `2b7837c` を指します。tag workflow の
+`verify` / `verify:create` / release、main Pages の build / deploy / 公開 smoke、
+公開 tarball の checksum と source commit をすべて確認しました。直接証拠は
+[`docs/result-v2.md`](docs/result-v2.md) の Wave 11 と完了監査に残しています。
 
 Wizard / Editable / 自動InfiniteList は、巨大な API を先に固定しません。cursor一覧は
 1 item内のLoadMoreList → useCursorList → CursorPage contractへ段階化し、自動無限scrollは

@@ -21,8 +21,9 @@
 `docs/plan-*.md` と `docs/result-*.md` は各版の計画と結果です。過去の判断の
 理由を知りたいときだけ読めば足ります。
 
-**いま動いている作業は v2.0.0 へ向けた機能整理と拡張です。** 計画と候補の採否は
-[`plan-v2.md`](plan-v2.md)、実施結果は [`result-v2.md`](result-v2.md) を正とします。
+**v2.0.0の機能整理・拡張・releaseは完了しています。** 計画と候補の採否は
+[`plan-v2.md`](plan-v2.md)、実装から公開物再download監査までの直接証拠は
+[`result-v2.md`](result-v2.md) を正とします。
 v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 [`result-v1.md`](result-v1.md) に残しています。
 直前のreview対応は [`plan-v09f-review.md`](plan-v09f-review.md) と
@@ -54,10 +55,11 @@ v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 
 ## 3. いまどこまで来ているか
 
-- `main` … v1.0.0 Stable と、次回 release の tag 引数修正まで merge 済み
+- `main` … v2.0.0 release PR #30を`2b7837c`としてmerge済み
 - `v1.0.0` … 検査済み `6e44cfb` を指す immutable tag。GitHub Release 公開済み
-- v2 … worklist をそのまま足さず、既存 item への吸収・hook・recipe・非採用まで
-  [`plan-v2.md`](plan-v2.md) の複雑さ予算で判断する
+- `v2.0.0` … 検査済み`2b7837c`を指すimmutable tag。GitHub Release公開済み
+- v2の候補はworklistをそのまま足さず、既存itemへの吸収・hook・recipe・非採用まで
+  [`plan-v2.md`](plan-v2.md) の複雑さ予算で判断した
 
 **公開済みです。** https://nasu726.github.io/Nasu-Stack/
 （`/catalog/` に部品のカタログ、`/demo/` にデモサイト、`/r/*.json` にレジストリ）
@@ -109,15 +111,16 @@ pnpm pages:build      # 公開する public/ を組み立てる（レジスト�
 pnpm release:build    # package versionに対応するGitHub Release用tarball + SHA-256
 ```
 
-v1.0.0 の release は完了しています。次回も release PR を merge し、Pages の deploy と
+v1.0.0 / v2.0.0 の release は完了しています。次回もrelease PRをmergeし、Pagesのdeployと
 公開先 smoke が成功した commit だけへ tag を打ちます。tag workflow は同じ
 `verify` / `verify-create` をもう一度通し、version 付き asset を GitHub Release へ出します。
 PR head や検査前の commit へ先に tag を打たないでください。
 
 実際の v1.0.0 tag workflow では、`pnpm` が引数区切りの `--` を script へ渡し、
 最後の Release 作成 job だけが失敗しました。製品検査は成功し、同じ hash の asset を
-既存 tag へ公開済みです。原因は PR #16 で直しました。次回は tag を打つ前に
+既存 tag へ公開済みです。原因は PR #16 で直しました。v2ではtagを打つ前に
 `release:build` を引数なし・tag 直接・`-- tag` の 3 経路で実行し、同じ失敗を防ぎます。
+実際のv2 tag workflowは3 jobすべて成功しました。
 
 公開したものを外から確かめる検査もあります。手元で試すときは
 `public/` を配ってから同じものを回します。
@@ -247,36 +250,19 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm verify
 
 ## 7. 次にやること
 
-計画は [`docs/plan-v09c.md`](plan-v09c.md)、文言の採否は
-[`docs/review-copy-v09c.md`](review-copy-v09c.md) にあります。
+v2.0.0はreleaseまで完了しています。次の版を始めるまでは新しいpublic APIを惰性で
+増やさず、実際の利用から得た再現と責任境界を入力にしてください。
 
-### v0.9c の残り
+- 実際に使い続けたときの指摘を集める。特にblogへ記事を増やした期間のある利用は、
+  生成直後の機械検査では代替できない
+- security / backend側のrate limit、Turnstile、idempotency storeはNasu Stackの
+  内蔵責任にせず、必要ならcontract / adapter / guideとして検討する
+- ダッシュボード雛型、Fieldのその場検証、DataTableの列表示、一括操作の進捗は、
+  利用例と複雑さ予算を満たしたものだけ次版の計画で採否を決める
+- shadcn directoryへ出す場合の要件とentry形は[手順](shadcn-directory.md)を参照する
 
-**v0.9c 〜 v0.9e は終わっています。** 残っているのは次です。
-
-1. **`main` へマージ** → `pages.yml` が走って公開されます。
-   マージするまで `verify-published` の「設定ゼロで入る」は赤いのが正しい
-   状態です（GitHub は既定ブランチの `registry.json` を読むため）
-2. **実際に何人かに使ってもらう。** コードだけでは見つからないものが
-   毎回出ています（v0.9c〜e で、作者の実機指摘 13 件 + 外部レビュー 20 件以上）
-3. shadcn のディレクトリは**急がなくてよくなりました。**
-   `npx shadcn add Nasu726/Nasu-Stack/<名前>` が設定ゼロで動きます。
-   出すときの要件と entry の形は [手順](shadcn-directory.md) に
-
-### v1.x へ回したもの
-
-- 受け口のレート制限・Turnstile・`Idempotency-Key`
-- 目的別の Feature Kits（`@nasu/contact` に UI + 検証 + 送信まで）
-- バックエンド（`Stack` という名前はここへ広げるためのものです）
-
-### 作者にお願いすること
-
-- required status check に **`verify-create`** を足すか判断してください。
-  `verify.yml` の 2 つ目のジョブとして PR で走るようになっています
-  （所要 15〜25 分。public リポジトリなので runner の費用はかかりません）
-
-積み残し（急がないもの): ダッシュボードの雛型（React 側）、`Field` の
-その場検証、`DataTable` の列の表示切り替え、一括操作の進捗表示。
+新しい版を始めるときは、`main`からブランチを切り、計画・境界・公開面・検査を同じPRの
+完了条件へ含めます。
 
 ---
 
