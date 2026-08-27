@@ -10,6 +10,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { pnpm } from "./_proc.mjs";
+import { buildCreateTemplate } from "./build-create-template.mjs";
+import { acquireWorkspaceLockSync } from "./_workspace-lock.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cli = path.join(root, "packages", "create-nasu-stack");
@@ -28,33 +30,40 @@ export function packCreateNasuStack({ destination, filename }) {
     throw new Error(`安全でないasset名です: ${filename}`);
   }
 
-  // template/は生成物なので、packの直前に必ず原本から作ります。
-  execFileSync(
-    process.execPath,
-    [path.join(root, "scripts", "build-create-template.mjs")],
-    { cwd: root, stdio: "inherit" },
-  );
+  /* buildからpack完了までtemplateを他processに作り直させません。
+     途中だけlockすると、pnpm packが半分だけ新しいtreeを読めます。 */
+  const release = acquireWorkspaceLockSync("create-template", {
+    root,
+    onWait: (owner) =>
+      console.log(`· create templateの利用を待っています${owner?.pid ? ` (pid ${owner.pid})` : ""}`),
+  });
+  try {
+    // template/は生成物なので、packの直前に必ず原本から作ります。
+    buildCreateTemplate();
 
-  // Windowsでpnpm.cmdを直接spawnしないため、既存の唯一の起動経路を使います。
-  const pack = pnpm(["pack"]);
-  const packed = execFileSync(pack.cmd, pack.args, {
-    cwd: cli,
-    encoding: "utf8",
-    ...pack.options,
-  })
-    .trim()
-    .split(/\r?\n/)
-    .pop()
-    .trim();
+    // Windowsでpnpm.cmdを直接spawnしないため、既存の唯一の起動経路を使います。
+    const pack = pnpm(["pack"]);
+    const packed = execFileSync(pack.cmd, pack.args, {
+      cwd: cli,
+      encoding: "utf8",
+      ...pack.options,
+    })
+      .trim()
+      .split(/\r?\n/)
+      .pop()
+      .trim();
 
-  fs.mkdirSync(destination, { recursive: true });
-  const target = path.join(destination, filename);
-  fs.renameSync(path.resolve(cli, packed), target);
+    fs.mkdirSync(destination, { recursive: true });
+    const target = path.join(destination, filename);
+    fs.renameSync(path.resolve(cli, packed), target);
 
-  const sha256 = createHash("sha256")
-    .update(fs.readFileSync(target))
-    .digest("hex");
-  fs.writeFileSync(`${target}.sha256`, `${sha256}  ${filename}\n`, "utf8");
+    const sha256 = createHash("sha256")
+      .update(fs.readFileSync(target))
+      .digest("hex");
+    fs.writeFileSync(`${target}.sha256`, `${sha256}  ${filename}\n`, "utf8");
 
-  return { target, sha256, size: fs.statSync(target).size };
+    return { target, sha256, size: fs.statSync(target).size };
+  } finally {
+    release();
+  }
 }

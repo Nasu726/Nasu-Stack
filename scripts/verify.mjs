@@ -167,6 +167,7 @@ await group([
   /* 公開後 smoke は CDN の単発 503 を再試行しますが、404 や継続障害を
      成功にはしません。その境界を network に出ず単体で固定します。 */
   ["単体: 公開物取得の一時障害", "node", ["scripts/verify-fetch-with-retry.mjs"]],
+  ["単体: checker / CI の協調", "node", ["scripts/verify-checker-coordination.mjs"]],
   /* 受け口。**「403 が返った」ではなく「メールが 0 回だった」を見ます。**
      応答を読めなくても、副作用はサーバで起きているためです。 */
   ["単体: 受け口の入口", "node", ["scripts/verify-receiver-unit.mjs"]],
@@ -268,22 +269,31 @@ const { TAB_KEYS: PLAYGROUND_TABS } = await import(
 async function sitePages() {
   const fallback = ["http://127.0.0.1:4321/"];
   try {
-    const xml = await (await fetch("http://127.0.0.1:4321/sitemap.xml")).text();
+    const response = await fetch("http://127.0.0.1:4321/sitemap.xml");
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const xml = await response.text();
     const paths = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
       .map((m) => m[1].replace(/^https?:\/\/[^/]+/, ""))
       .filter(Boolean);
     if (paths.length === 0) {
-      console.error("⚠️ sitemap.xml に URL がありませんでした。トップだけ検査します");
-      return fallback;
+      return { pages: fallback, ok: false, why: "sitemap.xml にURLがありません" };
     }
-    return paths.map((p) => `http://127.0.0.1:4321${p}`);
+    return {
+      pages: paths.map((p) => `http://127.0.0.1:4321${p}`),
+      ok: true,
+      why: `${paths.length}ページ`,
+    };
   } catch (e) {
-    // 黙って 1 ページに落とすと「全部見たつもり」になります。理由を必ず出します。
-    console.error("⚠️ sitemap.xml を取得できませんでした:", String(e).slice(0, 120));
-    return fallback;
+    return { pages: fallback, ok: false, why: String(e).slice(0, 120) };
   }
 }
-const SITE_PAGES = await sitePages();
+const discoveredSitePages = await sitePages();
+report({
+  name: "Astro sitemapから検査対象を取得",
+  ok: discoveredSitePages.ok,
+  out: discoveredSitePages.why,
+});
+const SITE_PAGES = discoveredSitePages.pages;
 process.stdout.write(`
 （Astro サイトの検査対象: ${SITE_PAGES.length} ページ）
 `);

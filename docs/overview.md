@@ -258,7 +258,7 @@ The measured rationale and the lower-level escape hatch are recorded in
 
 ## 6. How the checks are thought about
 
-`pnpm verify` is 31 stages; `pnpm verify:create` is 112 assertions. It looks
+`pnpm verify` is 33 stages; `pnpm verify:create` is 112 assertions. It looks
 like a lot. There's a reason.
 
 ### A check that only prints is not a check

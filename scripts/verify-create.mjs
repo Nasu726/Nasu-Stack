@@ -15,10 +15,22 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { npm, pnpm, stopTree } from "./_proc.mjs";
+import { buildCreateTemplate } from "./build-create-template.mjs";
+import { acquireWorkspaceLockSync } from "./_workspace-lock.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(root, "packages", "create-nasu-stack", "index.mjs");
 const FULL = process.argv.includes("--full");
+/*
+ * light/fullの2 verifierとpackが同じtemplate/を作り直します。
+ * templateから生成先へcopyし終わるまでlockし、半分だけ別processの生成物に
+ * なるraceを防ぎます。以後のinstall / buildは独立したtemp dirなので並列にできます。
+ */
+const releaseTemplateLock = acquireWorkspaceLockSync("create-template", {
+  root,
+  onWait: (owner) =>
+    console.log(`· create templateの利用を待っています${owner?.pid ? ` (pid ${owner.pid})` : ""}`),
+});
 
 const checks = [];
 function must(label, ok, detail = "") {
@@ -75,10 +87,7 @@ const PAGES = {
   // 生成し直して差分が無いことを見ます。
   // テンプレートは commit していないので、ずれるとしたら
   // 「生成し忘れ」だけです。それを機械で捕まえます。
-  execFileSync(process.execPath, [path.join(root, "scripts/build-create-template.mjs")], {
-    cwd: root,
-    stdio: "ignore",
-  });
+  buildCreateTemplate();
   const tpl = path.join(root, "packages", "create-nasu-stack", "template");
   const list = (dir) =>
     fs.existsSync(dir)
@@ -575,6 +584,9 @@ for (const { name, kind } of CASES) {
   );
 }
 
+/* ここより後はtemplate/を読みません。重いfull検査の間まで塞ぎません。 */
+releaseTemplateLock();
+
 /* ===== 8〜12. 生成物が本当に動くか（--full のときだけ） ========= */
 if (!FULL) {
   log("install / build / 実ブラウザ の検査は --full を付けたときだけ走ります");
@@ -638,15 +650,14 @@ if (!FULL) {
       if (ok) break;
     }
     if (!ok) {
-      log("レジストリを配れませんでした。「部品を足せる」の判定は飛ばします");
+      log("レジストリを配れませんでした。本物のCLI判定を失敗にします");
       stopTree(registryServer);
       registryServer = null;
       registryPort = 0;
     }
   } else {
-    // 黙って飛ばすと「確かめたつもり」になります。理由を必ず出します。
     log("public/r がありません。先に `pnpm registry:build` を走らせてください");
-    log("（「部品を足せる」の判定は飛ばします）");
+    log("（本物のCLI判定を失敗にします）");
   }
 
   for (const { name, kind, port } of CASES) {
@@ -698,9 +709,6 @@ if (!FULL) {
       const a = run(dir, ["audit", "--audit-level", "high", "--omit", "dev"]);
       if (a.ok) {
         must(`8.2 ${kind}: 配る依存に high 以上の脆弱性が無い`, true);
-      } else if (/ENOTFOUND|ECONNREFUSED|fetch failed|ENETUNREACH|EAI_AGAIN/i.test(a.out ?? "")) {
-        // 黙って通すと「調べたつもり」になります。理由を出して飛ばします。
-        log(`${kind}: 脆弱性の照会に行けませんでした。この判定は飛ばします`);
       } else {
         must(`8.2 ${kind}: 配る依存に high 以上の脆弱性が無い`, false, a.out ?? "");
       }
@@ -734,7 +742,11 @@ if (!FULL) {
       must(`8.5 ${kind}: 本物の CLI で部品を足せる`, a.ok && !before && after,
         a.ok ? `before=${before} after=${after}` : (a.out ?? ""));
     } else {
-      log(`${kind}: レジストリを配れていないので「部品を足せる」は飛ばします`);
+      must(
+        `8.5 ${kind}: 本物の CLI で部品を足せる`,
+        false,
+        "local registryを配れませんでした",
+      );
     }
 
     const t = run(dir, checkArgs);

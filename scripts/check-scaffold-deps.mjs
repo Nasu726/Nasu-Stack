@@ -16,12 +16,13 @@
  *
  * だから registry へ実際に問い合わせます。**手元の状態を見ません。**
  *
- * ネットワークが無い環境では、理由を印字して飛ばします。
- * 黙って通すと「調べたつもり」になります。
+ * 手元でネットワークが無い場合は、理由を印字して飛ばします。
+ * CIでは公開前の証拠なので必須にし、未実施をgreenにしません。
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { fetchWithRetry } from "./fetch-with-retry.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const scaffolds = ["astro", "vite"];
@@ -34,10 +35,14 @@ const must = (label, ok, detail = "") => {
 
 /** 範囲（`^7.2.2`）から、実際に取れる版があるかを見ます。 */
 async function resolvable(name, range) {
-  const res = await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}`, {
-    headers: { accept: "application/vnd.npm.install-v1+json" },
-    signal: AbortSignal.timeout(15000),
-  });
+  const res = await fetchWithRetry(
+    `https://registry.npmjs.org/${encodeURIComponent(name)}`,
+    { headers: { accept: "application/vnd.npm.install-v1+json" } },
+    {
+      fetchImpl: (input, init) =>
+        fetch(input, { ...init, signal: AbortSignal.timeout(15000) }),
+    },
+  );
   if (!res.ok) return { ok: false, why: `HTTP ${res.status}` };
   const meta = await res.json();
   const versions = Object.keys(meta.versions ?? {});
@@ -55,14 +60,19 @@ async function resolvable(name, range) {
   };
 }
 
-const online = await fetch("https://registry.npmjs.org/-/ping", {
-  signal: AbortSignal.timeout(8000),
+const online = await fetchWithRetry("https://registry.npmjs.org/-/ping", {}, {
+  fetchImpl: (input, init) =>
+    fetch(input, { ...init, signal: AbortSignal.timeout(8000) }),
 }).then(
   (r) => r.ok,
   () => false,
 );
 if (!online) {
   console.log("· registry.npmjs.org に届きません。依存の存在確認は飛ばします。");
+  if (process.env.CI) {
+    console.error("✗ CIでは依存の存在確認を必須にします");
+    process.exit(1);
+  }
   process.exit(0);
 }
 

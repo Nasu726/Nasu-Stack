@@ -33,6 +33,7 @@ import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 import { makeFixture } from "./_fixture.mjs";
 import { stopTree } from "./_proc.mjs";
+import { fetchWithRetry } from "./fetch-with-retry.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = 5077;
@@ -64,11 +65,13 @@ if (!fs.existsSync(path.join(pub, "r", "index.json"))) {
   process.exit(2);
 }
 
-/* --- 1. ネットワークが無いなら、理由を出して飛ばす ------------------ */
+/* --- 1. 手元でネットワークが無いなら、理由を出して飛ばす ------------ */
 /* **黙って通してはいけません。** 「通った」と「試していない」が
-   同じ緑に見えると、検査そのものが信用できなくなります。 */
-const online = await fetch("https://registry.npmjs.org/shadcn", {
-  signal: AbortSignal.timeout(8000),
+   同じ緑に見えると、検査そのものが信用できなくなります。
+   CIでは公開前の証拠なので、到達できない場合も赤にします。 */
+const online = await fetchWithRetry("https://registry.npmjs.org/shadcn", {}, {
+  fetchImpl: (input, init) =>
+    fetch(input, { ...init, signal: AbortSignal.timeout(8000) }),
 }).then(
   (r) => r.ok,
   () => false,
@@ -76,6 +79,10 @@ const online = await fetch("https://registry.npmjs.org/shadcn", {
 if (!online) {
   console.log("· registry.npmjs.org に届きません。本物の CLI の検査は飛ばします。");
   console.log("·（再現側の検査は scripts/verify-install.mjs が受け持ちます）");
+  if (process.env.CI) {
+    console.error("✗ CIでは本物の shadcn CLI 検査を必須にします");
+    process.exit(1);
+  }
   process.exit(0);
 }
 
