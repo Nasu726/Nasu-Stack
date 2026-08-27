@@ -26,7 +26,7 @@ export const REGISTRY_URL = `${PUBLIC_BASE}/r/{name}.json`;
 export const LATEST_TARBALL_URL = `${PUBLIC_BASE}/create-nasu-stack.tgz`;
 
 /** Stable の入口。版ごとに URL を変え、npm/npx の URL cache と衝突させません。 */
-export const RELEASE_VERSION = "1.0.0";
+export const RELEASE_VERSION = "2.0.0";
 export const TARBALL_URL =
   `https://github.com/Nasu726/Nasu-Stack/releases/download/v${RELEASE_VERSION}/` +
   `create-nasu-stack-${RELEASE_VERSION}.tgz`;

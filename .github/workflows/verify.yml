@@ -113,7 +113,7 @@ jobs:
       - name: 生成物を npm で install / build / 実ブラウザ
         run: pnpm verify:create
 
-      # tagを打って初めて壊れるrelease scriptにしない。PRでもversion照合・
-      # template生成・pack・checksum作成まで同じ経路を通します。
+      # tagを打って初めて壊れるrelease scriptにしない。package versionからtagを作り、
+      # release workflowと同じ「tag引数あり」の経路で照合・pack・checksumまで通します。
       - name: GitHub Release用assetを組み立てる
-        run: pnpm release:build
+        run: pnpm release:build "v$(node -p "require('./package.json').version")"
