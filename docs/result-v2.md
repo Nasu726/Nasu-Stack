@@ -483,12 +483,30 @@ copy済みsourceを裏で更新しない契約を保ち、日英の`migration-v2
 - [x] 全51 itemを本物のshadcn CLIで空projectへ追加し、型検査する
 - [x] local `pnpm verify` 33/33 / `pnpm verify:create` 112/112が成功する
 - [x] tag引数経路をtag前に実行し、不一致も赤になる
-- [ ] release PRのrequired checksが成功する
-- [ ] release PRをmainへmergeし、Pages deploy / 公開smokeが成功する
-- [ ] 検査済みmain commitへ`v2.0.0` tagを打ち、immutable Releaseを公開する
+- [x] release PRのrequired checksが成功する（PR #30 / verify 4m22s / verify-create 3m21s）
+- [x] release PRをmainへmergeし、Pages deploy / 公開smokeが成功する
+- [x] 検査済みmain commitへ`v2.0.0` tagを打ち、immutable Releaseを公開する
 
-tagはまだ打たない。release PRをmergeしたmainのPages deploy / 公開smokeが成功した後、
-その同じcommitだけへ`v2.0.0`を付ける。
+PR #30を`2b7837c06fb3c60a783298add5e2fcb110861869`としてmainへmergeした。先に
+[main Pages run](https://github.com/Nasu726/Nasu-Stack/actions/runs/33082074604)の
+verify 33/33、verify-create 112/112、build、deploy、公開smokeがすべて成功したことを
+確認し、そのcommitだけへ注釈付き`v2.0.0` tagを付けた。
+
+[tag workflow](https://github.com/Nasu726/Nasu-Stack/actions/runs/33082811857)もverify、
+verify-create、releaseの3 jobが成功し、
+[GitHub Release](https://github.com/Nasu726/Nasu-Stack/releases/tag/v2.0.0)を公開した。
+Releaseから3 assetを再downloadして次を確認した。
+
+- remoteの注釈付きtag object `4e788bb8bf5e544562b9597f42fd9b0612225fe6`が
+  source commit `2b7837c06fb3c60a783298add5e2fcb110861869`を指す
+- `create-nasu-stack-2.0.0.tgz`は268,724 bytes、package versionは`2.0.0`
+- checksum file、manifest、再計算したSHA-256が
+  `384db65744fe6b575db73e447cb8741db5fdeef9121e8c0fbd4c5dce223c2e02`で一致する
+- manifestのversion / tag / sourceCommit / artifact名 / size / SHA-256が公開物と一致する
+
+localの3経路は同じcheckout内のtag引数解釈を比較する検査であり、Release assetとは
+別環境で生成される。cross-environmentのbyte一致は契約にせず、公開物は同梱checksumと
+manifestを再downloadして検証した。
 
 ## 実装台帳
 
@@ -507,9 +525,34 @@ tagはまだ打たない。release PRをmergeしたmainのPages deploy / 公開s
 | 8: behavioral recipes | 完了 | #27 | `0390a82` / registry 50 item / state実ブラウザ77件 / verify 30工程 / verify-create 112判定 |
 | 9: cursor / Load more 判断 | 完了 | #28 | `c2e7103` / registry 51 item / state実ブラウザ98件 / verify 4m39s / verify-create 2m55s |
 | 10: checker / CI 時間 | 完了 | #29 | `88b3406` / verify 4m23s / verify-create 3m10s / main Pages 1経路でbuild・deploy・smokeまで成功 |
-| 11: contract audit / release | release candidate検証中 | — | migration日英 / version 2.0.0 / tag引数3経路で同一asset |
+| 11: contract audit / release | 完了 | #30 | `2b7837c` / PR・main Pages・tag workflow成功 / `v2.0.0` Release再download監査 |
 
 ## v2 完了監査
 
-ここは最後に [`plan-v2.md`](plan-v2.md) の完了条件を 1 行ずつ、commit / test / URL の
-直接証拠で埋めます。部分的な green CI や意図だけでは完了にしません。
+[`plan-v2.md`](plan-v2.md) の完了条件を、実装PRと最終releaseの直接証拠で監査した。
+
+- [x] **採用した全候補がDefinition of Doneを満たす。** Wave 1〜9の各完了条件に、
+  public責任、下位経路、日英docs / catalog、keyboard / focus / 320px、failure / race、
+  real install / typecheckの証拠がある。PR #18〜#25、#27、#28としてmainへmerge済み。
+- [x] **条件付き / 非採用候補に判断が残る。** TooltipはWave 7cでpublic itemにしない
+  実測根拠を残し、Wizard / Editable / 自動InfiniteListは計画の非採用欄へ境界を残した。
+  SearchListRecipeと手動LoadMoreだけを、intentional breakを含む証拠の後に採用した。
+- [x] **v1からのbreaking changeと移行方法が日英で読める。** `migration-v2.md` / `.ja.md`
+  にcopy ownership、diff / overwrite手順、唯一の意図的挙動変更を記録し、translation
+  checker 16対で同期を検査した。
+- [x] **公開面が同期している。** release candidateの`verify` 33/33でregistry / CLI /
+  catalog / demo / template / receiverを検査し、日英29 page × 5幅、state browser 98/98、
+  Astro 0 errors / 0 warnings / 0 hintsだった。
+- [x] **全itemを本物のshadcn CLIで追加できる。** 空projectへ51/51 item・53/53 fileを
+  installし、生成物をtypecheckした。
+- [x] **local / PR / main / tagの検査が成功した。** localはverify 33/33と
+  verify-create 112/112、[PR #30](https://github.com/Nasu726/Nasu-Stack/pull/30)は
+  required checks、main Pages runはbuild / deploy / public smoke、tag workflowはreleaseまで
+  成功した。
+- [x] **tag引数経路をtag前に回帰検査した。** 引数なし / `v2.0.0` / `-- v2.0.0`が
+  同一assetになり、不一致`v2.0.1`がexit 1になることをPR前に確認した。
+- [x] **検査済みcommitだけをreleaseした。** remote tagをGit objectまでdereferenceし、
+  main Pages成功済み`2b7837c`との一致を確認した。immutable assetは再download後に
+  checksum、manifest、package versionまで照合した。
+
+以上により、v2.0.0の完了条件は2026-08-27にすべて成立した。
