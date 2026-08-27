@@ -2,7 +2,7 @@
  * GitHub Releaseへ置くversioned assetを組み立てます。
  *
  *   pnpm release:build                 # package versionからtagを決める
- *   pnpm release:build -- v1.0.0       # tag workflowでは一致も検査する
+ *   pnpm release:build -- v2.0.0       # tag workflowでは一致も検査する
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -58,6 +58,8 @@ for (const file of [
   "docs/security.md",
   "docs/security.ja.md",
   "docs/shadcn-directory.md",
+  "docs/migration-v2.md",
+  "docs/migration-v2.ja.md",
   "packages/create-nasu-stack/index.mjs",
 ]) {
   if (!fs.readFileSync(path.join(root, file), "utf8").includes(TARBALL_URL)) {
@@ -71,10 +73,11 @@ if (!changelog.includes(`## [${rootVersion}]`)) {
 }
 const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
 const readmeJa = fs.readFileSync(path.join(root, "README.ja.md"), "utf8");
-if (!readme.includes("Nasu Stack 1.0 is Stable")) {
+const stableMajor = rootVersion.split(".")[0];
+if (!readme.includes(`Nasu Stack ${stableMajor} is Stable`)) {
   throw new Error("README.mdがStable表記になっていません");
 }
-if (!readmeJa.includes("Nasu Stack 1.0 は Stable")) {
+if (!readmeJa.includes(`Nasu Stack ${stableMajor} は Stable`)) {
   throw new Error("README.ja.mdがStable表記になっていません");
 }
 

@@ -18,11 +18,13 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 **先に見る:** [部品のカタログ](https://nasu726.github.io/Nasu-Stack/catalog/?lang=ja)（全部の部品を実際に触れます） /
 [デモサイト](https://nasu726.github.io/Nasu-Stack/demo/ja/)（この部品で組んだサイト）
 
-> **Nasu Stack 1.0 は Stable です。** 公開している registry 名、export、token、
+> **Nasu Stack 2 は Stable です。** 公開している registry 名、export、token、
 > 文書化した部品の契約は semantic versioning に従い、破壊的変更は次の major version
 > まで入れません。Stable になっても責任範囲は広がりません。**認証・認可、
 > サーバ側の検証、問い合わせの受け口のレート制限は引き続きアプリ側の責任です。**
 > 公開する前に [docs/boundaries.ja.md](docs/boundaries.ja.md) を 1 度読んでください。
+> v1 itemをcopy済みのapplicationは、customizeしたfileを置き換える前に
+> [v2移行ガイド](docs/migration-v2.ja.md)を確認してください。
 
 ---
 
@@ -33,7 +35,7 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 コマンドは 1 つです。最初に言語、次にどこから始めるかを選びます。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.0/create-nasu-stack-2.0.0.tgz my-site
 ```
 
 Stable の入口には version 付き GitHub Release URL を使います。版ごとに URL が

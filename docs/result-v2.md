@@ -442,8 +442,53 @@ manifestまで同じlock経路で成功した。
 - [x] intentional breakでCI二重経路とwriter競合のcheckerが赤になる
 - [x] local concurrent `pnpm verify` 33/33 / `pnpm verify:create` 112/112が成功する
 - [x] `pnpm release:build`が成功する
-- [ ] PR CIが成功する
-- [ ] `main`へmergeする
+- [x] PR CIが成功する（verify 4m23s / verify-create 3m10s）
+- [x] `main`へmergeする（PR #29 / `88b3406`）
+
+## Wave 11 — v2 contract audit / release
+
+### v1からのpublic差分
+
+`v1.0.0` tagとrelease candidateをregistry source単位で比較した。v1のregistry item名、
+public export、semantic tokenに削除はない。既存itemのpublic宣言は追加だけで、意図的な
+挙動変更は`useAction`が`VALIDATION` / HTTP `422`を自動retryしないことに限定した。
+
+copy済みsourceを裏で更新しない契約を保ち、日英の`migration-v2`へ次を記録した。
+
+- v1 applicationは現在のcopyを使い続けられる
+- `shadcn add --dry-run` / `--diff`で先に確認し、未変更fileだけを`--overwrite`する
+- customize済みfileはapplication ownerが必要な差分をmergeする
+- 新しい11 itemと、`load-more-list`に含まれる下位のcursor exportを分ける
+
+### v2.0.0 release candidate
+
+- root / create CLI / Stable URLを`2.0.0`へ統一
+- README / SECURITY / security guide / directory guide / CLI commentを同じimmutable URLへ統一
+- CHANGELOGに追加責任、唯一の挙動変更、引き受けないbackend責任を記録
+- PR CIのrelease buildを、tag workflowと同じtag引数ありの経路へ変更
+- 日英translation checkerはmigrationを含む16対で成功
+- `release:build`を引数なし / `v2.0.0` / `-- v2.0.0`の3経路で実行
+- 3経路とも268,724 bytes、SHA-256
+  `43076fc99ec11878cb7043eb843a6ed6e774137ca010a5bc31efc2607a2a6d60`
+- 不一致の`v2.0.1`を渡すとversion差を検知してexit 1になる
+- 同じWindows checkoutで`pnpm verify` / `pnpm verify:create`を同時実行し、
+  33/33・112/112がともに成功
+- Astro 0 errors / 0 warnings / 0 hints、本物のshadcn CLI 51/51 item・53/53 file、
+  state browser 98/98・pageerror 0、日英を含む29 page × 5幅で崩れなし
+
+### release gate
+
+- [x] v1との差分と移行方法が日英で読める
+- [x] registry / CLI / catalog / demo / template / receiverのpublic面を検査する
+- [x] 全51 itemを本物のshadcn CLIで空projectへ追加し、型検査する
+- [x] local `pnpm verify` 33/33 / `pnpm verify:create` 112/112が成功する
+- [x] tag引数経路をtag前に実行し、不一致も赤になる
+- [ ] release PRのrequired checksが成功する
+- [ ] release PRをmainへmergeし、Pages deploy / 公開smokeが成功する
+- [ ] 検査済みmain commitへ`v2.0.0` tagを打ち、immutable Releaseを公開する
+
+tagはまだ打たない。release PRをmergeしたmainのPages deploy / 公開smokeが成功した後、
+その同じcommitだけへ`v2.0.0`を付ける。
 
 ## 実装台帳
 
@@ -461,8 +506,8 @@ manifestまで同じlock経路で成功した。
 | 7c: Tooltip 判断 | 非採用 | — | APG WIP / disabled focus / touch tapを実測し、visible text・Popover・usePopoverへ分離 |
 | 8: behavioral recipes | 完了 | #27 | `0390a82` / registry 50 item / state実ブラウザ77件 / verify 30工程 / verify-create 112判定 |
 | 9: cursor / Load more 判断 | 完了 | #28 | `c2e7103` / registry 51 item / state実ブラウザ98件 / verify 4m39s / verify-create 2m55s |
-| 10: checker / CI 時間 | PR CI待ち | #29 | `52ce007` / verify 33工程 / verify-create 112判定の同時成功 / main verification 1経路 / writer lock / false-green 4経路を閉じる |
-| 11: contract audit / release | 未着手 | — | — |
+| 10: checker / CI 時間 | 完了 | #29 | `88b3406` / verify 4m23s / verify-create 3m10s / main Pages 1経路でbuild・deploy・smokeまで成功 |
+| 11: contract audit / release | release candidate検証中 | — | migration日英 / version 2.0.0 / tag引数3経路で同一asset |
 
 ## v2 完了監査
 

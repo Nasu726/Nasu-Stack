@@ -19,12 +19,14 @@ reliably get stuck on: **layout** and **async state**.
 **See it first:** [component catalog](https://nasu726.github.io/Nasu-Stack/catalog/) (every component, live) /
 [demo site](https://nasu726.github.io/Nasu-Stack/demo/) (a site built from them)
 
-> **Nasu Stack 1.0 is Stable.** Public registry names, exports, tokens, and the
+> **Nasu Stack 2 is Stable.** Public registry names, exports, tokens, and the
 > documented component contracts now follow semantic versioning: breaking
 > changes wait for the next major release. Stable does not expand the boundary —
 > **authentication, server-side validation, and rate limiting for the contact
 > receiver are still your application's responsibility.**
-> Read [docs/boundaries.md](docs/boundaries.md) once before you ship.
+> Read [docs/boundaries.md](docs/boundaries.md) once before you ship. If your
+> application copied v1 items, use the [v2 migration guide](docs/migration-v2.md)
+> before replacing customized files.
 
 ---
 
@@ -35,7 +37,7 @@ reliably get stuck on: **layout** and **async state**.
 One command. It asks for your language first, then how you want to start.
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v1.0.0/create-nasu-stack-1.0.0.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.0/create-nasu-stack-2.0.0.tgz my-site
 ```
 
 The versioned GitHub Release URL is the Stable entry point. Each release gets a

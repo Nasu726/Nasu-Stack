@@ -49,6 +49,10 @@ function read(file) {
   assert.ok(pages.includes("uses: ./.github/workflows/verify.yml"), "Pagesはverifyを再利用する");
   assert.ok(release.includes("uses: ./.github/workflows/verify.yml"), "tag releaseもverifyを再利用する");
   assert.ok(
+    verify.includes(`run: pnpm release:build "v$(node -p "require('./package.json').version")"`),
+    "PR CIでrelease workflowと同じtag引数経路を検査する",
+  );
+  assert.ok(
     verifyMain.includes('name: "Astro sitemapから検査対象を取得"'),
     "sitemap取得失敗をtop pageだけのgreenへ縮退させない",
   );
