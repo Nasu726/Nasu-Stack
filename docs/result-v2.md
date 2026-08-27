@@ -470,6 +470,22 @@ copy済みsourceを裏で更新しない契約を保ち、日英の`migration-v2
 - `release:build`を引数なし / `v2.0.0` / `-- v2.0.0`の3経路で実行
 - 3経路とも268,724 bytes、SHA-256
   `43076fc99ec11878cb7043eb843a6ed6e774137ca010a5bc31efc2607a2a6d60`
+- 不一致の`v2.0.1`を渡すとversion差を検知してexit 1になる
+- 同じWindows checkoutで`pnpm verify` / `pnpm verify:create`を同時実行し、
+  33/33・112/112がともに成功
+- Astro 0 errors / 0 warnings / 0 hints、本物のshadcn CLI 51/51 item・53/53 file、
+  state browser 98/98・pageerror 0、日英を含む29 page × 5幅で崩れなし
+
+### release gate
+
+- [x] v1との差分と移行方法が日英で読める
+- [x] registry / CLI / catalog / demo / template / receiverのpublic面を検査する
+- [x] 全51 itemを本物のshadcn CLIで空projectへ追加し、型検査する
+- [x] local `pnpm verify` 33/33 / `pnpm verify:create` 112/112が成功する
+- [x] tag引数経路をtag前に実行し、不一致も赤になる
+- [ ] release PRのrequired checksが成功する
+- [ ] release PRをmainへmergeし、Pages deploy / 公開smokeが成功する
+- [ ] 検査済みmain commitへ`v2.0.0` tagを打ち、immutable Releaseを公開する
 
 tagはまだ打たない。release PRをmergeしたmainのPages deploy / 公開smokeが成功した後、
 その同じcommitだけへ`v2.0.0`を付ける。
