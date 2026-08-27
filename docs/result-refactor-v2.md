@@ -111,8 +111,10 @@ exit code 0になる。同じprocess内でも4判定中2失敗・pageerror 1件�
 79/79へ戻した。配布file一覧の漏れはソース起動では検知できないため、tgz実物の検査を恒久化した。
 
 最初のPR CIでは`npm exec --package=<絶対tgz path>`がWindowsだけでbinを起動し、Linuxでは
-projectを作らず成功終了したため7.49が赤になった。空の一時projectへtgzをnpm installしてから
-ローカルbinを実行する経路へ変更し、OSごとのpackage指定解釈に依存しない検査にした。
+projectを作らず成功終了したため7.49が赤になった。空の一時projectへtgzをnpm installした
+2回目も、Linuxの`npm exec`はexit 0のままローカルbinを実行しなかった。npmで展開した
+packageのbin mappingを検証し、そのtargetをNodeで直接起動する形へ分け、npmのcommand推論と
+配布物の完全性を混同しない検査にした。
 
 ### local検証
 

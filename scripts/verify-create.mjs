@@ -633,22 +633,26 @@ if (!FULL) {
     ]);
     if (!installed.ok) throw new Error(installed.out);
 
-    const p = npm([
-      "exec",
-      "--",
-      "create-nasu-stack",
+    const installedRoot = path.join(runner, "node_modules", "create-nasu-stack");
+    const installedPackage = JSON.parse(
+      fs.readFileSync(path.join(installedRoot, "package.json"), "utf8"),
+    );
+    const binTarget = installedPackage.bin?.["create-nasu-stack"];
+    if (binTarget !== "index.mjs") {
+      throw new Error(`配布packageのbinが不正です: ${JSON.stringify(binTarget)}`);
+    }
+    const out = execFileSync(process.execPath, [
+      path.join(installedRoot, binTarget),
       "packed-site",
       "--template",
       "astro",
       "--lang",
       "en",
       "--yes",
-    ]);
-    const out = execFileSync(p.cmd, p.args, {
+    ], {
       cwd: runner,
       encoding: "utf8",
       stdio: "pipe",
-      ...p.options,
     });
     packedResult = { ok: true, out };
   } catch (e) {
@@ -658,7 +662,7 @@ if (!FULL) {
     };
   }
   must(
-    "7.49 配布tgzからnpm経由でCLIを起動できる",
+    "7.49 npmで展開した配布tgzのbinを起動できる",
     packedResult.ok && fs.existsSync(path.join(work, "packed-runner", "packed-site", "HowToUse.md")),
     packedResult.out,
   );
