@@ -229,6 +229,7 @@ type Action<TInput, TOutput> = (
 | `ValidationResult` / `Validator` | client / serverで共有するlibrary非依存の成功・field・form結果。規則そのものは決めない |
 | `FieldArray` | stable key・index付きname・min/max・追加/削除focusを持つ繰り返し入力。reorderやdomain ruleは持たない |
 | `DataList` | 取得・スケルトン・空・失敗と再試行を 1 個で |
+| `LoadMoreList` / `useCursorList` | buttonを既定にしたcursor読込。重複request・stale結果・失敗pageのretry・明示的な末尾を扱う |
 | `AsyncBoundary` | 読込中 / エラー / 空 / データありの 4 分岐を閉じ込める |
 | `ErrorBoundary` | React render failureを1つのsubtreeへ閉じ込め、読み上げ可能なfallbackとresetを提供。async errorとは分離 |
 | `Popover` | non-modalな補助内容のcontrolled/uncontrolled開閉・Esc/外側・focus復帰・viewport配置を扱う。中身のsemanticsは利用側のまま |
@@ -262,6 +263,8 @@ clipboard fallback・独自render・timer・情報開示の境界は
 [CopyButton / useCopyガイド](docs/copy-button.ja.md)にまとめています。
 debounce・stale resultの除外・結果link・検索とserverの境界は
 [search-list recipeガイド](docs/search-list.ja.md)で説明しています。
+cursor contract・手動Load more・application/serverとの境界は
+[LoadMoreList / useCursorListガイド](docs/load-more-list.ja.md)で説明しています。
 
 <details>
 <summary><b>DataTable — 狭い画面では表をやめる</b></summary>

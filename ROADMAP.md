@@ -18,11 +18,13 @@
 - [x] CopyButton / useCopy（fallback、連打、accessible status、timer cleanup）
 - [x] Tooltipの条件付き判断（v2 public itemにはせず、visible text / Popover / usePopoverへ分離）
 - [x] 条件を満たしたbehavioral recipe（SearchListRecipe: debounce / stale除外 / abort / retry / link）
+- [x] LoadMoreList / useCursorList / CursorPage contract（手動button、重複・stale・retry・末尾）
 - [ ] checker の intentional-break 検証と CI の重複・実行時間改善
 - [ ] v1 → v2 migration、全 public 面、実 install、Pages smoke、immutable Release
 
-Wizard / Editable / InfiniteList は、巨大な API を先に固定せず recipe または
-Load more contract で需要と共通部分を観測します。採用しない判断も v2 の成果に含めます。
+Wizard / Editable / 自動InfiniteList は、巨大な API を先に固定しません。cursor一覧は
+1 item内のLoadMoreList → useCursorList → CursorPage contractへ段階化し、自動無限scrollは
+public primitiveにしない判断を残します。採用しない判断も v2 の成果に含めます。
 
 ## v0.1 — 完了
 

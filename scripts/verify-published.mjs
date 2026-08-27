@@ -27,6 +27,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { fetchWithRetry } from "./fetch-with-retry.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const base = (process.argv[2] ?? "").replace(/\/$/, "");
@@ -37,6 +38,17 @@ if (!base) {
 
 const { REPO } = await import("./_deps.mjs");
 const { makeFixture } = await import("./_fixture.mjs");
+
+/**
+ * Pages/CDN の単発 503 で、存在している全公開物を欠落扱いしないための GET。
+ * 404 など非一時的な status と、3 回続く一時障害は成功にしません。
+ */
+const publishedFetch = (input, init) => fetchWithRetry(input, init, {
+  onRetry: ({ nextAttempt, status, error }) => {
+    const reason = status ? `HTTP ${status}` : String(error).slice(0, 80);
+    console.log(`  ↻ 一時的な取得失敗 (${reason})。${nextAttempt}/3 回目を試します`);
+  },
+});
 
 /** src/ の下のファイル数。**「コマンドが成功した」と「届いた」は別のこと**です。 */
 function countFiles(dir) {
@@ -64,7 +76,7 @@ const expected = JSON.parse(
 
 let index = null;
 try {
-  const res = await fetch(`${base}/r/index.json`);
+  const res = await publishedFetch(`${base}/r/index.json`);
   must("r/index.json が 200 で取れる", res.ok, `HTTP ${res.status}`);
   must(
     "content-type が JSON",
@@ -88,7 +100,7 @@ must(
 const broken = [];
 for (const item of index?.items ?? []) {
   try {
-    const res = await fetch(`${base}/r/${item.name}.json`);
+    const res = await publishedFetch(`${base}/r/${item.name}.json`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const body = await res.json();
     if (!Array.isArray(body.files) || body.files.length === 0) {
@@ -111,8 +123,8 @@ must(
    **経路の途中で差し替えられていないこと**を、利用者と同じ手順で確かめます。 */
 try {
   const [tgz, sha] = await Promise.all([
-    fetch(`${base}/create-nasu-stack.tgz`),
-    fetch(`${base}/create-nasu-stack.tgz.sha256`),
+    publishedFetch(`${base}/create-nasu-stack.tgz`),
+    publishedFetch(`${base}/create-nasu-stack.tgz.sha256`),
   ]);
   must("create-nasu-stack.tgz が 200 で取れる", tgz.ok, `HTTP ${tgz.status}`);
   must("sha256 が 200 で取れる", sha.ok, `HTTP ${sha.status}`);
@@ -161,7 +173,7 @@ async function crawl(entry, label) {
 
     let res;
     try {
-      res = await fetch(url);
+      res = await publishedFetch(url);
     } catch (e) {
       broken.push(`${url} → ${String(e).slice(0, 40)}`);
       continue;
@@ -201,7 +213,7 @@ for (const [name, sub] of [
   ["日本語デモ", "demo/ja"],
 ]) {
   const entry = `${base}/${sub}/`;
-  const res = await fetch(entry).catch(() => null);
+  const res = await publishedFetch(entry).catch(() => null);
   must(`${name}（/${sub}/）が 200 で取れる`, !!res?.ok, `HTTP ${res?.status ?? "接続できず"}`);
   if (!res?.ok) continue;
 
@@ -221,7 +233,7 @@ for (const [name, sub] of [
    一覧に入れると数百 KB になり、同じものが 2 か所に出ます。 */
 {
   const url = `${base}/r/registry.json`;
-  const res = await fetch(url);
+  const res = await publishedFetch(url);
   must("registry.json が 200 で取れる", res.ok, `HTTP ${res.status}`);
   if (res.ok) {
     let doc;

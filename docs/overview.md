@@ -229,7 +229,7 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 
 ## 5. What exists today
 
-**50 registry items.** Add them individually with
+**51 registry items.** Add them individually with
 `npx shadcn add Nasu726/Nasu-Stack/<name>`.
 
 | Layer | Contents |
@@ -239,9 +239,9 @@ The narrow-screen menu is `<details>`, not `<dialog>`.
 | Nav | SiteHeader / NavLink / SkipLink / SiteFooter / **Paginator** |
 | Disclosure | Dialog (center, sheet) / Tabs / Disclosure / Accordion / **Popover** / DropdownMenu / NavDropdown |
 | Input | AsyncForm (optional Validator + first-error focus) / **FieldArray** (stable key / indexed name / min-max / focus) / Field / SelectField / CheckboxField / CheckboxGroup / RadioGroup / DateField / AsyncSelect / FileDrop / HoneypotField |
-| Display | DataList / DataTable / AsyncBoundary / **ErrorBoundary** / **CopyButton** / Toast / ConfirmDialog / Scrollable / Frame / Img |
-| Contract and wiring | Action / ActionSpec / ActionError / **ValidationResult / Validator / validationFailureResponse** / jsonRequest / upload / **createSubmit** |
-| Hooks | useAction / useResource / useOptimisticList / usePopover / **useInteractionGuard / useAutosave / useCopy** |
+| Display | DataList / **LoadMoreList** / DataTable / AsyncBoundary / **ErrorBoundary** / **CopyButton** / Toast / ConfirmDialog / Scrollable / Frame / Img |
+| Contract and wiring | Action / ActionSpec / ActionError / **CursorPage / CursorLoader** / **ValidationResult / Validator / validationFailureResponse** / jsonRequest / upload / **createSubmit** |
+| Hooks | useAction / useResource / **useCursorList** / useOptimisticList / usePopover / **useInteractionGuard / useAutosave / useCopy** |
 | Recipes | **SearchListRecipe** (debounce / stale exclusion / abort / failure / link results; copy and own) |
 | Generation | `buildMeta` (SEO, OGP, JSON-LD) / `buildSitemap` / `buildRss` / `buildRobots` |
 | Checks | `check-responsive.mjs` (**shipped to users too**) |
@@ -258,7 +258,7 @@ The measured rationale and the lower-level escape hatch are recorded in
 
 ## 6. How the checks are thought about
 
-`pnpm verify` is 30 stages; `pnpm verify:create` is 112 assertions. It looks
+`pnpm verify` is 31 stages; `pnpm verify:create` is 112 assertions. It looks
 like a lot. There's a reason.
 
 ### A check that only prints is not a check

@@ -240,6 +240,7 @@ The reasoning behind each decision is in [docs/overview.md](docs/overview.md).
 | `ValidationResult` / `Validator` | Library-independent success / field / form result shared by client and server; it does not define your rules |
 | `FieldArray` | Stable repeated fields with indexed names, min/max controls, and add/remove focus; no reorder or domain rules |
 | `DataList` | Fetch, skeleton, empty, failure, and retry in a single component |
+| `LoadMoreList` / `useCursorList` | Button-first cursor loading with duplicate-request locking, stale exclusion, failed-page retry, and an explicit end |
 | `AsyncBoundary` | Wraps the loading / error / empty / loaded fork |
 | `ErrorBoundary` | Contains React render failures to one subtree with an accessible fallback and reset; async errors stay separate |
 | `Popover` | Non-modal supporting content with controlled/uncontrolled state, Escape/outside dismissal, focus return, and viewport-edge positioning; content semantics stay yours |
@@ -273,6 +274,8 @@ Clipboard fallback, custom rendering, timer behavior, and disclosure boundaries
 are in the [CopyButton / useCopy guide](docs/copy-button.md).
 Debounce, stale-result exclusion, result links, and the search/server boundary
 are in the [search-list recipe guide](docs/search-list.md).
+Cursor contracts, manual Load more behavior, and the application/server
+boundary are in the [LoadMoreList / useCursorList guide](docs/load-more-list.md).
 
 <details>
 <summary><b>DataTable — stop being a table when the screen is narrow</b></summary>

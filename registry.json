@@ -648,6 +648,38 @@
       ]
     },
     {
+      "name": "load-more-list",
+      "type": "registry:block",
+      "title": "LoadMoreList / useCursorList",
+      "description": "自動無限scrollにせず、buttonでcursor pageを追加するlist。同期連打を1 requestへまとめ、deps変更時のstale結果・retry・末尾・cursor loopを扱います。item重複・順序・認可・cursor発行はapp/serverの責任です。",
+      "registryDependencies": [
+        "Nasu726/Nasu-Stack/use-resource",
+        "Nasu726/Nasu-Stack/action",
+        "Nasu726/Nasu-Stack/action-button",
+        "Nasu726/Nasu-Stack/async-boundary",
+        "Nasu726/Nasu-Stack/spinner",
+        "Nasu726/Nasu-Stack/utils",
+        "Nasu726/Nasu-Stack/tokens"
+      ],
+      "files": [
+        {
+          "path": "registry/nasu/lib/cursor.ts",
+          "type": "registry:lib",
+          "target": "lib/cursor.ts"
+        },
+        {
+          "path": "registry/nasu/hooks/use-cursor-list.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-cursor-list.ts"
+        },
+        {
+          "path": "registry/nasu/components/ui/load-more-list.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/load-more-list.tsx"
+        }
+      ]
+    },
+    {
       "name": "frame",
       "type": "registry:ui",
       "title": "Frame / Img",

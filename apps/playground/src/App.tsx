@@ -9,10 +9,13 @@ import {
   SearchListRecipe,
   type SearchListItem,
 } from "@/components/recipes/search-list";
+import { LoadMoreList } from "@/components/ui/load-more-list";
+import type { CursorPage } from "@/lib/cursor";
 import { ThemeSwitcher, useTheme } from "@/components/ui/theme-provider";
 import { useAction } from "@/hooks/use-action";
 import { useAutosave } from "@/hooks/use-autosave";
 import { useInteractionGuard } from "@/hooks/use-interaction-guard";
+import { useCursorList } from "@/hooks/use-cursor-list";
 import {
   Column,
   Columns,
@@ -75,11 +78,13 @@ const PANELS: Record<string, React.ReactNode> = {
       <FormSection />
       <ListSection />
       <SearchListSection />
+      <LoadMoreSection />
       <AbortSection />
       <GuardRaceSection />
       <ToastSection />
       <RetryDelayProbe />
       <ToastDurationProbe />
+      <CursorHookRaceProbe />
     </Stack>
   ),
 };
@@ -1089,6 +1094,290 @@ function waitForSearch(
     if (signal.aborted) abort();
     else signal.addEventListener("abort", abort, { once: true });
   });
+}
+
+/* ---------------------------------------------------------------- */
+
+type LoadMoreMode =
+  | "normal"
+  | "error"
+  | "empty"
+  | "empty-page"
+  | "loop"
+  | "malformed";
+
+interface CursorDemoItem {
+  id: string;
+  href: string;
+  title: string;
+  description: string;
+}
+
+function LoadMoreSection() {
+  const [mode, setMode] = React.useState<LoadMoreMode>("normal");
+  const [version, setVersion] = React.useState(0);
+  const calls = React.useRef<string[]>([]);
+  const aborts = React.useRef(0);
+  const failures = React.useRef(new Map<string, number>());
+  const [, renderProbe] = React.useReducer((value) => value + 1, 0);
+
+  const chooseMode = (next: LoadMoreMode) => {
+    if (next === "error") failures.current.delete("error:page-2");
+    setMode(next);
+    setVersion((value) => value + 1);
+  };
+
+  const loader = React.useCallback(
+    async (
+      cursor: string | undefined,
+      context: { signal: AbortSignal },
+    ): Promise<CursorPage<CursorDemoItem, string>> => {
+      const call = `${mode}:${cursor ?? "initial"}`;
+      calls.current.push(call);
+      renderProbe();
+
+      const wait =
+        mode === "normal" && cursor === "page-2"
+          ? waitForCursorDemoIgnoringAbort
+          : waitForCursorDemo;
+      await wait(cursor === "page-2" ? 700 : 180, context.signal, () => {
+        aborts.current += 1;
+        renderProbe();
+      });
+
+      if (mode === "malformed" && cursor === undefined) {
+        return { items: null } as unknown as CursorPage<CursorDemoItem, string>;
+      }
+      if (mode === "empty" && cursor === undefined) return { items: [] };
+      if (mode === "empty-page" && cursor === undefined) {
+        return { items: [], nextCursor: "page-2" };
+      }
+
+      if (cursor === undefined) {
+        return {
+          items: [
+            {
+              id: `${mode}-1`,
+              href: "/articles/one",
+              title: t("cursor一覧の最初の記事"),
+              description: t("最初のpageは自動で取得します。"),
+            },
+            {
+              id: `${mode}-2`,
+              href: "/articles/two",
+              title:
+                "LoadMoreResultWithAnIntentionallyLongUnbrokenIdentifierThatMustWrap",
+              description: t("長い結果も狭い画面を押し広げません。"),
+            },
+          ],
+          nextCursor: "page-2",
+        };
+      }
+
+      if (mode === "error" && cursor === "page-2") {
+        const key = "error:page-2";
+        const attempt = (failures.current.get(key) ?? 0) + 1;
+        failures.current.set(key, attempt);
+        if (attempt === 1) throw new Error(t("次のpageを取得できませんでした"));
+      }
+
+      if (mode === "loop" && cursor === "page-2") {
+        return {
+          items: [
+            {
+              id: "loop-item",
+              href: "/articles/loop",
+              title: t("追加してはいけないloop結果"),
+              description: t("同じcursorへ戻るためfail closedになります。"),
+            },
+          ],
+          nextCursor: "page-2",
+        };
+      }
+
+      if (cursor === "page-2") {
+        return {
+          items: [
+            {
+              id: `${mode}-3`,
+              href: "/articles/three",
+              title: t("追加された記事A"),
+              description: t("buttonを押した後もfocus位置を保ちます。"),
+            },
+            {
+              id: `${mode}-4`,
+              href: "/articles/four",
+              title: t("追加された記事B"),
+              description: t("同じcursorを連打してもrequestは1回です。"),
+            },
+          ],
+          nextCursor: "page-3",
+        };
+      }
+
+      return {
+        items: [
+          {
+            id: `${mode}-5`,
+            href: "/articles/five",
+            title: t("最後の記事"),
+            description: t("末尾ではbuttonをend stateへ置き換えます。"),
+          },
+        ],
+      };
+    },
+    [mode],
+  );
+
+  const modes: Array<[LoadMoreMode, string]> = [
+    ["normal", t("通常のcursor list")],
+    ["error", t("次page失敗")],
+    ["empty", t("空のcursor list")],
+    ["empty-page", t("0件だが次があるpage")],
+    ["loop", t("cursor loop")],
+    ["malformed", t("不正なcursor page")],
+  ];
+
+  return (
+    <Panel
+      title="LoadMoreList / useCursorList"
+      description={t("自動無限scrollではなく明示的なbuttonを既定にし、cursor requestの連打・stale response・失敗したpageのretry・末尾・cursor loopを扱います。itemの重複、並び順、認可、cursor発行はappとserverの責任です。")}
+      code={t("<LoadMoreList\n  loader={(cursor, ctx) => getArticles(cursor, ctx)}\n  renderItem={(article) => <a href={article.href}>{article.title}</a>}\n  getKey={(article) => article.id}\n/>")}
+    >
+      <Inline space="xs">
+        {modes.map(([value, label]) => (
+          <Button
+            key={value}
+            size="sm"
+            variant={mode === value ? "primary" : "outline"}
+            onClick={() => chooseMode(value)}
+          >
+            {label}
+          </Button>
+        ))}
+      </Inline>
+
+      <ContentBlock width="32rem" align="start" data-testid="load-more-demo">
+        <LoadMoreList
+          loader={loader}
+          deps={[mode, version]}
+          title={t("記事")}
+          getKey={(item) => item.id}
+          renderItem={(item) => (
+            <a href={item.href} className="block min-w-0 text-card-fg">
+              <span className="block break-words text-sm font-medium">
+                {item.title}
+              </span>
+              <span className="mt-1 block break-words text-sm text-muted-fg">
+                {item.description}
+              </span>
+            </a>
+          )}
+          labels={{
+            loading: t("最初のpageを読込中…"),
+            loadMore: t("さらに読み込む"),
+            loadingMore: t("次のpageを読込中…"),
+            retry: t("このpageを再試行"),
+            empty: t("記事はまだありません。"),
+            end: t("すべての記事を読み込みました。"),
+            itemCount: (count) =>
+              t("記事 {0} 件").replace("{0}", String(count)),
+            error: (error) => (
+              <span data-cursor-error-code={String(error.code ?? "")}>
+                {error.code === "CURSOR_LOOP"
+                  ? t("serverが既に取得したcursorを返しました。")
+                  : error.code === "INVALID_CURSOR_PAGE"
+                    ? t("serverが不正なcursor pageを返しました。")
+                    : error.displayMessage}
+              </span>
+            ),
+          }}
+        />
+        <output
+          hidden
+          data-testid="load-more-probe"
+          data-calls={JSON.stringify(calls.current)}
+          data-aborts={aborts.current}
+        >
+          {calls.current.length}:{aborts.current}
+        </output>
+      </ContentBlock>
+    </Panel>
+  );
+}
+
+function waitForCursorDemo(
+  milliseconds: number,
+  signal: AbortSignal,
+  onAbort: () => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const abort = () => {
+      window.clearTimeout(timer);
+      onAbort();
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    const finish = () => {
+      signal.removeEventListener("abort", abort);
+      resolve();
+    };
+    const timer = window.setTimeout(finish, milliseconds);
+    if (signal.aborted) abort();
+    else signal.addEventListener("abort", abort, { once: true });
+  });
+}
+
+/** transportがAbortSignalを通知として受けても停止しない場合を再現します。 */
+function waitForCursorDemoIgnoringAbort(
+  milliseconds: number,
+  signal: AbortSignal,
+  onAbort: () => void,
+): Promise<void> {
+  return new Promise((resolve) => {
+    const abort = () => onAbort();
+    const finish = () => {
+      signal.removeEventListener("abort", abort);
+      resolve();
+    };
+    window.setTimeout(finish, milliseconds);
+    if (signal.aborted) abort();
+    else signal.addEventListener("abort", abort, { once: true });
+  });
+}
+
+/** disabled buttonに頼らず、hook自身が同期連打を止めることを測る治具。 */
+function CursorHookRaceProbe() {
+  const calls = React.useRef<string[]>([]);
+  const [, renderProbe] = React.useReducer((value) => value + 1, 0);
+  const cursor = useCursorList<string, string>(async (next, context) => {
+    calls.current.push(next ?? "initial");
+    renderProbe();
+    await waitForCursorDemo(120, context.signal, () => {});
+    return next === undefined
+      ? { items: ["first"], nextCursor: "next" }
+      : { items: ["second"] };
+  });
+
+  return (
+    <div hidden data-testid="cursor-hook-race-probe">
+      <button
+        type="button"
+        data-testid="cursor-hook-race-run"
+        onClick={() => {
+          for (let index = 0; index < 5; index++) void cursor.loadMore();
+        }}
+      >
+        run
+      </button>
+      <output
+        data-testid="cursor-hook-race-state"
+        data-status={cursor.status}
+        data-calls={JSON.stringify(calls.current)}
+      >
+        {cursor.status}:{calls.current.length}
+      </output>
+    </div>
+  );
 }
 
 /* ---------------------------------------------------------------- */

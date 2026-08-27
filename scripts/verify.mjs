@@ -164,6 +164,9 @@ await group([
   ["単体: エラー文言 / 既定値 / accept", "node", ["scripts/verify-action-unit.mjs"]],
   ["単体: validation 結果契約", "node", ["scripts/verify-validation-unit.mjs"]],
   ["単体: useResource の query key", "node", ["scripts/verify-resource-key-unit.mjs"]],
+  /* 公開後 smoke は CDN の単発 503 を再試行しますが、404 や継続障害を
+     成功にはしません。その境界を network に出ず単体で固定します。 */
+  ["単体: 公開物取得の一時障害", "node", ["scripts/verify-fetch-with-retry.mjs"]],
   /* 受け口。**「403 が返った」ではなく「メールが 0 回だった」を見ます。**
      応答を読めなくても、副作用はサーバで起きているためです。 */
   ["単体: 受け口の入口", "node", ["scripts/verify-receiver-unit.mjs"]],

@@ -310,8 +310,81 @@ empty・本物のresult linkという、見本だけでは繰り返し壊れる�
 - [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
 - [x] registry依存 / 空project install / 型検査 / 本物のshadcn CLI 50/50が成功する
 - [x] local `pnpm verify` 30/30 / `pnpm verify:create` 112/112が成功する
+- [x] PR #27のCIが成功する（verify 4m30s / verify-create 3m35s）
+- [x] `main`へmergeする（PR #27 / `0390a82`）
+
+merge後の`main`でも`pnpm verify`は成功した。最初のPages公開後smokeだけは、全50 item中
+`frame.json`の1 requestがHTTP 503になり9/10で失敗した。同じURLは直後から200へ戻り、配布漏れ
+ではなく一時障害だったが、公開物checkerに一時障害と恒常的欠落を分ける境界が無いことは実在する
+穴だった。再実行で公開状態を確認し、上限付きretryをWave 10から前倒しした。
+
+## Wave 9 — LoadMoreList / useCursorList / CursorPage
+
+### 採否
+
+自動`InfiniteList`をstable public primitiveにはしない。一方、`useResource`と`Paginator`では、
+cursorの同期連打、後続pageだけのretry、deps変更後のstale response、末尾、cursor loopを同時に
+扱えない。この責任は繰り返し可能で検査できるため、1つのregistry itemに次の3段を同梱した。
+
+1. `CursorPage` / `CursorLoader` contract
+2. 表示を持たない`useCursorList`
+3. 明示的なbuttonを既定にする`LoadMoreList`
+
+itemを3つへ分けず、初心者には1つの入口、経験者には1段ずつ降りる経路を提供する。registry itemは
+50 → 51。`IntersectionObserver`は、footer到達・history・scroll復元・支援技術でのnavigationを
+product側が判断した後に足すものとして境界外へ残す。
+
+### 実施
+
+- 最初のpageだけを自動取得し、後続pageは明示buttonで開始する
+- Reactの再描画より前の同期5連打もref lockで1 requestへまとめる
+- deps変更時に前itemを即座に隠し、進行中transportへabortを通知する
+- transportがabortを無視して遅れて成功してもgenerationとkeyで結果を捨てる
+- 後続page失敗時は取得済みitemを残し、失敗cursorだけをretryする
+- 空pageでも`nextCursor`があれば末尾にせず継続できる
+- 既出cursorへのloopを`CURSOR_LOOP`、不正pageを`INVALID_CURSOR_PAGE`でfail closedにする
+- append後はLoad more、失敗後はretry、末尾ではend statusへfocusを移す
+- item重複排除・安定順序・cursor発行・全pageの認可/filter・history復元をapp/serverへ残す
+
+### intentional break
+
+`pendingRef`の同期guardを外すと、state実ブラウザ検査はhook直接5連打とbutton 5連打の2件を
+正しく失敗にした。guardを戻すと両方とも1 requestへ戻った。
+
+loader成功後のabort / generation / key判定を外すと、deps変更後に前pageの遅延成功が空の新listを
+置き換え、専用のstale検査1件が失敗した。判定を戻すと、古い成功はDOMへ戻らずabort通知も1回に
+なった。checkerは「itemが無い」だけでなく、新しい空stateが表示され続けることまで測る。
+
+### 完了条件
+
+- [x] 自動infinite scrollにせず、最初だけ自動・後続はbuttonである
+- [x] hook直接 / buttonの同期5連打がどちらも1 requestになる
+- [x] append / focus / end / failure保持 / failed-page retryを実ブラウザで検査する
+- [x] deps変更直後の非表示、abort通知、abortを無視したstale成功の除外を検査する
+- [x] empty / 空page+next / loop / malformed / 320px overflowを検査する
+- [x] intentional breakで対象判定が赤になることを確認する
+- [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
+- [x] registry 51 itemの依存 / install / 型検査 / 本物のshadcn CLI 51/51が成功する
+- [x] local `pnpm verify` 31/31 / `pnpm verify:create` 112/112が成功する
 - [ ] PR CIが成功する
 - [ ] `main`へmergeする
+
+## Wave 10（前倒し）— 公開物GETの一時障害
+
+PR #27のPages smokeで、存在する`frame.json`への単発HTTP 503だけが公開jobを赤くした。公開物の
+欠落を隠さず外部経路の一時障害だけを吸収するため、GETを次の境界へ限定した。
+
+旧mainの同じjobを再実行すると、今度は`frame.json`ではなく`submit.json`だけがHTTP 503になった。
+対象が変わって再現したため、特定itemの欠落ではなく公開経路の一時応答であることも確認できた。
+
+- network errorと429 / 500 / 502 / 503 / 504だけ最大3 attempt
+- 404など非一時statusは1回で返し、欠落判定を隠さない
+- transient statusが3回続けば最終Responseを返し、従来どおりcheckerを失敗させる
+- 250ms / 750msの有限backoffで、外部障害を待ち続けない
+- networkを使わない単体治具で、503→503→200、404、継続503、network errorを固定する
+
+これはchecker / CI時間Wave全体の完了ではない。重複実行・総時間・他checkerのfalse positive監査は
+引き続きWave 10で扱う。
 
 ## 実装台帳
 
@@ -327,9 +400,9 @@ empty・本物のresult linkという、見本だけでは繰り返し壊れる�
 | 7a: Paginator | 完了 | #24 | `c6dd020` / registry 47 item / nav実ブラウザ76件 / verify 30工程 / verify-create 112判定 |
 | 7b: CopyButton / useCopy | 完了 | #25 | `e883e80` / registry 49 item / state実ブラウザ65件 / verify 30工程 / verify-create 112判定 |
 | 7c: Tooltip 判断 | 非採用 | — | APG WIP / disabled focus / touch tapを実測し、visible text・Popover・usePopoverへ分離 |
-| 8: behavioral recipes | 進行中 | — | `codex/v2-search-list-recipe` / registry 50 item / state実ブラウザ77件 / verify 30工程 / verify-create 112判定 |
-| 9: cursor / Load more 判断 | 未着手 | — | — |
-| 10: checker / CI 時間 | 未着手 | — | — |
+| 8: behavioral recipes | 完了 | #27 | `0390a82` / registry 50 item / state実ブラウザ77件 / verify 30工程 / verify-create 112判定 |
+| 9: cursor / Load more 判断 | 進行中 | #28 | `codex/v2-load-more-list` / registry 51 item / state実ブラウザ98件 / verify 31工程 / verify-create 112判定 |
+| 10: checker / CI 時間 | 一部前倒し | — | 公開GETの一時statusだけ最大3 attempt / 単体境界4 scenario。全体監査は未完了 |
 | 11: contract audit / release | 未着手 | — | — |
 
 ## v2 完了監査
