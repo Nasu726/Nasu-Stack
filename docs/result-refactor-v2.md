@@ -16,8 +16,8 @@
 
 | Wave | 状態 | PR | 証拠 |
 |---|---|---|---|
-| 0: plan / check harness | local完了 | — | verify 34/34 / verify-create 112/112 / intentional failure exit 1 |
-| 1: catalog / state demo | 未着手 | — | — |
+| 0: plan / check harness | main公開済み | [#32](https://github.com/Nasu726/Nasu-Stack/pull/32) | main `55cb6c8` / Pages `33099215948` 全job成功 |
+| 1: catalog / state demo | local完了 | — | verify 34/34 / verify-create 112/112 / translation 568/568 |
 | 2: create CLI modules | 未着手 | — | — |
 | 3: verifier scenarios | 未着手 | — | — |
 | 4: build / fixture helpers | 未着手 | — | — |
@@ -53,3 +53,34 @@ exit code 0になる。同じprocess内でも4判定中2失敗・pageerror 1件�
 - `pnpm verify`: 34/34、state browser 98/98、pageerror 0、日英29 page × 5幅
 - `pnpm verify:create`: 112/112、Astro / blog / Viteのnpm install、audit、real shadcn、
   typecheck、build、browser、responsiveが成功
+
+### PR / main公開
+
+- PR [#32](https://github.com/Nasu726/Nasu-Stack/pull/32): `verify` 4m27s、`verify-create` 2m57s
+- squash merge: `55cb6c8a8682855d14374d67cb74e3ab4e82499c`
+- main Pages run `33099215948`: verify、verify-create、build、deploy、公開smokeがすべて成功
+
+## Wave 1 — catalog shell / state demo
+
+### 実施
+
+- 1,680行の`App.tsx`からcatalog shell以外のstate demoとtest probeを分離し、300行へ縮小
+- `StateDemo.tsx`は表示順だけを持つ43行のcomposition rootに変更
+- state demoを変更理由で4moduleに分割
+  - Action / guard / abort: 404行
+  - render boundary / copy / autosave: 349行
+  - form / search / cursor list: 537行
+  - toast: 96行
+- registry component、hook、public exportは変更せず、catalog内部のimport境界だけを変更
+
+### local検証
+
+- playground TypeScript: 成功
+- playground production build: 成功、78 module
+- production preview上の`verify-states.mjs`: 98/98、pageerror 0
+- Vite開発serverではStrict Modeによるeffect二重実行を検知したため、CIと同じproduction previewへ
+  揃えて再実行した。検査環境差を回帰として記録しない
+- 最初の完全検査で、翻訳checkerが`src`直下だけを走査する前提を検知。再帰走査へ直し、
+  module分割後の翻訳568/568を確認
+- `pnpm verify`: 34/34、state 98/98、pageerror 0、日英29 page × 5幅
+- `pnpm verify:create`: 112/112、Astro / blog / Viteのinstall、実shadcn、型、build、browserが成功
