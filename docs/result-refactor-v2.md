@@ -101,13 +101,18 @@ exit code 0になる。同じprocess内でも4判定中2失敗・pageerror 1件�
 - `MIN_NODE`、validation、scaffold、対話関数など従来のpublic exportを入口からre-exportし、
   option、質問順、既定言語、生成結果を維持
 - packageの`files`へ`lib`を明示し、配布tgzに内部moduleを含める
-- full verifierで実際にtgzをpackし、そのtgzを`npm exec`して英語Astro生成物まで確認する
+- full verifierで実際にtgzをpackし、空の一時projectへnpm installして同梱binから
+  英語Astro生成物まで確認する
 
 ### 検査が捕まえた不整合
 
 最初のlight検査で、利用者向け文書moduleに`MIN_NODE`のimportが無いことを検知した。入口の
 巨大fileでは暗黙に同じscopeだった値がmodule境界を越えていなかったためで、importを明示して
 79/79へ戻した。配布file一覧の漏れはソース起動では検知できないため、tgz実物の検査を恒久化した。
+
+最初のPR CIでは`npm exec --package=<絶対tgz path>`がWindowsだけでbinを起動し、Linuxでは
+projectを作らず成功終了したため7.49が赤になった。空の一時projectへtgzをnpm installしてから
+ローカルbinを実行する経路へ変更し、OSごとのpackage指定解釈に依存しない検査にした。
 
 ### local検証
 

@@ -618,10 +618,23 @@ if (!FULL) {
       destination: packedDir,
       filename: "create-nasu-stack-test.tgz",
     });
+    const runner = path.join(work, "packed-runner");
+    fs.mkdirSync(runner);
+    fs.writeFileSync(
+      path.join(runner, "package.json"),
+      `${JSON.stringify({ private: true }, null, 2)}\n`,
+    );
+    const installed = run(runner, [
+      "install",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund",
+      packed.target,
+    ]);
+    if (!installed.ok) throw new Error(installed.out);
+
     const p = npm([
       "exec",
-      "--yes",
-      `--package=${packed.target}`,
       "--",
       "create-nasu-stack",
       "packed-site",
@@ -632,7 +645,7 @@ if (!FULL) {
       "--yes",
     ]);
     const out = execFileSync(p.cmd, p.args, {
-      cwd: work,
+      cwd: runner,
       encoding: "utf8",
       stdio: "pipe",
       ...p.options,
@@ -646,7 +659,7 @@ if (!FULL) {
   }
   must(
     "7.49 配布tgzからnpm経由でCLIを起動できる",
-    packedResult.ok && fs.existsSync(path.join(work, "packed-site", "HowToUse.md")),
+    packedResult.ok && fs.existsSync(path.join(work, "packed-runner", "packed-site", "HowToUse.md")),
     packedResult.out,
   );
 
