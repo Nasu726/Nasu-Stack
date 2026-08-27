@@ -22,6 +22,7 @@ import { fileURLToPath } from "node:url";
 import { REGISTRY_URL } from "./_site.mjs";
 import { writeSnippets } from "./build-snippets.mjs";
 import { localDep } from "./_deps.mjs";
+import { acquireWorkspaceLockSync } from "./_workspace-lock.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const registryRoot = path.join(root, "registry", "nasu");
@@ -248,60 +249,80 @@ function writeComponentsJson(kind, dest) {
   );
 }
 
-fs.rmSync(out, { recursive: true, force: true });
+/** 呼び出し側がcreate-template lockを保持してから実行します。 */
+export function buildCreateTemplate() {
+  fs.rmSync(out, { recursive: true, force: true });
 
-const report = [];
-for (const kind of ["astro", "blog", "vite"]) {
-  const dest = path.join(out, kind);
-  fs.mkdirSync(dest, { recursive: true });
-  if (kind === "blog") {
-    /* 足場は astro と同じ → apps/site の中身 → ブログ固有の上書き、の順。
-       **package-lock.json は astro のものが残ります。** blog の依存は
-       astro と同じで、違うのは scripts だけだからです。ずれたら
-       verify-create の判定（同梱の lock で install が通るか）が落ちます。 */
-    copyScaffold("astro", dest);
-    copyFromSite(dest);
-    copyScaffold("blog", dest);
-  } else {
-    copyScaffold(kind, dest);
-  }
-  writeComponentsJson(kind, dest);
-  /* 生成物の package.json に、検証済みの版を残します。
-     利用者が「何で試された構成なのか」を後から見られます。 */
-  {
-    const p = path.join(dest, "package.json");
-    const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
-    pkg.nasuStack = { shadcn: testedShadcnVersion() };
-    fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + "\n", "utf8");
-  }
-  const r = copyItems([...STARTER.common, ...STARTER[kind]], path.join(dest, "src"));
+  const report = [];
+  for (const kind of ["astro", "blog", "vite"]) {
+    const dest = path.join(out, kind);
+    fs.mkdirSync(dest, { recursive: true });
+    if (kind === "blog") {
+      /* 足場は astro と同じ → apps/site の中身 → ブログ固有の上書き、の順。
+         **package-lock.json は astro のものが残ります。** blog の依存は
+         astro と同じで、違うのは scripts だけだからです。ずれたら
+         verify-create の判定（同梱の lock で install が通るか）が落ちます。 */
+      copyScaffold("astro", dest);
+      copyFromSite(dest);
+      copyScaffold("blog", dest);
+    } else {
+      copyScaffold(kind, dest);
+    }
+    writeComponentsJson(kind, dest);
+    /* 生成物の package.json に、検証済みの版を残します。
+       利用者が「何で試された構成なのか」を後から見られます。 */
+    {
+      const p = path.join(dest, "package.json");
+      const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
+      pkg.nasuStack = { shadcn: testedShadcnVersion() };
+      fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+    }
+    const r = copyItems(
+      [...STARTER.common, ...STARTER[kind]],
+      path.join(dest, "src"),
+    );
 
-  /* エディタの補完。**入っている部品の分だけ**出します。
-     入っていない部品を補完に出すと、選んだ瞬間に「そんなものは無い」に
-     なります。原本の型から作るので、手で直す場所はありません。 */
-  const snips = writeSnippets(
-    [...r.resolved].map((n) => byName.get(n)),
-    root,
-    dest,
+    /* エディタの補完。**入っている部品の分だけ**出します。
+       入っていない部品を補完に出すと、選んだ瞬間に「そんなものは無い」に
+       なります。原本の型から作るので、手で直す場所はありません。 */
+    const snips = writeSnippets(
+      [...r.resolved].map((n) => byName.get(n)),
+      root,
+      dest,
+    );
+    report.push({ kind, ...r, snippets: snips });
+  }
+
+  // 生成物であることを、開いた人にも分かるようにしておきます
+  fs.writeFileSync(
+    path.join(out, "README.md"),
+    [
+      "# 生成物です",
+      "",
+      "このディレクトリは `scripts/build-create-template.mjs` が作ります。",
+      "**手で編集しないでください。**原本は `registry/nasu` です。",
+      "",
+    ].join("\n"),
   );
-  report.push({ kind, ...r, snippets: snips });
+
+  for (const r of report) {
+    console.log(
+      `  ${r.kind}: ${r.items} アイテム / ${r.files} ファイル / 補完 ${r.snippets} 個`,
+    );
+  }
+  console.log(`✅ テンプレートを生成しました: ${path.relative(root, out)}`);
+  return report;
 }
 
-// 生成物であることを、開いた人にも分かるようにしておきます
-fs.writeFileSync(
-  path.join(out, "README.md"),
-  [
-    "# 生成物です",
-    "",
-    "このディレクトリは `scripts/build-create-template.mjs` が作ります。",
-    "**手で編集しないでください。**原本は `registry/nasu` です。",
-    "",
-  ].join("\n"),
-);
-
-for (const r of report) {
-  console.log(
-    `  ${r.kind}: ${r.items} アイテム / ${r.files} ファイル / 補完 ${r.snippets} 個`,
-  );
+/* importしただけでは生成しません。CLIとして呼んだときだけlockを取ります。 */
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  const release = acquireWorkspaceLockSync("create-template", { root });
+  try {
+    buildCreateTemplate();
+  } finally {
+    release();
+  }
 }
-console.log(`✅ テンプレートを生成しました: ${path.relative(root, out)}`);

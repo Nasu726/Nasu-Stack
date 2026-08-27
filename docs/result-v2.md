@@ -366,10 +366,12 @@ loader成功後のabort / generation / key判定を外すと、deps変更後に�
 - [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
 - [x] registry 51 itemの依存 / install / 型検査 / 本物のshadcn CLI 51/51が成功する
 - [x] local `pnpm verify` 31/31 / `pnpm verify:create` 112/112が成功する
-- [ ] PR CIが成功する
-- [ ] `main`へmergeする
+- [x] PR CIが成功する（verify 4m39s / verify-create 2m55s）
+- [x] `main`へmergeする（PR #28 / `c2e7103`）
 
-## Wave 10（前倒し）— 公開物GETの一時障害
+## Wave 10 — checker / CI時間
+
+### 公開物GETの一時障害（Wave 9から前倒し）
 
 PR #27のPages smokeで、存在する`frame.json`への単発HTTP 503だけが公開jobを赤くした。公開物の
 欠落を隠さず外部経路の一時障害だけを吸収するため、GETを次の境界へ限定した。
@@ -383,8 +385,65 @@ PR #27のPages smokeで、存在する`frame.json`への単発HTTP 503だけが�
 - 250ms / 750msの有限backoffで、外部障害を待ち続けない
 - networkを使わない単体治具で、503→503→200、404、継続503、network errorを固定する
 
-これはchecker / CI時間Wave全体の完了ではない。重複実行・総時間・他checkerのfalse positive監査は
-引き続きWave 10で扱う。
+### 同じSHAのCI重複を排除
+
+`main`へのpushを`verify.yml`と`pages.yml`が両方受けていたため、前者の2 jobと、後者が
+reusable workflowとして呼ぶ同じ2 jobが同一SHAで重複していた。`main`はPagesだけが受け、
+Pages内から唯一の`verify.yml`を呼ぶ形へ統一した。PR / weekly schedule / manual dispatch /
+workflow callは残し、tag releaseも同じreusable workflowを呼ぶ。
+
+`verify-checker-coordination.mjs`がこのworkflow topologyを固定し、required check名の`verify` /
+`verify-create`、PR / schedule / tag経路を誤って消していないことも同時に見る。
+
+### 未実施をgreenにしない
+
+checkerのskip / warning経路を横断監査し、次のfalse-greenを閉じた。
+
+- sitemap取得失敗・空sitemapをトップ1ページへ黙って縮退せず、独立工程として赤にする
+- npm registryが一時的に不調なら有限retryし、CIでは依存存在確認と本物のshadcn検査を必須にする
+- `verify:create --full`でlocal registryを配れなければ、3雛型のCLI追加判定を省略せず失敗にする
+- `npm audit`へ到達できない場合も、full検査では成功扱いにしない
+- Astro 7が削除予定とする`astro:content`の`z`を、Astro自身が公開する`astro/zod`へ移し、
+  直接依存を増やさず0 errors / 0 warnings / 0 hintsへ戻す
+
+これにより`pnpm verify`は、sitemap discoveryとchecker / CI協調を独立させた33工程になった。
+
+### 同じworkspaceのwriterだけを直列化
+
+同じcheckoutで`pnpm verify`と`pnpm verify:create`を同時に起動すると、共有する
+`packages/create-nasu-stack/template`を双方が削除・再生成し、片方が途中のtreeを読むraceがあった。
+
+- system tempにworkspace絶対pathのhashと用途名でlock directoryを置く
+- atomicな`mkdir`でprocess間排他し、owner token / PIDが一致するownerだけがreleaseする
+- 生きているownerは経過時間だけで奪わず、dead PIDとowner書き込み前に止まった古いlockは回収する
+- stale回収は先に別名へatomic renameし、checkとremoveの間に別processのlockを消さない
+- template buildからCLI生成先へのcopy完了まで、packはtarball読み取り完了までをlockする
+- npm install / build / audit / browserは独立temp directoryなのでlockを外し、重い工程は並行のままにする
+
+実際に`pnpm verify`と`pnpm verify:create`を同じWindows checkoutで同時実行し、前者33/33、
+後者112/112がともに成功した。2つのlight verifierを同時起動した検査でも双方79/79で、片方が
+owner PIDを表示して待った後に成功した。`pnpm release:build`もtemplate build → pack → SHA-256 →
+manifestまで同じlock経路で成功した。
+
+### intentional break
+
+- `verify.yml`へ`main` pushを戻すと協調checkerがexit 1になり、二重経路を名指しした
+- lock取得をno-opにすると2 workerのtraceが`start, start, end, end`になり、重複を検知した
+- 本物のshadcn検査のCI必須分岐を無効化すると、network検査のskipとしてexit 1になった
+- 復旧後は`start, end, start, end`へ戻り、dead owner / owner不明lockも回収した
+
+### 完了条件
+
+- [x] 公開GETの一時障害と恒常的欠落を分け、双方の単体治具を通す
+- [x] 同じSHAに対するmainのverificationを1経路へ統一する
+- [x] sitemap / registry / real CLI / auditの未実施をCIのgreenにしない
+- [x] 同じworkspaceのtemplate writerをprocess間で安全に直列化する
+- [x] heavy install / build / browserは並行可能なままにする
+- [x] intentional breakでCI二重経路とwriter競合のcheckerが赤になる
+- [x] local concurrent `pnpm verify` 33/33 / `pnpm verify:create` 112/112が成功する
+- [x] `pnpm release:build`が成功する
+- [ ] PR CIが成功する
+- [ ] `main`へmergeする
 
 ## 実装台帳
 
@@ -401,8 +460,8 @@ PR #27のPages smokeで、存在する`frame.json`への単発HTTP 503だけが�
 | 7b: CopyButton / useCopy | 完了 | #25 | `e883e80` / registry 49 item / state実ブラウザ65件 / verify 30工程 / verify-create 112判定 |
 | 7c: Tooltip 判断 | 非採用 | — | APG WIP / disabled focus / touch tapを実測し、visible text・Popover・usePopoverへ分離 |
 | 8: behavioral recipes | 完了 | #27 | `0390a82` / registry 50 item / state実ブラウザ77件 / verify 30工程 / verify-create 112判定 |
-| 9: cursor / Load more 判断 | 進行中 | #28 | `codex/v2-load-more-list` / registry 51 item / state実ブラウザ98件 / verify 31工程 / verify-create 112判定 |
-| 10: checker / CI 時間 | 一部前倒し | — | 公開GETの一時statusだけ最大3 attempt / 単体境界4 scenario。全体監査は未完了 |
+| 9: cursor / Load more 判断 | 完了 | #28 | `c2e7103` / registry 51 item / state実ブラウザ98件 / verify 4m39s / verify-create 2m55s |
+| 10: checker / CI 時間 | PR CI待ち | #29 | `52ce007` / verify 33工程 / verify-create 112判定の同時成功 / main verification 1経路 / writer lock / false-green 4経路を閉じる |
 | 11: contract audit / release | 未着手 | — | — |
 
 ## v2 完了監査

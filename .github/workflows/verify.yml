@@ -1,8 +1,8 @@
 name: verify
 
 on:
-  push:
-    branches: [main]
+  # main pushはpages.ymlが受け、このworkflowをworkflow_callで1回だけ呼びます。
+  # ここでも受けると同じSHAでverify / verify-createが2組走ります。
   pull_request:
   # 依存を更新していなくても、週 1 で外部要因の破損に気づけるようにする
   schedule:

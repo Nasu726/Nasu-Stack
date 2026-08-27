@@ -19,7 +19,7 @@
 - [x] Tooltipの条件付き判断（v2 public itemにはせず、visible text / Popover / usePopoverへ分離）
 - [x] 条件を満たしたbehavioral recipe（SearchListRecipe: debounce / stale除外 / abort / retry / link）
 - [x] LoadMoreList / useCursorList / CursorPage contract（手動button、重複・stale・retry・末尾）
-- [ ] checker の intentional-break 検証と CI の重複・実行時間改善
+- [x] checker の intentional-break検証、false-green排除、CI重複とlocal writer競合の改善
 - [ ] v1 → v2 migration、全 public 面、実 install、Pages smoke、immutable Release
 
 Wizard / Editable / 自動InfiniteList は、巨大な API を先に固定しません。cursor一覧は
