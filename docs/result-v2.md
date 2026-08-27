@@ -366,8 +366,8 @@ loader成功後のabort / generation / key判定を外すと、deps変更後に�
 - [x] 日英README / overview / boundary / catalog / 専用guideに役割と非目標がある
 - [x] registry 51 itemの依存 / install / 型検査 / 本物のshadcn CLI 51/51が成功する
 - [x] local `pnpm verify` 31/31 / `pnpm verify:create` 112/112が成功する
-- [ ] PR CIが成功する
-- [ ] `main`へmergeする
+- [x] PR CIが成功する（verify 4m39s / verify-create 2m55s）
+- [x] `main`へmergeする（PR #28 / `c2e7103`）
 
 ## Wave 10 — checker / CI時間
 
@@ -460,8 +460,8 @@ manifestまで同じlock経路で成功した。
 | 7b: CopyButton / useCopy | 完了 | #25 | `e883e80` / registry 49 item / state実ブラウザ65件 / verify 30工程 / verify-create 112判定 |
 | 7c: Tooltip 判断 | 非採用 | — | APG WIP / disabled focus / touch tapを実測し、visible text・Popover・usePopoverへ分離 |
 | 8: behavioral recipes | 完了 | #27 | `0390a82` / registry 50 item / state実ブラウザ77件 / verify 30工程 / verify-create 112判定 |
-| 9: cursor / Load more 判断 | 進行中 | #28 | `codex/v2-load-more-list` / registry 51 item / state実ブラウザ98件 / verify 31工程 / verify-create 112判定 |
-| 10: checker / CI 時間 | local完了 / CI待ち | — | verify 33工程 / verify-create 112判定の同時成功 / main verification 1経路 / writer lock / false-green 4経路を閉じる |
+| 9: cursor / Load more 判断 | 完了 | #28 | `c2e7103` / registry 51 item / state実ブラウザ98件 / verify 4m39s / verify-create 2m55s |
+| 10: checker / CI 時間 | PR CI待ち | #29 | `52ce007` / verify 33工程 / verify-create 112判定の同時成功 / main verification 1経路 / writer lock / false-green 4経路を閉じる |
 | 11: contract audit / release | 未着手 | — | — |
 
 ## v2 完了監査
