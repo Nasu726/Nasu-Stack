@@ -7,6 +7,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { createCheckHarness } from "./_check.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, ".verify-validation");
@@ -51,11 +52,7 @@ const {
   validationFailureResponse,
 } = validation;
 
-const checks = [];
-function must(label, ok, detail = "") {
-  checks.push({ label, ok: !!ok, detail: String(detail) });
-  console.log(`  ${ok ? "✓" : "✗"} ${label}${detail ? `  (${detail})` : ""}`);
-}
+const { must, report } = createCheckHarness();
 
 const transformed = await runValidation(
   (input) => ({
@@ -185,12 +182,4 @@ must(
 );
 
 fs.rmSync(out, { recursive: true, force: true });
-const failed = checks.filter((check) => !check.ok);
-if (failed.length > 0) {
-  console.error(`\n❌ ${checks.length} 件中 ${failed.length} 件が失敗しました`);
-  for (const failure of failed) {
-    console.error(`   ✗ ${failure.label}  ${failure.detail}`);
-  }
-  process.exit(1);
-}
-console.log(`\n✅ 判定 ${checks.length} 件すべて成功`);
+process.exit(report().ok ? 0 : 1);

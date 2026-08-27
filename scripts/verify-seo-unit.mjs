@@ -12,6 +12,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { createCheckHarness } from "./_check.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, ".verify-seo");
@@ -76,11 +77,7 @@ const { buildSitemap, buildRss, buildRobots, escapeXml } = await import(
 
 /* ================================================================ */
 
-const checks = [];
-function must(label, ok, detail = "") {
-  checks.push({ label, ok: !!ok, detail: String(detail) });
-  console.log(`  ${ok ? "✓" : "✗"} ${label}${detail ? `  (${detail})` : ""}`);
-}
+const { must, report } = createCheckHarness();
 const attrOf = (tags, key, value) =>
   tags.find((t) => t.attrs[key] === value)?.attrs.content ??
   tags.find((t) => t.attrs[key] === value)?.attrs.href;
@@ -280,12 +277,4 @@ must(
 
 fs.rmSync(out, { recursive: true, force: true });
 
-const failed = checks.filter((c) => !c.ok);
-console.log("");
-console.log(
-  failed.length === 0
-    ? `✅ 判定 ${checks.length} 件すべて成功`
-    : `❌ 判定 ${checks.length} 件中 ${failed.length} 件が失敗`,
-);
-for (const f of failed) console.log(`   ✗ ${f.label}  ${f.detail}`);
-process.exit(failed.length ? 1 : 0);
+process.exit(report().ok ? 0 : 1);

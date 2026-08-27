@@ -1,5 +1,13 @@
 # ROADMAP
 
+## v2.0 Stable後 — 内部リファクタリング進行中
+
+public contractと責任境界は変えず、検査の判定集計、catalog shell、create CLI、巨大な
+browser verifierに混ざった変更理由を分離します。行数だけを理由にpublic registry itemを
+細分化しません。計画と実測基準は
+[`docs/plan-refactor-v2.md`](docs/plan-refactor-v2.md)、結果は
+[`docs/result-refactor-v2.md`](docs/result-refactor-v2.md)に記録します。
+
 ## v2.0 — 完了
 
 部品数ではなく、**利用者がしなくてよくなった判断の種類**を増やします。

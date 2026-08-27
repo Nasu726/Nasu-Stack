@@ -9,6 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { TAB_KEYS } from "../apps/playground/src/tabs.mjs";
+import { createCheckHarness, log } from "./_check.mjs";
 
 export const BASE = process.env.PLAYGROUND_URL || "http://127.0.0.1:4173";
 
@@ -112,7 +113,7 @@ export async function launch() {
    * やがて誰も見なくなります。
    * ============================================================== */
 
-  const checks = [];
+  const harness = createCheckHarness();
 
   /**
    * 満たしていなければ最後に失敗として報告します。
@@ -120,39 +121,14 @@ export async function launch() {
    * **その場では止めません。** 1 個目で止めると、残りが直っているか
    * 分からないまま何度も走らせることになります。
    */
-  function must(label, ok, detail = "") {
-    checks.push({ label, ok: !!ok, detail: String(detail) });
-    console.log(`  ${ok ? "✓" : "✗"} ${label}${detail ? `  (${detail})` : ""}`);
-    return !!ok;
-  }
+  const { checks, must, mustEq } = harness;
 
   /** 値がぴったり一致することを求めます（トークン由来の値など）。 */
-  function mustEq(label, actual, expected) {
-    const ok = Object.is(actual, expected) || String(actual) === String(expected);
-    checks.push({ label, ok, detail: `${actual} / 期待 ${expected}` });
-    console.log(
-      `  ${ok ? "✓" : "✗"} ${label}  (${actual}${ok ? "" : ` ← 期待 ${expected}`})`,
-    );
-    return ok;
-  }
-
   /** 判定と pageerror が両方 0 件なら 0、あれば 1 で終了します。 */
   async function finish() {
-    const failed = checks.filter((c) => !c.ok);
-    console.log("");
-    console.log(
-      failed.length === 0
-        ? `✅ 判定 ${checks.length} 件すべて成功`
-        : `❌ 判定 ${checks.length} 件中 ${failed.length} 件が失敗`,
-    );
-    for (const f of failed) console.log(`   ✗ ${f.label}  ${f.detail}`);
-    console.log(
-      errors.length === 0
-        ? "✅ pageerror 0 件"
-        : `❌ pageerror ${errors.length} 件:\n` + errors.join("\n"),
-    );
+    const result = harness.report({ pageErrors: errors });
     await browser.close();
-    process.exit(failed.length || errors.length ? 1 : 0);
+    process.exit(result.ok ? 0 : 1);
   }
 
   return { browser, errors, openTab, finish, must, mustEq, checks };
@@ -162,7 +138,7 @@ export async function launch() {
  * 判定に向かない値を、参考として出します。
  * 送信された JSON の中身や、環境で変わる座標などがこれに当たります。
  */
-export const log = (...a) => console.log("·", ...a);
+export { log };
 
 /**
  * 背景が「見える色で塗られているか」を見ます。
