@@ -50,7 +50,7 @@ pnpm build        # 両方ビルド + レジストリ生成
 ### 動作確認
 
 ```bash
-pnpm verify   # 型検査・ビルド・配布物・実ブラウザ検証をまとめて実行（30 工程）
+pnpm verify   # 型検査・ビルド・配布物・実ブラウザ検証をまとめて実行（33 工程）
 pnpm verify:create   # 生成物を install → build → 配信して実ブラウザで確認
 pnpm check -- http://localhost:5173/   # 端末幅の崩れだけを見る
 ```
@@ -103,7 +103,7 @@ Astro 側のページ一覧は **sitemap.xml から取ります**（手で並べ
 | **このリポジトリの開発用スクリプト** | Linux / macOS / **Windows 11** で動作確認済み |
 
 Windows は実機確認しています（Windows 11 / Node 24.13 / pnpm 10.28）。
-`pnpm verify` 30 工程と `pnpm verify:create` 112 判定が緑です。
+`pnpm verify` 33 工程と `pnpm verify:create` 112 判定が緑です。
 子プロセスの起動と停止は [`scripts/_proc.mjs`](../scripts/_proc.mjs) が唯一の定義で、
 **なぜ OS ごとに違うのかはそこに書いてあります**（`.cmd` は shell 無しで
 spawn できない / Windows にプロセスグループが無い）。

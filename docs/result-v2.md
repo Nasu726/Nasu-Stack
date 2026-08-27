@@ -442,8 +442,8 @@ manifestまで同じlock経路で成功した。
 - [x] intentional breakでCI二重経路とwriter競合のcheckerが赤になる
 - [x] local concurrent `pnpm verify` 33/33 / `pnpm verify:create` 112/112が成功する
 - [x] `pnpm release:build`が成功する
-- [ ] PR CIが成功する
-- [ ] `main`へmergeする
+- [x] PR CIが成功する（verify 4m23s / verify-create 3m10s）
+- [x] `main`へmergeする（PR #29 / `88b3406`）
 
 ## 実装台帳
 
@@ -461,7 +461,7 @@ manifestまで同じlock経路で成功した。
 | 7c: Tooltip 判断 | 非採用 | — | APG WIP / disabled focus / touch tapを実測し、visible text・Popover・usePopoverへ分離 |
 | 8: behavioral recipes | 完了 | #27 | `0390a82` / registry 50 item / state実ブラウザ77件 / verify 30工程 / verify-create 112判定 |
 | 9: cursor / Load more 判断 | 完了 | #28 | `c2e7103` / registry 51 item / state実ブラウザ98件 / verify 4m39s / verify-create 2m55s |
-| 10: checker / CI 時間 | PR CI待ち | #29 | `52ce007` / verify 33工程 / verify-create 112判定の同時成功 / main verification 1経路 / writer lock / false-green 4経路を閉じる |
+| 10: checker / CI 時間 | 完了 | #29 | `88b3406` / verify 4m23s / verify-create 3m10s / main Pages 1経路でbuild・deploy・smokeまで成功 |
 | 11: contract audit / release | 未着手 | — | — |
 
 ## v2 完了監査
