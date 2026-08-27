@@ -34,28 +34,16 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { makeFixture } from "./_fixture.mjs";
 import { stopTree } from "./_proc.mjs";
 import { fetchWithRetry } from "./fetch-with-retry.mjs";
+import { createCheckHarness, log } from "./_check.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = 5077;
 const BASE = `http://127.0.0.1:${PORT}`;
 
-const checks = [];
-function must(label, ok, detail = "") {
-  checks.push({ label, ok: !!ok, detail: String(detail) });
-  console.log(`  ${ok ? "✓" : "✗"} ${label}${detail ? `  (${detail})` : ""}`);
-}
-const log = (...a) => console.log("·", ...a);
+const { must, exit } = createCheckHarness();
 
 function finish(code) {
-  const failed = checks.filter((c) => !c.ok);
-  console.log("");
-  console.log(
-    failed.length === 0
-      ? `✅ 判定 ${checks.length} 件すべて成功`
-      : `❌ 判定 ${checks.length} 件中 ${failed.length} 件が失敗`,
-  );
-  for (const f of failed) console.log(`   ✗ ${f.label}  ${f.detail}`);
-  process.exit(code ?? (failed.length === 0 ? 0 : 1));
+  exit({ code });
 }
 
 /* --- 0. 配るものがあるか ------------------------------------------- */

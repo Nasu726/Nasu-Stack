@@ -14,6 +14,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { createCheckHarness } from "./_check.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, ".verify-receiver");
@@ -40,11 +41,7 @@ const worker = (
   await import(pathToFileURL(path.join(out, "cloudflare-worker.js")).href)
 ).default;
 
-const checks = [];
-function must(label, ok, detail = "") {
-  checks.push({ label, ok: !!ok, detail: String(detail) });
-  console.log(`  ${ok ? "✓" : "✗"} ${label}${detail ? `  (${detail})` : ""}`);
-}
+const { must, report } = createCheckHarness();
 
 const ORIGIN = "https://example.com";
 const FULL = {
@@ -191,11 +188,5 @@ for (const key of ["ALLOWED_ORIGIN", "MAIL_API_KEY", "MAIL_TO", "MAIL_FROM"]) {
 }
 
 /* ================================================================ */
-const failed = checks.filter((c) => !c.ok);
 fs.rmSync(out, { recursive: true, force: true });
-if (failed.length > 0) {
-  console.error(`\n❌ ${checks.length} 件中 ${failed.length} 件が失敗しました`);
-  for (const f of failed) console.error(`   ✗ ${f.label}  ${f.detail}`);
-  process.exit(1);
-}
-console.log(`\n✅ 判定 ${checks.length} 件すべて成功`);
+process.exit(report().ok ? 0 : 1);

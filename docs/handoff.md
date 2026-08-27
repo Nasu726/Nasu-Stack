@@ -24,6 +24,9 @@
 **v2.0.0の機能整理・拡張・releaseは完了しています。** 計画と候補の採否は
 [`plan-v2.md`](plan-v2.md)、実装から公開物再download監査までの直接証拠は
 [`result-v2.md`](result-v2.md) を正とします。
+現在の内部リファクタリングは[`plan-refactor-v2.md`](plan-refactor-v2.md)、実施証拠は
+[`result-refactor-v2.md`](result-refactor-v2.md)を正とします。public contractを変えず、
+検査基盤、catalog、CLI、巨大verifierの順に独立PRへ分けます。
 v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 [`result-v1.md`](result-v1.md) に残しています。
 直前のreview対応は [`plan-v09f-review.md`](plan-v09f-review.md) と
@@ -105,7 +108,7 @@ v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 
 ```bash
 pnpm install
-pnpm verify           # 33 工程（独立したものは並列）。型・ビルド・配布物・実ブラウザ
+pnpm verify           # 34 工程（独立したものは並列）。型・ビルド・配布物・実ブラウザ
 pnpm verify:create    # 入口の検査 112 判定。**npm** で install / build します。生成物に本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 pnpm release:build    # package versionに対応するGitHub Release用tarball + SHA-256

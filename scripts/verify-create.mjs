@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { npm, pnpm, stopTree } from "./_proc.mjs";
 import { buildCreateTemplate } from "./build-create-template.mjs";
 import { acquireWorkspaceLockSync } from "./_workspace-lock.mjs";
+import { createCheckHarness, log } from "./_check.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(root, "packages", "create-nasu-stack", "index.mjs");
@@ -32,12 +33,7 @@ const releaseTemplateLock = acquireWorkspaceLockSync("create-template", {
     console.log(`· create templateの利用を待っています${owner?.pid ? ` (pid ${owner.pid})` : ""}`),
 });
 
-const checks = [];
-function must(label, ok, detail = "") {
-  checks.push({ label, ok: !!ok, detail: String(detail) });
-  console.log(`  ${ok ? "✓" : "✗"} ${label}${detail ? `  (${detail})` : ""}`);
-}
-const log = (...a) => console.log("·", ...a);
+const { must, report } = createCheckHarness();
 
 const work = fs.mkdtempSync(path.join(os.tmpdir(), "wt-create-"));
 const create = (name, args = []) => {
@@ -860,12 +856,4 @@ try {
   console.log(`· ⚠️ 作業ディレクトリを消せませんでした (${work}): ${String(e).slice(0, 160)}`);
 }
 
-const failed = checks.filter((c) => !c.ok);
-console.log("");
-console.log(
-  failed.length === 0
-    ? `✅ 判定 ${checks.length} 件すべて成功`
-    : `❌ 判定 ${checks.length} 件中 ${failed.length} 件が失敗`,
-);
-for (const f of failed) console.log(`   ✗ ${f.label}  ${f.detail}`);
-process.exit(failed.length ? 1 : 0);
+process.exit(report().ok ? 0 : 1);

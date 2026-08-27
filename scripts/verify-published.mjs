@@ -28,6 +28,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchWithRetry } from "./fetch-with-retry.mjs";
+import { createCheckHarness, log } from "./_check.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const base = (process.argv[2] ?? "").replace(/\/$/, "");
@@ -59,12 +60,7 @@ function countFiles(dir) {
   return n;
 }
 
-const checks = [];
-function must(label, ok, detail = "") {
-  checks.push({ label, ok: !!ok, detail: String(detail) });
-  console.log(`  ${ok ? "✓" : "✗"} ${label}${detail ? `  (${detail})` : ""}`);
-}
-const log = (...a) => console.log("·", ...a);
+const { must, report } = createCheckHarness();
 
 console.log(`\n公開先: ${base}\n`);
 
@@ -381,12 +377,4 @@ try {
 }
 
 /* --- まとめ --------------------------------------------------------- */
-const failed = checks.filter((c) => !c.ok);
-console.log("");
-console.log(
-  failed.length === 0
-    ? `✅ 判定 ${checks.length} 件すべて成功`
-    : `❌ 判定 ${checks.length} 件中 ${failed.length} 件が失敗`,
-);
-for (const f of failed) console.log(`   ✗ ${f.label}  ${f.detail}`);
-process.exit(failed.length === 0 ? 0 : 1);
+process.exit(report().ok ? 0 : 1);

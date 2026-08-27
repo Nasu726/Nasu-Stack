@@ -10,17 +10,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { stopTree } from "./_proc.mjs";
+import { createCheckHarness, log } from "./_check.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = 4399;
 const API = `http://127.0.0.1:${PORT}`;
 
-const checks = [];
-function must(label, ok, detail = "") {
-  checks.push({ label, ok: !!ok, detail: String(detail) });
-  console.log(`  ${ok ? "✓" : "✗"} ${label}${detail ? `  (${detail})` : ""}`);
-}
-const log = (...a) => console.log("·", ...a);
+const { must, report } = createCheckHarness();
 
 /* --- 受け口サーバを立てる ---------------------------------------- */
 const server = spawn(process.execPath, [path.join(root, "scripts/_endpoint.mjs"), String(PORT)], {
@@ -327,17 +323,4 @@ await page.close();
 await browser.close();
 stop();
 
-const failed = checks.filter((c) => !c.ok);
-console.log("");
-console.log(
-  failed.length === 0
-    ? `✅ 判定 ${checks.length} 件すべて成功`
-    : `❌ 判定 ${checks.length} 件中 ${failed.length} 件が失敗`,
-);
-for (const f of failed) console.log(`   ✗ ${f.label}  ${f.detail}`);
-console.log(
-  pageErrors.length === 0
-    ? "✅ pageerror 0 件"
-    : `❌ pageerror ${pageErrors.length} 件:\n` + pageErrors.join("\n"),
-);
-process.exit(failed.length || pageErrors.length ? 1 : 0);
+process.exit(report({ pageErrors }).ok ? 0 : 1);
