@@ -28,11 +28,24 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const srcDir = path.join(root, "apps/playground/src");
 const JP = /[぀-ゟ゠-ヿ一-龯]/;
 
+/** src直下だけに限定すると、責務ごとのmodule分割が翻訳検査を無効にします。 */
+function sourceFiles(dir) {
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .flatMap((entry) => {
+      const target = path.join(dir, entry.name);
+      if (entry.isDirectory()) return sourceFiles(target);
+      if (!entry.isFile() || !/\.tsx?$/.test(entry.name) || /^lang/.test(entry.name)) {
+        return [];
+      }
+      return [target];
+    })
+    .sort();
+}
+
 /** ソースが実際に `t()` へ渡している原文。**一覧を書き写しません。** */
 const used = new Set();
-for (const f of fs.readdirSync(srcDir)) {
-  if (!/\.tsx?$/.test(f) || /^lang/.test(f)) continue;
-  const p = path.join(srcDir, f);
+for (const p of sourceFiles(srcDir)) {
   const sf = ts.createSourceFile(
     p,
     fs.readFileSync(p, "utf8"),
@@ -54,7 +67,7 @@ for (const f of fs.readdirSync(srcDir)) {
   })(sf);
 }
 
-/* タブの見出しは tabs.mjs にあり、App.tsx が `t(tab.label)` で通します。
+/* タブの見出しは tabs.mjs にあり、catalog shellが `t(tab.label)` で通します。
    **変数越しなので上の走査には出てきません。** ここで足します。 */
 const tabs = fs.readFileSync(path.join(srcDir, "tabs.mjs"), "utf8");
 for (const m of tabs.matchAll(/label: "([^"]+)"/g)) used.add(m[1]);
