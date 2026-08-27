@@ -82,11 +82,11 @@ readinessなどに類似がある。入力と出力の境界を明示できる�
 |---|---|---|
 | 0 | 計画、共通check harness | 全対象scriptの判定数・失敗詳細・exitが一致、intentional failureが赤 |
 | 1 | catalog shell / state demo分離 | state 98/98、全tab / responsive、App.tsxがshell責任だけになる |
-| 2 | create CLI内部module分離 | light/full 112/112、3 templateのnpm install / build / browser、pack実物で起動 |
+| 2 | create CLI内部module分離 | light 79/79・full 113/113、3 templateのnpm install / build / browser、pack実物で起動 |
 | 3 | states / nav / create verifierのscenario分離 | 判定数と順序を維持、intentional breakが該当scenarioを赤にする |
 | 4 | compile / fixture / build helper整理 | 同じ一時treeを複製せず、Windows cleanup・並列lockを維持 |
 | 5 | public registry内部監査 | public file / export / registryDependencies不変、51/51 real install |
-| 6 | 全体監査 | verify 34/34、verify:create 112/112、Pages deploy / public smoke成功 |
+| 6 | 全体監査 | verify 34/34、verify:create 113/113、Pages deploy / public smoke成功 |
 
 各Waveは独立PRを基本とする。前のPRをmainへmergeし、Pagesの公開smokeまで成功してから
 次のbranchをmainから切る。大きなmoveと挙動変更を同じPRへ入れない。

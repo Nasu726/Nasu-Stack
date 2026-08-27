@@ -16,6 +16,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { npm, pnpm, stopTree } from "./_proc.mjs";
 import { buildCreateTemplate } from "./build-create-template.mjs";
+import { packCreateNasuStack } from "./_pack-create.mjs";
 import { acquireWorkspaceLockSync } from "./_workspace-lock.mjs";
 import { createCheckHarness, log } from "./_check.mjs";
 
@@ -606,6 +607,48 @@ if (!FULL) {
       return { ok: false, out: (String(e.stdout ?? "") + String(e.stderr ?? "")).slice(-400) };
     }
   };
+
+  /* ソースのindex.mjsだけを動かしても、配布対象のfiles設定漏れは見えません。
+     利用者が受け取るtgzそのものをnpmで起動し、内部moduleも本当に同梱された
+     ことを確認します。PagesとGitHub Releaseも同じpack関数を使います。 */
+  const packedDir = path.join(work, "packed-cli");
+  let packedResult = { ok: false, out: "packを実行できませんでした" };
+  try {
+    const packed = packCreateNasuStack({
+      destination: packedDir,
+      filename: "create-nasu-stack-test.tgz",
+    });
+    const p = npm([
+      "exec",
+      "--yes",
+      `--package=${packed.target}`,
+      "--",
+      "create-nasu-stack",
+      "packed-site",
+      "--template",
+      "astro",
+      "--lang",
+      "en",
+      "--yes",
+    ]);
+    const out = execFileSync(p.cmd, p.args, {
+      cwd: work,
+      encoding: "utf8",
+      stdio: "pipe",
+      ...p.options,
+    });
+    packedResult = { ok: true, out };
+  } catch (e) {
+    packedResult = {
+      ok: false,
+      out: (String(e.stdout ?? "") + String(e.stderr ?? "") + String(e.message ?? "")).slice(-600),
+    };
+  }
+  must(
+    "7.49 配布tgzからnpm経由でCLIを起動できる",
+    packedResult.ok && fs.existsSync(path.join(work, "packed-site", "HowToUse.md")),
+    packedResult.out,
+  );
 
   /**
    * shadcn CLI は**このリポジトリに固定した版**を直接動かします。
