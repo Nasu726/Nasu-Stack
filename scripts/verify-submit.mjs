@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { stopTree } from "./_proc.mjs";
 import { createCheckHarness, log } from "./_check.mjs";
+import { compileTypeScriptFixture } from "./_compiled-fixture.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = 4399;
@@ -51,40 +52,29 @@ page.on("pageerror", (e) => pageErrors.push(String(e)));
  * ここでは**ソースを tsc で JS に落として、その場で評価**します。
  * 実際の fetch とブラウザの挙動（CORS・中断）をそのまま試すためです。
  */
-import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 
 const out = path.join(root, ".verify-submit");
-fs.rmSync(out, { recursive: true, force: true });
-fs.mkdirSync(out, { recursive: true });
 // `@/lib/action` の別名は tsconfig でしか解決できないので、その場で書きます
-const tsconfig = path.join(out, "tsconfig.json");
-fs.writeFileSync(
-  tsconfig,
-  JSON.stringify({
-    compilerOptions: {
-      outDir: ".",
-      rootDir: path.join(root, "registry", "nasu", "lib"),
-      module: "esnext",
-      target: "es2022",
-      moduleResolution: "bundler",
-      skipLibCheck: true,
-      strict: true,
-      baseUrl: root,
-      paths: { "@/*": ["registry/nasu/*"] },
-      lib: ["es2022", "dom"],
-    },
-    files: [
-      path.join(root, "registry", "nasu", "lib", "action.ts"),
-      path.join(root, "registry", "nasu", "lib", "submit.ts"),
-    ],
-  }),
-);
-execFileSync(
-  process.execPath,
-  [path.join(root, "node_modules", "typescript", "bin", "tsc"), "-p", tsconfig],
-  { stdio: "inherit", cwd: root },
-);
+const compiled = compileTypeScriptFixture({
+  root,
+  out,
+  compilerOptions: {
+    rootDir: path.join(root, "registry", "nasu", "lib"),
+    module: "esnext",
+    target: "es2022",
+    moduleResolution: "bundler",
+    skipLibCheck: true,
+    strict: true,
+    baseUrl: root,
+    paths: { "@/*": ["registry/nasu/*"] },
+    lib: ["es2022", "dom"],
+  },
+  files: [
+    path.join(root, "registry", "nasu", "lib", "action.ts"),
+    path.join(root, "registry", "nasu", "lib", "submit.ts"),
+  ],
+});
 // `@/lib/action` の別名をブラウザで解決できないので、相対に直します
 const submitJs = fs
   .readFileSync(path.join(out, "submit.js"), "utf8")
@@ -318,7 +308,7 @@ await reset();
 
 /* ================================================================ */
 
-fs.rmSync(out, { recursive: true, force: true });
+compiled.cleanup();
 await page.close();
 await browser.close();
 stop();

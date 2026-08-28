@@ -10,32 +10,27 @@
  * 「403 が返った」ではなく「送信が 0 回だった」を見るのが要点です。
  * 応答を読めなくても、副作用はサーバで起きているためです。
  */
-import { execFileSync } from "node:child_process";
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createCheckHarness } from "./_check.mjs";
+import { compileTypeScriptFixture } from "./_compiled-fixture.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, ".verify-receiver");
 
-fs.rmSync(out, { recursive: true, force: true });
-fs.mkdirSync(out, { recursive: true });
-execFileSync(
-  process.execPath,
-  [
-    path.join(root, "node_modules", "typescript", "bin", "tsc"),
-    path.join(root, "examples", "receivers", "cloudflare-worker.ts"),
-    "--outDir", out,
-    "--module", "esnext",
-    "--target", "es2022",
-    "--moduleResolution", "bundler",
-    "--skipLibCheck",
-    "--lib", "es2022,dom",
-  ],
-  { stdio: "inherit", cwd: root },
-);
-fs.writeFileSync(path.join(out, "package.json"), '{"type":"module"}\n');
+const compiled = compileTypeScriptFixture({
+  root,
+  out,
+  compilerOptions: {
+    rootDir: path.join(root, "examples", "receivers"),
+    module: "esnext",
+    target: "es2022",
+    moduleResolution: "bundler",
+    skipLibCheck: true,
+    lib: ["es2022", "dom"],
+  },
+  files: [path.join(root, "examples", "receivers", "cloudflare-worker.ts")],
+});
 
 const worker = (
   await import(pathToFileURL(path.join(out, "cloudflare-worker.js")).href)
@@ -188,5 +183,5 @@ for (const key of ["ALLOWED_ORIGIN", "MAIL_API_KEY", "MAIL_TO", "MAIL_FROM"]) {
 }
 
 /* ================================================================ */
-fs.rmSync(out, { recursive: true, force: true });
+compiled.cleanup();
 process.exit(report().ok ? 0 : 1);

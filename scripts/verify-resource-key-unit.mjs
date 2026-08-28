@@ -3,53 +3,37 @@
  * JSON.stringify の衝突や render 中の例外は画面から原因を追えないため、
  * React を起動する前に値の境界を名指しします。
  */
-import { execFileSync } from "node:child_process";
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createCheckHarness } from "./_check.mjs";
+import { compileTypeScriptFixture, rewriteRegistryAliases } from "./_compiled-fixture.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, ".verify-resource-key");
 
-fs.rmSync(out, { recursive: true, force: true });
-fs.mkdirSync(out, { recursive: true });
-fs.writeFileSync(
-  path.join(out, "tsconfig.json"),
-  JSON.stringify({
-    compilerOptions: {
-      outDir: ".",
-      rootDir: path.join(root, "registry", "nasu"),
-      module: "esnext",
-      target: "es2022",
-      moduleResolution: "bundler",
-      skipLibCheck: true,
-      baseUrl: path.join(root, "registry", "nasu"),
-      paths: { "@/*": ["./*"] },
-      types: [],
-      lib: ["es2022", "dom"],
-      jsx: "react-jsx",
-    },
-    files: [
-      path.join(root, "registry", "nasu", "lib", "action.ts"),
-      path.join(root, "registry", "nasu", "hooks", "use-resource.ts"),
-    ],
-  }),
-);
-execFileSync(
-  process.execPath,
-  [path.join(root, "node_modules", "typescript", "bin", "tsc"), "-p", path.join(out, "tsconfig.json")],
-  { stdio: "inherit", cwd: root },
-);
+const compiled = compileTypeScriptFixture({
+  root,
+  out,
+  compilerOptions: {
+    rootDir: path.join(root, "registry", "nasu"),
+    module: "esnext",
+    target: "es2022",
+    moduleResolution: "bundler",
+    skipLibCheck: true,
+    baseUrl: path.join(root, "registry", "nasu"),
+    paths: { "@/*": ["./*"] },
+    types: [],
+    lib: ["es2022", "dom"],
+    jsx: "react-jsx",
+  },
+  files: [
+    path.join(root, "registry", "nasu", "lib", "action.ts"),
+    path.join(root, "registry", "nasu", "hooks", "use-resource.ts"),
+  ],
+});
 
 const hookPath = path.join(out, "hooks", "use-resource.js");
-fs.writeFileSync(
-  hookPath,
-  fs
-    .readFileSync(hookPath, "utf8")
-    .replace(/from "@\/lib\/action"/g, 'from "../lib/action.js"'),
-);
-fs.writeFileSync(path.join(out, "package.json"), '{"type":"module"}\n');
+rewriteRegistryAliases(out);
 
 const resource = await import(pathToFileURL(hookPath).href);
 const serialize = resource.serializeResourceKey;
@@ -123,5 +107,5 @@ if (typeof serialize === "function") {
   must("循環していない共有参照は受け付ける", sharedError === undefined, String(sharedError ?? ""));
 }
 
-fs.rmSync(out, { recursive: true, force: true });
+compiled.cleanup();
 process.exit(report().ok ? 0 : 1);

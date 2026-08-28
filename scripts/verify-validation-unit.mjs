@@ -3,43 +3,28 @@
  * client / server の adapter が別の優先順位で field error を扱うと、同じ validator
  * なのに表示が変わるため、配る原本そのものを compile して測ります。
  */
-import { execFileSync } from "node:child_process";
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createCheckHarness } from "./_check.mjs";
+import { compileTypeScriptFixture } from "./_compiled-fixture.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, ".verify-validation");
 
-fs.rmSync(out, { recursive: true, force: true });
-fs.mkdirSync(out, { recursive: true });
-fs.writeFileSync(
-  path.join(out, "tsconfig.json"),
-  JSON.stringify({
-    compilerOptions: {
-      outDir: ".",
-      rootDir: path.join(root, "registry", "nasu"),
-      module: "esnext",
-      target: "es2022",
-      moduleResolution: "bundler",
-      skipLibCheck: true,
-      types: [],
-      lib: ["es2022", "dom"],
-    },
-    files: [path.join(root, "registry", "nasu", "lib", "validation.ts")],
-  }),
-);
-execFileSync(
-  process.execPath,
-  [
-    path.join(root, "node_modules", "typescript", "bin", "tsc"),
-    "-p",
-    path.join(out, "tsconfig.json"),
-  ],
-  { stdio: "inherit", cwd: root },
-);
-fs.writeFileSync(path.join(out, "package.json"), '{"type":"module"}\n');
+const compiled = compileTypeScriptFixture({
+  root,
+  out,
+  compilerOptions: {
+    rootDir: path.join(root, "registry", "nasu"),
+    module: "esnext",
+    target: "es2022",
+    moduleResolution: "bundler",
+    skipLibCheck: true,
+    types: [],
+    lib: ["es2022", "dom"],
+  },
+  files: [path.join(root, "registry", "nasu", "lib", "validation.ts")],
+});
 
 const validation = await import(
   pathToFileURL(path.join(out, "lib", "validation.js")).href
@@ -181,5 +166,5 @@ must(
   String(statusError ?? "例外なし"),
 );
 
-fs.rmSync(out, { recursive: true, force: true });
+compiled.cleanup();
 process.exit(report().ok ? 0 : 1);
