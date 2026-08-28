@@ -25,13 +25,26 @@ function read(file) {
   return fs.readFileSync(path.join(root, file), "utf8").replace(/\r\n/g, "\n");
 }
 
+function readDirectory(directory) {
+  return fs
+    .readdirSync(path.join(root, directory), { recursive: true })
+    .map(String)
+    .filter((file) => file.endsWith(".mjs"))
+    .sort()
+    .map((file) => read(path.join(directory, file)))
+    .join("\n");
+}
+
 /* main pushはPagesだけが受け、Pages内で唯一のverify定義を呼びます。 */
 {
   const verify = read(".github/workflows/verify.yml");
   const pages = read(".github/workflows/pages.yml");
   const release = read(".github/workflows/release.yml");
   const verifyMain = read("scripts/verify.mjs");
-  const verifyCreate = read("scripts/verify-create.mjs");
+  const verifyCreate = [
+    read("scripts/verify-create.mjs"),
+    readDirectory("scripts/verify-create"),
+  ].join("\n");
   const installReal = read("scripts/verify-install-real.mjs");
   const scaffoldDeps = read("scripts/check-scaffold-deps.mjs");
 
