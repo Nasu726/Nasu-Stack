@@ -13,82 +13,47 @@
  * 内部の文言が漏れていても画面には何か出ますし、既定値が上書きされても
  * 送信そのものは成功します。
  */
-import { execFileSync } from "node:child_process";
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createCheckHarness } from "./_check.mjs";
+import { compileTypeScriptFixture, rewriteRegistryAliases } from "./_compiled-fixture.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, ".verify-action");
 
-fs.rmSync(out, { recursive: true, force: true });
-fs.mkdirSync(out, { recursive: true });
-
 /* upload.ts は `@/lib/action` を import するので、
    alias を持った tsconfig を一時的に作って渡します。
    （コマンドラインの引数では paths を渡せません。） */
-const tsconfig = path.join(out, "tsconfig.json");
-fs.writeFileSync(
-  tsconfig,
-  JSON.stringify({
-    compilerOptions: {
-      outDir: ".",
-      rootDir: path.join(root, "registry", "nasu"),
-      module: "esnext",
-      target: "es2022",
-      moduleResolution: "bundler",
-      skipLibCheck: true,
-      baseUrl: path.join(root, "registry", "nasu"),
-      paths: { "@/*": ["./*"] },
-      types: [],
-      lib: ["es2022", "dom"],
-      jsx: "react-jsx",
-    },
-    files: [
-      path.join(root, "registry", "nasu", "lib", "action.ts"),
-      path.join(root, "registry", "nasu", "lib", "upload.ts"),
-      path.join(root, "registry", "nasu", "lib", "inline-script.ts"),
-      /* theme-provider は React を import しますが、確かめたい
-         makeThemeInitScript は React に触りません。**本物を測ります。**
-         文字列を写して測ると、原本が変わったときに気づけません。 */
-      path.join(root, "registry", "nasu", "lib", "utils.ts"),
-      path.join(root, "registry", "nasu", "components", "ui", "theme-provider.tsx"),
-    ],
-  }),
-);
-execFileSync(
-  process.execPath,
-  [path.join(root, "node_modules", "typescript", "bin", "tsc"), "-p", tsconfig],
-  { stdio: "inherit", cwd: root },
-);
+const compiled = compileTypeScriptFixture({
+  root,
+  out,
+  compilerOptions: {
+    rootDir: path.join(root, "registry", "nasu"),
+    module: "esnext",
+    target: "es2022",
+    moduleResolution: "bundler",
+    skipLibCheck: true,
+    baseUrl: path.join(root, "registry", "nasu"),
+    paths: { "@/*": ["./*"] },
+    types: [],
+    lib: ["es2022", "dom"],
+    jsx: "react-jsx",
+  },
+  files: [
+    path.join(root, "registry", "nasu", "lib", "action.ts"),
+    path.join(root, "registry", "nasu", "lib", "upload.ts"),
+    path.join(root, "registry", "nasu", "lib", "inline-script.ts"),
+    /* theme-provider は React を import しますが、確かめたい
+       makeThemeInitScript は React に触りません。**本物を測ります。**
+       文字列を写して測ると、原本が変わったときに気づけません。 */
+    path.join(root, "registry", "nasu", "lib", "utils.ts"),
+    path.join(root, "registry", "nasu", "components", "ui", "theme-provider.tsx"),
+  ],
+});
 /* tsc は alias を出力に書き写すだけで、解決はしません。
    出力は元の木の形（lib/ と components/ui/）で出るので、
    **深さに合わせた相対パス**へ直します。 */
-const walk = (dir) =>
-  fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
-    e.isDirectory()
-      ? walk(path.join(dir, e.name))
-      : e.name.endsWith(".js")
-        ? [path.join(dir, e.name)]
-        : [],
-  );
-for (const jsPath of walk(out)) {
-  const src = fs.readFileSync(jsPath, "utf8");
-  fs.writeFileSync(
-    jsPath,
-    src.replace(/from "@\/([^"]+)"/g, (_, sub) => {
-      const target = path.join(out, sub) + ".js";
-      let rel = path
-        .relative(path.dirname(jsPath), target)
-        .split(path.sep)
-        .join("/");
-      if (!rel.startsWith(".")) rel = "./" + rel;
-      return 'from "' + rel + '"';
-    }),
-  );
-}
-fs.writeFileSync(path.join(out, "package.json"), '{"type":"module"}\n');
+rewriteRegistryAliases(out);
 
 const { jsonRequest, resolveAction } = await import(
   pathToFileURL(path.join(out, "lib", "action.js")).href
@@ -284,5 +249,5 @@ globalThis.fetch = realFetch;
 
 
 /* ================================================================ */
-fs.rmSync(out, { recursive: true, force: true });
+compiled.cleanup();
 process.exit(report().ok ? 0 : 1);

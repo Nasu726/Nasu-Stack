@@ -20,8 +20,8 @@
 | 1: catalog / state demo | main公開済み | [#33](https://github.com/Nasu726/Nasu-Stack/pull/33) | main `74a1828` / Pages `33102054224` 全job成功 |
 | 2: create CLI modules | main公開済み | [#34](https://github.com/Nasu726/Nasu-Stack/pull/34) | main `b9e3767` / Pages `33106595791` 全job成功 |
 | 3a: states / nav verifier scenarios | main公開済み | [#35](https://github.com/Nasu726/Nasu-Stack/pull/35) | main `f974b1f` / Pages `33145511135` 全job成功 |
-| 3b: create verifier scenarios | local完了 | — | light 79/79・full 113/113、intentional break exit 1 |
-| 4: build / fixture helpers | 未着手 | — | — |
+| 3b: create verifier scenarios | main公開済み | [#36](https://github.com/Nasu726/Nasu-Stack/pull/36) | main `a00da77` / Pages `33162898273` 全job成功 |
+| 4: build / fixture helpers | local完了 | — | verify 34/34・create 113/113、intentional break exit 1 |
 | 5: public registry audit | 未着手 | — | — |
 | 6: completion audit | 未着手 | — | — |
 
@@ -202,3 +202,42 @@ checker coordinationが成功することを確認した。
   直し、同checkerの成功と上記intentional failureを確認
 - 修正後の`pnpm verify`: 34/34、state 98/98、pageerror 0、registry 51 item / 53 file、
   translation 568/568、日英29 page × 5幅
+
+### PR / main公開
+
+- PR [#36](https://github.com/Nasu726/Nasu-Stack/pull/36): `verify` 4m27s、
+  `verify-create` 2m59s
+- squash merge: `a00da77f44bef173a8f5591b08adc5c38490783b`
+- main Pages run `33162898273`: `verify` 4m17s、`verify-create` 2m57s、build、deploy、
+  公開smokeがすべて成功
+
+## Wave 4 — build / fixture helper
+
+### 実施
+
+- 6本のverifierに重複していた「固定出力先の初期化、tsconfig生成、TypeScript原本の同期compile、
+  ESM境界、終了時cleanup」を`scripts/_compiled-fixture.mjs`へ集約
+- action、SEO、resource keyで個別実装していた`@/…`の出力後alias変換を、出力treeの深さから
+  相対importを計算する1つの処理へ統合
+- verifier側には、対象原本と固有のcompiler optionだけを残した。固定の出力先、compile順、
+  同期実行、cleanupの`recursive / force`条件は変更していない
+- server待機、createの一時tree、Windows再試行、workspace lockも棚卸ししたが、失敗条件と
+  lifecycleが異なるためこのhelperへ混ぜず、既存の責任境界を維持
+
+### intentional break
+
+validation verifierがcompileする原本名だけを一時的に存在しない
+`validation-intentional-break.ts`へ変更した。TypeScriptのTS6053とhelperの呼出箇所を出して
+exit code 1になり、compile失敗を握り潰さないことを確認した。原本名の復元後は17/17へ戻った。
+
+### local検証
+
+- helperと6 verifierの`node --check`: 成功
+- action 27/27、SEO / feed 36/36、resource key 13/13、validation 17/17、
+  receiver 41/41
+- submit verifierは単独でcompileとHTTP契約12項目まで成功し、完全検査ではサイトを含む
+  28/28、pageerror 0
+- `pnpm verify`: 34/34、state 98/98、pageerror 0、registry 51 item / 53 file、
+  translation 568/568、日英29 page × 5幅
+- `pnpm verify:create`: 113/113。配布tgz、Astro / blog / Viteのinstall、lockfile不変、
+  production audit、実shadcn、型、build、browser、responsiveが成功
