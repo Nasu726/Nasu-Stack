@@ -19,8 +19,8 @@
 | 0: plan / check harness | main公開済み | [#32](https://github.com/Nasu726/Nasu-Stack/pull/32) | main `55cb6c8` / Pages `33099215948` 全job成功 |
 | 1: catalog / state demo | main公開済み | [#33](https://github.com/Nasu726/Nasu-Stack/pull/33) | main `74a1828` / Pages `33102054224` 全job成功 |
 | 2: create CLI modules | main公開済み | [#34](https://github.com/Nasu726/Nasu-Stack/pull/34) | main `b9e3767` / Pages `33106595791` 全job成功 |
-| 3a: states / nav verifier scenarios | local完了 | — | state 98/98・nav 76/76、pageerror 0、intentional break exit 1 |
-| 3b: create verifier scenarios | 未着手 | — | — |
+| 3a: states / nav verifier scenarios | main公開済み | [#35](https://github.com/Nasu726/Nasu-Stack/pull/35) | main `f974b1f` / Pages `33145511135` 全job成功 |
+| 3b: create verifier scenarios | local完了 | — | light 79/79・full 113/113、intentional break exit 1 |
 | 4: build / fixture helpers | 未着手 | — | — |
 | 5: public registry audit | 未着手 | — | — |
 | 6: completion audit | 未着手 | — | — |
@@ -159,4 +159,46 @@ search scenarioの最初の判定だけを一時的にfalseへ変え、同scenar
   通常より大幅に遅くなったため、そのverify process treeだけを停止した。残留browserが無いことを
   確認して単独で再実行し、製品の失敗とlocal資源競合を分けた
 - 単独の`pnpm verify`: 34/34、state 98/98、pageerror 0、registry 51 item / 53 file、
+  translation 568/568、日英29 page × 5幅
+
+### PR / main公開
+
+- PR [#35](https://github.com/Nasu726/Nasu-Stack/pull/35): `verify` 4m35s、
+  `verify-create` 2m52s
+- squash merge: `f974b1f4b6892aaef58c2f217acc2851e9afbc18`
+- main Pages run `33145511135`: `verify` 4m22s、`verify-create` 3m12s、build、deploy、
+  公開smokeがすべて成功
+
+## Wave 3b — create verifier scenario
+
+### 実施
+
+- 919行の`verify-create.mjs`を、設定、1つのtemp tree、template lock、scenario順、集計だけを
+  持つ102行のrunnerへ変更
+- light 79判定を、generation、safety、generated configuration、guidanceの4 scenarioへ分離
+- full 34判定を、配布tgz、共有registry server、3 templateの実動作scenarioへ分離
+- `CASES`と`PAGES`はrunnerの唯一の一覧として維持し、template生成からcopy完了までのlock、
+  npm / shadcn / browserの実行順、判定名、同じ作業treeを変更していない
+- checker coordinationは旧runner 1 fileだけを読む前提をやめ、runnerとscenario directoryの
+  `.mjs`を再帰的に結合して必須のfail-closed診断を確認する
+
+### intentional break
+
+generation scenarioの最初の判定だけを一時的にfalseへ変えた。79判定中、指定した
+`0. テンプレートが生成できる`だけが詳細付きで失敗し、exit code 1を確認した。その後、
+元の生成数判定へ戻した。
+
+checker側も、projects scenarioの`local registryを配れませんでした`だけを一時的に外した。
+`full create検査でlocal registry不在をskipしない`のassertionでexit code 1になり、文言復元後は
+checker coordinationが成功することを確認した。
+
+### local検証
+
+- runnerと7 scenario moduleの`node --check`: 成功
+- create light: 79/79
+- `pnpm verify:create`: 113/113。配布tgzのnpm展開・bin起動、Astro / blog / Viteの
+  install、lockfile不変、production audit、実shadcn、型、build、browser、responsiveが成功
+- 最初の`pnpm verify`でchecker coordinationの旧runner単体走査を検知。directory再帰走査へ
+  直し、同checkerの成功と上記intentional failureを確認
+- 修正後の`pnpm verify`: 34/34、state 98/98、pageerror 0、registry 51 item / 53 file、
   translation 568/568、日英29 page × 5幅
