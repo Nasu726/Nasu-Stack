@@ -18,8 +18,9 @@
 |---|---|---|---|
 | 0: plan / check harness | main公開済み | [#32](https://github.com/Nasu726/Nasu-Stack/pull/32) | main `55cb6c8` / Pages `33099215948` 全job成功 |
 | 1: catalog / state demo | main公開済み | [#33](https://github.com/Nasu726/Nasu-Stack/pull/33) | main `74a1828` / Pages `33102054224` 全job成功 |
-| 2: create CLI modules | local完了 | — | verify 34/34 / verify-create 113/113 / pack実物からnpm起動成功 |
-| 3: verifier scenarios | 未着手 | — | — |
+| 2: create CLI modules | main公開済み | [#34](https://github.com/Nasu726/Nasu-Stack/pull/34) | main `b9e3767` / Pages `33106595791` 全job成功 |
+| 3a: states / nav verifier scenarios | local完了 | — | state 98/98・nav 76/76、pageerror 0、intentional break exit 1 |
+| 3b: create verifier scenarios | 未着手 | — | — |
 | 4: build / fixture helpers | 未着手 | — | — |
 | 5: public registry audit | 未着手 | — | — |
 | 6: completion audit | 未着手 | — | — |
@@ -123,4 +124,39 @@ packageのbin mappingを検証し、そのtargetをNodeで直接起動する形�
 - `pnpm verify:create`: 113/113。packしたtgzのnpm起動、3 templateのnpm install、audit、
   real shadcn、typecheck、build、production browser、responsiveが成功
 - `pnpm verify`: 34/34、registry 51 item / 53 file、state 98/98、pageerror 0、
+  translation 568/568、日英29 page × 5幅
+
+### PR / main公開
+
+- PR [#34](https://github.com/Nasu726/Nasu-Stack/pull/34): 最終runで`verify` 4m21s、
+  `verify-create` 3m29s。tgz検査のLinux差をCIで2回検知し、上記の経路へ修正
+- squash merge: `b9e37679a813b15f51b5516f8fb892c74a359362`
+- main Pages run `33106595791`: verify-create、verify、build、deploy、公開smokeがすべて成功
+
+## Wave 3a — states / nav verifier scenario
+
+### 実施
+
+- 1,092行の`verify-states.mjs`を、browser lifecycleとscenario順だけを持つ50行のrunnerへ変更
+- Action、search、cursor、recovery、error boundary、autosave、copyの7 scenarioを個別moduleへ分離
+- 876行の`verify-nav.mjs`を18行のrunnerへ変更し、foundation、navigation、paginatorの3 scenarioへ分離
+- browserは従来どおり各verifierで1回だけ起動し、check集計・pageerror収集・終了コードもrunnerで
+  1回だけ確定する。Chromium process数、操作順、判定名は変更していない
+
+### intentional break
+
+search scenarioの最初の判定だけを一時的にfalseへ変え、同scenarioだけをrunnerから実行した。
+12判定中1件が指定した詳細`intentional scenario break`付きで失敗し、exit code 1、pageerror 0を
+確認した。その後、判定条件と7 scenarioの実行順を元へ戻した。
+
+### local検証
+
+- 全11 scenario moduleの`node --check`: 成功
+- production preview上のstate verifier: 98/98、pageerror 0
+- production preview上のnav verifier: 76/76、pageerror 0
+- `pnpm verify:create`: 113/113。`pnpm verify`との手動同時実行でもcreate側は完走
+- 2本の完全browser suiteを手動で同時実行すると、create側の完走後もverify側のresponsive区間が
+  通常より大幅に遅くなったため、そのverify process treeだけを停止した。残留browserが無いことを
+  確認して単独で再実行し、製品の失敗とlocal資源競合を分けた
+- 単独の`pnpm verify`: 34/34、state 98/98、pageerror 0、registry 51 item / 53 file、
   translation 568/568、日英29 page × 5幅
