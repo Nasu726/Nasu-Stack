@@ -228,6 +228,7 @@ const validateMembers: Validator<MembersData, FormValues> = (values) => {
 
 function FieldArraySection() {
   const [sent, setSent] = React.useState<MembersData | null>(null);
+  const [noteMin, setNoteMin] = React.useState(0);
 
   return (
     <Panel
@@ -286,26 +287,41 @@ function FieldArraySection() {
           </AsyncForm>
         </Box>
 
-        <Box className="max-w-lg" data-testid="field-array-empty">
-          <FieldArray<{ note: string }>
-            name="notes"
-            label={t("任意の補足")}
-            hint={t("min={0} なら空のままでも構いません。")}
-            min={0}
-            max={1}
-            createItem={() => ({ note: "" })}
-            addLabel={t("補足を追加")}
-            removeLabel={() => t("補足を削除")}
-            emptyMessage={t("補足はまだありません。必要なら追加できます。")}
-          >
-            {(item) => (
-              <Field
-                name={`${item.name}.text`}
-                label={t("補足")}
-                defaultValue={item.defaultValue.note}
-              />
-            )}
-          </FieldArray>
+        <Box className="max-w-lg">
+          <form data-testid="field-array-empty">
+            <Stack space="sm">
+              <Inline space="sm">
+                <Button type="button" onClick={() => setNoteMin(2)}>
+                  {t("最低行数を 2 にする")}
+                </Button>
+                <Button type="reset" variant="outline">
+                  {t("補足をリセット")}
+                </Button>
+              </Inline>
+              <FieldArray<{ note: string }>
+                name="notes"
+                label={t("任意の補足")}
+                hint={t("現在の最低行数: {0}").replace(
+                  "{0}",
+                  String(noteMin),
+                )}
+                min={noteMin}
+                max={2}
+                createItem={() => ({ note: "" })}
+                addLabel={t("補足を追加")}
+                removeLabel={() => t("補足を削除")}
+                emptyMessage={t("補足はまだありません。必要なら追加できます。")}
+              >
+                {(item) => (
+                  <Field
+                    name={`${item.name}.text`}
+                    label={t("補足")}
+                    defaultValue={item.defaultValue.note}
+                  />
+                )}
+              </FieldArray>
+            </Stack>
+          </form>
         </Box>
 
         {sent && (

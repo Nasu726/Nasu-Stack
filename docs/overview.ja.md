@@ -138,7 +138,8 @@ className="..."      ← 素の Tailwind
         あなたの API / Supabase / Convex / 何でも
 ```
 
-利用者が覚える契約は実質これだけです。
+Nasu Stack の中心契約はこれです。validation や cursor pagination は、
+その機能を選んだときだけ、それぞれの小さな契約を追加で使います。
 
 ```ts
 type Action<TInput, TOutput> = (

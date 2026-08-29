@@ -29,7 +29,7 @@ Web サイトの部品を配る**雛型**です。
 | | |
 |---|---|
 | `https://nasu726.github.io/Nasu-Stack/r/*.json` | shadcn CLI が読むレジストリ |
-| `https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.0/create-nasu-stack-2.0.0.tgz` | 上書きしない Stable の入口 |
+| `https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.0/create-nasu-stack-2.0.0.tgz` | version付きStable入口。workflowは上書きしない |
 | `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | 内容が変わる最新 main の確認用 |
 | 同 `.sha256` | それぞれの tarball のハッシュ |
 
@@ -58,6 +58,10 @@ npx ./create-nasu-stack-2.0.0.tgz my-site
 
 **これは「誰が作ったか」を示しません。** 示せるのは
 「取れたものが、こちらが出したものと同じか」だけです。
+
+GitHubのrepository-level release immutabilityは2026-08-30以降に公開するreleaseへ
+有効です。過去へは適用されないため、`v2.0.0`は保護済みtag、上書きしないworkflow、
+checksum、manifestで守っており、GitHub Immutable Releaseではありません。
 
 ## 約束していないこと
 

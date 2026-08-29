@@ -49,7 +49,7 @@ export interface FieldArrayProps<T>
   /** fieldset の legend。 */
   label: React.ReactNode;
   hint?: string;
-  /** 初回と native form reset 後に戻る行。uncontrolled です。 */
+  /** 初回と native form reset 後に戻る行。現在の min 未満なら不足行を補います。 */
   defaultItems?: readonly T[];
   /** 追加する 1 行の初期値を返します。 */
   createItem: () => T;
@@ -169,7 +169,13 @@ export function FieldArray<T>({
     if (!form) return;
     const reset = () => {
       pendingFocus.current = null;
-      const resetItems = initialItems.current ?? [];
+      const resetItems = [...(initialItems.current ?? [])];
+      while (resetItems.length < min) {
+        resetItems.push({
+          key: `${idPrefix}-${nextKey.current++}`,
+          defaultValue: createItem(),
+        });
+      }
       itemsRef.current = resetItems;
       setItems(resetItems);
       field.clearTree();
@@ -177,7 +183,7 @@ export function FieldArray<T>({
     };
     form.addEventListener("reset", reset);
     return () => form.removeEventListener("reset", reset);
-  }, [field.clearTree]);
+  }, [createItem, field.clearTree, idPrefix, min]);
 
   // state 更新後の DOM を対象にするため effect で focus します。
   React.useEffect(() => {

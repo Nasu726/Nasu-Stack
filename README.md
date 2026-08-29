@@ -211,7 +211,8 @@ is an order of magnitude more project.
         your API / Supabase / Convex / whatever
 ```
 
-In practice the only contract you have to learn is this:
+This is Nasu Stack's central contract. Validation and cursor pagination add
+their own small contracts only when you choose those capabilities:
 
 ```ts
 type Action<TInput, TOutput> = (

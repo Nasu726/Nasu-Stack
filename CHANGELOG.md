@@ -64,7 +64,7 @@ to edit; Nasu Stack does not silently update it.
 - Async action, resource, optimistic update, form, table, select, and toast
   contracts with browser-level regression checks
 - Astro, blog, and Vite starter templates
-- An immutable, versioned GitHub Release asset as the canonical Stable starter
+- A versioned GitHub Release asset with checksum and a no-overwrite workflow as the canonical Stable starter
 - English and Japanese documentation, catalog entry points, Astro demo routes,
   and language-selected guidance from `create-nasu-stack`
 - A release gate covering 29 verification stages and 112 generated-project

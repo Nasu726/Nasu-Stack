@@ -1,10 +1,22 @@
 # ROADMAP
 
-## v2.0 Stable後 — 内部リファクタリング進行中
+## v2.0.1候補 — 外部reviewの確定修正
 
-public contractと責任境界は変えず、検査の判定集計、catalog shell、create CLI、巨大な
-browser verifierに混ざった変更理由を分離します。行数だけを理由にpublic registry itemを
-細分化しません。計画と実測基準は
+- [x] `FieldArray`のdynamic `min`増加後もnative resetで現在の最低行数を守る
+- [x] 上記を実browserのintentional failureと回帰検査へ追加
+- [x] README / overviewの中心契約表現をv2のvalidation / cursor contractと整合
+- [x] GitHub Immutable Releasesを有効化し、既存v2.0.0と将来releaseの保護を区別
+- [x] 完了済みの内部リファクタリング表記とhandoffを更新
+
+version更新、tag、GitHub Releaseは、この修正PRの検査・main公開smoke後に扱います。
+計画と直接証拠は[`docs/plan-v201-review-fixes.md`](docs/plan-v201-review-fixes.md)と
+`docs/result-v201-review-fixes.md`へ分けます。
+
+## v2.0 Stable後 — 内部リファクタリング完了
+
+public contractと責任境界を変えず、検査の判定集計、catalog shell、create CLI、巨大な
+browser verifierに混ざった変更理由をPR #32〜#39で分離しました。行数だけを理由にpublic
+registry itemは細分化していません。計画と実測基準は
 [`docs/plan-refactor-v2.md`](docs/plan-refactor-v2.md)、結果は
 [`docs/result-refactor-v2.md`](docs/result-refactor-v2.md)に記録します。
 
@@ -28,7 +40,7 @@ browser verifierに混ざった変更理由を分離します。行数だけを�
 - [x] 条件を満たしたbehavioral recipe（SearchListRecipe: debounce / stale除外 / abort / retry / link）
 - [x] LoadMoreList / useCursorList / CursorPage contract（手動button、重複・stale・retry・末尾）
 - [x] checker の intentional-break検証、false-green排除、CI重複とlocal writer競合の改善
-- [x] v1 → v2 migration、全 public 面、実 install、Pages smoke、immutable Release
+- [x] v1 → v2 migration、全 public 面、実 install、Pages smoke、version付きReleaseとchecksum
 
 `v2.0.0` は PR #30 の検査済み main commit `2b7837c` を指します。tag workflow の
 `verify` / `verify:create` / release、main Pages の build / deploy / 公開 smoke、

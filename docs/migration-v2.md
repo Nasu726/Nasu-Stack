@@ -16,7 +16,7 @@ only delays feedback; authoritative validation still belongs on the server.
 
 ## Starting a new project
 
-Use the immutable v2 release asset:
+Use the versioned v2 release asset. Its release workflow refuses overwrites:
 
 ```bash
 npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.0/create-nasu-stack-2.0.0.tgz my-site

@@ -63,6 +63,15 @@ function readDirectory(directory) {
   assert.ok(pages.includes("uses: ./.github/workflows/verify.yml"), "Pagesはverifyを再利用する");
   assert.ok(release.includes("uses: ./.github/workflows/verify.yml"), "tag releaseもverifyを再利用する");
   assert.ok(
+    release.includes('gh release create "${GITHUB_REF_NAME}" release/*'),
+    "future releaseはassetをdraftへ添付してからpublishする",
+  );
+  assert.equal(
+    release.includes("gh release upload"),
+    false,
+    "publish後にassetを追加する経路を作らない",
+  );
+  assert.ok(
     verify.includes(`run: pnpm release:build "v$(node -p "require('./package.json').version")"`),
     "PR CIでrelease workflowと同じtag引数経路を検査する",
   );
@@ -149,5 +158,6 @@ function readDirectory(directory) {
 }
 
 console.log("✓ main pushのverifyはPages内の1経路だけで、PR / schedule / tag経路を保つ");
+console.log("✓ future releaseはassetをdraftへ添付し、immutabilityと両立する順序でpublishする");
 console.log("✓ sitemap / local registry / public contract / CI network検査をgreenから外さない");
 console.log("✓ workspace writerはprocess間で直列化し、dead / owner不明のlockを回収する");

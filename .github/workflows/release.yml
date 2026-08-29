@@ -37,8 +37,9 @@ jobs:
       - name: versioned assetを組み立てる
         run: pnpm release:build "${GITHUB_REF_NAME}"
 
-      # createは既存Releaseを上書きしません。同じtagでやり直してassetを
-      # 静かに差し替える経路を作らないため、存在すれば明示的に失敗します。
+      # gh release createへassetを同時に渡すと、draftへ添付してからpublishします。
+      # repositoryのImmutable Releasesを保ったまま、公開後にassetを足す経路を作りません。
+      # createは既存Releaseを上書きせず、同じtagが存在すれば明示的に失敗します。
       - name: GitHub Releaseを作る
         run: gh release create "${GITHUB_REF_NAME}" release/* --verify-tag --generate-notes --title "Nasu Stack ${GITHUB_REF_NAME}"
         env:
