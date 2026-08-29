@@ -21,8 +21,8 @@
 | 2: create CLI modules | main公開済み | [#34](https://github.com/Nasu726/Nasu-Stack/pull/34) | main `b9e3767` / Pages `33106595791` 全job成功 |
 | 3a: states / nav verifier scenarios | main公開済み | [#35](https://github.com/Nasu726/Nasu-Stack/pull/35) | main `f974b1f` / Pages `33145511135` 全job成功 |
 | 3b: create verifier scenarios | main公開済み | [#36](https://github.com/Nasu726/Nasu-Stack/pull/36) | main `a00da77` / Pages `33162898273` 全job成功 |
-| 4: build / fixture helpers | local完了 | — | verify 34/34・create 113/113、intentional break exit 1 |
-| 5: public registry audit | 未着手 | — | — |
+| 4: build / fixture helpers | main公開済み | [#37](https://github.com/Nasu726/Nasu-Stack/pull/37) | main `32b4865` / Pages `33165437832` 全job成功 |
+| 5: public registry audit | local完了 | — | 51 item / 53 file / 251 export、51/51 real install、intentional break exit 1 |
 | 6: completion audit | 未着手 | — | — |
 
 ## Wave 0 — plan / check harness
@@ -239,5 +239,49 @@ exit code 1になり、compile失敗を握り潰さないことを確認した�
   28/28、pageerror 0
 - `pnpm verify`: 34/34、state 98/98、pageerror 0、registry 51 item / 53 file、
   translation 568/568、日英29 page × 5幅
+- `pnpm verify:create`: 113/113。配布tgz、Astro / blog / Viteのinstall、lockfile不変、
+  production audit、実shadcn、型、build、browser、responsiveが成功
+
+### PR / main公開
+
+- PR [#37](https://github.com/Nasu726/Nasu-Stack/pull/37): `verify` 4m33s、
+  `verify-create` 2m57s
+- squash merge: `32b4865db9549ddb81edaea77130587e9ca2b594`
+- main Pages run `33165437832`: `verify` 4m29s、`verify-create` 3m11s、build 18s、
+  deploy 11s、公開smoke 1m30sですべて成功
+
+## Wave 5 — public registry内部監査
+
+### 実施
+
+- 51 registry itemについて、item名と順序、type、npm依存、registry依存、53配布fileのpath / type /
+  target、TypeScript / TSXの251 public exportを`scripts/registry-contract.json`へ記録
+- exportはTypeScript ASTで読み取り、名前だけでなくfunction、class、const、interface、type、
+  re-export等の宣言種別も契約に含めた。実装本文、title、descriptionは固定せず、内部改善の余地を維持
+- 通常のverifyはsnapshotを更新せず、現在値との差だけをfail-closedで検査する。Stable契約を意図的に
+  変更する場合だけ`node scripts/update-registry-contract.mjs`を明示実行する
+- public contract検査を既存のregistry dependency checkerへ統合し、完全検査の34 stepや実shadcn
+  installを増殖させず、同じ経路で構造契約と依存漏れを検査
+- checker coordinationにも`checkRegistryContract(root)`の呼出しを固定し、verifyから監査だけを
+  外してgreenにする変更を検知する
+
+### intentional break
+
+snapshot上の`ABORTED:const`だけを一時的に別の宣言種別へ変えた。registry checkerは
+`registry/nasu/lib/action.ts のexportが変わりました`の1件を期待値・実値付きで報告し、
+exit code 1になった。復元後は51 item / 53 file / 251 exportで成功した。
+
+次にregistry dependency checker内の`checkRegistryContract(root)`呼出しを一時的に外した。
+checker coordinationは`Stableのpublic registry契約をverifyから外さない`でexit code 1になり、
+呼出しの復元後は成功した。
+
+### local検証
+
+- contract helper、更新script、registry checkerの`node --check`: 成功
+- snapshotを明示的に再生成してもSHA-256
+  `a0bbfac369efc4bc826fadc7d21379c19255a1f3a62e9027591aa005b8d92eda`が不変
+- registry checker: 51 item / 53 file / 251 export、registryDependencies漏れなし
+- `pnpm verify`: 34/34、実shadcn install 51/51 item・53/53 file、state 98/98、
+  pageerror 0、submit 28/28、translation 568/568、日英29 page × 5幅
 - `pnpm verify:create`: 113/113。配布tgz、Astro / blog / Viteのinstall、lockfile不変、
   production audit、実shadcn、型、build、browser、responsiveが成功
