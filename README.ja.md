@@ -35,7 +35,7 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 コマンドは 1 つです。最初に言語、次にどこから始めるかを選びます。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.0/create-nasu-stack-2.0.0.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.1/create-nasu-stack-2.0.1.tgz my-site
 ```
 
 Stable の入口には version 付き GitHub Release URL を使います。版ごとに URL が

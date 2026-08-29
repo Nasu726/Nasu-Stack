@@ -1,6 +1,6 @@
 # ROADMAP
 
-## v2.0.1候補 — 外部reviewの確定修正
+## v2.0.1 — 互換bug fixのpatch release
 
 - [x] `FieldArray`のdynamic `min`増加後もnative resetで現在の最低行数を守る
 - [x] 上記を実browserのintentional failureと回帰検査へ追加
@@ -8,9 +8,12 @@
 - [x] GitHub Immutable Releasesを有効化し、既存v2.0.0と将来releaseの保護を区別
 - [x] 完了済みの内部リファクタリング表記とhandoffを更新
 
-version更新、tag、GitHub Releaseは、この修正PRの検査・main公開smoke後に扱います。
-計画と直接証拠は[`docs/plan-v201-review-fixes.md`](docs/plan-v201-review-fixes.md)と
-`docs/result-v201-review-fixes.md`へ分けます。
+確定修正はPR #40としてmain公開smokeまで成功しました。public contractを変えず、
+`2.0.1`へversionとStable導線を揃え、検査済みmain commitだけをpatch releaseにします。
+修正の計画と直接証拠は[`docs/plan-v201-review-fixes.md`](docs/plan-v201-review-fixes.md)と
+[`docs/result-v201-review-fixes.md`](docs/result-v201-review-fixes.md)、release工程は
+[`docs/plan-v201-release.md`](docs/plan-v201-release.md)、事前検査は
+[`docs/result-v201-release.md`](docs/result-v201-release.md)を正とします。
 
 ## v2.0 Stable後 — 内部リファクタリング完了
 
