@@ -47,6 +47,7 @@ function readDirectory(directory) {
   ].join("\n");
   const installReal = read("scripts/verify-install-real.mjs");
   const scaffoldDeps = read("scripts/check-scaffold-deps.mjs");
+  const registryDeps = read("scripts/check-registry-deps.mjs");
 
   assert.equal(
     verify.includes("\n  push:"),
@@ -72,6 +73,10 @@ function readDirectory(directory) {
   assert.ok(
     verifyCreate.includes('false,\n        "local registryを配れませんでした"'),
     "full create検査でlocal registry不在をskipしない",
+  );
+  assert.ok(
+    registryDeps.includes("checkRegistryContract(root)"),
+    "Stableのpublic registry契約をverifyから外さない",
   );
   for (const [name, source] of [
     ["本物のshadcn", installReal],
@@ -144,5 +149,5 @@ function readDirectory(directory) {
 }
 
 console.log("✓ main pushのverifyはPages内の1経路だけで、PR / schedule / tag経路を保つ");
-console.log("✓ sitemap / local registry / CI network検査を未実施のgreenへ縮退させない");
+console.log("✓ sitemap / local registry / public contract / CI network検査をgreenから外さない");
 console.log("✓ workspace writerはprocess間で直列化し、dead / owner不明のlockを回収する");

@@ -1,5 +1,5 @@
 /**
- * registry.json の依存漏れを検出します。
+ * registry.json の依存漏れと、Stableとして配る構造契約を検出します。
  *
  *   node scripts/check-registry-deps.mjs
  *
@@ -25,6 +25,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { localDep, REPO } from "./_deps.mjs";
+import { checkRegistryContract } from "./_registry-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const registry = JSON.parse(
@@ -82,6 +83,8 @@ const TOKEN_CLASSES = [
 const TOKEN_RE = TOKEN_CLASSES.map((c) => [c, new RegExp(`(?<![\\w-])${c}(?![\\w-])`)]);
 
 const problems = [];
+const contract = checkRegistryContract(root);
+problems.push(...contract.problems);
 
 for (const item of registry.items) {
   /* **宣言は `owner/repo` 形式で commit しています**（scripts/_deps.mjs）。
@@ -154,14 +157,20 @@ for (const item of registry.items) {
 
 if (problems.length === 0) {
   console.log(
+    `  ✓ public contract: ${contract.itemCount} item / ` +
+      `${contract.fileCount} file / ${contract.exportCount} export`,
+  );
+  console.log(
     `✅ registryDependencies の漏れはありません (${registry.items.length} 項目)`,
   );
   process.exit(0);
 }
 
-console.error(`❌ 依存の宣言漏れ ${problems.length} 件\n`);
+console.error(`❌ registry の契約違反 ${problems.length} 件\n`);
 for (const p of problems) console.error("  ・" + p);
 console.error(
-  "\n利用者が 1 つだけ入れたときに壊れます。registry.json に足してください。",
+  "\n依存漏れは registry.json を直してください。" +
+    "意図したpublic contract変更なら、レビュー後に " +
+    "node scripts/update-registry-contract.mjs で基準線も更新します。",
 );
 process.exit(1);
