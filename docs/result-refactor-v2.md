@@ -23,7 +23,7 @@
 | 3b: create verifier scenarios | main公開済み | [#36](https://github.com/Nasu726/Nasu-Stack/pull/36) | main `a00da77` / Pages `33162898273` 全job成功 |
 | 4: build / fixture helpers | main公開済み | [#37](https://github.com/Nasu726/Nasu-Stack/pull/37) | main `32b4865` / Pages `33165437832` 全job成功 |
 | 5: public registry audit | main公開済み | [#38](https://github.com/Nasu726/Nasu-Stack/pull/38) | main `a85e291` / Pages `33228745687` 全job成功 |
-| 6: completion audit | 監査完了 | — | 対象main `a85e291`、verify 34/34・create 113/113・公開smoke成功 |
+| 6: completion audit | 監査完了 | [#39](https://github.com/Nasu726/Nasu-Stack/pull/39) | 対象main `a85e291`、verify 34/34・create 113/113・公開smoke成功 |
 
 ## Wave 0 — plan / check harness
 
