@@ -22,8 +22,8 @@
 | 3a: states / nav verifier scenarios | main公開済み | [#35](https://github.com/Nasu726/Nasu-Stack/pull/35) | main `f974b1f` / Pages `33145511135` 全job成功 |
 | 3b: create verifier scenarios | main公開済み | [#36](https://github.com/Nasu726/Nasu-Stack/pull/36) | main `a00da77` / Pages `33162898273` 全job成功 |
 | 4: build / fixture helpers | main公開済み | [#37](https://github.com/Nasu726/Nasu-Stack/pull/37) | main `32b4865` / Pages `33165437832` 全job成功 |
-| 5: public registry audit | local完了 | — | 51 item / 53 file / 251 export、51/51 real install、intentional break exit 1 |
-| 6: completion audit | 未着手 | — | — |
+| 5: public registry audit | main公開済み | [#38](https://github.com/Nasu726/Nasu-Stack/pull/38) | main `a85e291` / Pages `33228745687` 全job成功 |
+| 6: completion audit | 監査完了 | [#39](https://github.com/Nasu726/Nasu-Stack/pull/39) | 対象main `a85e291`、verify 34/34・create 113/113・公開smoke成功 |
 
 ## Wave 0 — plan / check harness
 
@@ -285,3 +285,42 @@ checker coordinationは`Stableのpublic registry契約をverifyから外さな�
   pageerror 0、submit 28/28、translation 568/568、日英29 page × 5幅
 - `pnpm verify:create`: 113/113。配布tgz、Astro / blog / Viteのinstall、lockfile不変、
   production audit、実shadcn、型、build、browser、responsiveが成功
+
+### PR / main公開
+
+- PR [#38](https://github.com/Nasu726/Nasu-Stack/pull/38): `verify` 4m39s、
+  `verify-create` 2m56s
+- squash merge: `a85e291dd789db3f4207a86f392742b5b6a1f49b`
+- main Pages run `33228745687`: `verify` 4m02s、`verify-create` 2m58s、build 18s、
+  deploy 11s、公開smoke 1m18sですべて成功
+
+## Wave 6 — 全体完了監査
+
+### 監査対象
+
+- v2.0 Stable後の基準線`250088d`から、Wave 0〜5をmergeしたmain `a85e291`まで
+- 変更は62 file、7,817行追加・5,746行削除。catalog、create CLI、verifier、計画・実施記録の
+  4領域に収まり、計画外のpublic component変更はない
+- `registry/`、`registry.json`、`pnpm-lock.yaml`は基準線からbyte単位で不変
+- 全差分の`git diff --check`が成功し、意図しないfile mode変更、binary、intentional breakの
+  残骸、trackedな生成物はない
+
+### 責任分離の最終形
+
+- catalog composition root: `App.tsx` 1,680行 → 299行
+- create CLI public entry: `index.mjs` 1,385行 → 182行。既存binを保ち、配布対象へ`lib`だけを追加
+- state verifier runner: 1,092行 → 50行
+- nav verifier runner: 876行 → 18行
+- create verifier runner: 919行 → 102行
+- public registryは51 item / 53 file / 251 exportをsnapshot監査し、実shadcn installも
+  51/51 item・53/53 fileを維持
+
+### 完了判定
+
+- Wave 5の同一sourceをWindows実機で`pnpm verify` 34/34、`pnpm verify:create` 113/113まで確認
+- 最新mainのPages run `33228745687`でもverify、verify-create、build、deploy、公開smokeが全成功
+- public contract checkerとchecker coordinationを最新mainで再実行し、どちらも成功
+- 専用worktreeのtracked statusはclean。元の利用者作業treeへ製品fileの変更を持ち込んでいない
+
+これにより[`plan-refactor-v2.md`](plan-refactor-v2.md)のWave 0〜6とDefinition of Doneは完了。
+以後の機能変更は、この基準線を変更理由ごとの通常PRとして扱う。
