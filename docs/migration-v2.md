@@ -19,7 +19,7 @@ only delays feedback; authoritative validation still belongs on the server.
 Use the versioned v2 release asset. Its release workflow refuses overwrites:
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.0/create-nasu-stack-2.0.0.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.1/create-nasu-stack-2.0.1.tgz my-site
 ```
 
 The language, starting-point, and template prompts are unchanged. Existing

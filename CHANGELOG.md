@@ -4,6 +4,29 @@ All notable changes to Nasu Stack are recorded here. The project follows
 [Semantic Versioning](https://semver.org/) for the Stable contract described
 below.
 
+## [2.0.1] - 2026-08-30
+
+Patch release. It removes no registry item, public export, semantic token, or
+documented contract.
+
+### Fixed
+
+- `FieldArray` now preserves the current dynamic `min` after a native form
+  reset instead of returning below the minimum configured by its parent
+- The README and overview describe `Action` as the central contract rather
+  than the only contract, accounting for opt-in validation and cursor contracts
+- Stable distribution documentation now distinguishes the pre-existing mutable
+  `v2.0.0` Release from releases protected by repository-level immutability
+
+### Changed
+
+- Internal catalog, create CLI, and verification runners are split by
+  responsibility without changing the Stable public surface
+- The registry item/file/export surface is snapshot-checked, and verification
+  harnesses include intentional-failure checks against false-green results
+- Future GitHub Releases attach assets before publication and are protected by
+  GitHub Immutable Releases
+
 ## [2.0.0] - 2026-08-27
 
 Second Stable major release. Applications that copied v1 source keep owning
@@ -81,5 +104,6 @@ Stable is not a claim that the software is defect-free or a promise of perpetual
 maintenance. It means the responsibility boundary and public surface above can
 now be depended on without accepting breaking changes in a minor or patch release.
 
+[2.0.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Nasu726/Nasu-Stack/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/Nasu726/Nasu-Stack/releases/tag/v1.0.0

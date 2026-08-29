@@ -37,7 +37,7 @@ reliably get stuck on: **layout** and **async state**.
 One command. It asks for your language first, then how you want to start.
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.0/create-nasu-stack-2.0.0.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.1/create-nasu-stack-2.0.1.tgz my-site
 ```
 
 The versioned GitHub Release URL is the Stable entry point. Each release gets a

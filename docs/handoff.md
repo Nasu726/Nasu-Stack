@@ -58,9 +58,11 @@ v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 
 ## 3. いまどこまで来ているか
 
-- `main` … v2.0.0と、その後の内部リファクタリング完了監査 PR #39までmerge済み
+- `main` … v2.0.0後の内部リファクタリング PR #32〜#39と、互換bug fix PR #40までmerge済み
 - `v1.0.0` … 検査済み `6e44cfb` を指す保護済み注釈tag。GitHub Release公開済み
 - `v2.0.0` … 検査済み`2b7837c`を指す保護済み注釈tag。GitHub Release公開済み
+- v2.0.1のpatch release工程は[`plan-v201-release.md`](plan-v201-release.md)に分離した。
+  現在の公開tagとassetはGitHub Releasesを正とする
 - v2の候補はworklistをそのまま足さず、既存itemへの吸収・hook・recipe・非採用まで
   [`plan-v2.md`](plan-v2.md) の複雑さ予算で判断した
 
