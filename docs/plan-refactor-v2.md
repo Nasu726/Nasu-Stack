@@ -14,7 +14,7 @@ v2.0.0で固定したpublic contractを変えずに、次の変更を安全か�
 
 ## 2026-08-28の基準線
 
-- `v2.0.0`: 検査済みcommit `2b7837c`、immutable Release公開済み
+- `v2.0.0`: 検査済みcommit `2b7837c`、version付きReleaseとchecksum公開済み
 - `main`: post-release記録を含む`250088d`
 - registry: 51 item / real shadcn install 51 item・53 file
 - `pnpm verify`: 33 / 33

@@ -148,7 +148,22 @@ gh api -X POST repos/Nasu726/Nasu-Stack/rulesets \
   -F 'rules[][type]=update'
 ```
 
-### 3-5. あなた自身のアカウント
+### 3-5. Immutable Releasesを有効にする
+
+`Settings` → `General` → `Releases`で **Enable release immutability** を有効にします。
+このrepositoryでは2026-08-30に有効化しました。APIで確認する場合は次です。
+
+```bash
+gh api repos/Nasu726/Nasu-Stack/immutable-releases \
+  -H 'X-GitHub-Api-Version: 2026-03-10'
+```
+
+GitHubの仕様上、有効化後に公開するreleaseだけへ適用されます。既存`v2.0.0`は
+`immutable: false`のままで、後からimmutableにはなりません。将来のrelease workflowは
+`gh release create <tag> release/*`でdraft作成、asset添付、publishを順に行うため、
+assetを付ける前にreleaseが固定されません。
+
+### 3-6. あなた自身のアカウント
 
 リポジトリをいくら固めても、**アカウントが取られたら全部やり直しです。**
 
@@ -205,7 +220,8 @@ tarball の URL だけを案内しています。
 守る規則は次です。
 
 - **Stable の導入には version 付き GitHub Release asset を使う。** 同じ Release は
-  上書きせず、version と一緒に URL も変わります
+  workflowで上書きせず、version と一緒にURLも変わります。2026-08-30以降に公開する
+  releaseはGitHub側でもpublish後のtag・asset変更を禁止します
 - **Pages の tarball は最新 main の確認用に限る。** 同じ URL で内容が変わり、
   npm/npx が URL の古い cache を使うことがあるため、Stable の正式な導線にはしません
 - **配布物の SHA-256 を一緒に出す**（`create-nasu-stack-2.0.0.tgz.sha256`）。
@@ -224,6 +240,11 @@ release workflow は tag と package version の一致を検査し、既存の G
 Release を上書きしません。Pages と Release の tarball は同じ pack 処理を通すため、
 同じ版なのに組み立て方だけが静かに分岐する経路も作りません。
 
+repository-level Immutable Releasesは2026-08-30に有効化しましたが、過去へは
+適用されません。GitHub API上の`v2.0.0`は`immutable: false`です。このreleaseは
+保護済みtag、上書きしないworkflow、version付きURL、checksum、manifestで守ります。
+厳密なbyteが必要な場合は上のchecksum照合を行ってください。
+
 **1 行の npx command では checksum を検証しません。** 先に実行する byte を
 確かめたいときは、上の download・照合・local 実行の形を使います。
 
@@ -239,6 +260,9 @@ Release を上書きしません。Pages と Release の tarball は同じ pack 
 - **配布物への署名はしていません。** SHA-256 は「壊れていないこと」を示しますが、
   「誰が作ったか」は示しません。sigstore などは、利用者が確かめる手順まで
   用意できないと意味がないので、今は入れていません
+- **`v2.0.0`はImmutable Releases有効化前のreleaseです。** repository管理者は既存の
+  releaseやassetを変更できるため、正確なbyteが必要なら公開checksumを照合してください。
+  2026-08-30以降に公開するreleaseはGitHubがpublish後に固定し、release attestationも作ります
 - **依存の脆弱性を CI で見ていません。** `pnpm audit` を足すかは v0.9b で判断します
 
 

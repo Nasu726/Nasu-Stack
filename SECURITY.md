@@ -30,7 +30,7 @@ Only these project-owned artifacts are distributed:
 | | |
 |---|---|
 | `https://nasu726.github.io/Nasu-Stack/r/*.json` | the registry the shadcn CLI reads |
-| `https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.0/create-nasu-stack-2.0.0.tgz` | the immutable Stable starter CLI |
+| `https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.0/create-nasu-stack-2.0.0.tgz` | the versioned Stable starter CLI; its workflow refuses overwrites |
 | `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | the mutable latest-main preview |
 | the matching `.sha256` | the hash of each tarball |
 
@@ -59,6 +59,10 @@ above when you need to verify the exact bytes before running them.
 
 **This does not tell you who made it.** All it tells you is whether what you
 got matches what was published here.
+
+Repository-level GitHub release immutability is enabled for releases published
+after 2026-08-30. GitHub does not apply it retroactively, so `v2.0.0` still
+relies on its protected tag, no-overwrite workflow, checksum, and manifest.
 
 ## What is not promised
 

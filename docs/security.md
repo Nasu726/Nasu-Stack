@@ -76,8 +76,8 @@ If this ever does go to npm, these come first:
 Even with everything hardened on this side, **all you can confirm is that you
 typed the real URL.** These rules help:
 
-- **Stable installs use a versioned GitHub Release asset.** A release cannot be
-  overwritten, and the URL changes with the version
+- **Stable installs use a versioned GitHub Release asset.** The workflow refuses
+  to overwrite an existing release, and the URL changes with the version
 - **The Pages tarball is only a latest-main preview.** Its contents change at
   the same URL, and npm/npx may reuse URL-cached contents, so it is not the
   canonical Stable install command
@@ -98,6 +98,13 @@ The release workflow verifies the tag against the package version and refuses
 to overwrite an existing GitHub Release. The Pages and Release tarballs are
 built through the same packer, so their construction cannot drift silently.
 
+Repository-level GitHub release immutability was enabled on 2026-08-30 and
+protects future releases after they are published. GitHub does not apply the
+setting retroactively: the API still reports `immutable: false` for `v2.0.0`.
+That release therefore relies on its protected tag, the no-overwrite workflow,
+the versioned URL, checksum, and manifest rather than GitHub's immutable-release
+enforcement.
+
 **The one-line npx command does not verify the checksum.** Use the download,
 check, and local-run form above when you need to verify the exact bytes first.
 
@@ -111,6 +118,10 @@ check, and local-run form above when you need to verify the exact bytes first.
   it does not tell you who made them. Something like sigstore is only
   meaningful once there's a procedure a user can actually follow, so it isn't
   in yet
+- **`v2.0.0` predates repository-level immutable releases.** An administrator
+  could still change that existing release or its assets; verify its published
+  checksum when exact bytes matter. Releases published after 2026-08-30 are
+  locked by GitHub after publication and receive a release attestation
 - **No provenance for the registry JSON.** Same reasoning
 
 ---

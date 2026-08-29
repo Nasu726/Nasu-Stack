@@ -379,6 +379,38 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
     JSON.stringify(emptyAgain),
   );
 
+  await optional.getByRole("button", { name: "最低行数を 2 にする" }).click();
+  await page.waitForTimeout(100);
+  const afterMinIncrease = await optional.evaluate((root) => ({
+    names: [...root.querySelectorAll('[data-field-array-item]')].map((node) =>
+      node.getAttribute("data-field-array-item"),
+    ),
+  }));
+  must(
+    "    dynamic min を増やすと不足行を補う",
+    JSON.stringify(afterMinIncrease.names) ===
+      JSON.stringify(["notes.0", "notes.1"]),
+    JSON.stringify(afterMinIncrease),
+  );
+
+  await optional.getByRole("button", { name: "補足をリセット" }).click();
+  await page.waitForTimeout(100);
+  const afterDynamicMinReset = await optional.evaluate((root) => ({
+    names: [...root.querySelectorAll('[data-field-array-item]')].map((node) =>
+      node.getAttribute("data-field-array-item"),
+    ),
+    removeDisabled: [...root.querySelectorAll('[data-field-array-remove]')].every(
+      (node) => node.disabled,
+    ),
+  }));
+  must(
+    "    dynamic min を増やした後の native reset でも現在の min を守る",
+    JSON.stringify(afterDynamicMinReset.names) ===
+      JSON.stringify(["notes.0", "notes.1"]) &&
+      afterDynamicMinReset.removeDisabled,
+    JSON.stringify(afterDynamicMinReset),
+  );
+
   await page.close();
 }
 

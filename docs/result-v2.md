@@ -463,7 +463,7 @@ copy済みsourceを裏で更新しない契約を保ち、日英の`migration-v2
 ### v2.0.0 release candidate
 
 - root / create CLI / Stable URLを`2.0.0`へ統一
-- README / SECURITY / security guide / directory guide / CLI commentを同じimmutable URLへ統一
+- README / SECURITY / security guide / directory guide / CLI commentを同じversion付きURLへ統一
 - CHANGELOGに追加責任、唯一の挙動変更、引き受けないbackend責任を記録
 - PR CIのrelease buildを、tag workflowと同じtag引数ありの経路へ変更
 - 日英translation checkerはmigrationを含む16対で成功
@@ -485,7 +485,7 @@ copy済みsourceを裏で更新しない契約を保ち、日英の`migration-v2
 - [x] tag引数経路をtag前に実行し、不一致も赤になる
 - [x] release PRのrequired checksが成功する（PR #30 / verify 4m22s / verify-create 3m21s）
 - [x] release PRをmainへmergeし、Pages deploy / 公開smokeが成功する
-- [x] 検査済みmain commitへ`v2.0.0` tagを打ち、immutable Releaseを公開する
+- [x] 検査済みmain commitへ`v2.0.0` tagを打ち、version付きReleaseとchecksumを公開する
 
 PR #30を`2b7837c06fb3c60a783298add5e2fcb110861869`としてmainへmergeした。先に
 [main Pages run](https://github.com/Nasu726/Nasu-Stack/actions/runs/33082074604)の
@@ -496,6 +496,11 @@ verify 33/33、verify-create 112/112、build、deploy、公開smokeがすべて�
 verify-create、releaseの3 jobが成功し、
 [GitHub Release](https://github.com/Nasu726/Nasu-Stack/releases/tag/v2.0.0)を公開した。
 Releaseから3 assetを再downloadして次を確認した。
+
+後日のGitHub API監査で、このRelease自体は`immutable: false`と確認した。repository-level
+Immutable Releasesは2026-08-30に有効化したが過去へ適用されない。したがってv2.0.0の保護は
+tag ruleset、既存Releaseを上書きしないworkflow、version付きURL、checksum、manifestであり、
+GitHub Immutable Releaseを公開したという意味ではない。
 
 - remoteの注釈付きtag object `4e788bb8bf5e544562b9597f42fd9b0612225fe6`が
   source commit `2b7837c06fb3c60a783298add5e2fcb110861869`を指す
@@ -552,7 +557,7 @@ manifestを再downloadして検証した。
 - [x] **tag引数経路をtag前に回帰検査した。** 引数なし / `v2.0.0` / `-- v2.0.0`が
   同一assetになり、不一致`v2.0.1`がexit 1になることをPR前に確認した。
 - [x] **検査済みcommitだけをreleaseした。** remote tagをGit objectまでdereferenceし、
-  main Pages成功済み`2b7837c`との一致を確認した。immutable assetは再download後に
+  main Pages成功済み`2b7837c`との一致を確認した。version付きassetは再download後に
   checksum、manifest、package versionまで照合した。
 
 以上により、v2.0.0の完了条件は2026-08-27にすべて成立した。

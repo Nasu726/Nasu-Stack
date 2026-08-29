@@ -176,6 +176,6 @@ Zod 等の schema、database transaction、認証、rate limit、idempotency sto
 - 全 item を空 project へ本物の shadcn CLI で追加できる
 - `verify` / `verify:create` / Pages deploy / 公開後 smoke が成功する
 - release workflow の tag 引数経路を tag 前に同じ形で回帰検査する
-- 検査済み main commit にだけ `v2.0.0` tag を打ち、immutable asset を公開する
+- 検査済み main commit にだけ `v2.0.0` tagを打ち、version付きassetとchecksumを公開する
 
 途中の PR が green でも、この一覧を満たすまでは v2 完了としません。

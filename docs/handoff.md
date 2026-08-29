@@ -16,7 +16,7 @@
 | 2 | `docs/boundaries.md` | **Nasu Stack・アプリ・サーバの責任分界と escape hatch** |
 | 3 | `ROADMAP.md` | 版ごとに作ったものと、**踏んだ罠の記録** |
 | 4 | `docs/astro-and-react.md` | Astro と React が 1 つのプロジェクトで共存する理由 |
-| 5 | `registry/nasu/lib/action.ts` | 利用者が覚えるただ 1 つの契約 |
+| 5 | `registry/nasu/lib/action.ts` | public designの中心契約。選択した機能には個別の小さな契約もある |
 
 `docs/plan-*.md` と `docs/result-*.md` は各版の計画と結果です。過去の判断の
 理由を知りたいときだけ読めば足ります。
@@ -24,9 +24,9 @@
 **v2.0.0の機能整理・拡張・releaseは完了しています。** 計画と候補の採否は
 [`plan-v2.md`](plan-v2.md)、実装から公開物再download監査までの直接証拠は
 [`result-v2.md`](result-v2.md) を正とします。
-現在の内部リファクタリングは[`plan-refactor-v2.md`](plan-refactor-v2.md)、実施証拠は
-[`result-refactor-v2.md`](result-refactor-v2.md)を正とします。public contractを変えず、
-検査基盤、catalog、CLI、巨大verifierの順に独立PRへ分けます。
+v2 Stable後の内部リファクタリングは完了しています。計画は
+[`plan-refactor-v2.md`](plan-refactor-v2.md)、PR #32〜#39と公開smokeまでの実施証拠は
+[`result-refactor-v2.md`](result-refactor-v2.md)を正とします。
 v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 [`result-v1.md`](result-v1.md) に残しています。
 直前のreview対応は [`plan-v09f-review.md`](plan-v09f-review.md) と
@@ -58,9 +58,9 @@ v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 
 ## 3. いまどこまで来ているか
 
-- `main` … v2.0.0 release PR #30を`2b7837c`としてmerge済み
-- `v1.0.0` … 検査済み `6e44cfb` を指す immutable tag。GitHub Release 公開済み
-- `v2.0.0` … 検査済み`2b7837c`を指すimmutable tag。GitHub Release公開済み
+- `main` … v2.0.0と、その後の内部リファクタリング完了監査 PR #39までmerge済み
+- `v1.0.0` … 検査済み `6e44cfb` を指す保護済み注釈tag。GitHub Release公開済み
+- `v2.0.0` … 検査済み`2b7837c`を指す保護済み注釈tag。GitHub Release公開済み
 - v2の候補はworklistをそのまま足さず、既存itemへの吸収・hook・recipe・非採用まで
   [`plan-v2.md`](plan-v2.md) の複雑さ予算で判断した
 
