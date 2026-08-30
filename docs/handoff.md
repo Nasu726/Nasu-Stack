@@ -58,10 +58,12 @@ v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 
 ## 3. いまどこまで来ているか
 
-- `main` … v2.0.0後の内部リファクタリング PR #32〜#39と、互換bug fix PR #40までmerge済み
+- `main` … v2.0.0後の内部リファクタリング PR #32〜#39と、v2.0.1の互換bug fixまでmerge済み
 - `v1.0.0` … 検査済み `6e44cfb` を指す保護済み注釈tag。GitHub Release公開済み
 - `v2.0.0` … 検査済み`2b7837c`を指す保護済み注釈tag。GitHub Release公開済み
-- v2.0.1のpatch release工程は[`plan-v201-release.md`](plan-v201-release.md)に分離した。
+- v2.0.1のpatch release工程は[`plan-v201-release.md`](plan-v201-release.md)、tag前の追加境界修正は
+  [`plan-v201-boundary-fixes.md`](plan-v201-boundary-fixes.md)と
+  [`result-v201-boundary-fixes.md`](result-v201-boundary-fixes.md)に分離した。
   現在の公開tagとassetはGitHub Releasesを正とする
 - v2の候補はworklistをそのまま足さず、既存itemへの吸収・hook・recipe・非採用まで
   [`plan-v2.md`](plan-v2.md) の複雑さ予算で判断した
@@ -110,7 +112,7 @@ v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 
 ```bash
 pnpm install
-pnpm verify           # 34 工程（独立したものは並列）。型・ビルド・配布物・実ブラウザ
+pnpm verify           # 35 工程（独立したものは並列）。型・ビルド・配布物・実ブラウザ
 pnpm verify:create    # 入口の検査 113 判定。**npm** で install / build します。配布tgz起動と、本物の CLI で部品を足すところまで
 pnpm pages:build      # 公開する public/ を組み立てる（レジストリ + 入口の tarball）
 pnpm release:build    # package versionに対応するGitHub Release用tarball + SHA-256

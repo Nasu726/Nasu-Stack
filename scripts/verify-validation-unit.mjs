@@ -128,6 +128,7 @@ const payload = validationFailurePayload(failure);
 must(
   "transport は userMessage と正規化した fields を分ける",
   payload.message === "validation failed" &&
+    payload.code === "VALIDATION" &&
     payload.userMessage === "入力内容を確認してください" &&
     payload.fields?.email === "形式が正しくありません",
   JSON.stringify(payload),
@@ -148,10 +149,17 @@ const body = await response.json();
 must("server adapter の既定は 422", response.status === 422, response.status);
 must(
   "server adapter は JSON を名乗り、JSON以外の既存headerを保つ",
-  response.headers.get("content-type") === "application/json; charset=utf-8" &&
+    response.headers.get("content-type") === "application/json; charset=utf-8" &&
     response.headers.get("access-control-allow-origin") === "https://example.com" &&
+    body.code === "VALIDATION" &&
     body.fields.email === "形式が正しくありません",
   JSON.stringify(body),
+);
+
+const badRequest = validationFailureResponse(failure, { status: 400 });
+must(
+  "server adapterを400にしてもVALIDATION codeを保つ",
+  badRequest.status === 400 && (await badRequest.json()).code === "VALIDATION",
 );
 
 let statusError;

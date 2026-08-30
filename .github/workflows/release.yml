@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      actions: read
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -32,6 +33,19 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      # tagの内容がmainに含まれ、同じSHAのPages公開smokeが成功済みでなければ
+      # Releaseを作りません。tag内容のverifyだけでは「公開確認したcommit」と
+      # 「配るcommit」が同じことを証明できないためです。
+      - name: main公開smoke済みcommitか確認する
+        shell: bash
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "${GITHUB_SHA}" origin/main
+          run_id="$(gh run list --repo "${GITHUB_REPOSITORY}" --workflow pages.yml --branch main --commit "${GITHUB_SHA}" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+          test -n "${run_id}"
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       # tagとpackage versionが違えばassetを作る前に止まります。
       - name: versioned assetを組み立てる

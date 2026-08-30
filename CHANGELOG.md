@@ -12,7 +12,19 @@ documented contract.
 ### Fixed
 
 - `FieldArray` now preserves the current dynamic `min` after a native form
-  reset instead of returning below the minimum configured by its parent
+  reset instead of returning below the minimum configured by its parent, while
+  later `defaultItems` changes remain consistently uncontrolled
+- `AsyncForm` and `ActionButton` forward `pendingDuringGuard`; confirm dialogs
+  still force it off to preserve trigger focus restoration
+- FormData folding is prototype-safe, preserves repeated empty values, and no
+  longer reserves a user-data string as the unchecked-checkbox sentinel
+- Error-response `fields` are runtime-normalized before reaching React;
+  unknown-only field maps fall back to a visible general error
+- Validation failures remain terminal across 4xx statuses, form controls
+  compose owner props with pending/error mechanics, radio required semantics
+  reach native inputs, and search `aria-controls` always has a target
+- `createSubmit` reports JSON serialization failures separately from
+  network/CORS failures
 - The README and overview describe `Action` as the central contract rather
   than the only contract, accounting for opt-in validation and cursor contracts
 - Stable distribution documentation now distinguishes the pre-existing mutable
@@ -26,6 +38,8 @@ documented contract.
   harnesses include intentional-failure checks against false-green results
 - Future GitHub Releases attach assets before publication and are protected by
   GitHub Immutable Releases
+- Release jobs require the tag SHA to be on `main` and require a successful
+  Pages workflow for that exact SHA before building or publishing assets
 
 ## [2.0.0] - 2026-08-27
 

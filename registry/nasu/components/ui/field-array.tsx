@@ -111,14 +111,16 @@ export function FieldArray<T>({
   if (!name.trim() || name.endsWith(".")) {
     throw new TypeError("FieldArray name must be a non-empty field path");
   }
-  if (defaultItems.length > max) {
-    throw new RangeError("FieldArray defaultItems cannot exceed max");
-  }
 
   const idPrefix = React.useId();
   const nextKey = React.useRef(0);
   const initialItems = React.useRef<InternalItem<T>[] | null>(null);
   if (initialItems.current === null) {
+    // defaultItemsはuncontrolledな初期値です。mount後にpropが変わっても
+    // stateへ同期しないため、その無視する値を後から再validationもしません。
+    if (defaultItems.length > max) {
+      throw new RangeError("FieldArray defaultItems cannot exceed max");
+    }
     const values = [...defaultItems];
     while (values.length < min) values.push(createItem());
     initialItems.current = values.map((defaultValue) => ({

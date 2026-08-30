@@ -102,11 +102,26 @@ value is the object your application expects. Validate untrusted response
 values at the boundary where your domain starts. If the endpoint intentionally
 returns text, use `fetch` or a purpose-built helper instead.
 
+For error responses, `jsonRequest` accepts `fields` only when it is a plain
+object whose every key and value is a non-empty string. It preserves names such
+as `__proto__` without changing the prototype, and rejects the whole field map
+instead of partially trusting a malformed one. `AsyncForm` shows the general
+error when none of those names identify a rendered control, so a server typo
+cannot make a failure disappear. This checks the transport shape; whether a
+field name is valid for the domain remains application work.
+
 ### Browser validation is feedback, not authority
 
 Fields, `FileDrop`, and the form helpers can give immediate feedback and keep
 invalid data from being submitted accidentally. A caller can bypass all of
 them. The server remains authoritative for every value and permission.
+
+`AsyncForm` folds repeated names without dropping an empty first value, uses a
+null-prototype result so field names cannot affect object inheritance, and
+derives unchecked checkbox names from form controls rather than reserving a
+user-data string as a sentinel. Form controls compose owner callbacks and ARIA
+descriptions with internal error clearing and pending state. These are browser
+mechanics, not server validation.
 
 ### A validation result carries a decision; it does not make one
 

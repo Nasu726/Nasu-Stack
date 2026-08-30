@@ -122,7 +122,10 @@ export async function handle(request: Request): Promise<Response> {
 backend framework. It returns the payload already understood by `jsonRequest`,
 `createSubmit`, and `AsyncForm`. It keeps an internal `message` separate from an
 explicit user-facing `userMessage`, preserves supplied headers, defaults to
-422, and rejects a 2xx status for a failure.
+422, and rejects a 2xx status for a failure. Its payload also carries the
+machine-readable `VALIDATION` code, so choosing another 4xx status does not
+make `useAction` retry input that must be corrected. A normalized field-error
+map is terminal for the same reason.
 
 ## Adapter example for a schema library
 

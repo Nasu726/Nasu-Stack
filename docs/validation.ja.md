@@ -118,7 +118,9 @@ export async function handle(request: Request): Promise<Response> {
 `validationFailureResponse` は backend framework ではなく、Web-standard `Response`
 adapter です。`jsonRequest`・`createSubmit`・`AsyncForm` が既に理解するpayloadを返します。
 内部用 `message` と、明示的に利用者へ出す `userMessage` を分け、渡したheadersを保ち、
-既定を422とし、failureを2xxにする指定は拒否します。
+既定を422とし、failureを2xxにする指定は拒否します。payloadには機械判定用の
+`VALIDATION` codeも入るため、別の4xxを選んでも、入力修正が必要なfailureを`useAction`が
+自動retryしません。正規化済みfield errorも同じ理由でterminalです。
 
 ## schema library の adapter 例
 

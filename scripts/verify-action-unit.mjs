@@ -118,6 +118,56 @@ must(
 );
 must("  fields はそのまま通る", caught.fields?.email === "形式が正しくありません");
 
+fakeFetch(400, {
+  message: "validation failed",
+  code: "VALIDATION",
+  fields: { email: "形式が正しくありません" },
+});
+try {
+  await jsonRequest("/x", { ctx });
+} catch (e) {
+  caught = e;
+}
+must(
+  "validation payloadのmachine codeはHTTP 400でも保持する",
+  caught.code === "VALIDATION",
+  String(caught.code),
+);
+
+fakeFetch(422, {
+  message: "invalid fields shape",
+  fields: { email: "valid", name: { oops: true } },
+});
+try {
+  await jsonRequest("/x", { ctx });
+} catch (e) {
+  caught = e;
+}
+must(
+  "fieldsに1件でも不正な値があれば部分採用せず一般errorへ落とす",
+  caught.fields === undefined,
+  JSON.stringify(caught.fields),
+);
+
+fakeFetch(
+  422,
+  JSON.parse(
+    '{"message":"safe keys","fields":{"__proto__":"proto","constructor":"ctor"}}',
+  ),
+);
+try {
+  await jsonRequest("/x", { ctx });
+} catch (e) {
+  caught = e;
+}
+must(
+  "prototype系field nameもprototypeを書き換えず保持する",
+  Object.getPrototypeOf(caught.fields) === null &&
+    caught.fields?.__proto__ === "proto" &&
+    caught.fields?.constructor === "ctor",
+  JSON.stringify(caught.fields),
+);
+
 /* ===== P2-05. defaults と入力の勝ち負け ========================== */
 /**
  * 名前が `body`（「必ず混ぜる固定値」）のままだと、

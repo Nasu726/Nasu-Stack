@@ -208,6 +208,38 @@ await reset();
   );
 }
 
+/* ===== 8.5. JSON化とnetwork failureを混ぜない =================== */
+await reset();
+{
+  const r = await page.evaluate(async (api) => {
+    const submit = window.__submit.createSubmit({
+      url: `${api}/ok`,
+      transform: () => ({ id: 1n }),
+    });
+    try {
+      await submit({}, { signal: new AbortController().signal });
+      return { ok: true };
+    } catch (e) {
+      return {
+        ok: false,
+        code: e?.code,
+        displayMessage: e?.displayMessage,
+      };
+    }
+  }, API);
+  const got = await received();
+  must(
+    "8.5 JSON化できないtransform結果はSERIALIZATIONになる",
+    !r.ok && r.code === "SERIALIZATION",
+    JSON.stringify(r),
+  );
+  must(
+    "    serialization failureをNETWORK/CORSと誤案内せず送信もしない",
+    !/CORS|通信状況/.test(r.displayMessage ?? "") && got.length === 0,
+    `${r.displayMessage} / ${got.length}件`,
+  );
+}
+
 /* ===== 9. 通信できない ========================================== */
 {
   // 誰も listen していないポートへ送ります

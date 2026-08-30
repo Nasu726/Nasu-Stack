@@ -108,7 +108,7 @@ export function SearchListRecipe({
         />
       </div>
 
-      <div>
+      <div id={resultsId} aria-busy={waitingForDebounce || undefined}>
         {belowMinimum ? (
           <SearchStatus id={statusId}>
             {copy.belowMinimum(minQueryLength)}
@@ -119,7 +119,6 @@ export function SearchListRecipe({
           </SearchStatus>
         ) : (
           <SearchResults
-            id={resultsId}
             statusId={statusId}
             query={debouncedQuery}
             search={search}
@@ -133,14 +132,12 @@ export function SearchListRecipe({
 }
 
 function SearchResults({
-  id,
   statusId,
   query,
   search,
   retry,
   messages,
 }: {
-  id: string;
   statusId: string;
   query: string;
   search: Action<string, SearchListItem[]>;
@@ -154,7 +151,7 @@ function SearchResults({
   );
 
   return (
-    <div id={id} aria-busy={resource.isPending || undefined}>
+    <div aria-busy={resource.isPending || undefined}>
       <AsyncBoundary
         state={resource}
         onRetry={resource.refetch}

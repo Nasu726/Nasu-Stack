@@ -87,6 +87,51 @@ export async function verifyActionState({ page, must, mustEq, log, shot }) {
     must("遅い guard を 5 回連打しても action は 1 回だけ", n === 1, `${n} 回`);
   }
 
+  /* 1.75. 上位componentがuseAction optionを本当にforwardする ---------- */
+  {
+    const btn = page.getByTestId("action-guard-forward-run");
+    await btn.evaluate((button) => button.click());
+    await page.waitForTimeout(80);
+    const duringGuard = {
+      disabled: await btn.getAttribute("disabled"),
+      busy: await btn.getAttribute("aria-busy"),
+    };
+    must(
+      "ActionButtonは自前guardのpendingDuringGuard=falseを尊重する",
+      duringGuard.disabled === null && duringGuard.busy !== "true",
+      JSON.stringify(duringGuard),
+    );
+
+    await page.waitForTimeout(200);
+    const duringAction = {
+      disabled: await btn.getAttribute("disabled"),
+      busy: await btn.getAttribute("aria-busy"),
+    };
+    must(
+      "    guard後にactionが始まれば通常のpendingになる",
+      duringAction.disabled !== null && duringAction.busy === "true",
+      JSON.stringify(duringAction),
+    );
+    await page.waitForTimeout(250);
+    must(
+      "    forwarded guard経路でもactionは1回だけ",
+      (await page.getByTestId("action-guard-forward-calls").textContent()) === "1",
+    );
+  }
+
+  {
+    await page
+      .getByTestId("validation-retry-run")
+      .evaluate((button) => button.click());
+    await page.waitForTimeout(100);
+    const state = await page.getByTestId("validation-retry-state").textContent();
+    must(
+      "HTTP 400でも正規化済みfield errorはretryしない",
+      state === "error:1",
+      state,
+    );
+  }
+
   /* 1.8. 同期操作だけなら、完全な Action を要求しない ----------------
      ----------------------------------------------------------------
      disabled の再描画より先に同じイベントが重なる場合でも、ref の鍵が
