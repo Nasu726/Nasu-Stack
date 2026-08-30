@@ -58,7 +58,8 @@ hidden control など別の field に入れます。
 
 `defaultItems` は意図的に uncontrolled です。`AsyncForm` が成功後に行うものを含む
 native form reset では、この行へ戻ります。後から prop を変えることを data 同期の
-仕組みにはしません。
+仕組みにはせず、後から来た値をstateへcopyしたり`max`に対して再検査したりもしません。
+初期値はmount時に検査します。dynamicな`min`はreset後を含め、不足行を補います。
 
 ## nested validation path
 

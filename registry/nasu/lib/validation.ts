@@ -167,6 +167,7 @@ export function normalizeValidationFailure(
  */
 export function validationFailurePayload(failure: ValidationFailure): {
   message: "validation failed";
+  code: "VALIDATION";
   userMessage?: string;
   fields?: Record<string, string>;
 } {
@@ -178,6 +179,7 @@ export function validationFailurePayload(failure: ValidationFailure): {
   }
   return {
     message: "validation failed",
+    code: "VALIDATION",
     userMessage: normalized.message,
     fields: normalized.fields,
   };

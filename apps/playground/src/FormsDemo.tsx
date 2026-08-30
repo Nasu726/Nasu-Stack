@@ -25,7 +25,125 @@ export function FormsDemo() {
       <FieldArraySection />
       <SelectionSection />
       <OptimisticSection />
+      <BoundaryFormProbes />
     </Stack>
+  );
+}
+
+/** 境界の回帰検査だけが操作する治具。hiddenなのでcatalogの案内には混ぜません。 */
+function BoundaryFormProbes() {
+  const [folded, setFolded] = React.useState<{
+    values: FormValues;
+    nullPrototype: boolean;
+  } | null>(null);
+  const [ownerEvents, setOwnerEvents] = React.useState(0);
+  const [propCalls, setPropCalls] = React.useState(0);
+  const owner = () => setOwnerEvents((count) => count + 1);
+
+  return (
+    <div hidden data-testid="form-boundary-probes">
+      <div data-testid="form-fold-probe">
+        <AsyncForm
+          resetOnSuccess={false}
+          action={async (values) => {
+            setFolded({
+              values,
+              nullPrototype: Object.getPrototypeOf(values) === null,
+            });
+            return values;
+          }}
+        >
+          <input name="__proto__" defaultValue="prototype-safe" />
+          <input name="constructor" defaultValue="constructor-safe" />
+          <input name="repeated" defaultValue="" />
+          <input name="repeated" defaultValue="hello" />
+          <input name="sentinel-literal" defaultValue="__wt_unchecked__" />
+          <CheckboxField name="unchecked" label="unchecked" />
+        </AsyncForm>
+        <output data-testid="form-fold-result">
+          {folded ? JSON.stringify(folded) : ""}
+        </output>
+      </div>
+
+      <div data-testid="form-prop-probe" data-owner-events={ownerEvents}>
+        <span id="owner-field-description">owner field</span>
+        <span id="owner-select-description">owner select</span>
+        <span id="owner-checkbox-description">owner checkbox</span>
+        <span id="owner-date-description">owner date</span>
+        <AsyncForm
+          pendingDuringGuard={false}
+          retry={2}
+          guard={async () => {
+            await new Promise((resolve) => setTimeout(resolve, 220));
+            return true;
+          }}
+          action={async () => {
+            setPropCalls((count) => count + 1);
+            await new Promise((resolve) => setTimeout(resolve, 180));
+            throw new ActionError("probe validation", {
+              code: 400,
+              displayMessage: "probe validation failed",
+              fields: {
+                field: "field error",
+                select: "select error",
+                checkbox: "checkbox error",
+                date: "date error",
+              },
+            });
+          }}
+        >
+          <Field
+            name="field"
+            label="field"
+            disabled={false}
+            aria-invalid={false}
+            aria-describedby="owner-field-description"
+            onInput={owner}
+          />
+          <SelectField
+            name="select"
+            label="select"
+            disabled={false}
+            aria-invalid={false}
+            aria-describedby="owner-select-description"
+            onChange={owner}
+            options={[{ value: "one", label: "one" }]}
+          />
+          <CheckboxField
+            name="checkbox"
+            label="checkbox"
+            disabled={false}
+            aria-invalid={false}
+            aria-describedby="owner-checkbox-description"
+            onChange={owner}
+          />
+          <DateField
+            name="date"
+            label="date"
+            disabled={false}
+            aria-invalid={false}
+            aria-describedby="owner-date-description"
+            onInput={owner}
+          />
+        </AsyncForm>
+        <output data-testid="form-prop-calls">{propCalls}</output>
+      </div>
+
+      <div data-testid="unknown-field-probe">
+        <AsyncForm
+          resetOnSuccess={false}
+          action={async () => {
+            throw new ActionError("unknown field", {
+              code: "VALIDATION",
+              displayMessage: "unknown field is visible",
+              fields: { missing: "no matching control" },
+            });
+          }}
+        >
+          <Field name="known" label="known" />
+        </AsyncForm>
+      </div>
+    </div>
   );
 }
 
@@ -229,6 +347,9 @@ const validateMembers: Validator<MembersData, FormValues> = (values) => {
 function FieldArraySection() {
   const [sent, setSent] = React.useState<MembersData | null>(null);
   const [noteMin, setNoteMin] = React.useState(0);
+  const [lateNoteDefaults, setLateNoteDefaults] = React.useState<
+    Array<{ note: string }>
+  >([]);
 
   return (
     <Panel
@@ -290,6 +411,20 @@ function FieldArraySection() {
         <Box className="max-w-lg">
           <form data-testid="field-array-empty">
             <Stack space="sm">
+              <button
+                type="button"
+                hidden
+                data-testid="field-array-late-defaults"
+                onClick={() =>
+                  setLateNoteDefaults([
+                    { note: "ignored-1" },
+                    { note: "ignored-2" },
+                    { note: "ignored-3" },
+                  ])
+                }
+              >
+                change ignored defaults
+              </button>
               <Inline space="sm">
                 <Button type="button" onClick={() => setNoteMin(2)}>
                   {t("最低行数を 2 にする")}
@@ -307,6 +442,7 @@ function FieldArraySection() {
                 )}
                 min={noteMin}
                 max={2}
+                defaultItems={lateNoteDefaults}
                 createItem={() => ({ note: "" })}
                 addLabel={t("補足を追加")}
                 removeLabel={() => t("補足を削除")}

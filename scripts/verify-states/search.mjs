@@ -9,9 +9,18 @@ export async function verifySearchState({ page, must }) {
       aborts: Number((await probe.getAttribute("data-aborts")) ?? -1),
     });
 
+    const controlledResultsExist = async () => {
+      const id = await input.getAttribute("aria-controls");
+      return !!id && (await demo.locator(`#${id}`).count()) === 1;
+    };
+
     must(
       "検索前は最小文字数の案内を表示する",
       await demo.getByText("2文字以上入力すると検索します。").isVisible(),
+    );
+    must(
+      "最小文字数未満でもaria-controlsの参照先が存在する",
+      await controlledResultsExist(),
     );
     await input.fill("a");
     await page.waitForTimeout(400);
@@ -24,6 +33,10 @@ export async function verifySearchState({ page, must }) {
     await input.fill("n");
     await input.fill("na");
     await input.fill("nasu");
+    must(
+      "debounce中もaria-controlsの参照先が存在する",
+      await controlledResultsExist(),
+    );
     await page.waitForTimeout(550);
     let current = await seen();
     must(

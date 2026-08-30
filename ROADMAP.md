@@ -7,13 +7,25 @@
 - [x] README / overviewの中心契約表現をv2のvalidation / cursor contractと整合
 - [x] GitHub Immutable Releasesを有効化し、既存v2.0.0と将来releaseの保護を区別
 - [x] 完了済みの内部リファクタリング表記とhandoffを更新
+- [x] `pendingDuringGuard`をAsyncForm / ActionButtonから正しくforward
+- [x] FormData foldingのprototype・sentinel・repeated empty境界を修正
+- [x] HTTP `fields`をruntime正規化し、unknown fieldだけでも一般errorを残す
+- [x] validation retry、form prop composition、FieldArray uncontrolled契約を整合
+- [x] SearchList / RadioGroup / createSubmitの小さい境界不整合を修正
+- [x] release tagをmainの同一SHA・Pages成功runへ機械的に限定
+- [x] 境界回帰を含む`verify` / `verify:create`を再完走
 
 確定修正はPR #40としてmain公開smokeまで成功しました。public contractを変えず、
 `2.0.1`へversionとStable導線を揃え、検査済みmain commitだけをpatch releaseにします。
 修正の計画と直接証拠は[`docs/plan-v201-review-fixes.md`](docs/plan-v201-review-fixes.md)と
 [`docs/result-v201-review-fixes.md`](docs/result-v201-review-fixes.md)、release工程は
 [`docs/plan-v201-release.md`](docs/plan-v201-release.md)、事前検査は
-[`docs/result-v201-release.md`](docs/result-v201-release.md)を正とします。
+[`docs/result-v201-release.md`](docs/result-v201-release.md)を正とします。tag直前に見つかった
+追加境界修正は[`docs/plan-v201-boundary-fixes.md`](docs/plan-v201-boundary-fixes.md)へ分離します。
+実装とlocal検査の直接証拠は
+[`docs/result-v201-boundary-fixes.md`](docs/result-v201-boundary-fixes.md)に残します。
+merge後のmain公開smokeとtag workflowはGitHub上の同一SHAを正とし、release workflow自身も
+その関係を検査します。
 
 ## v2.0 Stable後 — 内部リファクタリング完了
 

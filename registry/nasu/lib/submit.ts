@@ -94,6 +94,24 @@ export function createSubmit<TInput = unknown, TOutput = unknown>({
     }
     if (transform) payload = transform(payload as TInput);
 
+    let body: string;
+    try {
+      const serialized = JSON.stringify(payload ?? {});
+      if (serialized === undefined) {
+        throw new TypeError("JSON.stringify returned undefined");
+      }
+      body = serialized;
+    } catch (raw) {
+      // JSON化はnetworkへ出る前の境界です。TypeErrorだからといって
+      // CORS/通信断へ翻訳すると、利用者を誤った調査先へ案内します。
+      throw new ActionError("request body is not JSON serializable", {
+        displayMessage:
+          "送信内容をJSONに変換できませんでした。transformの戻り値を確認してください。",
+        code: "SERIALIZATION",
+        cause: raw,
+      });
+    }
+
     /* --- 中断の合成 --------------------------------------------
        `AbortSignal.any` は比較的新しい API なので、手で合成します
        （古い環境でも同じように動かすため）。
@@ -120,7 +138,7 @@ export function createSubmit<TInput = unknown, TOutput = unknown>({
       const result = await jsonRequest<TOutput>(url, {
         method,
         headers: { "content-type": "application/json", ...headers },
-        body: JSON.stringify(payload ?? {}),
+        body,
         ctx: { signal: controller.signal },
       });
       return result;
@@ -200,17 +218,36 @@ function translate(
  * API ごとに `fields` だったり `errors` だったりするので、ここで吸収します。
  */
 function normalizeFields(error: ActionError): Record<string, string> | undefined {
-  if (error.fields && Object.keys(error.fields).length > 0) return error.fields;
+  const direct = normalizeFieldRecord(error.fields);
+  if (direct) return direct;
 
   const body = error.cause as Record<string, unknown> | undefined;
   const errors = body?.errors;
-  if (errors && typeof errors === "object" && !Array.isArray(errors)) {
-    const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(errors as Record<string, unknown>)) {
-      // 値が配列（["必須です"]）で返る API もあります
-      out[k] = Array.isArray(v) ? String(v[0] ?? "") : String(v ?? "");
-    }
-    if (Object.keys(out).length > 0) return out;
+  return normalizeFieldRecord(errors, true);
+}
+
+function normalizeFieldRecord(
+  value: unknown,
+  allowStringArrays = false,
+): Record<string, string> | undefined {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
   }
-  return undefined;
+  const proto = Object.getPrototypeOf(value);
+  if (proto !== Object.prototype && proto !== null) return undefined;
+
+  const out: Record<string, string> = Object.create(null);
+  for (const [name, raw] of Object.entries(value)) {
+    const message =
+      typeof raw === "string"
+        ? raw
+        : allowStringArrays &&
+            Array.isArray(raw) &&
+            raw.every((item) => typeof item === "string")
+          ? raw.find((item) => item.trim().length > 0)
+          : undefined;
+    if (!name.trim() || !message?.trim()) return undefined;
+    out[name] = message;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
 }

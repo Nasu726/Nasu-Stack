@@ -3,7 +3,6 @@
 import * as React from "react";
 import { cn, inputClass } from "@/lib/utils";
 import {
-  CHECKBOX_ABSENT,
   useFieldState,
   FieldShell,
 } from "@/components/ui/async-form";
@@ -29,6 +28,10 @@ export interface Option {
   disabled?: boolean;
 }
 
+function mergeIds(...values: Array<string | undefined>): string | undefined {
+  return values.filter(Boolean).join(" ") || undefined;
+}
+
 /* ================================================================
  * SelectField
  * ============================================================== */
@@ -52,7 +55,11 @@ export function SelectField({
   required,
   multiple,
   className,
-  ...props
+  disabled: disabledProp,
+  onChange: onChangeProp,
+  "aria-describedby": describedByProp,
+  "aria-invalid": invalidProp,
+  ...selectProps
 }: SelectFieldProps) {
   const f = useFieldState(name, { hint });
 
@@ -65,19 +72,22 @@ export function SelectField({
       error={f.error}
     >
       <select
+        {...selectProps}
         id={f.id}
         name={name}
         required={required}
         multiple={multiple}
-        aria-invalid={f.error ? true : undefined}
-        aria-describedby={f.describedBy}
-        disabled={f.disabled}
-        onChange={f.clear}
+        aria-invalid={f.error ? true : invalidProp}
+        aria-describedby={mergeIds(describedByProp, f.describedBy)}
+        disabled={f.disabled || disabledProp}
+        onChange={(event) => {
+          f.clear();
+          onChangeProp?.(event);
+        }}
         className={inputClass({
           error: f.error,
           className: cn(multiple && "min-h-32", className),
         })}
-        {...props}
       >
         {!multiple && placeholder && (
           <option value="">{placeholder}</option>
@@ -109,36 +119,40 @@ export function CheckboxField({
   hint,
   required,
   className,
-  ...props
+  disabled: disabledProp,
+  onChange: onChangeProp,
+  "aria-describedby": describedByProp,
+  "aria-invalid": invalidProp,
+  ...inputProps
 }: CheckboxFieldProps) {
   const f = useFieldState(name, { hint });
+  const disabled = f.disabled || disabledProp;
 
   return (
     <Stack space="2xs">
-      {/* 未チェックでも値が届くようにする目印。
-          これが無いと「キーごと無い」状態になり、受け取り側が false を判定できません。 */}
-      <input type="hidden" name={name} value={CHECKBOX_ABSENT} />
-
       {/* ラベル全体を当たり判定にする。四角だけだと 16px 程度で指で押せません。 */}
       <label
         htmlFor={f.id}
         className={cn(
           "flex wt-tap cursor-pointer items-center gap-2 text-sm",
-          f.disabled && "opacity-60",
+          disabled && "opacity-60",
           className,
         )}
       >
         <input
+          {...inputProps}
           id={f.id}
           name={name}
           type="checkbox"
           required={required}
-          aria-invalid={f.error ? true : undefined}
-          aria-describedby={f.describedBy}
-          disabled={f.disabled}
-          onChange={f.clear}
+          aria-invalid={f.error ? true : invalidProp}
+          aria-describedby={mergeIds(describedByProp, f.describedBy)}
+          disabled={disabled}
+          onChange={(event) => {
+            f.clear();
+            onChangeProp?.(event);
+          }}
           className="size-5 shrink-0 accent-primary"
-          {...props}
         />
         <span>
           {label}
@@ -230,6 +244,7 @@ function Choices({
       className={cn("min-w-0 border-0 p-0", className)}
       aria-describedby={f.describedBy}
       aria-invalid={f.error ? true : undefined}
+      aria-required={kind === "radio" && required ? true : undefined}
     >
       <legend className="mb-1.5 text-sm font-medium">
         {label}
@@ -239,10 +254,6 @@ function Choices({
           </span>
         )}
       </legend>
-
-      {kind === "checkbox" && (
-        <input type="hidden" name={name} value={CHECKBOX_ABSENT} />
-      )}
 
       <div
         className={cn(
@@ -266,6 +277,8 @@ function Choices({
                 name={name}
                 type={kind}
                 value={o.value}
+                required={kind === "radio" ? required : undefined}
+                aria-invalid={f.error ? true : undefined}
                 disabled={o.disabled || f.disabled}
                 onChange={f.clear}
                 className="size-5 shrink-0 accent-primary"
@@ -321,7 +334,11 @@ export function DateField({
   kind = "date",
   required,
   className,
-  ...props
+  disabled: disabledProp,
+  onInput: onInputProp,
+  "aria-describedby": describedByProp,
+  "aria-invalid": invalidProp,
+  ...inputProps
 }: DateFieldProps) {
   const f = useFieldState(name, { hint });
 
@@ -334,16 +351,19 @@ export function DateField({
       error={f.error}
     >
       <input
+        {...inputProps}
         id={f.id}
         name={name}
         type={kind}
         required={required}
-        aria-invalid={f.error ? true : undefined}
-        aria-describedby={f.describedBy}
-        disabled={f.disabled}
-        onInput={f.clear}
+        aria-invalid={f.error ? true : invalidProp}
+        aria-describedby={mergeIds(describedByProp, f.describedBy)}
+        disabled={f.disabled || disabledProp}
+        onInput={(event) => {
+          f.clear();
+          onInputProp?.(event);
+        }}
         className={inputClass({ error: f.error, className })}
-        {...props}
       />
     </FieldShell>
   );

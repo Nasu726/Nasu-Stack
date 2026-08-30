@@ -3,6 +3,9 @@
 ## release candidate
 
 PR #40で修正した互換bug fixを、public contractを変えず`2.0.1`へ揃えた。
+PR #41のmerge後、tagをpushする前に追加の境界bugが見つかったため、最初の
+release candidateは公開せず、[`result-v201-boundary-fixes.md`](result-v201-boundary-fixes.md)
+の修正を同じ未公開`2.0.1`へ取り込んだ。
 
 - root / `create-nasu-stack` package: `2.0.1`
 - Stable URL: `v2.0.1/create-nasu-stack-2.0.1.tgz`
@@ -21,8 +24,8 @@ PR #40で修正した互換bug fixを、public contractを変えず`2.0.1`へ揃
 すべて次の同一結果になった。
 
 - asset: `create-nasu-stack-2.0.1.tgz`
-- size: 270,170 bytes
-- SHA-256: `c5ae46f4d3e5df3e98550f43162d4e55d821a36ee8942166abc7a4b68bb3a539`
+- size: 271,977 bytes
+- SHA-256: `5367e8ea68e8316b0c4d688a1434ec92bd420226b93623e54058950ba22be2b4`
 - manifest: `nasu-stack-2.0.1-manifest.json`
 
 不一致の`v2.0.2`を渡すと`tagとpackage versionがずれています`でexit 1になった。
@@ -31,7 +34,7 @@ Releaseから再downloadしたbyteを公開checksumと照合して別に確認�
 
 ## local検査
 
-- `pnpm verify`: 34 / 34
+- `pnpm verify`: 35 / 35
 - `pnpm verify:create`: 113 / 113
 - translation parity: 16組
 - public registry contract: 51 item / 53 file / 251 export

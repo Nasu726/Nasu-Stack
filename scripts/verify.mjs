@@ -169,6 +169,7 @@ await group([
   ["単体: 公開物取得の一時障害", "node", ["scripts/verify-fetch-with-retry.mjs"]],
   ["単体: checker / CI の協調", "node", ["scripts/verify-checker-coordination.mjs"]],
   ["単体: check harness", "node", ["scripts/verify-check-harness.mjs"]],
+  ["単体: release ancestry / Pages smoke policy", "node", ["scripts/verify-release-policy.mjs"]],
   /* 受け口。**「403 が返った」ではなく「メールが 0 回だった」を見ます。**
      応答を読めなくても、副作用はサーバで起きているためです。 */
   ["単体: 受け口の入口", "node", ["scripts/verify-receiver-unit.mjs"]],

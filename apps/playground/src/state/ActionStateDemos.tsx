@@ -3,6 +3,7 @@ import { ActionButton, Button } from "@/components/ui/action-button";
 import { AsyncBoundary } from "@/components/ui/async-boundary";
 import { useAction } from "@/hooks/use-action";
 import { useInteractionGuard } from "@/hooks/use-interaction-guard";
+import { ActionError } from "@/lib/action";
 import { Inline, Stack } from "@/components/ui/layout";
 import { Panel } from "../Panel";
 import * as api from "../fake-api";
@@ -204,6 +205,59 @@ export function RetryDelayProbe() {
       <RetryDelayCase id="nan" delay={Number.NaN} />
       <RetryDelayCase id="infinity" delay={Number.POSITIVE_INFINITY} />
       <RetryDelayCase id="negative" delay={-1} />
+      <GuardForwardProbe />
+      <ValidationRetryProbe />
+    </div>
+  );
+}
+
+function GuardForwardProbe() {
+  const [calls, setCalls] = React.useState(0);
+  return (
+    <div data-testid="action-guard-forward-probe">
+      <ActionButton
+        data-testid="action-guard-forward-run"
+        pendingDuringGuard={false}
+        guard={async () => {
+          await new Promise((resolve) => setTimeout(resolve, 220));
+          return true;
+        }}
+        action={async () => {
+          setCalls((count) => count + 1);
+          await new Promise((resolve) => setTimeout(resolve, 180));
+        }}
+      >
+        guard forward
+      </ActionButton>
+      <output data-testid="action-guard-forward-calls">{calls}</output>
+    </div>
+  );
+}
+
+function ValidationRetryProbe() {
+  const [calls, setCalls] = React.useState(0);
+  const state = useAction(
+    async () => {
+      setCalls((count) => count + 1);
+      throw new ActionError("validation retry probe", {
+        code: 400,
+        fields: { email: "invalid" },
+      });
+    },
+    { retry: 2, retryDelay: 10 },
+  );
+  return (
+    <div data-testid="validation-retry-probe">
+      <button
+        type="button"
+        data-testid="validation-retry-run"
+        onClick={() => void state.run()}
+      >
+        run
+      </button>
+      <output data-testid="validation-retry-state">
+        {state.status}:{calls}
+      </output>
     </div>
   );
 }

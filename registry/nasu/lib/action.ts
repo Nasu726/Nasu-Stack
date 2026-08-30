@@ -8,7 +8,7 @@
  *   「読込中の表示」「失敗したときの表示」「二重送信の防止」
  *   「キャンセル」「リトライ」は全部コンポーネント側が持ちます。
  *
- * 使う側が覚えることは、実質この 1 行だけです:
+ * Actionを使う側が最初に覚える中心契約は、この 1 行です:
  *   action: (input) => Promise<output>
  */
 
@@ -23,7 +23,7 @@ export interface ActionContext {
 }
 
 /**
- * 「呼び出す関数」の型。これがテンプレート全体で唯一の契約です。
+ * 「呼び出す関数」の型。これが非同期Actionの中心契約です。
  * 同期関数を渡しても動きます（Promise でなくても構いません）。
  */
 export type Action<TInput = void, TOutput = unknown> = (
@@ -86,6 +86,38 @@ export class ActionError extends Error {
 /** 中断されたことを示す番兵。状態を error にせず idle に戻すために使います。 */
 export const ABORTED = Symbol("nasu-stack.aborted");
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+/** transportやunknown throwから来たfieldsを、Reactへ渡せる形だけに絞ります。 */
+function normalizeActionFields(value: unknown): Record<string, string> | undefined {
+  if (!isPlainRecord(value)) return undefined;
+  const out: Record<string, string> = Object.create(null);
+  for (const [name, message] of Object.entries(value)) {
+    // 途中まで正しいobjectを部分採用しません。1件でも不正ならfail closedです。
+    if (
+      name.trim().length === 0 ||
+      typeof message !== "string" ||
+      message.trim().length === 0
+    ) {
+      return undefined;
+    }
+    out[name] = message;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function responseErrorCode(value: unknown, fallback: number): string | number {
+  if (typeof value === "string" && value.trim().length > 0) return value;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  return fallback;
+}
+
 /**
  * 何が throw されても ActionError に揃えます。
  * 利用者は `throw new Error("メール送信に失敗しました")` と書くだけでよく、
@@ -110,10 +142,7 @@ export function toActionError(value: unknown): ActionError {
     };
     return new ActionError(value.message, {
       displayMessage: value.message || "エラーが発生しました",
-      fields:
-        extra.fields && typeof extra.fields === "object"
-          ? extra.fields
-          : undefined,
+      fields: normalizeActionFields(extra.fields),
       code: extra.code,
       cause: value,
     });
@@ -125,7 +154,7 @@ export function toActionError(value: unknown): ActionError {
 
   // { message, fields } 形式のオブジェクト（API のエラーレスポンス想定）
   if (value && typeof value === "object") {
-    const o = value as Record<string, unknown>;
+    const o = isPlainRecord(value) ? value : Object.create(null);
     const message =
       typeof o.message === "string" ? o.message : "エラーが発生しました";
     return new ActionError(message, {
@@ -134,10 +163,7 @@ export function toActionError(value: unknown): ActionError {
         typeof o.code === "string" || typeof o.code === "number"
           ? o.code
           : undefined,
-      fields:
-        o.fields && typeof o.fields === "object"
-          ? (o.fields as Record<string, string>)
-          : undefined,
+      fields: normalizeActionFields(o.fields),
       cause: value,
     });
   }
@@ -234,7 +260,7 @@ export async function jsonRequest<T>(
     } catch {
       /* 読めない応答は無視して、下でステータスから文言を作ります */
     }
-    const o = (body ?? {}) as Record<string, unknown>;
+    const o = isPlainRecord(body) ? body : Object.create(null);
     /* **サーバの `message` を画面に出しません。**
        そこに来るのは DB のエラー、内部の URL、使っている製品の名前など、
        利用者に見せる前提で書かれていないものです。React が escape するので
@@ -250,16 +276,20 @@ export async function jsonRequest<T>(
        元の `message` は捨てていません。`ActionError.message` と `cause` に
        残るので、開発者コンソールと Sentry などからは読めます。 */
     const userMessage =
-      typeof o.userMessage === "string" ? o.userMessage : undefined;
+      typeof o.userMessage === "string" && o.userMessage.trim().length > 0
+        ? o.userMessage
+        : undefined;
+    const code = responseErrorCode(o.code, res.status);
     throw new ActionError(
       typeof o.message === "string" ? o.message : `HTTP ${res.status}`,
       {
-        displayMessage: userMessage ?? `通信に失敗しました (${res.status})`,
-        code: res.status,
-        fields:
-          o.fields && typeof o.fields === "object"
-            ? (o.fields as Record<string, string>)
-            : undefined,
+        displayMessage:
+          userMessage ??
+          (code === "VALIDATION"
+            ? "入力内容を確認してください"
+            : `通信に失敗しました (${res.status})`),
+        code,
+        fields: normalizeActionFields(o.fields),
         cause: body,
       },
     );

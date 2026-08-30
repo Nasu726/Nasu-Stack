@@ -90,10 +90,21 @@ JSON として parse できても、アプリが期待する object だとは限
 応答値は、ドメインの入口で検証してください。意図して text を返す endpoint には、
 `fetch` または用途専用の helper を使います。
 
+error応答の`fields`は、plain objectで、全てのkeyとvalueが空でないstringの場合だけ
+`jsonRequest`が受け取ります。`__proto__`のようなnameもprototypeを変えずに保持し、
+1件でも不正なら一部だけを信用せずfield map全体を拒否します。どのnameも描画済みcontrolに
+一致しない場合、`AsyncForm`は一般errorを残すため、server側のtypoでfailureが消えません。
+ここで検査するのはtransport shapeであり、そのfield名がdomain上正しいかはapplicationの仕事です。
+
 ### ブラウザの入力検証はフィードバックであり、正規の判定ではない
 
 Field・`FileDrop`・form helper は、その場で誤りを伝え、誤送信を減らせます。
 呼び出す側はすべてを迂回できます。全ての値と権限について、最終判断はサーバ側です。
+
+`AsyncForm`は、先頭が空文字でも同名controlの順序を落とさず配列へ畳み、field nameが
+object継承へ影響しないnull-prototypeの結果を作ります。未checkのcheckboxは利用者data内の
+予約文字列ではなくform controlから判定します。各controlは利用者callback・ARIA descriptionと、
+内部のerror clear・pending状態をcomposeします。これらはbrowser mechanicsでありserver validationではありません。
 
 ### validation結果は判定を運ぶが、判定そのものは作らない
 

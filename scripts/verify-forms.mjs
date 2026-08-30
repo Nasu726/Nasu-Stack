@@ -88,6 +88,9 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
     return {
       fieldset: !!fs,
       legend: fs?.querySelector("legend")?.textContent?.trim(),
+      ariaRequired: fs?.getAttribute("aria-required"),
+      nativeRequired: [...(fs?.querySelectorAll('input[type="radio"]') ?? [])]
+        .every((control) => control.required),
     };
   });
   must("13. RadioGroup が fieldset で囲まれている", radio.fieldset);
@@ -95,6 +98,11 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
     "    legend に見出しが入っている（div+label では代用できない）",
     !!radio.legend,
     radio.legend,
+  );
+  must(
+    "    requiredはfieldsetのARIAとnative radioへ届く",
+    radio.ariaRequired === "true" && radio.nativeRequired,
+    JSON.stringify(radio),
   );
 
   /* --- フィールドエラーが radio group にも出るか --- */
@@ -180,6 +188,121 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
     serverValidation.alerts.length === 1 &&
       serverValidation.alerts[0]?.includes("QA チーム"),
     JSON.stringify(serverValidation.alerts),
+  );
+
+  await page.close();
+}
+
+/* ===== FormData / inherited options / prop ownership ============= */
+{
+  const page = await open();
+
+  const fold = page.getByTestId("form-fold-probe");
+  await fold.locator("form").evaluate((form) => form.requestSubmit());
+  await page.waitForTimeout(100);
+  const folded = JSON.parse(
+    (await page.getByTestId("form-fold-result").textContent()) || "null",
+  );
+  must(
+    "FormDataはnull prototypeでprototype系nameを通常dataとして保持する",
+    folded?.nullPrototype === true &&
+      folded.values?.__proto__ === "prototype-safe" &&
+      folded.values?.constructor === "constructor-safe",
+    JSON.stringify(folded),
+  );
+  must(
+    "    同名の空文字+値は順序を保った配列になる",
+    JSON.stringify(folded?.values?.repeated) === JSON.stringify(["", "hello"]),
+    JSON.stringify(folded?.values?.repeated),
+  );
+  must(
+    "    旧sentinel文字列は利用者dataとして保持し、未checkは別経路で空にする",
+    folded?.values?.["sentinel-literal"] === "__wt_unchecked__" &&
+      folded?.values?.unchecked === "",
+    JSON.stringify(folded?.values),
+  );
+
+  const propProbe = page.getByTestId("form-prop-probe");
+  await propProbe.locator("form").evaluate((form) => form.requestSubmit());
+  await page.waitForTimeout(80);
+  const guardPhase = await propProbe.evaluate((root) => {
+    const submit = root.querySelector('button[type="submit"]');
+    return { disabled: submit?.disabled, busy: submit?.getAttribute("aria-busy") };
+  });
+  must(
+    "AsyncFormはpendingDuringGuard=falseをuseActionへforwardする",
+    guardPhase.disabled === false && guardPhase.busy !== "true",
+    JSON.stringify(guardPhase),
+  );
+
+  await page.waitForTimeout(200);
+  const actionPhase = await propProbe.evaluate((root) =>
+    [...root.querySelectorAll("input, select")]
+      .filter((control) => control.getAttribute("type") !== "hidden")
+      .every((control) => control.disabled),
+  );
+  must(
+    "    action pending中は利用者のdisabled=falseでも全controlを無効にする",
+    actionPhase,
+  );
+
+  await page.waitForTimeout(250);
+  const errors = await propProbe.evaluate((root) =>
+    ["field", "select", "checkbox", "date"].map((name) => {
+      const control = root.querySelector(`[name="${name}"]`);
+      const ids = (control?.getAttribute("aria-describedby") ?? "")
+        .split(/\s+/)
+        .filter(Boolean);
+      return {
+        name,
+        invalid: control?.getAttribute("aria-invalid"),
+        hasOwner: ids.some((id) => id.startsWith("owner-")),
+        hasError: ids.some(
+          (id) => document.getElementById(id)?.getAttribute("role") === "alert",
+        ),
+      };
+    }),
+  );
+  must(
+    "    内部ARIAは利用者ARIAとcomposeし、error時のinvalidを上書きさせない",
+    errors.every(
+      (item) => item.invalid === "true" && item.hasOwner && item.hasError,
+    ),
+    JSON.stringify(errors),
+  );
+  must(
+    "    HTTP 400でもfield errorは自動retryしない",
+    (await page.getByTestId("form-prop-calls").textContent()) === "1",
+    await page.getByTestId("form-prop-calls").textContent(),
+  );
+
+  await propProbe.locator('input[name="field"]').evaluate((control) =>
+    control.dispatchEvent(new Event("input", { bubbles: true })),
+  );
+  await propProbe.locator('select[name="select"]').evaluate((control) =>
+    control.dispatchEvent(new Event("change", { bubbles: true })),
+  );
+  await propProbe.locator('input[name="checkbox"]').evaluate((control) =>
+    control.click(),
+  );
+  await propProbe.locator('input[name="date"]').evaluate((control) =>
+    control.dispatchEvent(new Event("input", { bubbles: true })),
+  );
+  await page.waitForTimeout(100);
+  must(
+    "    内部error clearの後に利用者event handlerも全て呼ぶ",
+    (await propProbe.locator('p[role="alert"]').count()) === 0 &&
+      (await propProbe.getAttribute("data-owner-events")) === "4",
+    `${await propProbe.locator('p[role="alert"]').count()} errors / ` +
+      `${await propProbe.getAttribute("data-owner-events")} owner events`,
+  );
+
+  const unknown = page.getByTestId("unknown-field-probe");
+  await unknown.locator("form").evaluate((form) => form.requestSubmit());
+  await page.waitForTimeout(100);
+  must(
+    "存在しないfield名だけのfailureは一般errorとして画面に残る",
+    (await unknown.textContent())?.includes("unknown field is visible") ?? false,
   );
 
   await page.close();
@@ -409,6 +532,26 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
       JSON.stringify(["notes.0", "notes.1"]) &&
       afterDynamicMinReset.removeDisabled,
     JSON.stringify(afterDynamicMinReset),
+  );
+
+  await page
+    .getByTestId("field-array-late-defaults")
+    .evaluate((button) => button.click());
+  await page.waitForTimeout(100);
+  const afterIgnoredDefaults = await optional.evaluate((root) => ({
+    names: [...root.querySelectorAll('[data-field-array-item]')].map((node) =>
+      node.getAttribute("data-field-array-item"),
+    ),
+    values: [...root.querySelectorAll('input[name$=".text"]')].map(
+      (node) => node.value,
+    ),
+  }));
+  must(
+    "    mount後のdefaultItems変更はmax超過でもuncontrolled stateへ同期しない",
+    JSON.stringify(afterIgnoredDefaults.names) ===
+      JSON.stringify(["notes.0", "notes.1"]) &&
+      afterIgnoredDefaults.values.every((value) => value === ""),
+    JSON.stringify(afterIgnoredDefaults),
   );
 
   await page.close();

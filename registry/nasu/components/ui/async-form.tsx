@@ -38,33 +38,72 @@ export type FormValues = Record<
  *
  * ここでは同名のものを配列に畳みます。
  */
-export function formDataToObject(fd: FormData): FormValues {
-  const out: FormValues = {};
+export function formDataToObject(
+  fd: FormData,
+  checkboxNames: Iterable<string> = [],
+): FormValues {
+  // `__proto__` / `constructor` も通常のfield nameとして保持します。
+  // `{}` と `in` の組み合わせではprototype側を既存値と誤認します。
+  const out: FormValues = Object.create(null);
   for (const [key, value] of fd.entries()) {
-    // CheckboxField が置いている「未チェックの目印」は値として扱わない
-    if (value === CHECKBOX_ABSENT) {
-      if (!(key in out)) out[key] = "";
+    if (!Object.prototype.hasOwnProperty.call(out, key)) {
+      out[key] = value;
       continue;
     }
     const existing = out[key];
-    if (existing === undefined || existing === "") {
-      out[key] = value;
-    } else if (Array.isArray(existing)) {
+    if (Array.isArray(existing)) {
       existing.push(value);
     } else {
       out[key] = [existing, value];
+    }
+  }
+  // 未チェックを通常文字列のsentinelで表すと、その文字列を入力した利用者の
+  // dataと衝突します。FormDataとは別のcontrol情報から、不在のkeyだけ補います。
+  for (const name of checkboxNames) {
+    if (
+      name &&
+      !Object.prototype.hasOwnProperty.call(out, name)
+    ) {
+      out[name] = "";
     }
   }
   return out;
 }
 
 /**
- * 未チェックのチェックボックスは FormData に現れません。
- * `false` ではなく「キーごと無い」状態になるので、受け取り側が
- * `values.agree === ""` すら期待できなくなります。
- * そこで各チェックボックスの直前に隠し入力を置き、この目印を必ず送ります。
+ * @deprecated 値sentinel方式は利用者dataと衝突するため廃止しました。
+ * 既にimportしているcopy-owned sourceを壊さないため、export名だけを残します。
  */
 export const CHECKBOX_ABSENT = "__wt_unchecked__";
+
+function enabledCheckboxNames(form: HTMLFormElement): string[] {
+  const names = new Set<string>();
+  for (const control of Array.from(form.elements)) {
+    if (
+      control instanceof HTMLInputElement &&
+      control.type === "checkbox" &&
+      control.name &&
+      !control.disabled
+    ) {
+      names.add(control.name);
+    }
+  }
+  return [...names];
+}
+
+function hasMatchingFieldControl(
+  form: HTMLFormElement | null,
+  fields: Record<string, string> | undefined,
+): boolean {
+  if (!form || !fields) return false;
+  const names = new Set(Object.keys(fields));
+  return Array.from(form.elements).some((control) => {
+    if (!(control instanceof HTMLElement)) return false;
+    if (control.getAttribute("type") === "hidden") return false;
+    const name = control.getAttribute("name");
+    return !!name && names.has(name);
+  });
+}
 
 /* ------------------------------------------------------------------
  * フォーム内でフィールドエラーを共有するための文脈
@@ -164,6 +203,7 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
   retry,
   retryDelay,
   guard,
+  pendingDuringGuard,
   ...formProps
 }: AsyncFormProps<TOutput> | ValidatedAsyncFormProps<TData, TOutput>) {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -213,8 +253,10 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
     onError:
       onError ??
       ((error) => {
-        const hasFieldErrors =
-          error.fields && Object.keys(error.fields).length > 0;
+        const hasFieldErrors = hasMatchingFieldControl(
+          formRef.current,
+          error.fields,
+        );
         if (!hasFieldErrors) defaults.onError?.(error);
       }),
     onSettled,
@@ -222,6 +264,7 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
     retry,
     retryDelay,
     guard,
+    pendingDuringGuard,
   });
 
   const rawFieldErrors = state.error?.fields ?? {};
@@ -294,7 +337,8 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
 
   // フィールドに紐づかない、フォーム全体のエラー
   const generalError =
-    state.isError && Object.keys(rawFieldErrors).length === 0
+    state.isError &&
+    !hasMatchingFieldControl(formRef.current, rawFieldErrors)
       ? state.error?.displayMessage
       : undefined;
 
@@ -306,7 +350,10 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
         className={cn("flex w-full flex-col gap-4", className)}
         onSubmit={(e) => {
           e.preventDefault();
-          void state.run(formDataToObject(new FormData(e.currentTarget)));
+          const form = e.currentTarget;
+          void state.run(
+            formDataToObject(new FormData(form), enabledCheckboxNames(form)),
+          );
         }}
         {...formProps}
       >
@@ -467,15 +514,27 @@ export function Field({
   ...inputProps
 }: FieldProps) {
   const f = useFieldState(name, { hint });
+  const {
+    disabled: disabledProp,
+    onInput: onInputProp,
+    "aria-describedby": describedByProp,
+    "aria-invalid": invalidProp,
+    ...controlProps
+  } = inputProps;
+  const describedBy =
+    [describedByProp, f.describedBy].filter(Boolean).join(" ") || undefined;
 
   const shared = {
     id: f.id,
     name,
     required,
-    "aria-invalid": f.error ? (true as const) : undefined,
-    "aria-describedby": f.describedBy,
-    disabled: f.disabled,
-    onInput: f.clear,
+    "aria-invalid": f.error ? (true as const) : invalidProp,
+    "aria-describedby": describedBy,
+    disabled: f.disabled || disabledProp,
+    onInput: (event: React.InputEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      f.clear();
+      onInputProp?.(event as React.InputEvent<HTMLInputElement>);
+    },
     className: inputClass({ error: f.error, className }),
   };
 
@@ -489,12 +548,12 @@ export function Field({
     >
       {multiline ? (
         <textarea
+          {...(controlProps as unknown as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
           {...shared}
           rows={rows}
-          {...(inputProps as unknown as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
         />
       ) : (
-        <input {...shared} {...inputProps} />
+        <input {...controlProps} {...shared} />
       )}
     </FieldShell>
   );

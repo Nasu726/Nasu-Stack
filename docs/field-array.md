@@ -58,7 +58,9 @@ another field when the server needs one.
 
 `defaultItems` is intentionally uncontrolled. A native form reset, including
 the reset performed by `AsyncForm` after success, restores those rows. Changing
-the prop later is not a data synchronization mechanism.
+the prop later is not a data synchronization mechanism; later values are not
+copied into state or revalidated against `max`. The initial value is checked at
+mount. Dynamic `min` still fills missing rows, including after a reset.
 
 ## Nested validation paths
 

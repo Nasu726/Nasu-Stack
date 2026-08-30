@@ -145,6 +145,7 @@ export function ActionButton<TInput = void, TOutput = unknown>({
   retry,
   retryDelay,
   guard,
+  pendingDuringGuard,
   ...buttonProps
 }: ActionButtonProps<TInput, TOutput>) {
   const resolved = React.useMemo(
@@ -170,7 +171,7 @@ export function ActionButton<TInput = void, TOutput = unknown>({
     retryDelay,
     /* 確認ダイアログを出す間は、ボタンの表示を変えません。
        変えるとフォーカスが戻らなくなります（use-action の説明）。 */
-    pendingDuringGuard: !confirm,
+    pendingDuringGuard: confirm ? false : pendingDuringGuard,
     guard: confirm
       ? async (i, ctx) => {
           const ok = await askConfirm(confirm);
