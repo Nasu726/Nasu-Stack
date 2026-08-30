@@ -195,7 +195,8 @@ interface GroupProps {
 
 /**
  * 複数選べるチェックボックス群。
- * 同じ `name` を複数持つので、`AsyncForm` は値を**配列**で渡します。
+ * raw `FormValues` は未選択=`""`、1件=`string`、複数=`string[]`です。
+ * validatorでdomain上の配列へ正規化してください。
  */
 export function CheckboxGroup({
   name,

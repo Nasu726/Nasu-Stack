@@ -6,6 +6,10 @@ import type { Action } from "@/lib/action";
 import { useResource } from "@/hooks/use-resource";
 import { usePopover } from "@/hooks/use-popover";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  FieldShell,
+  useFieldState,
+} from "@/components/ui/async-form";
 
 /**
  * AsyncSelect — 検索つきセレクト
@@ -79,8 +83,10 @@ export function AsyncSelect<T>({
   getFormValue,
   className,
 }: AsyncSelectProps<T>) {
-  const id = React.useId();
+  const field = useFieldState(name ?? "", { hint });
+  const id = field.id;
   const listId = `${id}-list`;
+  const effectiveDisabled = Boolean(disabled || field.disabled);
 
   const controlled = value !== undefined;
   const [innerValue, setInnerValue] = React.useState<T | null>(
@@ -100,6 +106,21 @@ export function AsyncSelect<T>({
   const listRef = React.useRef<HTMLUListElement>(null);
   const getLabelRef = React.useRef(getLabel);
   getLabelRef.current = getLabel;
+
+  // requiredが求めるのは検索文字列ではなく選択値です。通常のrequiredだけでは
+  // 候補を選ばず文字を打った状態がvalidになるため、同じnative境界へ揃えます。
+  React.useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    input.setCustomValidity(
+      required && !selected ? "候補を選択してください" : "",
+    );
+    return () => input.setCustomValidity("");
+  }, [required, selected]);
+
+  React.useEffect(() => {
+    if (effectiveDisabled) setOpen(false);
+  }, [effectiveDisabled]);
 
   /* 入力で選択を外した直後、親が value=null を返す render だけは
      query を空に戻しません。表示中の検索語と選択値は別の状態です。 */
@@ -180,9 +201,11 @@ export function AsyncSelect<T>({
   }
 
   function choose(item: T) {
+    if (effectiveDisabled) return;
     preserveQueryForNullRef.current = false;
     changeSelected(item);
     setText(getLabel(item));
+    field.clear();
     setOpen(false);
     inputRef.current?.focus();
   }
@@ -244,139 +267,141 @@ export function AsyncSelect<T>({
   }, [active, open, items.length]);
 
   return (
-    <div className={cn("flex w-full flex-col gap-1.5", className)}>
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-        {required && (
-          <span className="ml-1 text-danger" aria-label="必須">
-            *
-          </span>
-        )}
-      </label>
-
-      <div ref={wrapRef} className="relative">
-        {name && (
-          <input
-            type="hidden"
-            name={name}
-            disabled={disabled}
-            value={
-              selected
-                ? (getFormValue?.(selected) ?? String(getKey(selected)))
-                : ""
-            }
-            readOnly
-          />
-        )}
-        <input
-          ref={inputRef}
-          id={id}
-          type="text"
-          role="combobox"
-          autoComplete="off"
-          aria-expanded={open}
-          aria-controls={listId}
-          aria-autocomplete="list"
-          aria-activedescendant={
-            open && items[active] ? `${id}-opt-${active}` : undefined
-          }
-          aria-describedby={hint ? `${id}-hint` : undefined}
-          disabled={disabled}
-          required={required}
-          placeholder={placeholder}
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            setOpen(true);
-            if (selected) {
-              preserveQueryForNullRef.current = controlled;
-              changeSelected(null);
-            }
-          }}
-          onFocus={() => setOpen(true)}
-          onKeyDown={onKeyDown}
-          className={inputClass({ className: "pr-8" })}
-        />
-
-        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-          {result.isPending && open ? (
-            <Spinner className="text-muted-fg" />
-          ) : (
-            <svg
-              viewBox="0 0 24 24"
-              className="size-4 text-muted-fg"
-              aria-hidden="true"
-              fill="none"
-            >
-              <path
-                d="m7 10 5 5 5-5"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+    <div className={cn("w-full", className)}>
+      <FieldShell
+        id={id}
+        label={label}
+        required={required}
+        hint={hint}
+        error={field.error}
+      >
+        <div ref={wrapRef} className="relative">
+          {name && (
+            <input
+              type="hidden"
+              name={name}
+              disabled={effectiveDisabled}
+              value={
+                selected
+                  ? (getFormValue?.(selected) ?? String(getKey(selected)))
+                  : ""
+              }
+              readOnly
+            />
           )}
-        </span>
+          <input
+            ref={inputRef}
+            id={id}
+            data-field-name={name || undefined}
+            type="text"
+            role="combobox"
+            autoComplete="off"
+            aria-expanded={open}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={
+              open && items[active] ? `${id}-opt-${active}` : undefined
+            }
+            aria-describedby={field.describedBy}
+            aria-invalid={field.error ? true : undefined}
+            aria-required={required || undefined}
+            disabled={effectiveDisabled}
+            required={required}
+            placeholder={placeholder}
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              field.clear();
+              setOpen(true);
+              if (selected) {
+                preserveQueryForNullRef.current = controlled;
+                changeSelected(null);
+              }
+            }}
+            onFocus={() => setOpen(true)}
+            onKeyDown={onKeyDown}
+            className={inputClass({
+              error: field.error,
+              className: "pr-8",
+            })}
+          />
 
-        {open && (
-          <ul
-            ref={listRef}
-            id={listId}
-            role="listbox"
-            aria-label={label}
-            className={cn(
-              "absolute z-40 max-h-[260px] w-full overflow-y-auto rounded-lg",
-              "border border-border bg-card p-1 shadow-e3",
-              placement === "below" ? "top-full mt-1" : "bottom-full mb-1",
-            )}
-          >
-            {result.isPending && items.length === 0 && (
-              <li className="px-2 py-2 text-sm text-muted-fg">検索中…</li>
-            )}
-
-            {result.isError && (
-              <li role="alert" className="px-2 py-2 text-sm text-danger">
-                {result.error?.displayMessage ?? "取得に失敗しました"}
-              </li>
-            )}
-
-            {!result.isPending && !result.isError && items.length === 0 && (
-              <li className="px-2 py-2 text-sm text-muted-fg">
-                候補がありません
-              </li>
-            )}
-
-            {items.map((item, i) => (
-              <li
-                key={getKey(item)}
-                id={`${id}-opt-${i}`}
-                data-index={i}
-                role="option"
-                aria-selected={i === active}
-                // pointerdown だと入力欄の blur より先に走るので選択が確実になる
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  choose(item);
-                }}
-                onPointerEnter={() => setActive(i)}
-                className={cn(
-                  "cursor-pointer rounded-md px-2 py-2 text-sm",
-                  i === active ? "bg-accent text-accent-fg" : "text-card-fg",
-                )}
+          <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+            {result.isPending && open ? (
+              <Spinner className="text-muted-fg" />
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                className="size-4 text-muted-fg"
+                aria-hidden="true"
+                fill="none"
               >
-                {renderItem ? renderItem(item) : getLabel(item)}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                <path
+                  d="m7 10 5 5 5-5"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
 
-      {hint && (
-        <p id={`${id}-hint`} className="text-xs text-muted-fg">
-          {hint}
-        </p>
-      )}
+          {open && (
+            <ul
+              ref={listRef}
+              id={listId}
+              role="listbox"
+              aria-label={label}
+              className={cn(
+                "absolute z-40 max-h-[260px] w-full overflow-y-auto rounded-lg",
+                "border border-border bg-card p-1 shadow-e3",
+                placement === "below" ? "top-full mt-1" : "bottom-full mb-1",
+              )}
+            >
+              {result.isPending && items.length === 0 && (
+                <li className="px-2 py-2 text-sm text-muted-fg">検索中…</li>
+              )}
+
+              {result.isError && (
+                <li role="alert" className="px-2 py-2 text-sm text-danger">
+                  {result.error?.displayMessage ?? "取得に失敗しました"}
+                </li>
+              )}
+
+              {!result.isPending && !result.isError && items.length === 0 && (
+                <li className="px-2 py-2 text-sm text-muted-fg">
+                  候補がありません
+                </li>
+              )}
+
+              {items.map((item, i) => (
+                <li
+                  key={getKey(item)}
+                  id={`${id}-opt-${i}`}
+                  data-index={i}
+                  role="option"
+                  aria-selected={i === active}
+                  // pointerdown だと入力欄の blur より先に走るので選択が確実になる
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    choose(item);
+                  }}
+                  onPointerEnter={() => setActive(i)}
+                  className={cn(
+                    "cursor-pointer rounded-md px-2 py-2 text-sm",
+                    i === active
+                      ? "bg-accent text-accent-fg"
+                      : "text-card-fg",
+                  )}
+                >
+                  {renderItem ? renderItem(item) : getLabel(item)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </FieldShell>
     </div>
   );
 }

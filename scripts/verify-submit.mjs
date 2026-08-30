@@ -85,7 +85,8 @@ await page.goto(`${API}/received`, { waitUntil: "domcontentloaded" });
 await page.addScriptTag({
   content:
     fs.readFileSync(path.join(out, "action.js"), "utf8").replace(/export /g, "") +
-    "\nwindow.__action = { ActionError, toActionError, jsonRequest };",
+    "\nwindow.__action = { ActionError, toActionError, jsonRequest, " +
+    "resolveAction, serializeJsonBody };",
 });
 await page.addScriptTag({
   content: submitJs
@@ -93,6 +94,7 @@ await page.addScriptTag({
     .replace(/export /g, "")
     .replace(/\bActionError\b/g, "window.__action.ActionError")
     .replace(/\bjsonRequest\b/g, "window.__action.jsonRequest")
+    .replace(/\bserializeJsonBody\b/g, "window.__action.serializeJsonBody")
     .replace(/window\.__action\.jsonRequest<[^>]*>/g, "window.__action.jsonRequest") +
     "\nwindow.__submit = { createSubmit, HONEYPOT_NAME };",
 });
@@ -160,6 +162,32 @@ await reset();
     "   おとりの欄は送信先に届けない",
     got[0] && !("wt_company_url" in got[0].body),
     JSON.stringify(got[0]?.body),
+  );
+}
+
+await reset();
+{
+  const r = await page.evaluate(async (api) => {
+    const action = window.__action.resolveAction({ url: `${api}/ok` });
+    try {
+      await action(
+        { id: 1n },
+        { signal: new AbortController().signal },
+      );
+      return { ok: true };
+    } catch (e) {
+      return {
+        ok: false,
+        code: e?.code,
+        displayMessage: e?.displayMessage,
+      };
+    }
+  }, API);
+  const got = await received();
+  must(
+    "    EndpointSpecも同じSERIALIZATION契約を使う",
+    !r.ok && r.code === "SERIALIZATION" && got.length === 0,
+    `${JSON.stringify(r)} / ${got.length}件`,
   );
 }
 
@@ -250,6 +278,24 @@ await reset();
 }
 
 /* ===== 10. タイムアウト ========================================= */
+{
+  const invalid = await page.evaluate((api) => {
+    const values = [Number.NaN, Number.POSITIVE_INFINITY, -1];
+    return values.map((timeout) => {
+      try {
+        window.__submit.createSubmit({ url: `${api}/ok`, timeout });
+        return false;
+      } catch (error) {
+        return error instanceof RangeError;
+      }
+    });
+  }, API);
+  must(
+    "10. 不正なtimeoutはnetworkへ出る前にfail-fastする",
+    invalid.every(Boolean),
+    JSON.stringify(invalid),
+  );
+}
 {
   const r = await send({ url: `${API}/slow`, timeout: 300 }, { a: 1 });
   must("10. タイムアウトすると専用の文言になる", r.code === "TIMEOUT", r.displayMessage);

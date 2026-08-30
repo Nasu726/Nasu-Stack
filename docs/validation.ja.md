@@ -88,6 +88,15 @@ error を表示し、DOM順で最初の invalid control へfocusを移します�
 actionには変換済みdataを渡します。lifecycle callbackの第2引数は元の`FormValues`を
 保つため、error handlerは送信されたcontrolを確認できます。
 
+`FormValues`はbrowserから来る同名fieldのrawな形を保ちます。`CheckboxGroup`は
+0件なら`""`、1件なら`string`、2件以上なら`string[]`です。validator内でこの
+`"" | string | string[]`境界をdomain上の配列へ正規化してください。
+
+form messageを抑止するのは、返されたfield名のすべてが、errorを表示できるfield
+componentとして登録されている場合だけです。既知fieldとserver専用・誤記fieldが
+混ざる場合、既知errorはcontrolの隣へ出し、残りの失敗が消えないようform messageも
+残します。`FieldArray`はroot name自身を表示先として登録します。
+
 後からserverが返したerrorも同じfield表示へ戻ります。新しいsubmitを始めると前のclient
 結果を置き換えるので、client / serverのerrorが2つの正解として積み上がりません。
 

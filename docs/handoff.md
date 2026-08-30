@@ -27,6 +27,9 @@
 v2 Stable後の内部リファクタリングは完了しています。計画は
 [`plan-refactor-v2.md`](plan-refactor-v2.md)、PR #32〜#39と公開smokeまでの実施証拠は
 [`result-refactor-v2.md`](result-refactor-v2.md)を正とします。
+dogfoodingは[`plan-dogfood.md`](plan-dogfood.md)で、実アプリをCLIへ直投入せず
+`apps/dogfood-*`で育てる工程に分けました。先に直したv2.0.2候補のform / transport
+境界と検査結果は[`result-v202-boundaries.md`](result-v202-boundaries.md)を正とします。
 v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 [`result-v1.md`](result-v1.md) に残しています。
 直前のreview対応は [`plan-v09f-review.md`](plan-v09f-review.md) と
@@ -65,6 +68,8 @@ v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
   [`plan-v201-boundary-fixes.md`](plan-v201-boundary-fixes.md)と
   [`result-v201-boundary-fixes.md`](result-v201-boundary-fixes.md)に分離した。
   現在の公開tagとassetはGitHub Releasesを正とする
+- `codex/v2.0.2-dogfood-boundaries` … dogfood前のform / transport境界修正。merge後は
+  `plan-dogfood.md`のRepository PulseからappごとにPRを分ける
 - v2の候補はworklistをそのまま足さず、既存itemへの吸収・hook・recipe・非採用まで
   [`plan-v2.md`](plan-v2.md) の複雑さ予算で判断した
 

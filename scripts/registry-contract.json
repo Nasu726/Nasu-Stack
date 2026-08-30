@@ -25,6 +25,7 @@
             "callSafely:function",
             "jsonRequest:function",
             "resolveAction:function",
+            "serializeJsonBody:function",
             "toActionError:function"
           ]
         }
@@ -1155,7 +1156,8 @@
         "Nasu726/Nasu-Stack/spinner",
         "Nasu726/Nasu-Stack/utils",
         "Nasu726/Nasu-Stack/action",
-        "Nasu726/Nasu-Stack/use-popover"
+        "Nasu726/Nasu-Stack/use-popover",
+        "Nasu726/Nasu-Stack/async-form"
       ],
       "files": [
         {

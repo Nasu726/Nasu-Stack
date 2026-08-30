@@ -235,7 +235,11 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
     JSON.stringify(guardPhase),
   );
 
-  await page.waitForTimeout(200);
+  await page.waitForFunction(
+    () =>
+      document.querySelector('[data-testid="form-prop-calls"]')
+        ?.textContent === "1",
+  );
   const actionPhase = await propProbe.evaluate((root) =>
     [...root.querySelectorAll("input, select")]
       .filter((control) => control.getAttribute("type") !== "hidden")
@@ -246,7 +250,12 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
     actionPhase,
   );
 
-  await page.waitForTimeout(250);
+  await page.waitForFunction(
+    () =>
+      document.querySelectorAll(
+        '[data-testid="form-prop-probe"] p[role="alert"]',
+      ).length === 4,
+  );
   const errors = await propProbe.evaluate((root) =>
     ["field", "select", "checkbox", "date"].map((name) => {
       const control = root.querySelector(`[name="${name}"]`);
@@ -303,6 +312,108 @@ const open = (width = 1200, height = 950) => openTab("forms", { width, height })
   must(
     "存在しないfield名だけのfailureは一般errorとして画面に残る",
     (await unknown.textContent())?.includes("unknown field is visible") ?? false,
+  );
+
+  // focusを見るため、このbrowser検査中だけhidden fixtureを表示します。
+  await page.getByTestId("form-boundary-probes").evaluate((root) => {
+    root.hidden = false;
+  });
+
+  const mixed = page.getByTestId("mixed-field-probe");
+  await mixed.locator("form").evaluate((form) => form.requestSubmit());
+  await page.waitForTimeout(100);
+  const mixedAlerts = await mixed
+    .locator('form p[role="alert"]')
+    .allTextContents();
+  must(
+    "既知+未知fieldのfailureは既知fieldと一般errorの両方を失わない",
+    mixedAlerts.some((message) => message.includes("known field error")) &&
+      mixedAlerts.some((message) =>
+        message.includes("mixed field failure remains visible"),
+      ),
+    JSON.stringify(mixedAlerts),
+  );
+
+  const arrayRoot = page.getByTestId("field-array-root-error-probe");
+  await arrayRoot.locator("form").evaluate((form) => form.requestSubmit());
+  await page.waitForTimeout(100);
+  const arrayRootAlerts = await arrayRoot
+    .locator('form p[role="alert"]')
+    .allTextContents();
+  const arrayRootFocus = await arrayRoot.evaluate(
+    () => document.activeElement?.getAttribute("data-field-array-add"),
+  );
+  must(
+    "FieldArray root errorは1回だけ出し、追加buttonへfocusする",
+    arrayRootAlerts.length === 1 &&
+      arrayRootAlerts[0]?.includes("add at least one member") &&
+      !arrayRootAlerts[0]?.includes("must not duplicate") &&
+      arrayRootFocus === "members",
+    JSON.stringify({ alerts: arrayRootAlerts, focus: arrayRootFocus }),
+  );
+
+  const asyncSelect = page.getByTestId("async-select-field-probe");
+  const combo = asyncSelect.getByRole("combobox", { name: "owner" });
+  await asyncSelect.locator("form").evaluate((form) => form.requestSubmit());
+  await page.waitForTimeout(80);
+  must(
+    "AsyncSelectはAsyncForm pending中に自動でdisabledになる",
+    await combo.isDisabled(),
+  );
+  await page.waitForTimeout(180);
+  const selectError = await asyncSelect.evaluate((root) => {
+    const input = root.querySelector('[role="combobox"]');
+    const described = (input?.getAttribute("aria-describedby") ?? "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((id) => document.getElementById(id));
+    return {
+      invalid: input?.getAttribute("aria-invalid"),
+      activeField: document.activeElement?.getAttribute("data-field-name"),
+      describedAlerts: described.filter(
+        (node) => node?.getAttribute("role") === "alert",
+      ).length,
+      alerts: [...root.querySelectorAll('form p[role="alert"]')].map((node) =>
+        node.textContent?.trim(),
+      ),
+    };
+  });
+  must(
+    "    field error・ARIA・first-error focusをvisible comboboxへ接続する",
+    selectError.invalid === "true" &&
+      selectError.activeField === "ownerId" &&
+      selectError.describedAlerts === 1 &&
+      selectError.alerts.length === 1 &&
+      selectError.alerts[0]?.includes("select an owner"),
+    JSON.stringify(selectError),
+  );
+
+  await combo.fill("Ali");
+  await page.waitForTimeout(80);
+  const typedValidity = await combo.evaluate((input) => ({
+    valid: input.checkValidity(),
+    message: input.validationMessage,
+    invalid: input.getAttribute("aria-invalid"),
+  }));
+  must(
+    "    入力でserver errorを消すが、候補未選択のrequiredはvalidにしない",
+    !typedValidity.valid &&
+      typedValidity.message.length > 0 &&
+      typedValidity.invalid !== "true" &&
+      (await asyncSelect.locator('form p[role="alert"]').count()) === 0,
+    JSON.stringify(typedValidity),
+  );
+
+  await asyncSelect.getByRole("option", { name: "Alice" }).click();
+  const selectedValue = await asyncSelect.evaluate((root) => {
+    const input = root.querySelector('[role="combobox"]');
+    const hidden = root.querySelector('input[type="hidden"][name="ownerId"]');
+    return { valid: input?.checkValidity(), value: hidden?.value };
+  });
+  must(
+    "    候補を選ぶとrequiredを満たし、検索文字列ではなく選択値を送る",
+    selectedValue.valid === true && selectedValue.value === "owner-1",
+    JSON.stringify(selectedValue),
   );
 
   await page.close();

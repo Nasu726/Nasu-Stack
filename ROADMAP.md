@@ -1,5 +1,23 @@
 # ROADMAP
 
+## v2.0.2候補 — dogfood前の境界修正と実アプリincubation
+
+外部reviewで再現条件が確定したform / transport境界を先に直し、その後は新しい
+primitiveを机上で増やさず、性質の異なる実アプリ3本でcompositionを検証します。
+
+- [x] `AsyncForm`のfield error表示先をfield registrationで正確に判定
+- [x] `AsyncSelect`をAsyncForm field contractへ統合
+- [x] JSON serialization分類と`createSubmit.timeout`のruntime検査を統一
+- [x] `CheckboxGroup`の0 / 1 / N raw値契約を正確に文書化
+- [ ] read-heavy / state-heavy / write-heavyなdogfood appを順に実装
+- [ ] 反復実装、邪魔なdefault、文書不足、escape hatchを横断記録
+
+計画とCLI昇格の品質基準は
+[`docs/plan-dogfood.md`](docs/plan-dogfood.md)を正とします。dogfood appは最初から
+利用者向けtemplateと断定せず、`apps/dogfood-*`で実利用と自動検査を通してから昇格を
+判断します。境界修正の実装と直接証拠は
+[`docs/result-v202-boundaries.md`](docs/result-v202-boundaries.md)に残します。
+
 ## v2.0.1 — 互換bug fixのpatch release
 
 - [x] `FieldArray`のdynamic `min`増加後もnative resetで現在の最低行数を守る

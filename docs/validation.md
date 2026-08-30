@@ -90,6 +90,17 @@ The action receives transformed data; lifecycle callbacks keep the original
 `FormValues` as their second argument so an error handler can inspect the
 submitted controls.
 
+`FormValues` preserves the browser's raw repeated-name shape. For a
+`CheckboxGroup`, zero selected values are `""`, one selected value is a
+`string`, and two or more selected values are a `string[]`. Normalize that
+`"" | string | string[]` boundary to a domain array inside the validator.
+
+The form-level message is suppressed only when every returned field name is
+registered by a field component that can render it. If a response mixes a
+known field with a server-only or misspelled field, the known error stays next
+to its control and the form-level message remains visible so the other failure
+does not disappear. A `FieldArray` registers its root name as a display target.
+
 An error returned later by the server uses the same field display. Starting a
 new submission replaces the previous client result, so client and server errors
 do not accumulate as two competing sources of truth.

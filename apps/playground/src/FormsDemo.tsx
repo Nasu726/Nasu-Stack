@@ -10,6 +10,7 @@ import {
   SelectField,
 } from "@/components/ui/form-fields";
 import { FieldArray } from "@/components/ui/field-array";
+import { AsyncSelect } from "@/components/ui/async-select";
 import { DataTable, type TableColumn } from "@/components/ui/data-table";
 import { useOptimisticList } from "@/hooks/use-optimistic-list";
 import { useToast } from "@/components/ui/action-provider";
@@ -17,6 +18,11 @@ import { ActionError } from "@/lib/action";
 import type { ValidationResult, Validator } from "@/lib/validation";
 import { Panel } from "./Panel";
 import { t } from "./lang";
+
+const probeOwners = [
+  { id: "owner-1", name: "Alice" },
+  { id: "owner-2", name: "Bob" },
+];
 
 export function FormsDemo() {
   return (
@@ -79,7 +85,7 @@ function BoundaryFormProbes() {
           }}
           action={async () => {
             setPropCalls((count) => count + 1);
-            await new Promise((resolve) => setTimeout(resolve, 180));
+            await new Promise((resolve) => setTimeout(resolve, 400));
             throw new ActionError("probe validation", {
               code: 400,
               displayMessage: "probe validation failed",
@@ -141,6 +147,81 @@ function BoundaryFormProbes() {
           }}
         >
           <Field name="known" label="known" />
+        </AsyncForm>
+      </div>
+
+      <div data-testid="mixed-field-probe">
+        <AsyncForm
+          resetOnSuccess={false}
+          action={async () => {
+            throw new ActionError("mixed fields", {
+              code: "VALIDATION",
+              displayMessage: "mixed field failure remains visible",
+              fields: {
+                known: "known field error",
+                serverOnlyField: "server-only field error",
+              },
+            });
+          }}
+        >
+          <Field name="known" label="known mixed field" />
+        </AsyncForm>
+      </div>
+
+      <div data-testid="field-array-root-error-probe">
+        <AsyncForm
+          resetOnSuccess={false}
+          action={async () => {
+            throw new ActionError("field array root", {
+              code: "VALIDATION",
+              displayMessage: "field array root must not duplicate",
+              fields: { members: "add at least one member" },
+            });
+          }}
+        >
+          <FieldArray<{ email: string }>
+            name="members"
+            label="members"
+            defaultItems={[]}
+            createItem={() => ({ email: "" })}
+            addLabel="add member"
+            removeLabel={() => "remove member"}
+            emptyMessage="no members"
+          >
+            {(item) => (
+              <Field name={`${item.name}.email`} label="member email" />
+            )}
+          </FieldArray>
+        </AsyncForm>
+      </div>
+
+      <div data-testid="async-select-field-probe">
+        <AsyncForm
+          resetOnSuccess={false}
+          action={async () => {
+            await new Promise((resolve) => setTimeout(resolve, 180));
+            throw new ActionError("owner field", {
+              code: "VALIDATION",
+              displayMessage: "choose an owner before continuing",
+              fields: { ownerId: "select an owner" },
+            });
+          }}
+        >
+          <AsyncSelect
+            name="ownerId"
+            label="owner"
+            hint="choose a registered owner"
+            required
+            debounce={0}
+            loader={async (query) =>
+              probeOwners.filter((owner) =>
+                owner.name.toLowerCase().includes(query.toLowerCase()),
+              )
+            }
+            getKey={(owner) => owner.id}
+            getLabel={(owner) => owner.name}
+            getFormValue={(owner) => owner.id}
+          />
         </AsyncForm>
       </div>
     </div>
