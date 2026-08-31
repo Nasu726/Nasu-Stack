@@ -15,8 +15,10 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 </Stack>
 ```
 
-**先に見る:** [部品のカタログ](https://nasu726.github.io/Nasu-Stack/catalog/?lang=ja)（全部の部品を実際に触れます） /
-[デモサイト](https://nasu726.github.io/Nasu-Stack/demo/ja/)（この部品で組んだサイト）
+**先に見る:**
+[部品のカタログ](https://nasu726.github.io/Nasu-Stack/catalog/?lang=ja)（全部の部品を実際に触れます） /
+[デモサイト](https://nasu726.github.io/Nasu-Stack/demo/ja/)（この部品で組んだ雛型サイト） /
+[Repository Pulse](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/)（公開CLIとregistryから組み立てた実アプリ）
 
 > **Nasu Stack 2 は Stable です。** 公開している registry 名、export、token、
 > 文書化した部品の契約は semantic versioning に従い、破壊的変更は次の major version
@@ -497,10 +499,6 @@ import { DataList } from "@/ui/data-list";
 | [docs/security.ja.md](docs/security.ja.md) | 配り方と、その安全性の根拠 |
 | [docs/development.md](docs/development.md) | このリポジトリ自体を触るとき |
 | [README.md](README.md) | English |
-| [docs/rename.md](docs/rename.md) | `WebTemplate` から改名した経緯 |
-
-**v0.9e より前の記録（`docs/plan-*` `docs/result-*` と `ROADMAP.md`）は、
-旧名の `WebTemplate` のままです。** 当時の記録なので直していません。
 
 個人のプロジェクトです。保守と対応期限は約束していません（[SECURITY.ja.md](SECURITY.ja.md)）。
 
