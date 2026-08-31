@@ -71,14 +71,14 @@ const CONFIG_RESULT: ConfigResult = (() => {
 
 export function App() {
   return (
-    <ThemeProvider defaultTheme="editorial" storageKey="repository-pulse.theme">
+    <ThemeProvider defaultTheme="neutral" storageKey="repository-pulse.theme.v2">
       <ActionProvider>
         <SkipLink />
         <SiteHeader
           brand="Repository Pulse"
           brandHref={import.meta.env.BASE_URL}
           items={CONFIG_RESULT.ok ? NAVIGATION : []}
-          actions={<ThemeSwitcher themes={false} />}
+          actions={<ThemeSwitcher />}
           width="wide"
         />
 
