@@ -27,7 +27,10 @@ context、transport helperの契約を揃え、利用者projectへ配った状�
 
 ### transportとraw FormValues
 
-- `serializeJsonBody()`を`EndpointSpec`と`createSubmit()`で共有した
+- `serializeJsonBody()`をlower-level transport APIとして`EndpointSpec`と`createSubmit()`で共有した
+- helperは値を補わず、各呼び出し側が自身の既存契約に沿って既定値を決める
+- `EndpointSpec`の既存契約どおり、`undefined`はbodyなし、`null`はJSON `null`として送る
+- `createSubmit()`は従来どおり`null` / `undefined` payloadを空objectとして送る
 - BigInt / cycle等はnetworkへ出さず、両経路とも`SERIALIZATION`になる
 - `createSubmit.timeout`は有限な0以上のnumberだけを受け付ける
 - `CheckboxGroup`のraw値が0件=`""`、1件=`string`、複数=`string[]`であることを
@@ -39,7 +42,8 @@ context、transport helperの契約を揃え、利用者projectへ配った状�
 - `FieldArray` root errorは1回だけ表示し、追加操作へfocusする
 - `AsyncSelect`がpending disabled、field error、ARIA、focus、clearを継承する
 - 検索文字列だけではrequiredを満たさず、候補選択後はhidden valueを送る
-- EndpointSpecのBigIntも`SERIALIZATION`となり、requestを送らない
+- EndpointSpecのundefined / null / BigInt / cycleを個別に回帰検査する
+- createSubmitのnull / undefinedが従来どおり空objectになることを回帰検査する
 - NaN / Infinity / 負数のtimeoutは`createSubmit()`生成時にfail-fastする
 
 途中、既存のpending検査がguard開始から固定200ms後を観測してfalse-redになった。
@@ -55,10 +59,11 @@ action開始とerror出現をDOM状態で待つ検査へ変更し、処理速度
 | `pnpm verify`（最終diff） | 35 / 35 |
 | `pnpm verify:create` | 113 / 113 |
 | `verify-forms`（最終diff、実browser） | 59 / 59、pageerror 0 |
-| `verify-submit`（全体runner内） | 32 / 32、pageerror 0 |
+| `verify-submit`（全体runner内） | 36 / 36、pageerror 0 |
 
 ## dogfoodへ持ち越すこと
 
 このPRでは`apps/dogfood-*`をまだ作らない。form境界修正と実アプリを同じPRへ混ぜると、
 不具合修正の回帰条件とtemplateの製品判断を分離できないためである。次は
-[`plan-dogfood.md`](plan-dogfood.md)の順にRepository Pulseから実装し、観測表を残す。
+[`plan-dogfood.md`](plan-dogfood.md)の順に、workspace aliasではなく実create / registry copy
+経路でRepository Pulseから実装し、観測表を残す。

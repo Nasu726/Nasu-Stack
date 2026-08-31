@@ -167,26 +167,55 @@ await reset();
 
 await reset();
 {
+  await send({ url: `${API}/ok` }, undefined);
+  await send({ url: `${API}/ok` }, null);
+  const got = await received();
+  must(
+    "   createSubmitのnull/undefinedは従来どおり空objectになる",
+    got.length === 2 && got.every((entry) => entry.rawBody === "{}"),
+    JSON.stringify(got.map((entry) => entry.rawBody)),
+  );
+}
+
+await reset();
+{
   const r = await page.evaluate(async (api) => {
     const action = window.__action.resolveAction({ url: `${api}/ok` });
-    try {
-      await action(
-        { id: 1n },
-        { signal: new AbortController().signal },
-      );
-      return { ok: true };
-    } catch (e) {
-      return {
-        ok: false,
-        code: e?.code,
-        displayMessage: e?.displayMessage,
-      };
+    await action(undefined, { signal: new AbortController().signal });
+    await action(null, { signal: new AbortController().signal });
+    return true;
+  }, API);
+  const got = await received();
+  must("   EndpointSpecのundefinedはbodyを送らない", r && got[0]?.rawBody === "");
+  must("   EndpointSpecのnullはJSON nullを送る", got[1]?.rawBody === "null");
+}
+
+await reset();
+{
+  const r = await page.evaluate(async (api) => {
+    const action = window.__action.resolveAction({ url: `${api}/ok` });
+    const cyclic = {};
+    cyclic.self = cyclic;
+    const codes = [];
+    for (const input of [{ id: 1n }, cyclic]) {
+      try {
+        await action(input, { signal: new AbortController().signal });
+        codes.push("OK");
+      } catch (e) {
+        codes.push(e?.code);
+      }
     }
+    return codes;
   }, API);
   const got = await received();
   must(
-    "    EndpointSpecも同じSERIALIZATION契約を使う",
-    !r.ok && r.code === "SERIALIZATION" && got.length === 0,
+    "   EndpointSpecのBigIntはSERIALIZATIONになる",
+    r[0] === "SERIALIZATION" && got.length === 0,
+    `${JSON.stringify(r)} / ${got.length}件`,
+  );
+  must(
+    "   EndpointSpecのcycleもSERIALIZATIONになる",
+    r[1] === "SERIALIZATION" && got.length === 0,
     `${JSON.stringify(r)} / ${got.length}件`,
   );
 }

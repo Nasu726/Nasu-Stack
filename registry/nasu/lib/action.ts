@@ -221,13 +221,11 @@ export type ActionSpec<TInput = void, TOutput = unknown> =
   | EndpointSpec;
 
 /** JSON request bodyを作り、serialization failureを通信失敗と分離します。 */
-export function serializeJsonBody(value: unknown): string {
+export function serializeJsonBody(value: unknown): string | undefined {
   try {
-    const serialized = JSON.stringify(value ?? {});
-    if (serialized === undefined) {
-      throw new TypeError("JSON.stringify returned undefined");
-    }
-    return serialized;
+    // undefinedはbodyなし、nullはJSONのnullです。ここで既定値へ置き換えると
+    // EndpointSpecの既存契約が変わるため、呼び出し側の値をそのまま扱います。
+    return JSON.stringify(value);
   } catch (raw) {
     throw new ActionError("request body is not JSON serializable", {
       displayMessage:

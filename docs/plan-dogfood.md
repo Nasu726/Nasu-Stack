@@ -35,8 +35,13 @@ dogfood側に回避策を埋め込む前に、外部reviewで再現条件が明�
 ## incubationの配置
 
 最初はworkspace内の`apps/dogfood-*`へ置く。公開demo、通常scaffold、dogfoodの原本を
-手で複製しない。dogfoodはNasu Stackのregistry sourceをworkspace aliasで直接使い、
-採用すると決めた時点で`create-nasu-stack`の生成経路を別途設計する。
+手で複製しない。ただしregistry sourceへのworkspace aliasも使わない。3本ともpackした
+`create-nasu-stack`から空のappを作り、本物のshadcn / registry経路で必要なitemをcopyする。
+生成されたsourceは実利用時と同じく各appの所有物とし、app固有の変更もそこで行う。
+
+各appにはbootstrap時のcommandと導入itemを記録する。registry更新を試す時は
+`--dry-run`→`--diff`を先に行い、利用者が変更したcopy-owned sourceとの衝突も観測する。
+依存packageとlockfileも各app側で解決し、repository内にあるという理由で暗黙に共有しない。
 
 CLIへ追加する条件は次のすべてを満たすこととする。
 
@@ -46,7 +51,8 @@ CLIへ追加する条件は次のすべてを満たすこととする。
 - 320 / 375 / 414 / 768 / 1024 / 1920pxで主要経路が潰れない
 - keyboardだけで主要操作を完了でき、loading / empty / error / successが読める
 - `.env.example`、設定手順、責任外の運用要件が英語と日本語で分かる
-- registry sourceやtemplate sourceの第二の手コピーを作らない
+- registry sourceを手で複製せず、実registry経路が作ったcopy-owned sourceを使う
+- workspace aliasでregistry本体へ抜け道を作らない
 
 ## 作る3種類の実アプリ
 

@@ -101,9 +101,9 @@ export function createSubmit<TInput = unknown, TOutput = unknown>({
     }
     if (transform) payload = transform(payload as TInput);
 
-    // JSON化はnetworkへ出る前の境界です。EndpointSpecと同じ分類を使い、
-    // TypeErrorをCORS/通信断へ誤翻訳しません。
-    const body = serializeJsonBody(payload);
+    // createSubmitは従来どおりnull/undefinedを空objectとして送ります。
+    // JSON境界の分類はEndpointSpecと共有し、値の既定だけをここで決めます。
+    const body = serializeJsonBody(payload ?? {});
 
     /* --- 中断の合成 --------------------------------------------
        `AbortSignal.any` は比較的新しい API なので、手で合成します

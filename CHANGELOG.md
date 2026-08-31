@@ -15,7 +15,8 @@ below.
   disablement, server errors, ARIA, first-error focus, error clearing, and
   selection-based required validity
 - `EndpointSpec` and `createSubmit` share one JSON serialization boundary and
-  both classify BigInt/cyclic payloads as `SERIALIZATION`
+  both classify BigInt/cyclic payloads as `SERIALIZATION`, while preserving
+  EndpointSpec's bodyless `undefined` and JSON `null` behavior
 - `createSubmit` rejects non-finite and negative timeouts before a request can
   start
 
