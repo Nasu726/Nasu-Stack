@@ -178,6 +178,14 @@ await group([
   ["入口: create-nasu-stack", "node", ["scripts/verify-create.mjs"]],
 ]);
 
+/* dogfoodは外部APIへ出ず、app自身の固定fixtureとChromiumで検査します。
+   copy-owned source、独立package、公開設定の失敗画面まで実利用側で通します。 */
+await step(
+  "dogfood: Repository Pulse",
+  "pnpm",
+  ["--filter", "dogfood-repository-pulse", "verify"],
+);
+
 /* ---- 群 2: レジストリを作ってから ---------------------------------- */
 // 下の 3 つは public/r を読むので、生成が先です。ここだけ直列。
 await step("レジストリ生成", "node", ["scripts/build-registry.mjs"]);
