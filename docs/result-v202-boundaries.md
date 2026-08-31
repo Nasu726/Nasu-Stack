@@ -32,6 +32,8 @@ context、transport helperの契約を揃え、利用者projectへ配った状�
 - `EndpointSpec`の既存契約どおり、`undefined`はbodyなし、`null`はJSON `null`として送る
 - `createSubmit()`は従来どおり`null` / `undefined` payloadを空objectとして送る
 - BigInt / cycle等はnetworkへ出さず、両経路とも`SERIALIZATION`になる
+- function / Symbol等、`JSON.stringify()`がthrowせず`undefined`を返すtransform結果も
+  `createSubmit()`では`SERIALIZATION`となり、bodyなしrequestへ退行しない
 - `createSubmit.timeout`は有限な0以上のnumberだけを受け付ける
 - `CheckboxGroup`のraw値が0件=`""`、1件=`string`、複数=`string[]`であることを
   英日validation guideとsource commentへ記録した
@@ -44,6 +46,7 @@ context、transport helperの契約を揃え、利用者projectへ配った状�
 - 検索文字列だけではrequiredを満たさず、候補選択後はhidden valueを送る
 - EndpointSpecのundefined / null / BigInt / cycleを個別に回帰検査する
 - createSubmitのnull / undefinedが従来どおり空objectになることを回帰検査する
+- createSubmitのBigInt / Symbol / function transformがrequest前に失敗することを検査する
 - NaN / Infinity / 負数のtimeoutは`createSubmit()`生成時にfail-fastする
 
 途中、既存のpending検査がguard開始から固定200ms後を観測してfalse-redになった。
@@ -59,7 +62,7 @@ action開始とerror出現をDOM状態で待つ検査へ変更し、処理速度
 | `pnpm verify`（最終diff） | 35 / 35 |
 | `pnpm verify:create` | 113 / 113 |
 | `verify-forms`（最終diff、実browser） | 59 / 59、pageerror 0 |
-| `verify-submit`（全体runner内） | 36 / 36、pageerror 0 |
+| `verify-submit`（全体runner内） | 38 / 38、pageerror 0 |
 
 ## dogfoodへ持ち越すこと
 

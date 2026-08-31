@@ -102,8 +102,9 @@ export function createSubmit<TInput = unknown, TOutput = unknown>({
     if (transform) payload = transform(payload as TInput);
 
     // createSubmitは従来どおりnull/undefinedを空objectとして送ります。
-    // JSON境界の分類はEndpointSpecと共有し、値の既定だけをここで決めます。
-    const body = serializeJsonBody(payload ?? {});
+    // EndpointSpecと違い、transform後の値には必ずJSON bodyを要求します。
+    // function / SymbolのようにJSON.stringifyがundefinedを返す値も失敗です。
+    const body = serializeJsonBody(payload ?? {}, { required: true });
 
     /* --- 中断の合成 --------------------------------------------
        `AbortSignal.any` は比較的新しい API なので、手で合成します

@@ -17,6 +17,8 @@ below.
 - `EndpointSpec` and `createSubmit` share one JSON serialization boundary and
   both classify BigInt/cyclic payloads as `SERIALIZATION`, while preserving
   EndpointSpec's bodyless `undefined` and JSON `null` behavior
+- `createSubmit` also rejects transform results such as functions and Symbols
+  when `JSON.stringify()` returns `undefined` without throwing
 - `createSubmit` rejects non-finite and negative timeouts before a request can
   start
 

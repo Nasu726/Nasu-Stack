@@ -268,32 +268,52 @@ await reset();
 /* ===== 8.5. JSON化とnetwork failureを混ぜない =================== */
 await reset();
 {
-  const r = await page.evaluate(async (api) => {
-    const submit = window.__submit.createSubmit({
-      url: `${api}/ok`,
-      transform: () => ({ id: 1n }),
-    });
-    try {
-      await submit({}, { signal: new AbortController().signal });
-      return { ok: true };
-    } catch (e) {
-      return {
-        ok: false,
-        code: e?.code,
-        displayMessage: e?.displayMessage,
-      };
+  const results = await page.evaluate(async (api) => {
+    const transforms = [
+      () => ({ id: 1n }),
+      () => Symbol("x"),
+      () => () => {},
+    ];
+    const outcomes = [];
+    for (const transform of transforms) {
+      const submit = window.__submit.createSubmit({
+        url: `${api}/ok`,
+        transform,
+      });
+      try {
+        await submit({}, { signal: new AbortController().signal });
+        outcomes.push({ ok: true });
+      } catch (e) {
+        outcomes.push({
+          ok: false,
+          code: e?.code,
+          displayMessage: e?.displayMessage,
+        });
+      }
     }
+    return outcomes;
   }, API);
   const got = await received();
   must(
-    "8.5 JSON化できないtransform結果はSERIALIZATIONになる",
-    !r.ok && r.code === "SERIALIZATION",
-    JSON.stringify(r),
+    "8.5 BigIntのtransform結果はSERIALIZATIONになる",
+    !results[0]?.ok && results[0]?.code === "SERIALIZATION",
+    JSON.stringify(results[0]),
+  );
+  must(
+    "    Symbolのtransform結果もSERIALIZATIONになる",
+    !results[1]?.ok && results[1]?.code === "SERIALIZATION",
+    JSON.stringify(results[1]),
+  );
+  must(
+    "    functionのtransform結果もSERIALIZATIONになる",
+    !results[2]?.ok && results[2]?.code === "SERIALIZATION",
+    JSON.stringify(results[2]),
   );
   must(
     "    serialization failureをNETWORK/CORSと誤案内せず送信もしない",
-    !/CORS|通信状況/.test(r.displayMessage ?? "") && got.length === 0,
-    `${r.displayMessage} / ${got.length}件`,
+    results.every((r) => !/CORS|通信状況/.test(r.displayMessage ?? "")) &&
+      got.length === 0,
+    `${JSON.stringify(results)} / ${got.length}件`,
   );
 }
 
