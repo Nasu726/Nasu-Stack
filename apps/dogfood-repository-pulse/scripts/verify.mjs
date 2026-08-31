@@ -154,7 +154,10 @@ async function applicationCase(browser) {
     await page.goto(`http://127.0.0.1:${webPort}/`, { waitUntil: "networkidle" });
     await page.getByRole("heading", { name: "example/pulse" }).waitFor();
     check(await page.getByText("1.2K").isVisible(), "repository summary renders parsed metrics");
-
+    check(
+      (await page.locator("html").getAttribute("data-theme")) === "neutral",
+      "Repository Pulse starts with the neutral theme",
+    );
     await page.locator("body").press("Home");
     await page.locator("body").press("Tab");
     check(
