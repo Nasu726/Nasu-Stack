@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/layout";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { SiteHeader, SkipLink } from "@/components/ui/site-nav";
-import { ThemeProvider, ThemeSwitcher } from "@/components/ui/theme-provider";
+import { ThemeProvider } from "@/components/ui/theme-provider";
 import { useResource } from "@/hooks/use-resource";
 import {
   PublicConfigError,
@@ -71,14 +71,13 @@ const CONFIG_RESULT: ConfigResult = (() => {
 
 export function App() {
   return (
-    <ThemeProvider defaultTheme="neutral" storageKey="repository-pulse.theme.v2">
+    <ThemeProvider defaultTheme="neutral" persist={false}>
       <ActionProvider>
         <SkipLink />
         <SiteHeader
           brand="Repository Pulse"
           brandHref={import.meta.env.BASE_URL}
           items={CONFIG_RESULT.ok ? NAVIGATION : []}
-          actions={<ThemeSwitcher />}
           width="wide"
         />
 

@@ -158,10 +158,6 @@ async function applicationCase(browser) {
       (await page.locator("html").getAttribute("data-theme")) === "neutral",
       "Repository Pulse starts with the neutral theme",
     );
-    check(
-      (await page.getByRole("radio").count()) === 4,
-      "tone switcher exposes all four themes",
-    );
     await page.locator("body").press("Home");
     await page.locator("body").press("Tab");
     check(
@@ -170,12 +166,6 @@ async function applicationCase(browser) {
     );
     await page.keyboard.press("Enter");
     check(await page.evaluate(() => document.activeElement?.id === "main"), "skip link focuses main content");
-
-    await page.getByText("Vivid", { exact: true }).click();
-    await page.locator('html[data-theme="vivid"]').waitFor();
-    check(true, "tone switcher changes the active theme");
-    await page.getByText("Neutral", { exact: true }).click();
-    await page.locator('html[data-theme="neutral"]').waitFor();
 
     const copy = page.getByRole("button", { name: "Copy repository URL" });
     await copy.click();
