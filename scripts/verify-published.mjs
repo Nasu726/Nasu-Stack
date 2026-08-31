@@ -207,6 +207,7 @@ for (const [name, sub] of [
   ["カタログ", "catalog"],
   ["デモ", "demo"],
   ["日本語デモ", "demo/ja"],
+  ["Repository Pulse", "dogfood/repository-pulse"],
 ]) {
   const entry = `${base}/${sub}/`;
   const res = await publishedFetch(entry).catch(() => null);
@@ -303,6 +304,48 @@ try {
         failed.length === 0,
         failed.slice(0, 3).join(" / "),
       );
+    }
+
+    /* Repository Pulseのdomain dataは外部GitHub APIの責任範囲です。
+       Pages smokeでは、同一originのJS/CSSが取れ、公開設定が埋め込まれた
+       app shellまで起動することを検査します。GitHubのrate limitを
+       Nasu Stackのdeploy失敗へ誤変換しません。 */
+    {
+      const page = await browser.newPage();
+      const failed = [];
+      const publishedOrigin = new URL(base).origin;
+      page.on("response", (response) => {
+        if (
+          new URL(response.url()).origin === publishedOrigin &&
+          response.status() >= 400
+        ) {
+          failed.push(`${response.url()} → HTTP ${response.status()}`);
+        }
+      });
+      page.on("requestfailed", (request) => {
+        if (new URL(request.url()).origin === publishedOrigin) {
+          failed.push(`${request.url()} → ${request.failure()?.errorText}`);
+        }
+      });
+      await page.goto(`${base}/dogfood/repository-pulse/`, {
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
+      });
+      const heading = page.getByRole("heading", {
+        level: 1,
+        name: "See what is moving in a repository.",
+      });
+      await heading.waitFor({ state: "visible", timeout: 10000 });
+      must(
+        "    Repository Pulse: 公開設定でapp shellが起動する",
+        await heading.isVisible(),
+      );
+      must(
+        "    Repository Pulse: 同一サイトの要求が失敗しない",
+        failed.length === 0,
+        failed.slice(0, 3).join(" / "),
+      );
+      await page.close();
     }
   } finally {
     await browser.close();

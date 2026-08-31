@@ -76,7 +76,7 @@ export function App() {
         <SkipLink />
         <SiteHeader
           brand="Repository Pulse"
-          brandHref="/"
+          brandHref={import.meta.env.BASE_URL}
           items={CONFIG_RESULT.ok ? NAVIGATION : []}
           actions={<ThemeSwitcher themes={false} />}
           width="wide"
