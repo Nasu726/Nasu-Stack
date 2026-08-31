@@ -6,6 +6,8 @@ Repository Pulseは、Nasu Stackを実アプリで検証するread-heavyなdogfo
 アプリです。公開repositoryの概要、Issue / Pull Request検索、明示的な追加読込、
 狭い画面でカードへ組み替わるrelease表を提供します。
 
+[公開中のdogfoodアプリを見る](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/)
+
 これはまだ`create-nasu-stack`の新しい雛型ではありません。packしたCLIから生成し、
 公開shadcn registryを通して部品を導入しています。利用者と同じcopy-owned sourceの
 経路を検証するためです。

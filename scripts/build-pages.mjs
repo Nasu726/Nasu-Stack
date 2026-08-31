@@ -17,6 +17,7 @@
  *   public/r/index.json             一覧
  *   public/create-nasu-stack.tgz   最新 main の確認用 CLI
  *   public/create-nasu-stack.tgz.sha256
+ *   public/dogfood/repository-pulse/ Repository Pulseの公開dogfood
  *   public/404.html                 存在しない URL のときに出るページ
  *   public/index.html               入口の案内（v0.9b でドキュメントサイトに差し替え）
  */
@@ -105,6 +106,16 @@ buildApp("site", "apps/site/dist", "demo", {
      `…/Nasu Stack/Nasu Stack/demo/` のように二重になります（実際なりました）。 */
   PUBLIC_SITE: new URL(PUBLIC_BASE).origin,
 });
+buildApp(
+  "dogfood-repository-pulse",
+  "apps/dogfood-repository-pulse/dist",
+  "dogfood/repository-pulse",
+  {
+    PUBLIC_BASE: `${basePath}/dogfood/repository-pulse/`,
+    VITE_GITHUB_OWNER: "Nasu726",
+    VITE_GITHUB_REPO: "Nasu-Stack",
+  },
+);
 
 /* --- 4. ページ ------------------------------------------------------ */
 const items = JSON.parse(
@@ -164,6 +175,7 @@ things beginners reliably get stuck on: layout and async state.</p>
 <ul>
   <li><a href="./catalog/">Component catalog</a> — every component, live</li>
   <li><a href="./demo/">Demo site</a> — a site built from them (blog, landing page, contact)</li>
+  <li><a href="./dogfood/repository-pulse/">Repository Pulse</a> — a real app built through the public CLI and registry</li>
 </ul>
 
 <h2>Components (${items.length})</h2>

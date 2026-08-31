@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
+  base: process.env.PUBLIC_BASE?.trim() || "/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

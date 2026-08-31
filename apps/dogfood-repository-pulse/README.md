@@ -6,6 +6,8 @@ Repository Pulse is a read-heavy dogfood application for Nasu Stack. It shows
 public repository metadata, issue and pull-request search, explicit load-more
 pagination, and a responsive release table.
 
+[View the public dogfood app](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/)
+
 This is an example application, not a new `create-nasu-stack` template. It was
 created from the packed CLI and populated through the public shadcn registry so
 that it exercises the same copy-owned source path as a real user project.
