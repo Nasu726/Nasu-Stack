@@ -324,6 +324,7 @@ export function FieldArray<T>({
         onClick={add}
         className="mt-sm"
         data-field-array-add={name}
+        data-field-name={name}
       >
         {addLabel}
       </Button>

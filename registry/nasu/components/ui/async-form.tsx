@@ -91,18 +91,12 @@ function enabledCheckboxNames(form: HTMLFormElement): string[] {
   return [...names];
 }
 
-function hasMatchingFieldControl(
-  form: HTMLFormElement | null,
+function allFieldErrorsHaveTargets(
   fields: Record<string, string> | undefined,
+  registeredFields: ReadonlySet<string>,
 ): boolean {
-  if (!form || !fields) return false;
-  const names = new Set(Object.keys(fields));
-  return Array.from(form.elements).some((control) => {
-    if (!(control instanceof HTMLElement)) return false;
-    if (control.getAttribute("type") === "hidden") return false;
-    const name = control.getAttribute("name");
-    return !!name && names.has(name);
-  });
+  const names = Object.keys(fields ?? {});
+  return names.length > 0 && names.every((name) => registeredFields.has(name));
 }
 
 /* ------------------------------------------------------------------
@@ -116,6 +110,8 @@ interface FormCtx {
   clearField: (name: string) => void;
   /** FieldArray の構造が変わったら、その path 以下の古いエラーを消す。 */
   clearFieldTree: (name: string) => void;
+  /** このfield nameのerrorを画面内へ表示できることをformへ知らせる。 */
+  registerField: (name: string) => () => void;
 }
 
 const FormContext = React.createContext<FormCtx | null>(null);
@@ -211,7 +207,41 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
   const [clearedTrees, setClearedTrees] = React.useState<Set<string>>(
     new Set(),
   );
+  const registeredFieldCounts = React.useRef(new Map<string, number>());
+  const registeredFieldsRef = React.useRef<Set<string>>(new Set());
+  const [registeredFields, setRegisteredFields] = React.useState<Set<string>>(
+    new Set(),
+  );
   const defaults = useActionDefaults();
+
+  const registerField = React.useCallback((name: string) => {
+    if (!name) return () => undefined;
+
+    const counts = registeredFieldCounts.current;
+    const nextCount = (counts.get(name) ?? 0) + 1;
+    counts.set(name, nextCount);
+    if (nextCount === 1) {
+      const next = new Set(registeredFieldsRef.current);
+      next.add(name);
+      registeredFieldsRef.current = next;
+      setRegisteredFields(next);
+    }
+
+    return () => {
+      const currentCount = counts.get(name) ?? 0;
+      if (currentCount > 1) {
+        counts.set(name, currentCount - 1);
+        return;
+      }
+      counts.delete(name);
+      if (registeredFieldsRef.current.has(name)) {
+        const next = new Set(registeredFieldsRef.current);
+        next.delete(name);
+        registeredFieldsRef.current = next;
+        setRegisteredFields(next);
+      }
+    };
+  }, []);
 
   const resolved = React.useMemo(
     () => resolveAction<TData, TOutput>(action as ActionSpec<TData, TOutput>),
@@ -253,11 +283,11 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
     onError:
       onError ??
       ((error) => {
-        const hasFieldErrors = hasMatchingFieldControl(
-          formRef.current,
+        const allFieldsAreVisible = allFieldErrorsHaveTargets(
           error.fields,
+          registeredFieldsRef.current,
         );
-        if (!hasFieldErrors) defaults.onError?.(error);
+        if (!allFieldsAreVisible) defaults.onError?.(error);
       }),
     onSettled,
     resetAfter,
@@ -297,7 +327,9 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
     const target = Array.from(formRef.current.elements).find(
       (control): control is HTMLElement => {
         if (!(control instanceof HTMLElement)) return false;
-        const name = control.getAttribute("name");
+        const name =
+          control.getAttribute("data-field-name") ??
+          control.getAttribute("name");
         if (!name || !names.has(name)) return false;
         if (control.getAttribute("type") === "hidden") return false;
         if ("disabled" in control && control.disabled === true) return false;
@@ -331,14 +363,21 @@ export function AsyncForm<TData = FormValues, TOutput = unknown>({
       isPending: state.isPending,
       clearField,
       clearFieldTree,
+      registerField,
     }),
-    [fieldErrors, state.isPending, clearField, clearFieldTree],
+    [
+      fieldErrors,
+      state.isPending,
+      clearField,
+      clearFieldTree,
+      registerField,
+    ],
   );
 
   // フィールドに紐づかない、フォーム全体のエラー
   const generalError =
     state.isError &&
-    !hasMatchingFieldControl(formRef.current, rawFieldErrors)
+    !allFieldErrorsHaveTargets(rawFieldErrors, registeredFields)
       ? state.error?.displayMessage
       : undefined;
 
@@ -425,12 +464,18 @@ export function useFieldState(
   const ctx = React.useContext(FormContext);
   const clearField = ctx?.clearField;
   const clearFieldTree = ctx?.clearFieldTree;
+  const registerField = ctx?.registerField;
   const id = React.useId();
   const error = ctx?.fieldErrors[name];
   const describedBy =
-    [options.hint ? `${id}-hint` : null, error ? `${id}-error` : null]
+    [
+      options.hint && !error ? `${id}-hint` : null,
+      error ? `${id}-error` : null,
+    ]
       .filter(Boolean)
       .join(" ") || undefined;
+
+  React.useEffect(() => registerField?.(name), [name, registerField]);
 
   return {
     id,

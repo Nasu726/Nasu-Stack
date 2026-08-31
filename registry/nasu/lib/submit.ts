@@ -3,6 +3,7 @@ import {
   type ActionContext,
   ActionError,
   jsonRequest,
+  serializeJsonBody,
 } from "@/lib/action";
 
 /**
@@ -74,6 +75,12 @@ export function createSubmit<TInput = unknown, TOutput = unknown>({
   honeypot = HONEYPOT_NAME,
   transform,
 }: SubmitOptions<TInput>): Action<TInput, TOutput> {
+  if (!Number.isFinite(timeout) || timeout < 0) {
+    throw new RangeError(
+      "createSubmit timeout must be a finite number greater than or equal to 0",
+    );
+  }
+
   return async (input: TInput, ctx: ActionContext): Promise<TOutput> => {
     /* --- おとりの欄 --------------------------------------------
        値が入っているのは、人ではなく自動入力です。
@@ -94,23 +101,10 @@ export function createSubmit<TInput = unknown, TOutput = unknown>({
     }
     if (transform) payload = transform(payload as TInput);
 
-    let body: string;
-    try {
-      const serialized = JSON.stringify(payload ?? {});
-      if (serialized === undefined) {
-        throw new TypeError("JSON.stringify returned undefined");
-      }
-      body = serialized;
-    } catch (raw) {
-      // JSON化はnetworkへ出る前の境界です。TypeErrorだからといって
-      // CORS/通信断へ翻訳すると、利用者を誤った調査先へ案内します。
-      throw new ActionError("request body is not JSON serializable", {
-        displayMessage:
-          "送信内容をJSONに変換できませんでした。transformの戻り値を確認してください。",
-        code: "SERIALIZATION",
-        cause: raw,
-      });
-    }
+    // createSubmitは従来どおりnull/undefinedを空objectとして送ります。
+    // EndpointSpecと違い、transform後の値には必ずJSON bodyを要求します。
+    // function / SymbolのようにJSON.stringifyがundefinedを返す値も失敗です。
+    const body = serializeJsonBody(payload ?? {}, { required: true });
 
     /* --- 中断の合成 --------------------------------------------
        `AbortSignal.any` は比較的新しい API なので、手で合成します

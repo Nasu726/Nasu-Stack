@@ -220,6 +220,32 @@ export type ActionSpec<TInput = void, TOutput = unknown> =
   | Action<TInput, TOutput>
   | EndpointSpec;
 
+/**
+ * JSON request bodyを作り、serialization failureを通信失敗と分離します。
+ * `required`なら、throwせず`undefined`になるfunction / Symbol等も失敗にします。
+ */
+export function serializeJsonBody(
+  value: unknown,
+  { required = false }: { required?: boolean } = {},
+): string | undefined {
+  try {
+    // undefinedはbodyなし、nullはJSONのnullです。ここで既定値へ置き換えると
+    // EndpointSpecの既存契約が変わるため、呼び出し側の値をそのまま扱います。
+    const serialized = JSON.stringify(value);
+    if (required && serialized === undefined) {
+      throw new TypeError("JSON.stringify returned undefined");
+    }
+    return serialized;
+  } catch (raw) {
+    throw new ActionError("request body is not JSON serializable", {
+      displayMessage:
+        "送信内容をJSONに変換できませんでした。送信する値を確認してください。",
+      code: "SERIALIZATION",
+      cause: raw,
+    });
+  }
+}
+
 /** ActionSpec を必ず関数へ正規化します。 */
 export function resolveAction<TInput, TOutput>(
   spec: ActionSpec<TInput, TOutput>,
@@ -239,7 +265,7 @@ export function resolveAction<TInput, TOutput>(
     return jsonRequest<TOutput>(url, {
       method,
       headers: { "content-type": "application/json", ...headers },
-      body: JSON.stringify(payload),
+      body: serializeJsonBody(payload),
       ctx,
     });
   };

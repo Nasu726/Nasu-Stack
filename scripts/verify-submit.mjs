@@ -85,7 +85,8 @@ await page.goto(`${API}/received`, { waitUntil: "domcontentloaded" });
 await page.addScriptTag({
   content:
     fs.readFileSync(path.join(out, "action.js"), "utf8").replace(/export /g, "") +
-    "\nwindow.__action = { ActionError, toActionError, jsonRequest };",
+    "\nwindow.__action = { ActionError, toActionError, jsonRequest, " +
+    "resolveAction, serializeJsonBody };",
 });
 await page.addScriptTag({
   content: submitJs
@@ -93,6 +94,7 @@ await page.addScriptTag({
     .replace(/export /g, "")
     .replace(/\bActionError\b/g, "window.__action.ActionError")
     .replace(/\bjsonRequest\b/g, "window.__action.jsonRequest")
+    .replace(/\bserializeJsonBody\b/g, "window.__action.serializeJsonBody")
     .replace(/window\.__action\.jsonRequest<[^>]*>/g, "window.__action.jsonRequest") +
     "\nwindow.__submit = { createSubmit, HONEYPOT_NAME };",
 });
@@ -163,6 +165,61 @@ await reset();
   );
 }
 
+await reset();
+{
+  await send({ url: `${API}/ok` }, undefined);
+  await send({ url: `${API}/ok` }, null);
+  const got = await received();
+  must(
+    "   createSubmitのnull/undefinedは従来どおり空objectになる",
+    got.length === 2 && got.every((entry) => entry.rawBody === "{}"),
+    JSON.stringify(got.map((entry) => entry.rawBody)),
+  );
+}
+
+await reset();
+{
+  const r = await page.evaluate(async (api) => {
+    const action = window.__action.resolveAction({ url: `${api}/ok` });
+    await action(undefined, { signal: new AbortController().signal });
+    await action(null, { signal: new AbortController().signal });
+    return true;
+  }, API);
+  const got = await received();
+  must("   EndpointSpecのundefinedはbodyを送らない", r && got[0]?.rawBody === "");
+  must("   EndpointSpecのnullはJSON nullを送る", got[1]?.rawBody === "null");
+}
+
+await reset();
+{
+  const r = await page.evaluate(async (api) => {
+    const action = window.__action.resolveAction({ url: `${api}/ok` });
+    const cyclic = {};
+    cyclic.self = cyclic;
+    const codes = [];
+    for (const input of [{ id: 1n }, cyclic]) {
+      try {
+        await action(input, { signal: new AbortController().signal });
+        codes.push("OK");
+      } catch (e) {
+        codes.push(e?.code);
+      }
+    }
+    return codes;
+  }, API);
+  const got = await received();
+  must(
+    "   EndpointSpecのBigIntはSERIALIZATIONになる",
+    r[0] === "SERIALIZATION" && got.length === 0,
+    `${JSON.stringify(r)} / ${got.length}件`,
+  );
+  must(
+    "   EndpointSpecのcycleもSERIALIZATIONになる",
+    r[1] === "SERIALIZATION" && got.length === 0,
+    `${JSON.stringify(r)} / ${got.length}件`,
+  );
+}
+
 /* ===== 4〜5. 検証エラーの形 ===================================== */
 {
   const r = await send({ url: `${API}/errors` }, { name: "" });
@@ -211,32 +268,52 @@ await reset();
 /* ===== 8.5. JSON化とnetwork failureを混ぜない =================== */
 await reset();
 {
-  const r = await page.evaluate(async (api) => {
-    const submit = window.__submit.createSubmit({
-      url: `${api}/ok`,
-      transform: () => ({ id: 1n }),
-    });
-    try {
-      await submit({}, { signal: new AbortController().signal });
-      return { ok: true };
-    } catch (e) {
-      return {
-        ok: false,
-        code: e?.code,
-        displayMessage: e?.displayMessage,
-      };
+  const results = await page.evaluate(async (api) => {
+    const transforms = [
+      () => ({ id: 1n }),
+      () => Symbol("x"),
+      () => () => {},
+    ];
+    const outcomes = [];
+    for (const transform of transforms) {
+      const submit = window.__submit.createSubmit({
+        url: `${api}/ok`,
+        transform,
+      });
+      try {
+        await submit({}, { signal: new AbortController().signal });
+        outcomes.push({ ok: true });
+      } catch (e) {
+        outcomes.push({
+          ok: false,
+          code: e?.code,
+          displayMessage: e?.displayMessage,
+        });
+      }
     }
+    return outcomes;
   }, API);
   const got = await received();
   must(
-    "8.5 JSON化できないtransform結果はSERIALIZATIONになる",
-    !r.ok && r.code === "SERIALIZATION",
-    JSON.stringify(r),
+    "8.5 BigIntのtransform結果はSERIALIZATIONになる",
+    !results[0]?.ok && results[0]?.code === "SERIALIZATION",
+    JSON.stringify(results[0]),
+  );
+  must(
+    "    Symbolのtransform結果もSERIALIZATIONになる",
+    !results[1]?.ok && results[1]?.code === "SERIALIZATION",
+    JSON.stringify(results[1]),
+  );
+  must(
+    "    functionのtransform結果もSERIALIZATIONになる",
+    !results[2]?.ok && results[2]?.code === "SERIALIZATION",
+    JSON.stringify(results[2]),
   );
   must(
     "    serialization failureをNETWORK/CORSと誤案内せず送信もしない",
-    !/CORS|通信状況/.test(r.displayMessage ?? "") && got.length === 0,
-    `${r.displayMessage} / ${got.length}件`,
+    results.every((r) => !/CORS|通信状況/.test(r.displayMessage ?? "")) &&
+      got.length === 0,
+    `${JSON.stringify(results)} / ${got.length}件`,
   );
 }
 
@@ -250,6 +327,24 @@ await reset();
 }
 
 /* ===== 10. タイムアウト ========================================= */
+{
+  const invalid = await page.evaluate((api) => {
+    const values = [Number.NaN, Number.POSITIVE_INFINITY, -1];
+    return values.map((timeout) => {
+      try {
+        window.__submit.createSubmit({ url: `${api}/ok`, timeout });
+        return false;
+      } catch (error) {
+        return error instanceof RangeError;
+      }
+    });
+  }, API);
+  must(
+    "10. 不正なtimeoutはnetworkへ出る前にfail-fastする",
+    invalid.every(Boolean),
+    JSON.stringify(invalid),
+  );
+}
 {
   const r = await send({ url: `${API}/slow`, timeout: 300 }, { a: 1 });
   must("10. タイムアウトすると専用の文言になる", r.code === "TIMEOUT", r.displayMessage);

@@ -4,6 +4,32 @@ All notable changes to Nasu Stack are recorded here. The project follows
 [Semantic Versioning](https://semver.org/) for the Stable contract described
 below.
 
+## [Unreleased]
+
+### Fixed
+
+- `AsyncForm` now suppresses its general error only when every returned field
+  error has a registered display target; mixed known/unknown fields remain
+  visible, while `FieldArray` root errors no longer appear twice
+- `AsyncSelect` participates in the AsyncForm field contract for pending
+  disablement, server errors, ARIA, first-error focus, error clearing, and
+  selection-based required validity
+- `EndpointSpec` and `createSubmit` share one JSON serialization boundary and
+  both classify BigInt/cyclic payloads as `SERIALIZATION`, while preserving
+  EndpointSpec's bodyless `undefined` and JSON `null` behavior
+- `createSubmit` also rejects transform results such as functions and Symbols
+  when `JSON.stringify()` returns `undefined` without throwing
+- `createSubmit` rejects non-finite and negative timeouts before a request can
+  start
+
+### Documentation
+
+- The validation guides now state the raw `CheckboxGroup` boundary precisely:
+  no selection is `""`, one selection is `string`, and repeated selections are
+  `string[]`
+- Added the dogfood incubation and promotion criteria for three real example
+  applications without exposing unproven templates in the create CLI
+
 ## [2.0.1] - 2026-08-30
 
 Patch release. It removes no registry item, public export, semantic token, or

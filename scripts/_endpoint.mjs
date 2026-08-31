@@ -65,6 +65,7 @@ const server = http.createServer(async (req, res) => {
     path: url.pathname,
     method: req.method,
     contentType: req.headers["content-type"] ?? null,
+    rawBody: body,
     body: parsed ?? body,
     at: received.length,
   });
