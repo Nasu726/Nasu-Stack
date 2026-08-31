@@ -16,8 +16,10 @@ reliably get stuck on: **layout** and **async state**.
 </Stack>
 ```
 
-**See it first:** [component catalog](https://nasu726.github.io/Nasu-Stack/catalog/) (every component, live) /
-[demo site](https://nasu726.github.io/Nasu-Stack/demo/) (a site built from them)
+**See it first:**
+[component catalog](https://nasu726.github.io/Nasu-Stack/catalog/) (every component, live) /
+[demo site](https://nasu726.github.io/Nasu-Stack/demo/) (a starter site built from them) /
+[Repository Pulse](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/) (a real app built through the public CLI and registry)
 
 > **Nasu Stack 2 is Stable.** Public registry names, exports, tokens, and the
 > documented component contracts now follow semantic versioning: breaking
@@ -519,11 +521,6 @@ More in [docs/astro-and-react.md](docs/astro-and-react.md).
 | [docs/boundaries.md](docs/boundaries.md) | **What is covered and what is not** (read before you ship) |
 | [docs/security.md](docs/security.md) | How this is distributed, and why that's safe |
 | [docs/development.md](docs/development.md) | Working on this repository (Japanese) |
-| [docs/rename.md](docs/rename.md) | Why it was renamed from `WebTemplate` (Japanese) |
-
-**Records written before v0.9e (`docs/plan-*`, `docs/result-*`, `ROADMAP.md`)
-still say `WebTemplate`.** They're records of the time and haven't been
-rewritten. They are in Japanese.
 
 This is a personal project. Maintenance and response times are not promised
 ([SECURITY.md](SECURITY.md)).
