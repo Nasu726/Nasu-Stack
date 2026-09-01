@@ -76,16 +76,18 @@ v1.0.0 の release engineering は [`plan-v1.md`](plan-v1.md) と
 **公開済みです。** https://nasu726.github.io/Nasu-Stack/
 （`/catalog/` に部品のカタログ、`/demo/` にデモサイト、`/r/*.json` にレジストリ）
 
-### 配っている雛型は 3 つです
+### 配っている生成物は 5 つです
 
 | `--template` | 中身 | 原本 |
 |---|---|---|
 | `astro` | 1 ページだけ。自分で組み立てたい人向け | `packages/create-nasu-stack/scaffold/astro/` |
 | `blog` | ブログ・LP・会社概要・問い合わせ・RSS・sitemap・404 | **`apps/site` から生成します**（下記） |
+| `repository-pulse` | 公開GitHub repositoryのread-heavyな完成アプリ | **`apps/dogfood-repository-pulse`から生成します** |
+| `weather-planner` | 天気・場所検索・local autosaveのstate-heavyな完成アプリ | **`apps/dogfood-weather-planner`から生成します** |
 | `vite` | React のアプリ | `packages/create-nasu-stack/scaffold/vite/` |
 
 対話では最初に English / 日本語、次に「まっさらな状態から / 雛型を使う」を
-選びます。非対話では `--lang en|ja --template astro|blog|vite --yes` です。
+選びます。非対話では `--lang en|ja --template <種類> --yes` です。
 選んだ言語はターミナルだけでなく、生成する `README.md`、`HowToUse.md`、
 `.env.example` にも使います。
 

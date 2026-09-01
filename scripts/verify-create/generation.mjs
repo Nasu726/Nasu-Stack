@@ -38,6 +38,19 @@ export async function verifyGeneration({ root, work, CASES, create, must }) {
       "   Repository Pulseは検査済みdogfood appを単一原本にする",
       pulseSource === pulseTemplate,
     );
+
+    const weatherSource = fs.readFileSync(
+      path.join(root, "apps/dogfood-weather-planner/src/App.tsx"),
+      "utf8",
+    );
+    const weatherTemplate = fs.readFileSync(
+      path.join(tpl, "weather-planner/src/App.tsx"),
+      "utf8",
+    );
+    must(
+      "   Weather Plannerは検査済みdogfood appを単一原本にする",
+      weatherSource === weatherTemplate,
+    );
   }
 
   /* ===== 1〜3. 生成 =============================================== */
@@ -109,6 +122,53 @@ export async function verifyGeneration({ root, work, CASES, create, must }) {
       "    Repository Pulse: 選ばなかった言語の存在しないREADMEへlinkしない",
       !pulseReadme.includes("README.ja.md") &&
         !fs.existsSync(path.join(work, "my-pulse", "README.ja.md")),
+    );
+
+    const weather = create("my-weather", [
+      "--template", "weather-planner", "--lang", "en",
+    ]);
+    must("2.3 Weather Planner雛型を生成できる", weather.ok, weather.out.trim().slice(-160));
+    const weatherWant = [
+      ".env.example",
+      "package-lock.json",
+      "README.md",
+      "HowToUse.md",
+      path.join("scripts", "fixture-api.mjs"),
+      path.join("scripts", "verify.mjs"),
+      path.join("src", "App.tsx"),
+      path.join("src", "lib", "config.ts"),
+      path.join("src", "lib", "weather.ts"),
+      path.join("src", "lib", "planner.ts"),
+      path.join("src", "components", "ui", "async-select.tsx"),
+      path.join("src", "hooks", "use-autosave.ts"),
+    ];
+    const weatherFiles = fs
+      .readdirSync(path.join(work, "my-weather"), { recursive: true })
+      .map(String);
+    const weatherMissing = weatherWant.filter((file) => !weatherFiles.includes(file));
+    must(
+      "    Weather Planner: app・公開設定・固定fixtureが揃っている",
+      weatherMissing.length === 0,
+      weatherMissing.join(", ") || `${weatherFiles.length} ファイル`,
+    );
+    const weatherPackage = JSON.parse(
+      fs.readFileSync(path.join(work, "my-weather", "package.json"), "utf8"),
+    );
+    const weatherLock = JSON.parse(
+      fs.readFileSync(path.join(work, "my-weather", "package-lock.json"), "utf8"),
+    );
+    const weatherReadme = fs.readFileSync(path.join(work, "my-weather", "README.md"), "utf8");
+    must(
+      "    Weather Planner: project名がpackageとlockfileへ反映される",
+      weatherPackage.name === "my-weather" && weatherLock.name === "my-weather" &&
+        weatherLock.packages?.[""]?.name === "my-weather",
+    );
+    must(
+      "    Weather Planner: 英語案内だけを残し、存在しない言語fileへlinkしない",
+      weatherReadme.startsWith("# my-weather\n") &&
+        !weatherReadme.includes("README.ja.md") &&
+        !fs.existsSync(path.join(work, "my-weather", "README.ja.md")) &&
+        !fs.existsSync(path.join(work, "my-weather", "HowToUse.ja.md")),
     );
 
     /* ブログ付きの雛型。**中身は apps/site から生成しています。**
@@ -183,6 +243,30 @@ export async function verifyGeneration({ root, work, CASES, create, must }) {
         pulseJaGuide.includes("Repository Pulseの構成") && pulseJaEnv.includes("誰でも読めます") &&
         !pulseJaReadme.includes("[English](./README.md)"),
       pulseJa.out?.trim().slice(-160) ?? "",
+    );
+
+    const weatherJa = create("my-weather-ja", [
+      "--template", "weather-planner", "--lang", "ja",
+    ]);
+    const weatherJaReadme = weatherJa.ok
+      ? fs.readFileSync(path.join(work, "my-weather-ja", "README.md"), "utf8")
+      : "";
+    const weatherJaGuide = weatherJa.ok
+      ? fs.readFileSync(path.join(work, "my-weather-ja", "HowToUse.md"), "utf8")
+      : "";
+    const weatherJaEnv = weatherJa.ok
+      ? fs.readFileSync(path.join(work, "my-weather-ja", ".env.example"), "utf8")
+      : "";
+    must(
+      "2.8 Weather Plannerも日本語のREADME・使い方・環境変数案内を生成する",
+      weatherJa.ok && weatherJaReadme.startsWith("# my-weather-ja\n") &&
+        weatherJaReadme.includes("7日分の天気") &&
+        weatherJaGuide.includes("無料APIの境界") &&
+        weatherJaEnv.includes("誰でも読めます") &&
+        weatherJaReadme.includes("./HowToUse.md") &&
+        !weatherJaReadme.includes("HowToUse.ja.md") &&
+        !weatherJaReadme.includes("[English](./README.md)"),
+      weatherJa.out?.trim().slice(-160) ?? "",
     );
   }
 

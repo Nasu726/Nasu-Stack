@@ -70,6 +70,15 @@ const CASES = [
     probeItem: "file-drop",
     probeTarget: "src/components/ui/file-drop.tsx",
   },
+  {
+    kind: "weather-planner",
+    name: "my-weather",
+    port: 4602,
+    framework: "vite",
+    verifyScript: true,
+    probeItem: "file-drop",
+    probeTarget: "src/components/ui/file-drop.tsx",
+  },
   { kind: "vite", name: "my-app", port: 4599, framework: "vite" },
 ];
 /** 検査するページ。ブログ付きは入口だけ見ても意味がありません。 */
@@ -80,6 +89,7 @@ const PAGES = {
     "/ja/", "/ja/lp/", "/ja/about/", "/ja/contact/", "/ja/blog/", "/ja/blog/hello/",
   ],
   "repository-pulse": ["/"],
+  "weather-planner": ["/"],
   vite: ["/"],
 };
 

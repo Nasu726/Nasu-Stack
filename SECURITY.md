@@ -30,7 +30,7 @@ Only these project-owned artifacts are distributed:
 | | |
 |---|---|
 | `https://nasu726.github.io/Nasu-Stack/r/*.json` | the registry the shadcn CLI reads |
-| `https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz` | the versioned Stable starter CLI; its workflow refuses overwrites |
+| `https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz` | the versioned Stable starter CLI; its workflow refuses overwrites |
 | `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | the mutable latest-main preview |
 | the matching `.sha256` | the hash of each tarball |
 
@@ -44,14 +44,14 @@ You can verify the tarball before you run it.
 Download it once, verify that file, and **run that same file**:
 
 ```bash
-curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz
-curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz.sha256
-sha256sum -c create-nasu-stack-2.1.0.tgz.sha256   # once this says OK
-npx ./create-nasu-stack-2.1.0.tgz my-site
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz.sha256
+sha256sum -c create-nasu-stack-2.2.0.tgz.sha256   # once this says OK
+npx ./create-nasu-stack-2.2.0.tgz my-site
 ```
 
 (On Windows PowerShell, compare the output of
-`Get-FileHash create-nasu-stack-2.1.0.tgz -Algorithm SHA256` against the contents of
+`Get-FileHash create-nasu-stack-2.2.0.tgz -Algorithm SHA256` against the contents of
 the `.sha256` file.)
 
 **The one-liner in the README does not verify the checksum.** Use the four lines

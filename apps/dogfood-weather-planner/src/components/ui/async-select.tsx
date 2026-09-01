@@ -1,0 +1,407 @@
+"use client";
+
+import * as React from "react";
+import { cn, inputClass } from "@/lib/utils";
+import type { Action } from "@/lib/action";
+import { useResource } from "@/hooks/use-resource";
+import { usePopover } from "@/hooks/use-popover";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  FieldShell,
+  useFieldState,
+} from "@/components/ui/async-form";
+
+/**
+ * AsyncSelect — 検索つきセレクト
+ * ================================================================
+ * ```tsx
+ * <AsyncSelect
+ *   label="担当者"
+ *   name="ownerId"
+ *   loader={(q, ctx) => jsonRequest<User[]>(`/api/users?q=${q}`, { ctx })}
+ *   getKey={(u) => u.id}
+ *   getLabel={(u) => u.name}
+ *   getFormValue={(u) => `user_${u.id}`}
+ *   onChange={setOwner}
+ * />
+ * ```
+ *
+ * 引き受けているもの:
+ *   - 入力のたびに投げない（既定 250ms の debounce）
+ *   - **前の要求の自動中断。** 検索語を useResource の依存キーにしているので、
+ *     打ち直すと前のリクエストが abort されます。古い応答が新しい応答を
+ *     上書きする競合は、この層で既に解けています
+ *   - キーボード操作（↑↓ Enter Esc Home End）
+ *   - WAI-ARIA の combobox パターン
+ *   - 画面下部で開いたときに候補が画面外へ出ないよう、上下を自動で切り替え
+ */
+
+export interface AsyncSelectProps<T> {
+  label: string;
+  /** 検索語を受け取って候補を返す関数。ctx.signal を fetch に渡してください。 */
+  loader: Action<string, T[]>;
+  getKey: (item: T) => React.Key;
+  getLabel: (item: T) => string;
+  /** 候補 1 件の描画。省略時は getLabel。 */
+  renderItem?: (item: T) => React.ReactNode;
+  /** 選択値を親で持つ controlled 指定。省略すると内部で持ちます。 */
+  value?: T | null;
+  /** uncontrolled 時の初期値。form.reset() でもこの値へ戻ります。 */
+  defaultValue?: T | null;
+  onChange?: (item: T | null) => void;
+  placeholder?: string;
+  hint?: string;
+  required?: boolean;
+  disabled?: boolean;
+  /** 入力から検索までの待ち時間 (ms)。既定 250。 */
+  debounce?: number;
+  /** 空文字でも検索するか。既定 true（開いた瞬間に一覧が出ます）。 */
+  searchOnEmpty?: boolean;
+  /** FormData に入れる名前。検索文字列ではなく、選択値を送ります。 */
+  name?: string;
+  /** FormData 用の値。既定は String(getKey(item))。 */
+  getFormValue?: (item: T) => string;
+  className?: string;
+}
+
+export function AsyncSelect<T>({
+  label,
+  loader,
+  getKey,
+  getLabel,
+  renderItem,
+  value,
+  defaultValue,
+  onChange,
+  placeholder,
+  hint,
+  required,
+  disabled,
+  debounce = 250,
+  searchOnEmpty = true,
+  name,
+  getFormValue,
+  className,
+}: AsyncSelectProps<T>) {
+  const field = useFieldState(name ?? "", { hint });
+  const id = field.id;
+  const listId = `${id}-list`;
+  const effectiveDisabled = Boolean(disabled || field.disabled);
+
+  const controlled = value !== undefined;
+  const [innerValue, setInnerValue] = React.useState<T | null>(
+    defaultValue ?? null,
+  );
+  const selected = controlled ? (value ?? null) : innerValue;
+
+  const [open, setOpen] = React.useState(false);
+  const [text, setText] = React.useState(() => {
+    const initial = controlled ? (value ?? null) : (defaultValue ?? null);
+    return initial ? getLabel(initial) : "";
+  });
+  const [query, setQuery] = React.useState("");
+  const [active, setActive] = React.useState(0);
+
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const listRef = React.useRef<HTMLUListElement>(null);
+  const getLabelRef = React.useRef(getLabel);
+  getLabelRef.current = getLabel;
+
+  // requiredが求めるのは検索文字列ではなく選択値です。通常のrequiredだけでは
+  // 候補を選ばず文字を打った状態がvalidになるため、同じnative境界へ揃えます。
+  React.useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    input.setCustomValidity(
+      required && !selected ? "Choose one of the available locations" : "",
+    );
+    return () => input.setCustomValidity("");
+  }, [required, selected]);
+
+  React.useEffect(() => {
+    if (effectiveDisabled) setOpen(false);
+  }, [effectiveDisabled]);
+
+  /* 入力で選択を外した直後、親が value=null を返す render だけは
+     query を空に戻しません。表示中の検索語と選択値は別の状態です。 */
+  const preserveQueryForNullRef = React.useRef(false);
+
+  function changeSelected(next: T | null) {
+    if (!controlled) setInnerValue(next);
+    onChange?.(next);
+  }
+
+  /* controlled value は初期値だけでなく、親からの変更にも追従します。 */
+  React.useEffect(() => {
+    if (!controlled) return;
+    if (value === null && preserveQueryForNullRef.current) {
+      preserveQueryForNullRef.current = false;
+      return;
+    }
+    preserveQueryForNullRef.current = false;
+    setText(value ? getLabelRef.current(value) : "");
+  }, [controlled, value]);
+
+  /* native form.reset() は React state を変えません。AsyncForm も成功後に
+     この経路を使うため、選択と表示を同じ初期値へ戻します。 */
+  React.useEffect(() => {
+    const form = inputRef.current?.form;
+    if (!form) return;
+    const reset = () => {
+      const next = defaultValue ?? null;
+      preserveQueryForNullRef.current = false;
+      if (!controlled) setInnerValue(next);
+      onChange?.(next);
+      setText(next ? getLabelRef.current(next) : "");
+      setOpen(false);
+    };
+    form.addEventListener("reset", reset);
+    return () => form.removeEventListener("reset", reset);
+  }, [controlled, defaultValue, onChange]);
+
+  const loaderRef = React.useRef(loader);
+  loaderRef.current = loader;
+
+  /* --- 入力 → debounce → 検索語 --------------------------------- */
+  React.useEffect(() => {
+    const t = setTimeout(() => setQuery(text), debounce);
+    return () => clearTimeout(t);
+  }, [text, debounce]);
+
+  /* --- 検索語が変われば取得。前の要求は useResource が中断する --- */
+  const result = useResource<T[]>(
+    [query, open],
+    React.useCallback(
+      (_: void, ctx) => loaderRef.current(query, ctx),
+      [query],
+    ),
+    { enabled: open && (searchOnEmpty || query.length > 0), retry: 0 },
+  );
+
+  const items = result.data ?? [];
+
+  // 候補が入れ替わったら選択位置を先頭へ戻す
+  React.useEffect(() => {
+    setActive(0);
+  }, [query, open]);
+
+  /* --- 開く向き・外側クリック・Esc は usePopover の担当 ----------
+     DropdownMenu と同じ要件なので、実装は 1 つに寄せています。
+     Esc は入力欄の onKeyDown でも拾いますが、close() は何度呼んでも
+     同じ結果になるので二重に効いても問題ありません。 */
+  const { anchorRef: wrapRef, placement } = usePopover<HTMLDivElement>({
+    open,
+    onClose: () => close(), // 理由に関わらず、選択中の表示へ戻すだけ
+  });
+
+  function close() {
+    setOpen(false);
+    // 選び直さずに閉じたときは、選択中の値の表示へ戻す
+    setText(selected ? getLabel(selected) : "");
+  }
+
+  function choose(item: T) {
+    if (effectiveDisabled) return;
+    preserveQueryForNullRef.current = false;
+    changeSelected(item);
+    setText(getLabel(item));
+    field.clear();
+    setOpen(false);
+    inputRef.current?.focus();
+  }
+
+  /* --- キーボード -------------------------------------------------
+     フォーカスは入力欄に置いたまま、aria-activedescendant で
+     「いまどれを選んでいるか」を伝えます。
+     実フォーカスを候補へ移すと文字が打てなくなります。 */
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!open) {
+        setOpen(true);
+        return;
+      }
+      if (items.length === 0) return;
+      setActive((i) => {
+        const next = e.key === "ArrowDown" ? i + 1 : i - 1;
+        return (next + items.length) % items.length;
+      });
+      return;
+    }
+    if (e.key === "Home" && open) {
+      e.preventDefault();
+      setActive(0);
+      return;
+    }
+    if (e.key === "End" && open) {
+      e.preventDefault();
+      setActive(Math.max(0, items.length - 1));
+      return;
+    }
+    if (e.key === "Enter") {
+      if (open && items[active]) {
+        e.preventDefault();
+        choose(items[active]);
+      }
+      return;
+    }
+    if (e.key === "Escape") {
+      if (open) {
+        e.preventDefault();
+        close();
+      }
+      return;
+    }
+    if (e.key === "Tab" && open) {
+      close();
+    }
+  }
+
+  // 選択中の候補が見えるようにスクロール
+  React.useEffect(() => {
+    if (!open) return;
+    const el = listRef.current?.querySelector<HTMLElement>(
+      `[data-index="${active}"]`,
+    );
+    el?.scrollIntoView({ block: "nearest" });
+  }, [active, open, items.length]);
+
+  return (
+    <div className={cn("w-full", className)}>
+      <FieldShell
+        id={id}
+        label={label}
+        required={required}
+        hint={hint}
+        error={field.error}
+      >
+        <div ref={wrapRef} className="relative">
+          {name && (
+            <input
+              type="hidden"
+              name={name}
+              disabled={effectiveDisabled}
+              value={
+                selected
+                  ? (getFormValue?.(selected) ?? String(getKey(selected)))
+                  : ""
+              }
+              readOnly
+            />
+          )}
+          <input
+            ref={inputRef}
+            id={id}
+            data-field-name={name || undefined}
+            type="text"
+            role="combobox"
+            autoComplete="off"
+            aria-expanded={open}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={
+              open && items[active] ? `${id}-opt-${active}` : undefined
+            }
+            aria-describedby={field.describedBy}
+            aria-invalid={field.error ? true : undefined}
+            aria-required={required || undefined}
+            disabled={effectiveDisabled}
+            required={required}
+            placeholder={placeholder}
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              field.clear();
+              setOpen(true);
+              if (selected) {
+                preserveQueryForNullRef.current = controlled;
+                changeSelected(null);
+              }
+            }}
+            onFocus={() => setOpen(true)}
+            onKeyDown={onKeyDown}
+            className={inputClass({
+              error: field.error,
+              className: "pr-8",
+            })}
+          />
+
+          <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+            {result.isPending && open ? (
+              <Spinner className="text-muted-fg" />
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                className="size-4 text-muted-fg"
+                aria-hidden="true"
+                fill="none"
+              >
+                <path
+                  d="m7 10 5 5 5-5"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
+
+          {open && (
+            <ul
+              ref={listRef}
+              id={listId}
+              role="listbox"
+              aria-label={label}
+              className={cn(
+                "absolute z-40 max-h-[260px] w-full overflow-y-auto rounded-lg",
+                "border border-border bg-card p-1 shadow-e3",
+                placement === "below" ? "top-full mt-1" : "bottom-full mb-1",
+              )}
+            >
+              {result.isPending && items.length === 0 && (
+                <li className="px-2 py-2 text-sm text-muted-fg">Searching…</li>
+              )}
+
+              {result.isError && (
+                <li role="alert" className="px-2 py-2 text-sm text-danger">
+                  {result.error?.displayMessage ?? "Could not load suggestions"}
+                </li>
+              )}
+
+              {!result.isPending && !result.isError && items.length === 0 && (
+                <li className="px-2 py-2 text-sm text-muted-fg">
+                  No matching locations
+                </li>
+              )}
+
+              {items.map((item, i) => (
+                <li
+                  key={getKey(item)}
+                  id={`${id}-opt-${i}`}
+                  data-index={i}
+                  role="option"
+                  aria-selected={i === active}
+                  // pointerdown だと入力欄の blur より先に走るので選択が確実になる
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    choose(item);
+                  }}
+                  onPointerEnter={() => setActive(i)}
+                  className={cn(
+                    "cursor-pointer rounded-md px-2 py-2 text-sm",
+                    i === active
+                      ? "bg-accent text-accent-fg"
+                      : "text-card-fg",
+                  )}
+                >
+                  {renderItem ? renderItem(item) : getLabel(item)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </FieldShell>
+    </div>
+  );
+}

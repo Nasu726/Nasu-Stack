@@ -1,6 +1,6 @@
 # ROADMAP
 
-## v2.0.2候補 — dogfood前の境界修正と実アプリincubation
+## v2.2.0 — dogfood境界修正と実アプリincubation
 
 外部reviewで再現条件が確定したform / transport境界を先に直し、その後は新しい
 primitiveを机上で増やさず、性質の異なる実アプリ3本でcompositionを検証します。
@@ -10,7 +10,8 @@ primitiveを机上で増やさず、性質の異なる実アプリ3本でcomposi
 - [x] JSON serialization分類と`createSubmit.timeout`のruntime検査を統一
 - [x] `CheckboxGroup`の0 / 1 / N raw値契約を正確に文書化
 - [x] read-heavyなRepository Pulseを実装・公開し、正式なCLI雛型へ昇格
-- [ ] state-heavy / write-heavyなdogfood appを順に実装・検証後に雛型へ昇格
+- [x] state-heavyなWeather Plannerを実装・公開し、正式なCLI雛型へ昇格
+- [ ] write-heavyなService Intakeを実装・検証後に雛型へ昇格
 - [ ] 反復実装、邪魔なdefault、文書不足、escape hatchを横断記録
 
 計画とCLI昇格の品質基準は

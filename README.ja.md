@@ -18,7 +18,8 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 **先に見る:**
 [部品のカタログ](https://nasu726.github.io/Nasu-Stack/catalog/?lang=ja)（全部の部品を実際に触れます） /
 [デモサイト](https://nasu726.github.io/Nasu-Stack/demo/ja/)（この部品で組んだ雛型サイト） /
-[Repository Pulse](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/)（公開CLIとregistryから組み立てた実アプリ）
+[Repository Pulse](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/)（read-heavyな実アプリ） /
+[Weather Planner](https://nasu726.github.io/Nasu-Stack/dogfood/weather-planner/)（state-heavyな実アプリ）
 
 > **Nasu Stack 2 は Stable です。** 公開している registry 名、export、token、
 > 文書化した部品の契約は semantic versioning に従い、破壊的変更は次の major version
@@ -37,7 +38,7 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 コマンドは 1 つです。最初に言語、次にどこから始めるかを選びます。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-site
 ```
 
 Stable の入口には version 付き GitHub Release URL を使います。版ごとに URL が
@@ -60,10 +61,12 @@ Stable の入口には version 付き GitHub Release URL を使います。版�
 |---|---|
 | `blog` | **ブログ・LP・会社概要・問い合わせ・RSS・sitemap・404** が入った状態 |
 | `repository-pulse` | **公開GitHub repository**の概要・検索・追加読込・responsiveなrelease表・固定fixtureのbrowser検査まで入ったReactアプリ |
+| `weather-planner` | **7日分の天気と予定**、場所検索、local autosave、復旧、固定fixtureのbrowser検査まで入ったReactアプリ。既定の公開APIは条件を満たす非商用利用ならaccountもkeyも不要 |
 
-どちらも選ぶ前に確認できます：
+完成雛型は選ぶ前に確認できます：
 [複数ページのデモ](https://nasu726.github.io/Nasu-Stack/demo/ja/)と、公開中の
-[Repository Pulse](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/)です。
+[Repository Pulse](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/)・
+[Weather Planner](https://nasu726.github.io/Nasu-Stack/dogfood/weather-planner/)です。
 
 最初に **English / 日本語**、次に **まっさらな状態から / 雛型を使う**を選びます。
 ターミナルの表示と、生成される `README.md`・`HowToUse.md`・環境変数の案内は
@@ -76,10 +79,23 @@ Stable の入口には version 付き GitHub Release URL を使います。版�
 
 ```bash
 # 日本語の案内
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-pulse --lang ja --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-pulse --lang ja --template repository-pulse --yes
 # 英語の案内
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-pulse --lang en --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-pulse --lang en --template repository-pulse --yes
 ```
+
+Weather Plannerから始める場合です。
+
+```bash
+# 日本語の案内
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-weather --lang ja --template weather-planner --yes
+# 英語の案内
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-weather --lang en --template weather-planner --yes
+```
+
+API keyなしで起動します。既定のOpen-Meteo無料endpointは条件を満たす非商用利用向けで、
+利用上限と帰属表示の条件があります。商用credentialを自分のserver側へ移す方法は雛型内で
+説明します。
 
 > **npm には publish していません。** 個人的なプロジェクトとして続けるので、
 > 継続的な保守を約束できないためです。npm は URL の tarball をそのまま受け取れます。
@@ -134,7 +150,8 @@ npx shadcn@4.17.0 add @nasu/action-button
 
 `neutral` / `warm` / `editorial` / `vivid` の 4 種。
 色だけでなく**角丸・影の強さ・書体・字間・余白の広さ**まで一緒に変わるので、
-部分的に浮くことがありません。切り替え UI は `ThemeSwitcher` をそのまま置けます。
+部分的に浮くことがありません。通常はcode中の`data-theme`を1つ決めれば十分です。
+訪問者自身に切替を許す製品だけ、必要に応じて`ThemeSwitcher`を置けます。
 
 自分のテーマは、`tokens.css` の `:root` に並んでいる変数を別のセレクタで
 上書きするだけです。

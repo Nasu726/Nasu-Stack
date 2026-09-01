@@ -124,6 +124,15 @@ export const KINDS = [
     },
   },
   {
+    key: "weather-planner",
+    mode: "template",
+    label: { en: "Weather Planner (Vite + React)", ja: "Weather Planner（Vite + React）" },
+    hint: {
+      en: "A seven-day planner with place search, local autosave, and fixture-driven tests.",
+      ja: "場所検索・local autosave・固定fixture検査が入った7日分の予定アプリ。",
+    },
+  },
+  {
     key: "vite",
     mode: "scratch",
     label: { en: "App (Vite + React)", ja: "アプリ（Vite + React）" },

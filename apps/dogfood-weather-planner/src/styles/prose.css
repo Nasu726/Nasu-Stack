@@ -1,0 +1,163 @@
+/**
+ * prose.css — 本文（Markdown を流し込む場所）の見た目
+ * ================================================================
+ *
+ *   <ContentBlock width="prose">
+ *     <div class="wt-prose" set:html={html} />
+ *   </ContentBlock>
+ *
+ * ----------------------------------------------------------------
+ * ここだけ「余白は部品が持たない」の原則を破っています
+ * ----------------------------------------------------------------
+ * この設計の原則は「コンポーネントは自分の外側の余白を持たない。
+ * 余白はレイアウト部品が所有する」です。
+ *
+ * **本文だけは例外にします。** Markdown が吐く `<h2>` と `<p>` の間に
+ * `<Stack>` を差し込むことはできないからです。書き手は文章を書くのであって、
+ * 段落ごとにコンポーネントを挟むわけではありません。
+ *
+ * 例外だと分かるように、余白は `.wt-prose` の**子孫にだけ**効かせ、
+ * `.wt-prose` 自身は外側の余白を一切持ちません。
+ *
+ * ----------------------------------------------------------------
+ * 幅は持たせません
+ * ----------------------------------------------------------------
+ * 読みやすい行長（和文 45 字 / 欧文 75〜80 字）は `ContentBlock width="prose"`
+ * の担当です。ここでも幅を決めると、同じ基準が 2 か所に増えて必ずずれます。
+ *
+ * @layer components に置いてあるので、`class="wt-prose text-lg"` のように
+ * ユーティリティで上書きできます（base に置くと詳細度で勝ってしまい、
+ * 上書きできなくなります）。
+ */
+
+@layer components {
+  .wt-prose {
+    line-height: 1.85;
+    color: var(--fg);
+  }
+
+  /* --- 見出し ---------------------------------------------------
+     上の余白を下より大きく取ります。見出しは「次の段落のもの」で、
+     前の段落から離れているほうが構造が見えるためです。 */
+  .wt-prose :is(h1, h2, h3, h4) {
+    font-family: var(--font-display);
+    letter-spacing: var(--tracking-display);
+    font-weight: var(--weight-display);
+    line-height: 1.35;
+    margin-block: var(--space-xl) var(--space-sm);
+    scroll-margin-top: calc(var(--header-h) + var(--space-sm));
+  }
+  .wt-prose > :first-child {
+    margin-block-start: 0;
+  }
+  .wt-prose h1 {
+    font-size: 2rem;
+  }
+  .wt-prose h2 {
+    font-size: 1.5rem;
+  }
+  .wt-prose h3 {
+    font-size: 1.25rem;
+  }
+  .wt-prose h4 {
+    font-size: 1.0625rem;
+  }
+
+  /* --- 段落・リスト --------------------------------------------- */
+  .wt-prose :is(p, ul, ol, blockquote, pre, table, figure) {
+    margin-block: var(--space-md);
+  }
+  .wt-prose :is(ul, ol) {
+    padding-inline-start: 1.5em;
+  }
+  .wt-prose ul {
+    list-style: disc;
+  }
+  .wt-prose ol {
+    list-style: decimal;
+  }
+  .wt-prose li {
+    margin-block: var(--space-2xs);
+  }
+  .wt-prose li::marker {
+    color: var(--muted-fg);
+  }
+  /* 入れ子のリストは、外側の項目との間隔だけ詰めます */
+  .wt-prose li > :is(ul, ol) {
+    margin-block: var(--space-2xs);
+  }
+
+  /* --- 引用 ------------------------------------------------------ */
+  .wt-prose blockquote {
+    border-inline-start: 3px solid var(--border);
+    padding-inline-start: var(--space-md);
+    color: var(--muted-fg);
+  }
+
+  /* --- コード ----------------------------------------------------
+     pre の overflow-x: auto は tokens.css の base 層が既に持っています。
+     ここで上書きすると二重管理になるので、見た目だけを足します。 */
+  .wt-prose :not(pre) > code {
+    background: var(--muted);
+    border-radius: calc(var(--radius) * 0.5);
+    padding: 0.1em 0.35em;
+    font-size: 0.9em;
+  }
+  .wt-prose pre {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md);
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  /* --- リンク ----------------------------------------------------
+     下線を消しません。色だけで示すと、色を見分けにくい人に届きません。 */
+  .wt-prose a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .wt-prose a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  /* --- 表 --------------------------------------------------------
+     広い表は <Scrollable> で囲んでください。ここでは見た目だけ整えます。 */
+  .wt-prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+  .wt-prose :is(th, td) {
+    border-block-end: 1px solid var(--border);
+    padding: var(--space-2xs) var(--space-sm);
+    text-align: start;
+    /* Markdown の表では <Scrollable> を差し込めないことがあります。
+       code や識別子 1 語の最小幅で表全体を押し出さないよう、狭い画面では
+       セル内で折り返せるようにします（英語の metadata 表で実測 3px 超過）。 */
+    overflow-wrap: anywhere;
+  }
+  .wt-prose th {
+    font-weight: 600;
+    color: var(--muted-fg);
+  }
+
+  /* --- そのほか -------------------------------------------------- */
+  .wt-prose hr {
+    border: 0;
+    border-block-start: 1px solid var(--border);
+    margin-block: var(--space-xl);
+  }
+  .wt-prose :is(figcaption, small) {
+    font-size: 0.8125rem;
+    color: var(--muted-fg);
+  }
+  .wt-prose img {
+    border-radius: var(--radius);
+  }
+  .wt-prose > :last-child {
+    margin-block-end: 0;
+  }
+}
