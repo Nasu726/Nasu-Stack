@@ -106,7 +106,7 @@ export function SiteFooter({
         </div>
 
         {note && (
-          <p className="mt-xl text-xs text-muted-fg">{note}</p>
+          <p className="mt-xl max-w-prose text-xs leading-relaxed text-muted-fg">{note}</p>
         )}
       </PageBlock>
     </footer>

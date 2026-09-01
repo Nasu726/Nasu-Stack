@@ -479,7 +479,7 @@ function ConfigurationError({ error }: { error: PublicConfigError }) {
               <li key={problem}>{problem}</li>
             ))}
           </ul>
-          <p className="text-sm text-muted-fg">
+          <p className="max-w-prose text-sm leading-relaxed text-muted-fg">
             Do not add a GitHub token to a <code>VITE_*</code> variable. Those values are public.
           </p>
         </Stack>

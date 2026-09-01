@@ -3,8 +3,9 @@
 ## 目的
 
 Nasu Stackを使う実アプリを作り、静的なAPI候補ではなく、実際に繰り返した判断を
-次の改善候補として集める。成果物は環境変数を設定すれば動く品質の見本にするが、
-検証前から`create-nasu-stack`の選択肢にはしない。
+次の改善候補として集める。成果物は環境変数を設定すれば動く品質の見本にし、下記の
+昇格条件を満たしたものは`create-nasu-stack`から配る正式な雛型にする。検証前から
+選択肢にはしないが、検証後も内部作例だけに留めない。
 
 この工程で優先するのは部品数ではない。
 
@@ -53,6 +54,11 @@ CLIへ追加する条件は次のすべてを満たすこととする。
 - `.env.example`、設定手順、責任外の運用要件が英語と日本語で分かる
 - registry sourceを手で複製せず、実registry経路が作ったcopy-owned sourceを使う
 - workspace aliasでregistry本体へ抜け道を作らない
+
+昇格後も`apps/dogfood-*`を実例・回帰検査・雛型生成の単一原本として残す。配布用sourceを
+別directoryへ手で複製せず、`create-nasu-stack`のtemplateはbuild時に原本から生成する。
+利用者には言語別のREADME / HowToUse / `.env.example`、copy-owned source、lockfile、
+固定fixtureをまとめて渡す。今後作るdogfood appにも同じ条件と生成経路を適用する。
 
 ## 作る3種類の実アプリ
 

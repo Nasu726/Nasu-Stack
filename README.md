@@ -39,7 +39,7 @@ reliably get stuck on: **layout** and **async state**.
 One command. It asks for your language first, then how you want to start.
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.1/create-nasu-stack-2.0.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-site
 ```
 
 The versioned GitHub Release URL is the Stable entry point. Each release gets a
@@ -62,9 +62,11 @@ theme; the content is yours.
 | Choice | |
 |---|---|
 | `blog` | Comes with a **blog, landing page, about, contact, RSS, sitemap, and 404** |
+| `repository-pulse` | A complete React app for exploring a **public GitHub repository**, with search, load-more pagination, a responsive release table, and fixture-driven browser tests |
 
-The [demo site](https://nasu726.github.io/Nasu-Stack/demo/) is exactly this, so
-**you can look before you choose.**
+You can inspect both templates before choosing: the
+[multipage demo](https://nasu726.github.io/Nasu-Stack/demo/) and the live
+[Repository Pulse app](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/).
 
 The setup asks for **English or Japanese first**, then **From scratch or Use a
 template**. Its terminal messages, `README.md`, `HowToUse.md`, and environment
@@ -72,6 +74,15 @@ variable guidance use the selected language.
 
 Add `--lang en --template <kind> --yes` to skip the prompts. Use `--lang ja`
 for Japanese guidance.
+
+For example, generate Repository Pulse without prompts:
+
+```bash
+# English guidance
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-pulse --lang en --template repository-pulse --yes
+# Japanese guidance
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-pulse --lang ja --template repository-pulse --yes
+```
 
 > **Not published to npm.** This is a personal project and I can't promise
 > ongoing maintenance, so I don't want to hold an npm name. `npx` takes a

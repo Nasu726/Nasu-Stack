@@ -37,7 +37,7 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 コマンドは 1 つです。最初に言語、次にどこから始めるかを選びます。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.1/create-nasu-stack-2.0.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-site
 ```
 
 Stable の入口には version 付き GitHub Release URL を使います。版ごとに URL が
@@ -59,8 +59,11 @@ Stable の入口には version 付き GitHub Release URL を使います。版�
 | 選ぶもの | |
 |---|---|
 | `blog` | **ブログ・LP・会社概要・問い合わせ・RSS・sitemap・404** が入った状態 |
+| `repository-pulse` | **公開GitHub repository**の概要・検索・追加読込・responsiveなrelease表・固定fixtureのbrowser検査まで入ったReactアプリ |
 
-[デモサイト](https://nasu726.github.io/Nasu-Stack/demo/ja/)がこれです。**中身を見てから決められます。**
+どちらも選ぶ前に確認できます：
+[複数ページのデモ](https://nasu726.github.io/Nasu-Stack/demo/ja/)と、公開中の
+[Repository Pulse](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/)です。
 
 最初に **English / 日本語**、次に **まっさらな状態から / 雛型を使う**を選びます。
 ターミナルの表示と、生成される `README.md`・`HowToUse.md`・環境変数の案内は
@@ -68,6 +71,15 @@ Stable の入口には version 付き GitHub Release URL を使います。版�
 
 対話を飛ばすなら `--lang ja --template <種類> --yes` を付けます。英語の案内は
 `--lang en` です。
+
+たとえばRepository Pulseを対話なしで生成できます。
+
+```bash
+# 日本語の案内
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-pulse --lang ja --template repository-pulse --yes
+# 英語の案内
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-pulse --lang en --template repository-pulse --yes
+```
 
 > **npm には publish していません。** 個人的なプロジェクトとして続けるので、
 > 継続的な保守を約束できないためです。npm は URL の tarball をそのまま受け取れます。

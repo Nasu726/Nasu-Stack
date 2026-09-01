@@ -5,6 +5,10 @@
 コマンドは`package.json`があるproject rootで実行します。`.env.example`を
 `.env`へコピーし、`npm install`と`npm run dev`を実行してください。
 
+同梱の`package-lock.json`はcommitしてください。この雛型が検査を通った依存treeを
+固定しています。依存を更新した場合も、buildとbrowser検査を通した後のlockfileを
+commitします。
+
 ## 実装の地図
 
 | 場所 | 責任 |

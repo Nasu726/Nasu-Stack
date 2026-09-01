@@ -82,7 +82,7 @@ logo: z.string(),           // SVG かどうかすら見ていない
 入口の CLI は version 付き GitHub Release asset の URL です。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.1/create-nasu-stack-2.0.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-site
 ```
 
 `npx create-nasu-stack` は**空いている名前**なので、打つと他人のコードが動きます。

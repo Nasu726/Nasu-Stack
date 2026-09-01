@@ -25,8 +25,8 @@ import { localDep } from "./_deps.mjs";
 import { acquireWorkspaceLockSync } from "./_workspace-lock.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const registryRoot = path.join(root, "registry", "nasu");
 const site = path.join(root, "apps", "site");
+const repositoryPulse = path.join(root, "apps", "dogfood-repository-pulse");
 const pkg = path.join(root, "packages", "create-nasu-stack");
 const out = path.join(pkg, "template");
 
@@ -66,6 +66,27 @@ const STARTER = {
     "data-list",
     "disclosure",
     "theme-provider",
+  ],
+  "repository-pulse": [
+    "theme-provider",
+    "action-provider",
+    "action-button",
+    "async-form",
+    "form-fields",
+    "async-boundary",
+    "use-action",
+    "use-resource",
+    "toast",
+    "dialog",
+    "tabs",
+    "disclosure",
+    "submit",
+    "honeypot-field",
+    "search-list",
+    "data-table",
+    "load-more-list",
+    "copy-button",
+    "error-boundary",
   ],
   vite: [
     "theme-provider",
@@ -116,6 +137,25 @@ function copyItems(names, destSrc) {
     }
   }
   return { items: items.size, files: count, resolved: items };
+}
+
+/** dogfoodで検査したcopy-owned sourceを上書きせず、必要なitemが揃うことだけ確かめます。 */
+function inspectCopiedItems(names, destSrc) {
+  const items = resolve(names);
+  const files = new Set();
+  const missing = [];
+  for (const name of items) {
+    for (const file of byName.get(name).files ?? []) {
+      files.add(file.target);
+      if (!fs.existsSync(path.join(destSrc, file.target))) {
+        missing.push(`${name}:${file.target}`);
+      }
+    }
+  }
+  if (missing.length > 0) {
+    throw new Error(`Repository Pulseのcopy-owned sourceが不足しています: ${missing.join(", ")}`);
+  }
+  return { items: items.size, files: files.size, resolved: items };
 }
 
 /** 足場（設定ファイルなど）をそのまま写します。 */
@@ -175,6 +215,46 @@ function copyFromSite(dest) {
 }
 
 /**
+ * 検証済みのRepository Pulseを、そのまま利用者向け雛型の原本にします。
+ *
+ * copy-owned sourceをregistryから組み直すと、dogfoodで実際に検査したものと
+ * 配るものが別になります。逆にapp全体を手で別directoryへ複製すると、次の修正で
+ * 必ず片方だけ古くなります。そこでruntime source、lockfile、固定fixture、言語別案内を
+ * `apps/dogfood-repository-pulse`からbuild時に写し、生成物だけをpackします。
+ */
+function copyRepositoryPulse(dest) {
+  const excluded = new Set(["node_modules", "dist", ".gitignore", "DOGFOOD.md"]);
+  fs.cpSync(repositoryPulse, dest, {
+    recursive: true,
+    filter: (source) => {
+      const relative = path.relative(repositoryPulse, source);
+      if (!relative) return true;
+      return !relative.split(path.sep).some((segment) => excluded.has(segment));
+    },
+  });
+
+  const packagePath = path.join(dest, "package.json");
+  const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+  packageJson.name = "__PROJECT_NAME__";
+  fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+
+  /* npm lockfileのroot nameもproject名と揃えます。依存木には触れません。 */
+  const lockPath = path.join(dest, "package-lock.json");
+  const lock = fs.readFileSync(lockPath, "utf8").replaceAll(
+    "dogfood-repository-pulse",
+    "__PROJECT_NAME__",
+  );
+  fs.writeFileSync(lockPath, lock, "utf8");
+
+  /* READMEの先頭だけは生成先の名前にします。製品名としてのRepository Pulseは残します。 */
+  for (const file of ["README.md", "README.ja.md"]) {
+    const target = path.join(dest, file);
+    const source = fs.readFileSync(target, "utf8");
+    fs.writeFileSync(target, source.replace(/^# Repository Pulse$/m, "# __PROJECT_NAME__"), "utf8");
+  }
+}
+
+/**
  * 検証済みの道具の版を、生成物に書き残します。
  *
  * ----------------------------------------------------------------
@@ -227,7 +307,9 @@ function writeComponentsJson(kind, dest) {
     tailwind: {
       config: "",
       // 足場の CSS の入口。tokens / themes / prose をここから読んでいます。
-      css: "src/styles/global.css",
+      css: kind === "astro" || kind === "blog"
+        ? "src/styles/global.css"
+        : "src/index.css",
       baseColor: "neutral",
       // 色はトンマナ側（tokens.css）が持ちます。shadcn には触らせません。
       cssVariables: true,
@@ -254,7 +336,7 @@ export function buildCreateTemplate() {
   fs.rmSync(out, { recursive: true, force: true });
 
   const report = [];
-  for (const kind of ["astro", "blog", "vite"]) {
+  for (const kind of ["astro", "blog", "repository-pulse", "vite"]) {
     const dest = path.join(out, kind);
     fs.mkdirSync(dest, { recursive: true });
     if (kind === "blog") {
@@ -265,6 +347,8 @@ export function buildCreateTemplate() {
       copyScaffold("astro", dest);
       copyFromSite(dest);
       copyScaffold("blog", dest);
+    } else if (kind === "repository-pulse") {
+      copyRepositoryPulse(dest);
     } else {
       copyScaffold(kind, dest);
     }
@@ -277,10 +361,10 @@ export function buildCreateTemplate() {
       pkg.nasuStack = { shadcn: testedShadcnVersion() };
       fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + "\n", "utf8");
     }
-    const r = copyItems(
-      [...STARTER.common, ...STARTER[kind]],
-      path.join(dest, "src"),
-    );
+    const included = [...STARTER.common, ...STARTER[kind]];
+    const r = kind === "repository-pulse"
+      ? inspectCopiedItems(included, path.join(dest, "src"))
+      : copyItems(included, path.join(dest, "src"));
 
     /* エディタの補完。**入っている部品の分だけ**出します。
        入っていない部品を補完に出すと、選んだ瞬間に「そんなものは無い」に
