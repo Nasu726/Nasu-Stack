@@ -11,10 +11,12 @@ function selectTemplateGuidance(dest, lang) {
   const guidePath = path.join(dest, localizedGuide);
   if (!fs.existsSync(readmePath) || !fs.existsSync(guidePath)) return false;
 
-  const readmeSource = fs.readFileSync(readmePath, "utf8").replace(
-    /\n\[(?:日本語|English)\]\(\.\/README(?:\.ja)?\.md\)\r?\n/,
-    "\n",
-  );
+  const readmeSource = fs.readFileSync(readmePath, "utf8")
+    .replace(
+      /\n\[(?:日本語|English)\]\(\.\/README(?:\.ja)?\.md\)\r?\n/,
+      "\n",
+    )
+    .replaceAll("HowToUse.ja.md", "HowToUse.md");
   const guideSource = fs.readFileSync(guidePath, "utf8");
   fs.writeFileSync(path.join(dest, "README.md"), readmeSource, "utf8");
   fs.writeFileSync(path.join(dest, "HowToUse.md"), guideSource, "utf8");

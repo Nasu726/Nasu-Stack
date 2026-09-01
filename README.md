@@ -19,7 +19,8 @@ reliably get stuck on: **layout** and **async state**.
 **See it first:**
 [component catalog](https://nasu726.github.io/Nasu-Stack/catalog/) (every component, live) /
 [demo site](https://nasu726.github.io/Nasu-Stack/demo/) (a starter site built from them) /
-[Repository Pulse](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/) (a real app built through the public CLI and registry)
+[Repository Pulse](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/) (a read-heavy real app) /
+[Weather Planner](https://nasu726.github.io/Nasu-Stack/dogfood/weather-planner/) (a state-heavy real app)
 
 > **Nasu Stack 2 is Stable.** Public registry names, exports, tokens, and the
 > documented component contracts now follow semantic versioning: breaking
@@ -39,7 +40,7 @@ reliably get stuck on: **layout** and **async state**.
 One command. It asks for your language first, then how you want to start.
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-site
 ```
 
 The versioned GitHub Release URL is the Stable entry point. Each release gets a
@@ -63,10 +64,12 @@ theme; the content is yours.
 |---|---|
 | `blog` | Comes with a **blog, landing page, about, contact, RSS, sitemap, and 404** |
 | `repository-pulse` | A complete React app for exploring a **public GitHub repository**, with search, load-more pagination, a responsive release table, and fixture-driven browser tests |
+| `weather-planner` | A **seven-day weather planner** with place search, local autosave, recovery, and fixture-driven browser tests; the default public API needs no account or key for qualifying non-commercial use |
 
-You can inspect both templates before choosing: the
+You can inspect the completed templates before choosing: the
 [multipage demo](https://nasu726.github.io/Nasu-Stack/demo/) and the live
-[Repository Pulse app](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/).
+[Repository Pulse](https://nasu726.github.io/Nasu-Stack/dogfood/repository-pulse/) and
+[Weather Planner](https://nasu726.github.io/Nasu-Stack/dogfood/weather-planner/) apps.
 
 The setup asks for **English or Japanese first**, then **From scratch or Use a
 template**. Its terminal messages, `README.md`, `HowToUse.md`, and environment
@@ -79,10 +82,23 @@ For example, generate Repository Pulse without prompts:
 
 ```bash
 # English guidance
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-pulse --lang en --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-pulse --lang en --template repository-pulse --yes
 # Japanese guidance
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-pulse --lang ja --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-pulse --lang ja --template repository-pulse --yes
 ```
+
+Or start from the Weather Planner example:
+
+```bash
+# English guidance
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-weather --lang en --template weather-planner --yes
+# Japanese guidance
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-weather --lang ja --template weather-planner --yes
+```
+
+It starts without an API key. The default Open-Meteo free endpoint is for
+qualifying non-commercial use, has usage limits, and requires attribution; the
+template explains how to move commercial credentials behind your own server.
 
 > **Not published to npm.** This is a personal project and I can't promise
 > ongoing maintenance, so I don't want to hold an npm name. `npx` takes a
@@ -141,8 +157,9 @@ stops before it can resolve the dependencies. That's measured, not assumed.
 
 Four themes: `neutral`, `warm`, `editorial`, `vivid`. Each changes more than
 color — **corner radius, shadow strength, typeface, letter spacing, and the
-size of the spacing scale** move together, so nothing looks bolted on. Drop in
-`ThemeSwitcher` if you want a toggle.
+size of the spacing scale** move together, so nothing looks bolted on. Usually,
+choosing one `data-theme` in code is enough. Add `ThemeSwitcher` only when the
+product deliberately lets visitors choose.
 
 To make your own, override the variables from `tokens.css` under a different
 selector:

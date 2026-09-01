@@ -19,7 +19,7 @@ v2をmajor releaseにした理由はStable contractの拡張と、1つの意図�
 version付きで、release workflowが上書きしないv2のassetを使います。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-site
 ```
 
 言語、始め方、雛型を選ぶ流れは変わりません。既存の`--lang`、`--template`、

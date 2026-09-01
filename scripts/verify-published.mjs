@@ -208,6 +208,7 @@ for (const [name, sub] of [
   ["デモ", "demo"],
   ["日本語デモ", "demo/ja"],
   ["Repository Pulse", "dogfood/repository-pulse"],
+  ["Weather Planner", "dogfood/weather-planner"],
 ]) {
   const entry = `${base}/${sub}/`;
   const res = await publishedFetch(entry).catch(() => null);
@@ -342,6 +343,46 @@ try {
       );
       must(
         "    Repository Pulse: 同一サイトの要求が失敗しない",
+        failed.length === 0,
+        failed.slice(0, 3).join(" / "),
+      );
+      await page.close();
+    }
+
+    /* Weather Plannerも外部Open-Meteo APIの可用性をPages判定へ混ぜません。
+       同一originのassetと、公開設定で起動したapp shellだけを保証します。 */
+    {
+      const page = await browser.newPage();
+      const failed = [];
+      const publishedOrigin = new URL(base).origin;
+      page.on("response", (response) => {
+        if (
+          new URL(response.url()).origin === publishedOrigin &&
+          response.status() >= 400
+        ) {
+          failed.push(`${response.url()} → HTTP ${response.status()}`);
+        }
+      });
+      page.on("requestfailed", (request) => {
+        if (new URL(request.url()).origin === publishedOrigin) {
+          failed.push(`${request.url()} → ${request.failure()?.errorText}`);
+        }
+      });
+      await page.goto(`${base}/dogfood/weather-planner/`, {
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
+      });
+      const heading = page.getByRole("heading", {
+        level: 1,
+        name: "Give the week a little room to change.",
+      });
+      await heading.waitFor({ state: "visible", timeout: 10000 });
+      must(
+        "    Weather Planner: 公開設定でapp shellが起動する",
+        await heading.isVisible(),
+      );
+      must(
+        "    Weather Planner: 同一サイトの要求が失敗しない",
         failed.length === 0,
         failed.slice(0, 3).join(" / "),
       );

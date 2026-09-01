@@ -74,6 +74,9 @@ DataTable / LoadMoreList、CopyButton、ErrorBoundaryの実戦を確認する。
 
 ### 2. Weather Planner — state-heavyなViteアプリ
 
+**完了:** 公開CLIとregistryから組み立て、固定fixtureで33件のapp回帰検査を通し、
+`weather-planner`正式雛型とPages作例の単一原本へ昇格した。
+
 公開APIから場所と予報を取得し、候補選択、保存中表示、復旧、responsive compositionを
 検証する。`AsyncSelect`、`useAutosave`、Popover、ErrorBoundaryを中心に使う。
 

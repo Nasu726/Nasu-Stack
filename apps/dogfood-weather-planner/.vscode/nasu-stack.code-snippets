@@ -1,0 +1,290 @@
+{
+  "Box": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-box",
+    "body": [
+      "<Box>",
+      "  ${1:中身}",
+      "</Box>"
+    ],
+    "description": "import { Box } from \"@/components/ui/layout\";\n任意: as padding paddingX paddingY background border radius shadow"
+  },
+  "Stack": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-stack",
+    "body": [
+      "<Stack>",
+      "  ${1:中身}",
+      "</Stack>"
+    ],
+    "description": "import { Stack } from \"@/components/ui/layout\";\n任意: as space align dividers"
+  },
+  "Inline": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-inline",
+    "body": [
+      "<Inline>",
+      "  ${1:中身}",
+      "</Inline>"
+    ],
+    "description": "import { Inline } from \"@/components/ui/layout\";\n任意: as space align alignY wrap"
+  },
+  "Switcher": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-switcher",
+    "body": [
+      "<Switcher>",
+      "  ${1:中身}",
+      "</Switcher>"
+    ],
+    "description": "import { Switcher } from \"@/components/ui/layout\";\n任意: as space minItemWidth"
+  },
+  "SidebarLayout": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-sidebar-layout",
+    "body": [
+      "<SidebarLayout\n  side={${1:side}}\n>",
+      "  ${2:中身}",
+      "</SidebarLayout>"
+    ],
+    "description": "import { SidebarLayout } from \"@/components/ui/layout\";\n任意: as sideWidth contentMinWidth sidePosition space"
+  },
+  "Columns": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-columns",
+    "body": [
+      "<Columns>",
+      "  ${1:中身}",
+      "</Columns>"
+    ],
+    "description": "import { Columns } from \"@/components/ui/layout\";\n任意: as space collapseBelow alignY"
+  },
+  "Column": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-column",
+    "body": [
+      "<Column>",
+      "  ${1:中身}",
+      "</Column>"
+    ],
+    "description": "import { Column } from \"@/components/ui/layout\";\n任意: as width"
+  },
+  "Tiles": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-tiles",
+    "body": [
+      "<Tiles>",
+      "  ${1:中身}",
+      "</Tiles>"
+    ],
+    "description": "import { Tiles } from \"@/components/ui/layout\";\n任意: as columns space"
+  },
+  "Spread": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-spread",
+    "body": [
+      "<Spread>",
+      "  ${1:中身}",
+      "</Spread>"
+    ],
+    "description": "import { Spread } from \"@/components/ui/layout\";\n任意: as space alignY"
+  },
+  "ContentBlock": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-content-block",
+    "body": [
+      "<ContentBlock>",
+      "  ${1:中身}",
+      "</ContentBlock>"
+    ],
+    "description": "import { ContentBlock } from \"@/components/ui/layout\";\n任意: as width align"
+  },
+  "PageBlock": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-page-block",
+    "body": [
+      "<PageBlock />"
+    ],
+    "description": "import { PageBlock } from \"@/components/ui/layout\";\n任意: gutter"
+  },
+  "Section": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-section",
+    "body": [
+      "<Section>",
+      "  ${1:中身}",
+      "</Section>"
+    ],
+    "description": "import { Section } from \"@/components/ui/layout\";\n任意: space background"
+  },
+  "SiteHeader": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-site-header",
+    "body": [
+      "<SiteHeader />"
+    ],
+    "description": "import { SiteHeader } from \"@/components/ui/site-nav\";\n任意: brand brandHref items currentPath actions sticky width className"
+  },
+  "SiteFooter": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-site-footer",
+    "body": [
+      "<SiteFooter />"
+    ],
+    "description": "import { SiteFooter } from \"@/components/ui/site-footer\";\n任意: brand brandHref description groups note width className"
+  },
+  "Frame": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-frame",
+    "body": [
+      "<Frame>",
+      "  ${1:中身}",
+      "</Frame>"
+    ],
+    "description": "import { Frame } from \"@/components/ui/frame\";\n任意: ratio fit radius"
+  },
+  "Img": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-img",
+    "body": [
+      "<Img\n  alt=\"${1:alt}\"\n/>"
+    ],
+    "description": "import { Img } from \"@/components/ui/frame\";\n任意: priority"
+  },
+  "ActionProvider": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-action-provider",
+    "body": [
+      "<ActionProvider>",
+      "  ${1:中身}",
+      "</ActionProvider>"
+    ],
+    "description": "import { ActionProvider } from \"@/components/ui/action-provider\";\n任意: toastOnError toastOnSuccess position retry resetAfter onError"
+  },
+  "Button": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-button",
+    "body": [
+      "<Button />"
+    ],
+    "description": "import { Button } from \"@/components/ui/action-button\";\n任意: variant size"
+  },
+  "ActionButton": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-action-button",
+    "body": [
+      "<ActionButton\n  action={${1:action}}\n>",
+      "  ${2:中身}",
+      "</ActionButton>"
+    ],
+    "description": "import { ActionButton } from \"@/components/ui/action-button\";\n任意: input labels confirm showError"
+  },
+  "Dialog": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-dialog",
+    "body": [
+      "<Dialog\n  open={${1:open}}\n  onOpenChange={${2:onOpenChange}}\n>",
+      "  ${3:中身}",
+      "</Dialog>"
+    ],
+    "description": "import { Dialog } from \"@/components/ui/dialog\";\n任意: title description placement size dismissible keepMounted footer className"
+  },
+  "AsyncForm": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-async-form",
+    "body": [
+      "<AsyncForm\n  action={${1:action}}\n/>"
+    ],
+    "description": "import { AsyncForm } from \"@/components/ui/async-form\";\n任意: validate"
+  },
+  "Field": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-field",
+    "body": [
+      "<Field\n  name=\"${1:name}\"\n  label=\"${2:label}\"\n/>"
+    ],
+    "description": "import { Field } from \"@/components/ui/async-form\";\n任意: hint multiline rows"
+  },
+  "SelectField": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-select-field",
+    "body": [
+      "<SelectField\n  name=\"${1:name}\"\n  label=\"${2:label}\"\n  options={${3:options}}\n/>"
+    ],
+    "description": "import { SelectField } from \"@/components/ui/form-fields\";\n任意: hint placeholder"
+  },
+  "CheckboxField": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-checkbox-field",
+    "body": [
+      "<CheckboxField\n  name=\"${1:name}\"\n  label={${2:label}}\n/>"
+    ],
+    "description": "import { CheckboxField } from \"@/components/ui/form-fields\";\n任意: hint"
+  },
+  "DateField": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-date-field",
+    "body": [
+      "<DateField\n  name=\"${1:name}\"\n  label=\"${2:label}\"\n/>"
+    ],
+    "description": "import { DateField } from \"@/components/ui/form-fields\";\n任意: hint kind"
+  },
+  "AsyncBoundary": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-async-boundary",
+    "body": [
+      "<AsyncBoundary\n  state={${1:state}}\n>",
+      "  ${2:中身}",
+      "</AsyncBoundary>"
+    ],
+    "description": "import { AsyncBoundary } from \"@/components/ui/async-boundary\";\n任意: loading isEmpty empty onRetry retryLabel className skeletonRows"
+  },
+  "Tabs": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-tabs",
+    "body": [
+      "<Tabs\n  items={${1:items}}\n>",
+      "  ${2:中身}",
+      "</Tabs>"
+    ],
+    "description": "import { Tabs } from \"@/components/ui/tabs\";\n任意: value defaultValue onValueChange activation unmountInactive label idPrefix panelId scrollbar className"
+  },
+  "TabPanel": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-tab-panel",
+    "body": [
+      "<TabPanel\n  value=\"${1:value}\"\n>",
+      "  ${2:中身}",
+      "</TabPanel>"
+    ],
+    "description": "import { TabPanel } from \"@/components/ui/tabs\";\n任意の props はありません"
+  },
+  "Scrollable": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-scrollable",
+    "body": [
+      "<Scrollable>",
+      "  ${1:中身}",
+      "</Scrollable>"
+    ],
+    "description": "import { Scrollable } from \"@/components/ui/scrollable\";\n任意: label axis scrollbar maxHeight"
+  },
+  "Disclosure": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-disclosure",
+    "body": [
+      "<Disclosure\n  summary={${1:summary}}\n>",
+      "  ${2:中身}",
+      "</Disclosure>"
+    ],
+    "description": "import { Disclosure } from \"@/components/ui/disclosure\";\n任意: defaultOpen name"
+  },
+  "Accordion": {
+    "scope": "typescriptreact,javascriptreact,astro",
+    "prefix": "wt-accordion",
+    "body": [
+      "<Accordion\n  items={${1:items}}\n/>"
+    ],
+    "description": "import { Accordion } from \"@/components/ui/disclosure\";\n任意: exclusive className"
+  }
+}

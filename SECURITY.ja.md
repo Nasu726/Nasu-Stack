@@ -29,7 +29,7 @@ Web サイトの部品を配る**雛型**です。
 | | |
 |---|---|
 | `https://nasu726.github.io/Nasu-Stack/r/*.json` | shadcn CLI が読むレジストリ |
-| `https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz` | version付きStable入口。workflowは上書きしない |
+| `https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz` | version付きStable入口。workflowは上書きしない |
 | `https://nasu726.github.io/Nasu-Stack/create-nasu-stack.tgz` | 内容が変わる最新 main の確認用 |
 | 同 `.sha256` | それぞれの tarball のハッシュ |
 
@@ -43,14 +43,14 @@ tarball は打つ前に照合できます。
 1 度落として、それを確かめて、**その同じファイルを実行**します。
 
 ```bash
-curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz
-curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz.sha256
-sha256sum -c create-nasu-stack-2.1.0.tgz.sha256   # OK と出たら
-npx ./create-nasu-stack-2.1.0.tgz my-site
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz.sha256
+sha256sum -c create-nasu-stack-2.2.0.tgz.sha256   # OK と出たら
+npx ./create-nasu-stack-2.2.0.tgz my-site
 ```
 
 （Windows の PowerShell なら
-`Get-FileHash create-nasu-stack-2.1.0.tgz -Algorithm SHA256` で出した値を、
+`Get-FileHash create-nasu-stack-2.2.0.tgz -Algorithm SHA256` で出した値を、
 `.sha256` の中身と見比べてください。）
 
 **README の 1 行では checksum を検証しません。** 実行前に同じファイルを
