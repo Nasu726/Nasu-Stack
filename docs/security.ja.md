@@ -184,7 +184,7 @@ assetを付ける前にreleaseが固定されません。
 代わりに **tarball の URL** を配ります。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.1/create-nasu-stack-2.0.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz my-site
 ```
 
 npm は URL の tarball をそのまま受け取れます（v0.9a で実測）。
@@ -224,16 +224,16 @@ tarball の URL だけを案内しています。
   releaseはGitHub側でもpublish後のtag・asset変更を禁止します
 - **Pages の tarball は最新 main の確認用に限る。** 同じ URL で内容が変わり、
   npm/npx が URL の古い cache を使うことがあるため、Stable の正式な導線にはしません
-- **配布物の SHA-256 を一緒に出す**（`create-nasu-stack-2.0.1.tgz.sha256`）。
+- **配布物の SHA-256 を一緒に出す**（`create-nasu-stack-2.1.0.tgz.sha256`）。
   打つ前に照合できます
 - **URL を https に限る。** レジストリの JSON も tarball も同じです
 
 ```bash
-# v2.0.1 を 1 度落とし、確かめて、**その同じファイルを実行**します。
-curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.1/create-nasu-stack-2.0.1.tgz
-curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.0.1/create-nasu-stack-2.0.1.tgz.sha256
-sha256sum -c create-nasu-stack-2.0.1.tgz.sha256
-npx ./create-nasu-stack-2.0.1.tgz my-site
+# v2.1.0 を 1 度落とし、確かめて、**その同じファイルを実行**します。
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.0/create-nasu-stack-2.1.0.tgz.sha256
+sha256sum -c create-nasu-stack-2.1.0.tgz.sha256
+npx ./create-nasu-stack-2.1.0.tgz my-site
 ```
 
 release workflow は tag と package version の一致を検査し、既存の GitHub

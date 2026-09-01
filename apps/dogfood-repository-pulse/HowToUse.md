@@ -5,6 +5,10 @@
 Run commands from this project root—the directory containing `package.json`.
 Copy `.env.example` to `.env`, then run `npm install` and `npm run dev`.
 
+Commit the included `package-lock.json`. It records the exact dependency tree
+that this template passed with; if you update dependencies, commit the updated
+lockfile after the build and browser checks pass again.
+
 ## Implementation map
 
 | Location | Responsibility |

@@ -3,6 +3,35 @@ import path from "node:path";
 import { MIN_NODE, TEMPLATES } from "./config.mjs";
 import { howToUse, readme } from "./guidance.mjs";
 
+/** 完成雛型が持つ言語別案内を選び、生成先には選んだ言語だけを残します。 */
+function selectTemplateGuidance(dest, lang) {
+  const localizedReadme = lang === "ja" ? "README.ja.md" : "README.md";
+  const localizedGuide = lang === "ja" ? "HowToUse.ja.md" : "HowToUse.md";
+  const readmePath = path.join(dest, localizedReadme);
+  const guidePath = path.join(dest, localizedGuide);
+  if (!fs.existsSync(readmePath) || !fs.existsSync(guidePath)) return false;
+
+  const readmeSource = fs.readFileSync(readmePath, "utf8").replace(
+    /\n\[(?:日本語|English)\]\(\.\/README(?:\.ja)?\.md\)\r?\n/,
+    "\n",
+  );
+  const guideSource = fs.readFileSync(guidePath, "utf8");
+  fs.writeFileSync(path.join(dest, "README.md"), readmeSource, "utf8");
+  fs.writeFileSync(path.join(dest, "HowToUse.md"), guideSource, "utf8");
+  const localizedEnv = path.join(dest, lang === "ja" ? ".env.example.ja" : ".env.example");
+  if (fs.existsSync(localizedEnv)) {
+    fs.writeFileSync(
+      path.join(dest, ".env.example"),
+      fs.readFileSync(localizedEnv, "utf8"),
+      "utf8",
+    );
+  }
+  fs.rmSync(path.join(dest, "README.ja.md"), { force: true });
+  fs.rmSync(path.join(dest, "HowToUse.ja.md"), { force: true });
+  fs.rmSync(path.join(dest, ".env.example.ja"), { force: true });
+  return true;
+}
+
 /** テンプレートを写し、プロジェクト固有の名前と案内を埋めます。 */
 export function scaffold(kind, dest, projectName, lang = "en") {
   const src = path.join(TEMPLATES, kind);
@@ -14,6 +43,7 @@ export function scaffold(kind, dest, projectName, lang = "en") {
         "During development, run `node scripts/build-create-template.mjs` first");
   }
   fs.cpSync(src, dest, { recursive: true });
+  const hasTemplateGuidance = selectTemplateGuidance(dest, lang);
 
   // 名前を埋める対象。バイナリを壊さないよう、拡張子で絞ります。
   const REPLACE_IN = /\.(json|ts|tsx|astro|css|html|md|mjs)$/;
@@ -59,9 +89,10 @@ export function scaffold(kind, dest, projectName, lang = "en") {
 
   /* 何を置く場所なのかが分かるように、見本を置きます。
      **ファイルがあるだけで置き場所が分かります。** */
-  fs.writeFileSync(
-    path.join(dest, ".env.example"),
-    (lang === "ja"
+  if (!fs.existsSync(path.join(dest, ".env.example"))) {
+    fs.writeFileSync(
+      path.join(dest, ".env.example"),
+      (lang === "ja"
       ? [
           "# ここに秘密の値を書きます。使うときは .env にコピーしてください。",
           "# .env は git に入りません（.gitignore 済み）。",
@@ -86,16 +117,21 @@ export function scaffold(kind, dest, projectName, lang = "en") {
           "# PUBLIC_CONTACT_ENDPOINT=https://example.workers.dev/contact",
           "",
         ]).join("\n"),
-  );
+    );
+  }
 
   // nvm などが読む、この雛型が想定している Node の版。
   fs.writeFileSync(path.join(dest, ".nvmrc"), `${MIN_NODE}\n`);
 
-  fs.writeFileSync(path.join(dest, "README.md"), readme(kind, projectName, lang));
+  if (!hasTemplateGuidance) {
+    fs.writeFileSync(path.join(dest, "README.md"), readme(kind, projectName, lang));
+  }
   /* 手順は**ファイルに残します。**
      生成の直後に画面へ出しても、次のコマンドを打った時点で流れて消えます。
      「さっき何て書いてあったっけ」を、スクロールを遡って探すことになります。 */
-  fs.writeFileSync(path.join(dest, "HowToUse.md"), howToUse(kind, projectName, lang));
+  if (!hasTemplateGuidance) {
+    fs.writeFileSync(path.join(dest, "HowToUse.md"), howToUse(kind, projectName, lang));
+  }
   return true;
 }
 

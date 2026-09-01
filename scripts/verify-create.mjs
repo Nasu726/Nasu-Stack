@@ -59,9 +59,18 @@ const create = (name, args = []) => {
  * （忘れても何も言われず、その雛型だけ検査を素通りします）。
  */
 const CASES = [
-  { kind: "astro", name: "my-site", port: 4598 },
-  { kind: "blog", name: "my-blog", port: 4600 },
-  { kind: "vite", name: "my-app", port: 4599 },
+  { kind: "astro", name: "my-site", port: 4598, framework: "astro" },
+  { kind: "blog", name: "my-blog", port: 4600, framework: "astro" },
+  {
+    kind: "repository-pulse",
+    name: "my-pulse",
+    port: 4601,
+    framework: "vite",
+    verifyScript: true,
+    probeItem: "file-drop",
+    probeTarget: "src/components/ui/file-drop.tsx",
+  },
+  { kind: "vite", name: "my-app", port: 4599, framework: "vite" },
 ];
 /** 検査するページ。ブログ付きは入口だけ見ても意味がありません。 */
 const PAGES = {
@@ -70,6 +79,7 @@ const PAGES = {
     "/", "/lp/", "/about/", "/contact/", "/blog/", "/blog/hello/",
     "/ja/", "/ja/lp/", "/ja/about/", "/ja/contact/", "/ja/blog/", "/ja/blog/hello/",
   ],
+  "repository-pulse": ["/"],
   vite: ["/"],
 };
 

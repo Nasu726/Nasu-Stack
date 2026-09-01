@@ -6,11 +6,19 @@ import { stopTree } from "../_proc.mjs";
 import { log } from "../_check.mjs";
 
 export async function verifyProjects({ root, work, CASES, PAGES, must, run, shadcn, registryPort }) {
-  for (const { name, kind, port } of CASES) {
+  for (const {
+    name,
+    kind,
+    port,
+    framework,
+    verifyScript = false,
+    probeItem = "data-table",
+    probeTarget = "src/components/ui/data-table.tsx",
+  } of CASES) {
     // build は `npm run build`（利用者が打つ形）。型検査は npm exec で直に。
     const buildArgs = ["run", "build"];
     const checkArgs =
-      kind === "vite"
+      framework === "vite"
         ? ["exec", "--", "tsc", "--noEmit"]
         : ["exec", "--", "astro", "check"];
     const dir = path.join(work, name);
@@ -43,6 +51,12 @@ export async function verifyProjects({ root, work, CASES, PAGES, must, run, shad
         hashOf(lockPath) === lockBefore,
         "書き換わった = 同梱していた lockfile が古い",
       );
+    }
+
+    /* 完成雛型は、自身が持つ固定fixtureのbrowser回帰検査も配布後の姿で通します。 */
+    if (verifyScript) {
+      const v = run(dir, ["run", "verify"]);
+      must(`8.3 ${kind}: 同梱の固定fixture browser検査が通る`, v.ok, v.out ?? "");
     }
 
     /* --- 8.2. 配っている依存に、既知の脆弱性が無いか ----------------
@@ -82,9 +96,9 @@ export async function verifyProjects({ root, work, CASES, PAGES, must, run, shad
 
          利用者は N（既定）のままで構いません。自分が書き換えたコードを
          守るための確認です。ここは使い捨ての作業ディレクトリなので上書きします。 */
-      const before = fs.existsSync(path.join(dir, "src/components/ui/data-table.tsx"));
-      const a = shadcn(dir, ["add", "@nasu/data-table", "--yes", "--overwrite"]);
-      const after = fs.existsSync(path.join(dir, "src/components/ui/data-table.tsx"));
+      const before = fs.existsSync(path.join(dir, probeTarget));
+      const a = shadcn(dir, ["add", `@nasu/${probeItem}`, "--yes", "--overwrite"]);
+      const after = fs.existsSync(path.join(dir, probeTarget));
       must(`8.5 ${kind}: 本物の CLI で部品を足せる`, a.ok && !before && after,
         a.ok ? `before=${before} after=${after}` : (a.out ?? ""));
     } else {
@@ -116,7 +130,7 @@ export async function verifyProjects({ root, work, CASES, PAGES, must, run, shad
     const server = spawn(
       process.execPath,
       [path.join(root, "scripts/serve-static.mjs"), dist, String(port),
-        ...(kind === "vite" ? ["--spa"] : [])],
+        ...(framework === "vite" ? ["--spa"] : [])],
       { cwd: root, stdio: "ignore", detached: process.platform !== "win32" },
     );
 

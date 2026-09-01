@@ -6,6 +6,17 @@ below.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-09-01
+
+Minor release. It adds the first dogfood-proven application template without
+removing or changing an existing registry item, CLI option, or copied contract.
+
+### Added
+
+- Repository Pulse is available as the `repository-pulse` create CLI template,
+  including language-selected guidance, public environment configuration,
+  copy-owned Nasu Stack source, its verified lockfile, and deterministic browser tests
+
 ### Fixed
 
 - `AsyncForm` now suppresses its general error only when every returned field
@@ -21,6 +32,8 @@ below.
   when `JSON.stringify()` returns `undefined` without throwing
 - `createSubmit` rejects non-finite and negative timeouts before a request can
   start
+- `SiteFooter` constrains its note to a readable prose width instead of letting
+  short footer copy stretch across a wide container
 
 ### Documentation
 
@@ -28,7 +41,7 @@ below.
   no selection is `""`, one selection is `string`, and repeated selections are
   `string[]`
 - Added the dogfood incubation and promotion criteria for three real example
-  applications without exposing unproven templates in the create CLI
+  applications; verified apps are promoted without duplicating their source
 
 ## [2.0.1] - 2026-08-30
 
@@ -144,6 +157,7 @@ Stable is not a claim that the software is defect-free or a promise of perpetual
 maintenance. It means the responsibility boundary and public surface above can
 now be depended on without accepting breaking changes in a minor or patch release.
 
+[2.1.0]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Nasu726/Nasu-Stack/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/Nasu726/Nasu-Stack/releases/tag/v1.0.0

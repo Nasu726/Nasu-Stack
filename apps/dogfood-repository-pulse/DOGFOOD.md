@@ -14,10 +14,20 @@ workspace aliasは使っていない。追加されたsourceと依存はこのap
 
 ## 検査結果
 
-- app単体: `23 / 23`（固定API、Chromium、320〜1920px）
+- app単体: `24 / 24`（固定API、Chromium、320〜1920px）
 - root: `pnpm verify` = `36 / 36`
-- 生成物: `pnpm verify:create` = `113 / 113`
+- 生成物: `pnpm verify:create` = `145 / 145`（4雛型。Repository Pulseの生成後検査を含む）
 - app自身の`npm install`は脆弱性0件で、`package-lock.json`を保持する
+
+## CLI雛型への昇格
+
+公開・app単体・root・生成物の検査と下記観測を完走したため、`repository-pulse`として
+正式な`create-nasu-stack`雛型へ昇格した。配布用sourceは別に持たず、このappを
+`scripts/build-create-template.mjs`がbuild時に写す。言語別README / HowToUse /
+`.env.example`、copy-owned source、lockfile、固定fixture browser検査までを利用者へ渡す。
+
+今後の修正はこのappで回帰検査してから雛型を再生成する。dogfoodと配布物の二重管理は
+行わない。
 
 ## 観測
 
@@ -29,6 +39,7 @@ workspace aliasは使っていない。追加されたsourceと依存はこのap
 | 文書の不足 | `VITE_*`をsecretにしない境界は十分明確だった | 変更不要 |
 | 反復実装 | 外部JSONを`unknown`からdomain型へfail-closedで変換する処理 | 1本目なのでpublic API化しない。次appでも形が似るか観測 |
 | escape hatch | `DataTable`のresponsive/sortはcomponentを使用し、localeだけcopy-owned sourceを編集 | componentから降りずに解決。locale APIは未判断 |
+| 生成物検査で発見 | `SiteFooter.note`がwide containerで長すぎる行になった | noteの本文幅はcomponent責任なのでregistryの安全な既定値へ戻した |
 
 ## productへ戻さなかったもの
 

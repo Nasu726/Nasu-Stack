@@ -25,6 +25,19 @@ export async function verifyGeneration({ root, work, CASES, create, must }) {
     const a = fs.readFileSync(path.join(root, "registry/nasu/components/ui/layout.tsx"), "utf8");
     const b = fs.readFileSync(path.join(tpl, "vite/src/components/ui/layout.tsx"), "utf8");
     must("   原本とテンプレートの中身が一致する", a === b);
+
+    const pulseSource = fs.readFileSync(
+      path.join(root, "apps/dogfood-repository-pulse/src/App.tsx"),
+      "utf8",
+    );
+    const pulseTemplate = fs.readFileSync(
+      path.join(tpl, "repository-pulse/src/App.tsx"),
+      "utf8",
+    );
+    must(
+      "   Repository Pulseは検査済みdogfood appを単一原本にする",
+      pulseSource === pulseTemplate,
+    );
   }
 
   /* ===== 1〜3. 生成 =============================================== */
@@ -54,6 +67,48 @@ export async function verifyGeneration({ root, work, CASES, create, must }) {
     must(
       "   vite 側にも入口がある",
       fs.existsSync(path.join(work, "my-app", "src", "App.tsx")),
+    );
+
+    const pulse = create("my-pulse", ["--template", "repository-pulse", "--lang", "en"]);
+    must("2.2 Repository Pulse雛型を生成できる", pulse.ok, pulse.out.trim().slice(-160));
+    const pulseWant = [
+      ".env.example",
+      "package-lock.json",
+      "README.md",
+      "HowToUse.md",
+      path.join("scripts", "fixture-api.mjs"),
+      path.join("scripts", "verify.mjs"),
+      path.join("src", "App.tsx"),
+      path.join("src", "lib", "config.ts"),
+      path.join("src", "lib", "github.ts"),
+      path.join("src", "components", "recipes", "search-list.tsx"),
+      path.join("src", "components", "ui", "load-more-list.tsx"),
+    ];
+    const pulseFiles = fs
+      .readdirSync(path.join(work, "my-pulse"), { recursive: true })
+      .map(String);
+    const pulseMissing = pulseWant.filter((file) => !pulseFiles.includes(file));
+    must(
+      "    Repository Pulse: app・公開設定・固定fixtureが揃っている",
+      pulseMissing.length === 0,
+      pulseMissing.join(", ") || `${pulseFiles.length} ファイル`,
+    );
+    const pulsePackage = JSON.parse(
+      fs.readFileSync(path.join(work, "my-pulse", "package.json"), "utf8"),
+    );
+    const pulseLock = JSON.parse(
+      fs.readFileSync(path.join(work, "my-pulse", "package-lock.json"), "utf8"),
+    );
+    must(
+      "    Repository Pulse: project名がpackageとlockfileへ反映される",
+      pulsePackage.name === "my-pulse" && pulseLock.name === "my-pulse" &&
+        pulseLock.packages?.[""]?.name === "my-pulse",
+    );
+    const pulseReadme = fs.readFileSync(path.join(work, "my-pulse", "README.md"), "utf8");
+    must(
+      "    Repository Pulse: 選ばなかった言語の存在しないREADMEへlinkしない",
+      !pulseReadme.includes("README.ja.md") &&
+        !fs.existsSync(path.join(work, "my-pulse", "README.ja.md")),
     );
 
     /* ブログ付きの雛型。**中身は apps/site から生成しています。**
@@ -109,6 +164,26 @@ export async function verifyGeneration({ root, work, CASES, create, must }) {
 
     const r4 = create("my-site-ja", ["--template", "astro", "--lang", "ja"]);
     must("2.6 日本語の案内を指定して生成できる", r4.ok, r4.out.trim().slice(-120));
+
+    const pulseJa = create("my-pulse-ja", [
+      "--template", "repository-pulse", "--lang", "ja",
+    ]);
+    const pulseJaReadme = pulseJa.ok
+      ? fs.readFileSync(path.join(work, "my-pulse-ja", "README.md"), "utf8")
+      : "";
+    const pulseJaGuide = pulseJa.ok
+      ? fs.readFileSync(path.join(work, "my-pulse-ja", "HowToUse.md"), "utf8")
+      : "";
+    const pulseJaEnv = pulseJa.ok
+      ? fs.readFileSync(path.join(work, "my-pulse-ja", ".env.example"), "utf8")
+      : "";
+    must(
+      "2.7 Repository Pulseも日本語のREADME・使い方・環境変数案内を生成する",
+      pulseJa.ok && pulseJaReadme.includes("完成済み") &&
+        pulseJaGuide.includes("Repository Pulseの構成") && pulseJaEnv.includes("誰でも読めます") &&
+        !pulseJaReadme.includes("[English](./README.md)"),
+      pulseJa.out?.trim().slice(-160) ?? "",
+    );
   }
 
 

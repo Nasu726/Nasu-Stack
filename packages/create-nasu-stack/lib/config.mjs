@@ -115,6 +115,15 @@ export const KINDS = [
     },
   },
   {
+    key: "repository-pulse",
+    mode: "template",
+    label: { en: "Repository Pulse (Vite + React)", ja: "Repository Pulse（Vite + React）" },
+    hint: {
+      en: "A complete public GitHub repository dashboard with search, pagination, and tests.",
+      ja: "公開GitHub repositoryの概要・検索・追加読込・検査が入った実アプリ。",
+    },
+  },
+  {
     key: "vite",
     mode: "scratch",
     label: { en: "App (Vite + React)", ja: "アプリ（Vite + React）" },
@@ -159,5 +168,5 @@ export const localized = (items, lang) =>
 export const kindLabel = (kind, lang) =>
   KINDS.find((item) => item.key === kind)?.label[lang] ?? kind;
 
-/** Astro の雛型か（Vite でないか）。開発サーバの番号や触る場所が変わります。 */
-export const isAstro = (kind) => kind !== "vite";
+/** Astro の雛型か。Vite製の完成雛型が増えても、名前から推測しません。 */
+export const isAstro = (kind) => kind === "astro" || kind === "blog";
