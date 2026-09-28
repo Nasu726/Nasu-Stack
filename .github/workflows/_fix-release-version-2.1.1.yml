@@ -1,0 +1,92 @@
+name: fix-release-version-2.1.1
+
+on:
+  push:
+    branches:
+      - fix/release-version-2.1.1
+
+permissions:
+  contents: write
+
+jobs:
+  correct-and-verify:
+    if: ${{ !contains(github.event.head_commit.message, '[version-corrected]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.12.0
+          cache: pnpm
+
+      - name: Correct release version to 2.1.1
+        shell: bash
+        run: |
+          set -euxo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+
+          for (const p of ['package.json', 'packages/create-nasu-stack/package.json']) {
+            const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+            if (j.version !== '2.2.1') throw new Error(`${p}: expected version 2.2.1, got ${j.version}`);
+            j.version = '2.1.1';
+            fs.writeFileSync(p, JSON.stringify(j, null, 2) + '\n');
+          }
+
+          const stableFiles = [
+            'README.md', 'README.ja.md', 'SECURITY.md', 'SECURITY.ja.md',
+            'docs/security.md', 'docs/security.ja.md',
+            'docs/migration-v2.md', 'docs/migration-v2.ja.md',
+            'docs/shadcn-directory.md', 'packages/create-nasu-stack/index.mjs',
+            'scripts/_site.mjs'
+          ];
+          for (const p of stableFiles) {
+            let s = fs.readFileSync(p, 'utf8');
+            if (!s.includes('2.2.1')) throw new Error(`${p}: expected Stable 2.2.1 reference`);
+            s = s.replaceAll('2.2.1', '2.1.1');
+            fs.writeFileSync(p, s);
+          }
+
+          const changelogPath = 'CHANGELOG.md';
+          let c = fs.readFileSync(changelogPath, 'utf8');
+          if (!c.includes('## [2.2.1] - 2026-09-28')) throw new Error('CHANGELOG: 2.2.1 section missing');
+          c = c.replace('## [2.2.1] - 2026-09-28', '## [2.1.1] - 2026-09-28');
+          c = c.replace('[2.2.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.2.0...v2.2.1',
+            '[2.1.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.1.0...v2.1.1');
+          fs.writeFileSync(changelogPath, c);
+          NODE
+
+      - name: Install repository dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build registry
+        run: pnpm registry:build
+
+      - name: Verify repository
+        run: pnpm verify
+
+      - name: Verify generated projects
+        run: pnpm verify:create
+
+      - name: Verify release asset
+        run: pnpm release:build v2.1.1
+
+      - name: Commit verified correction
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git status --short
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'fix: correct security patch release to v2.1.1 [version-corrected]'
+          git push origin HEAD:fix/release-version-2.1.1
