@@ -6,6 +6,18 @@ below.
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-09-28
+
+Patch release. It refreshes the Astro starter dependency tree after newly
+published security advisories caused the weekly production-dependency audit to fail.
+
+### Security
+
+- Raise the Astro security floor from 7.2.2 to 7.2.10
+- Raise the Sharp override from 0.35.3 to 0.35.4
+- Refresh transitive dependencies in the Astro/Blog lockfile so the production
+  audit contains no high-or-higher known vulnerabilities
+
 ## [2.1.0] - 2026-09-01
 
 Minor release. It adds the first dogfood-proven application template without
@@ -157,6 +169,7 @@ Stable is not a claim that the software is defect-free or a promise of perpetual
 maintenance. It means the responsibility boundary and public surface above can
 now be depended on without accepting breaking changes in a minor or patch release.
 
+[2.1.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Nasu726/Nasu-Stack/compare/v1.0.0...v2.0.0
