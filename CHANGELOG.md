@@ -6,51 +6,17 @@ below.
 
 ## [Unreleased]
 
-## [2.2.1] - 2026-09-28
+## [2.1.1] - 2026-09-28
 
 Patch release. It refreshes the Astro starter dependency tree after newly
 published security advisories caused the weekly production-dependency audit to fail.
 
 ### Security
 
-- Raise the Astro security floor from 7.2.2 to 7.2.10; Astro 7.2.8 and later
-  include the fix for the AVIF image-optimization RCE advisory
-- Raise the Sharp override from 0.35.3 to 0.35.4 and refresh the generated
-  Astro/Blog lockfiles, including patched transitive dependencies
-- Keep the Vite, Repository Pulse, and Weather Planner templates unchanged;
-  their production dependency audits were already green
-
-## [2.2.0] - 2026-09-01
-
-Minor release. It adds a second dogfood-proven application template without
-removing or changing an existing registry item, CLI option, or copied contract.
-
-### Added
-
-- Weather Planner is available as the `weather-planner` create CLI template,
-  including English/Japanese guidance, public environment configuration,
-  copy-owned Nasu Stack source, its verified lockfile, and deterministic browser tests
-- The live Pages example demonstrates place search, fail-closed forecast parsing,
-  local autosave recovery, keyboard interaction, retry, and responsive composition
-
-### Changed
-
-- Dogfood-derived templates now share one generator path, keeping each tested
-  application as the single source for both its live example and distributable files
-- Generated Japanese template READMEs normalize their usage-guide link to the
-  retained `HowToUse.md` filename instead of displaying a removed localized name
-
-### Fixed
-
-- Form helper text now keeps a readable prose line length on tablet-width and
-  wider layouts; Weather Planner keeps this regression in its fixture browser test
-
-### Responsibility boundary
-
-- Weather Planner starts without an account, API key, or credit card when using
-  Open-Meteo's qualifying non-commercial free service. Provider usage limits,
-  attribution, commercial service selection, credentials, and server persistence
-  remain application/provider responsibilities and are documented in the template
+- Raise the Astro security floor from 7.2.2 to 7.2.10
+- Raise the Sharp override from 0.35.3 to 0.35.4
+- Refresh transitive dependencies in the Astro/Blog lockfile so the production
+  audit contains no high-or-higher known vulnerabilities
 
 ## [2.1.0] - 2026-09-01
 
@@ -203,8 +169,7 @@ Stable is not a claim that the software is defect-free or a promise of perpetual
 maintenance. It means the responsibility boundary and public surface above can
 now be depended on without accepting breaking changes in a minor or patch release.
 
-[2.2.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.2.0...v2.2.1
-[2.2.0]: https://github.com/Nasu726/Nasu-Stack/compare/v2.1.0...v2.2.0
+[2.1.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Nasu726/Nasu-Stack/compare/v1.0.0...v2.0.0

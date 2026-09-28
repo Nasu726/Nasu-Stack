@@ -185,11 +185,6 @@ await step(
   "pnpm",
   ["--filter", "dogfood-repository-pulse", "verify"],
 );
-await step(
-  "dogfood: Weather Planner",
-  "pnpm",
-  ["--filter", "dogfood-weather-planner", "verify"],
-);
 
 /* ---- 群 2: レジストリを作ってから ---------------------------------- */
 // 下の 3 つは public/r を読むので、生成が先です。ここだけ直列。
