@@ -39,7 +39,9 @@ jobs:
           fs.writeFileSync(p, JSON.stringify(j, null, 2) + '\n');
           NODE
             (cd "$dir" && npm install astro@7.2.10 --package-lock-only --ignore-scripts)
+            (cd "$dir" && npm audit fix --package-lock-only --omit=dev --ignore-scripts)
             (cd "$dir" && npm audit --audit-level=high --omit=dev)
+            (cd "$dir" && npm ls undici --all || true)
           done
 
       - name: Bump stable version to 2.2.1
@@ -69,7 +71,7 @@ jobs:
 
           const changelogPath = 'CHANGELOG.md';
           let c = fs.readFileSync(changelogPath, 'utf8');
-          const section = `## [2.2.1] - 2026-09-28\n\nPatch release. It refreshes the Astro starter dependency tree after newly\npublished security advisories caused the weekly production-dependency audit to fail.\n\n### Security\n\n- Raise the Astro security floor from 7.2.2 to 7.2.10; Astro 7.2.8 and later\n  include the fix for the AVIF image-optimization RCE advisory\n- Raise the Sharp override from 0.35.3 to 0.35.4 and refresh the generated\n  Astro/Blog lockfiles, including the patched SVGO 4.1.x dependency\n- Keep the Vite, Repository Pulse, and Weather Planner templates unchanged;\n  their production dependency audits were already green\n\n`;
+          const section = `## [2.2.1] - 2026-09-28\n\nPatch release. It refreshes the Astro starter dependency tree after newly\npublished security advisories caused the weekly production-dependency audit to fail.\n\n### Security\n\n- Raise the Astro security floor from 7.2.2 to 7.2.10; Astro 7.2.8 and later\n  include the fix for the AVIF image-optimization RCE advisory\n- Raise the Sharp override from 0.35.3 to 0.35.4 and refresh the generated\n  Astro/Blog lockfiles, including patched transitive dependencies\n- Keep the Vite, Repository Pulse, and Weather Planner templates unchanged;\n  their production dependency audits were already green\n\n`;
           c = c.replace('## [Unreleased]\n\n', '## [Unreleased]\n\n' + section);
           c = c.replace('[2.2.0]: https://github.com/Nasu726/Nasu-Stack/compare/v2.1.0...v2.2.0',
             '[2.2.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.2.0...v2.2.1\n[2.2.0]: https://github.com/Nasu726/Nasu-Stack/compare/v2.1.0...v2.2.0');
