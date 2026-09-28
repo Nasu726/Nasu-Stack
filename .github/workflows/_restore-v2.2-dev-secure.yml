@@ -1,0 +1,65 @@
+name: restore-v2.2-dev-secure
+
+on:
+  push:
+    branches:
+      - chore/restore-v2.2-dev-secure
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-and-verify:
+    if: ${{ !contains(github.event.head_commit.message, '[v2.2-dev-ready]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.12.0
+          cache: pnpm
+
+      - name: Apply security dependency refresh
+        shell: bash
+        run: |
+          set -euxo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          for (const p of [
+            'packages/create-nasu-stack/scaffold/astro/package.json',
+            'packages/create-nasu-stack/scaffold/blog/package.json'
+          ]) {
+            const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+            j.dependencies.astro = '^7.2.10';
+            j.overrides = { ...(j.overrides || {}), sharp: '^0.35.4' };
+            fs.writeFileSync(p, JSON.stringify(j, null, 2) + '\n');
+          }
+          NODE
+          cd packages/create-nasu-stack/scaffold/astro
+          npm install astro@7.2.10 --package-lock-only --ignore-scripts
+          npm audit fix --package-lock-only --ignore-scripts
+          npm audit --audit-level=high --omit=dev
+          cd ../../../..
+          test ! -e packages/create-nasu-stack/scaffold/blog/package-lock.json
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm registry:build
+      - name: Verify repository
+        run: pnpm verify
+      - name: Verify generated projects
+        run: pnpm verify:create
+
+      - name: Commit verified development tree
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'fix: carry security dependency refresh into v2.2 development [v2.2-dev-ready]'
+          git push origin HEAD:chore/restore-v2.2-dev-secure
