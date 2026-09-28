@@ -520,7 +520,7 @@ export function FieldShell({
       {children}
 
       {hint && !error && (
-        <p id={`${id}-hint`} className="max-w-prose text-xs text-muted-fg">
+        <p id={`${id}-hint`} className="text-xs text-muted-fg">
           {hint}
         </p>
       )}

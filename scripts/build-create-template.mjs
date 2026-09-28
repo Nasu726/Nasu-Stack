@@ -26,21 +26,9 @@ import { acquireWorkspaceLockSync } from "./_workspace-lock.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const site = path.join(root, "apps", "site");
+const repositoryPulse = path.join(root, "apps", "dogfood-repository-pulse");
 const pkg = path.join(root, "packages", "create-nasu-stack");
 const out = path.join(pkg, "template");
-
-const DOGFOOD_TEMPLATES = {
-  "repository-pulse": {
-    root: path.join(root, "apps", "dogfood-repository-pulse"),
-    packageName: "dogfood-repository-pulse",
-    heading: "Repository Pulse",
-  },
-  "weather-planner": {
-    root: path.join(root, "apps", "dogfood-weather-planner"),
-    packageName: "dogfood-weather-planner",
-    heading: "Weather Planner",
-  },
-};
 
 const registry = JSON.parse(
   fs.readFileSync(path.join(root, "registry.json"), "utf8"),
@@ -98,26 +86,6 @@ const STARTER = {
     "data-table",
     "load-more-list",
     "copy-button",
-    "error-boundary",
-  ],
-  "weather-planner": [
-    "theme-provider",
-    "action-provider",
-    "action-button",
-    "async-form",
-    "form-fields",
-    "async-boundary",
-    "use-action",
-    "use-resource",
-    "toast",
-    "dialog",
-    "tabs",
-    "disclosure",
-    "submit",
-    "honeypot-field",
-    "async-select",
-    "use-autosave",
-    "popover",
     "error-boundary",
   ],
   vite: [
@@ -185,7 +153,7 @@ function inspectCopiedItems(names, destSrc) {
     }
   }
   if (missing.length > 0) {
-    throw new Error(`dogfood templateのcopy-owned sourceが不足しています: ${missing.join(", ")}`);
+    throw new Error(`Repository Pulseのcopy-owned sourceが不足しています: ${missing.join(", ")}`);
   }
   return { items: items.size, files: files.size, resolved: items };
 }
@@ -247,22 +215,19 @@ function copyFromSite(dest) {
 }
 
 /**
- * 検証済みのdogfood appを、そのまま利用者向け雛型の原本にします。
+ * 検証済みのRepository Pulseを、そのまま利用者向け雛型の原本にします。
  *
  * copy-owned sourceをregistryから組み直すと、dogfoodで実際に検査したものと
  * 配るものが別になります。逆にapp全体を手で別directoryへ複製すると、次の修正で
  * 必ず片方だけ古くなります。そこでruntime source、lockfile、固定fixture、言語別案内を
- * `apps/dogfood-*`からbuild時に写し、生成物だけをpackします。
+ * `apps/dogfood-repository-pulse`からbuild時に写し、生成物だけをpackします。
  */
-function copyDogfoodTemplate(kind, dest) {
-  const template = DOGFOOD_TEMPLATES[kind];
-  if (!template) throw new Error(`dogfood templateの定義がありません: ${kind}`);
-
+function copyRepositoryPulse(dest) {
   const excluded = new Set(["node_modules", "dist", ".gitignore", "DOGFOOD.md"]);
-  fs.cpSync(template.root, dest, {
+  fs.cpSync(repositoryPulse, dest, {
     recursive: true,
     filter: (source) => {
-      const relative = path.relative(template.root, source);
+      const relative = path.relative(repositoryPulse, source);
       if (!relative) return true;
       return !relative.split(path.sep).some((segment) => excluded.has(segment));
     },
@@ -276,20 +241,16 @@ function copyDogfoodTemplate(kind, dest) {
   /* npm lockfileのroot nameもproject名と揃えます。依存木には触れません。 */
   const lockPath = path.join(dest, "package-lock.json");
   const lock = fs.readFileSync(lockPath, "utf8").replaceAll(
-    template.packageName,
+    "dogfood-repository-pulse",
     "__PROJECT_NAME__",
   );
   fs.writeFileSync(lockPath, lock, "utf8");
 
-  /* READMEの先頭だけは生成先の名前にします。本文中の製品名は残します。 */
+  /* READMEの先頭だけは生成先の名前にします。製品名としてのRepository Pulseは残します。 */
   for (const file of ["README.md", "README.ja.md"]) {
     const target = path.join(dest, file);
     const source = fs.readFileSync(target, "utf8");
-    fs.writeFileSync(
-      target,
-      source.replace(new RegExp(`^# ${template.heading}$`, "m"), "# __PROJECT_NAME__"),
-      "utf8",
-    );
+    fs.writeFileSync(target, source.replace(/^# Repository Pulse$/m, "# __PROJECT_NAME__"), "utf8");
   }
 }
 
@@ -375,7 +336,7 @@ export function buildCreateTemplate() {
   fs.rmSync(out, { recursive: true, force: true });
 
   const report = [];
-  for (const kind of ["astro", "blog", "repository-pulse", "weather-planner", "vite"]) {
+  for (const kind of ["astro", "blog", "repository-pulse", "vite"]) {
     const dest = path.join(out, kind);
     fs.mkdirSync(dest, { recursive: true });
     if (kind === "blog") {
@@ -386,8 +347,8 @@ export function buildCreateTemplate() {
       copyScaffold("astro", dest);
       copyFromSite(dest);
       copyScaffold("blog", dest);
-    } else if (DOGFOOD_TEMPLATES[kind]) {
-      copyDogfoodTemplate(kind, dest);
+    } else if (kind === "repository-pulse") {
+      copyRepositoryPulse(dest);
     } else {
       copyScaffold(kind, dest);
     }
@@ -401,7 +362,7 @@ export function buildCreateTemplate() {
       fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + "\n", "utf8");
     }
     const included = [...STARTER.common, ...STARTER[kind]];
-    const r = DOGFOOD_TEMPLATES[kind]
+    const r = kind === "repository-pulse"
       ? inspectCopiedItems(included, path.join(dest, "src"))
       : copyItems(included, path.join(dest, "src"));
 
