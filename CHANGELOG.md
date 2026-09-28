@@ -6,7 +6,7 @@ below.
 
 ## [Unreleased]
 
-## [2.2.1] - 2026-09-28
+## [2.1.1] - 2026-09-28
 
 Patch release. It refreshes the Astro starter dependency tree after newly
 published security advisories caused the weekly production-dependency audit to fail.
@@ -203,7 +203,7 @@ Stable is not a claim that the software is defect-free or a promise of perpetual
 maintenance. It means the responsibility boundary and public surface above can
 now be depended on without accepting breaking changes in a minor or patch release.
 
-[2.2.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.2.0...v2.2.1
+[2.1.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.1.0...v2.1.1
 [2.2.0]: https://github.com/Nasu726/Nasu-Stack/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.0...v2.0.1

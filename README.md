@@ -40,7 +40,7 @@ reliably get stuck on: **layout** and **async state**.
 One command. It asks for your language first, then how you want to start.
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.1/create-nasu-stack-2.2.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-site
 ```
 
 The versioned GitHub Release URL is the Stable entry point. Each release gets a
@@ -82,18 +82,18 @@ For example, generate Repository Pulse without prompts:
 
 ```bash
 # English guidance
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.1/create-nasu-stack-2.2.1.tgz my-pulse --lang en --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-pulse --lang en --template repository-pulse --yes
 # Japanese guidance
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.1/create-nasu-stack-2.2.1.tgz my-pulse --lang ja --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-pulse --lang ja --template repository-pulse --yes
 ```
 
 Or start from the Weather Planner example:
 
 ```bash
 # English guidance
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.1/create-nasu-stack-2.2.1.tgz my-weather --lang en --template weather-planner --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-weather --lang en --template weather-planner --yes
 # Japanese guidance
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.1/create-nasu-stack-2.2.1.tgz my-weather --lang ja --template weather-planner --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-weather --lang ja --template weather-planner --yes
 ```
 
 It starts without an API key. The default Open-Meteo free endpoint is for
