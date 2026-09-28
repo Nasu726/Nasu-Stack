@@ -38,7 +38,7 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 コマンドは 1 つです。最初に言語、次にどこから始めるかを選びます。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.1/create-nasu-stack-2.2.1.tgz my-site
 ```
 
 Stable の入口には version 付き GitHub Release URL を使います。版ごとに URL が
@@ -79,18 +79,18 @@ Stable の入口には version 付き GitHub Release URL を使います。版�
 
 ```bash
 # 日本語の案内
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-pulse --lang ja --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.1/create-nasu-stack-2.2.1.tgz my-pulse --lang ja --template repository-pulse --yes
 # 英語の案内
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-pulse --lang en --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.1/create-nasu-stack-2.2.1.tgz my-pulse --lang en --template repository-pulse --yes
 ```
 
 Weather Plannerから始める場合です。
 
 ```bash
 # 日本語の案内
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-weather --lang ja --template weather-planner --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.1/create-nasu-stack-2.2.1.tgz my-weather --lang ja --template weather-planner --yes
 # 英語の案内
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.0/create-nasu-stack-2.2.0.tgz my-weather --lang en --template weather-planner --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.2.1/create-nasu-stack-2.2.1.tgz my-weather --lang en --template weather-planner --yes
 ```
 
 API keyなしで起動します。既定のOpen-Meteo無料endpointは条件を満たす非商用利用向けで、
