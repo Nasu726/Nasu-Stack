@@ -46,7 +46,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version: 24.22.1
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -96,9 +96,10 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          # 生成物が要求する下限。**ここで確かめないと意味がありません。**
-          # 案内より新しい版でだけ通る状態になっていても気づけません。
-          node-version: 22.12.0
+          # CI は最新 LTS のセキュリティリリースで実行します。
+          # 生成物の engines 下限 (>=22.12.0) は変更しません。
+          # 最低対応版での互換性検証は別途必要です。
+          node-version: 24.22.1
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
