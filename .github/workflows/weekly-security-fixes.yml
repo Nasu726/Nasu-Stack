@@ -87,6 +87,21 @@ jobs:
           pnpm registry:build
           pnpm verify:create
 
+      # Only publish a maintenance PR if distributed/runtime dependencies
+      # meet the same high-or-higher policy enforced by verify-create.
+      - name: Confirm no high-or-critical production advisories remain
+        if: steps.patch.outputs.changed == 'true'
+        shell: bash
+        run: |
+          pnpm audit --audit-level high --prod
+          for dir in \
+            apps/dogfood-repository-pulse \
+            packages/create-nasu-stack/scaffold/astro \
+            packages/create-nasu-stack/scaffold/blog \
+            packages/create-nasu-stack/scaffold/vite; do
+            (cd "$dir" && npm audit --audit-level high --omit dev)
+          done
+
       - name: Store verified patch
         if: steps.patch.outputs.changed == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
