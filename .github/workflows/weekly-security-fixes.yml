@@ -4,6 +4,8 @@
 name: weekly dependency security fixes
 
 on:
+  pull_request:
+    branches: [main]
   schedule:
     - cron: "45 0 * * 1" # Monday 09:45 JST
   workflow_dispatch:
@@ -17,6 +19,7 @@ concurrency:
 
 jobs:
   prepare:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 55
     outputs:
@@ -97,13 +100,14 @@ jobs:
           retention-days: 7
 
   publish:
+    if: github.event_name != 'pull_request' && needs.prepare.outputs.changed == 'true'
     needs: prepare
-    if: needs.prepare.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
       pull-requests: write
+      actions: write
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -123,6 +127,7 @@ jobs:
           git apply "$RUNNER_TEMP/security-patch/security-fixes.patch"
 
       - name: Create or update security fix PR
+        id: cpr
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           branch: automation/weekly-dependency-security-fixes
@@ -152,3 +157,89 @@ jobs:
             packages/*/package.json
             packages/*/scaffold/*/package.json
             packages/*/scaffold/*/package-lock.json
+
+      # GITHUB_TOKEN-created PRs do not automatically trigger normal PR workflows.
+      # workflow_dispatch is an explicit GitHub-supported exception.
+      - name: Run required checks for the updated security PR
+        if: steps.cpr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run verify.yml --ref "${{ steps.cpr.outputs.pull-request-branch }}"
+
+  # One-time bootstrap: repair the lockfiles ON THIS PR, before merging
+  # the scheduled workflow into main. Restrict write access to the exact
+  # maintainer-owned branch; never execute fork PR code with write rights.
+  bootstrap-current-pr:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'automation/weekly-dependency-security-fixes-20261022'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.head_ref }}
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Repair workspace dependencies
+        shell: bash
+        run: |
+          pnpm install --frozen-lockfile
+          if ! pnpm audit --fix; then
+            echo "::warning::Some workspace advisories could not be auto-fixed."
+          fi
+          pnpm install --lockfile-only
+          pnpm install --frozen-lockfile
+
+      - name: Repair four committed npm lockfiles
+        shell: bash
+        run: |
+          cutoff="$(date -u -d '3 days ago' +'%Y-%m-%dT%H:%M:%SZ')"
+          for dir in \
+            apps/dogfood-repository-pulse \
+            packages/create-nasu-stack/scaffold/astro \
+            packages/create-nasu-stack/scaffold/blog \
+            packages/create-nasu-stack/scaffold/vite; do
+            echo "::group::Repair $dir"
+            if ! (cd "$dir" && npm audit fix --package-lock-only --ignore-scripts --no-fund --before="$cutoff"); then
+              echo "::warning::Unfixed npm advisories remain in $dir."
+            fi
+            echo "::endgroup::"
+          done
+
+      - name: Commit dependency repairs to the same PR branch
+        id: commit
+        shell: bash
+        run: |
+          git add -- package.json pnpm-workspace.yaml pnpm-lock.yaml \
+            ':(glob)apps/*/package.json' \
+            ':(glob)apps/*/package-lock.json' \
+            ':(glob)packages/*/package.json' \
+            ':(glob)packages/*/scaffold/*/package.json' \
+            ':(glob)packages/*/scaffold/*/package-lock.json'
+          if git diff --cached --quiet; then
+            echo "No fixable dependency changes were found."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "fix(deps): apply baseline security repairs"
+            git push origin "HEAD:${GITHUB_HEAD_REF}"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Re-run both required checks on updated PR head
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run verify.yml --ref "${GITHUB_HEAD_REF}"
