@@ -1,0 +1,179 @@
+# Weekly security maintenance for the pnpm workspace and committed npm scaffolds.
+# All dependency installation/testing runs with a read-only GITHUB_TOKEN.
+# Only the second job receives permission to publish a reviewed patch as a PR.
+name: weekly dependency security fixes
+
+on:
+  schedule:
+    - cron: "45 0 * * 1" # Monday 09:45 JST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-dependency-security-fixes
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    outputs:
+      changed: ${{ steps.patch.outputs.changed }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.22.1"
+          cache: pnpm
+
+      - name: Install existing workspace
+        run: pnpm install --frozen-lockfile
+
+      # pnpm 10 uses pnpm audit --fix, not npm audit fix, for this workspace.
+      # Nonzero can also mean advisories remain unresolved; keep partial repairs.
+      - name: Repair pnpm workspace vulnerabilities
+        shell: bash
+        run: |
+          if ! pnpm audit --fix; then
+            echo "::warning::pnpm audit --fix did not clear every advisory; review its log."
+          fi
+          pnpm install --lockfile-only
+
+      # These four lockfiles are not maintained by the root pnpm-lock.yaml.
+      # Keep npm updates within the same 3-day release-age policy as pnpm.
+      - name: Repair npm scaffold and dogfood lockfiles
+        shell: bash
+        run: |
+          cutoff="$(date -u -d '3 days ago' +'%Y-%m-%dT%H:%M:%SZ')"
+          for dir in             apps/dogfood-repository-pulse             packages/create-nasu-stack/scaffold/astro             packages/create-nasu-stack/scaffold/blog             packages/create-nasu-stack/scaffold/vite; do
+            echo "::group::Audit $dir"
+            if ! (cd "$dir" && npm audit fix --package-lock-only --ignore-scripts --no-fund --before="$cutoff"); then
+              echo "::warning file=$dir/package-lock.json::Some npm advisories remain or the audit failed."
+            fi
+            echo "::endgroup::"
+          done
+
+      - name: Prepare manifest-only patch
+        id: patch
+        shell: bash
+        run: |
+          git diff --binary --             package.json pnpm-workspace.yaml pnpm-lock.yaml             ':(glob)apps/*/package.json'             ':(glob)apps/*/package-lock.json'             ':(glob)packages/*/package.json'             ':(glob)packages/*/scaffold/*/package.json'             ':(glob)packages/*/scaffold/*/package-lock.json'             > "$RUNNER_TEMP/security-fixes.patch"
+          if [ -s "$RUNNER_TEMP/security-fixes.patch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No repairable dependency changes detected."
+          fi
+
+      # Do not publish an untested dependency update. Verify the real project
+      # and the CLI-generated consumer projects before creating a PR.
+      - name: Verify repaired dependencies
+        if: steps.patch.outputs.changed == 'true'
+        shell: bash
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+          pnpm verify
+          pnpm registry:build
+          pnpm verify:create
+
+      # Only publish a maintenance PR if distributed/runtime dependencies
+      # meet the same high-or-higher policy enforced by verify-create.
+      - name: Confirm no high-or-critical production advisories remain
+        if: steps.patch.outputs.changed == 'true'
+        shell: bash
+        run: |
+          pnpm audit --audit-level high --prod
+          for dir in \
+            apps/dogfood-repository-pulse \
+            packages/create-nasu-stack/scaffold/astro \
+            packages/create-nasu-stack/scaffold/blog \
+            packages/create-nasu-stack/scaffold/vite; do
+            (cd "$dir" && npm audit --audit-level high --omit dev)
+          done
+
+      - name: Store verified patch
+        if: steps.patch.outputs.changed == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verified-security-fixes
+          path: ${{ runner.temp }}/security-fixes.patch
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    if: needs.prepare.outputs.changed == 'true'
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: verified-security-fixes
+          path: ${{ runner.temp }}/security-patch
+
+      - name: Apply verified manifest-only patch
+        shell: bash
+        run: |
+          git apply --check "$RUNNER_TEMP/security-patch/security-fixes.patch"
+          git apply "$RUNNER_TEMP/security-patch/security-fixes.patch"
+
+      - name: Create or update security fix PR
+        id: cpr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: automation/weekly-dependency-security-fixes
+          base: main
+          delete-branch: true
+          commit-message: "chore(deps): apply weekly security fixes"
+          title: "chore(deps): weekly automated security fixes"
+          body: |
+            Automated weekly dependency security repair from the default branch.
+
+            - pnpm workspace: `pnpm audit --fix`
+            - Four committed npm lockfiles: `npm audit fix --package-lock-only`
+            - No `--force` or automatic major upgrades
+            - 3-day minimum release-age policy retained for npm updates
+            - Before PR creation: frozen-lockfile install, Playwright browser
+              verification, and full generated-project verification
+
+            This PR can leave unfixable or blocked advisories unresolved.
+            Please review the resulting overrides and dependency versions.
+            The workflow intentionally does not auto-merge.
+          add-paths: |
+            package.json
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            apps/*/package.json
+            apps/*/package-lock.json
+            packages/*/package.json
+            packages/*/scaffold/*/package.json
+            packages/*/scaffold/*/package-lock.json
+
+      # GITHUB_TOKEN-created PRs do not automatically trigger normal PR workflows.
+      # workflow_dispatch is an explicit GitHub-supported exception.
+      - name: Run required checks for the updated security PR
+        if: steps.cpr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run verify.yml --ref "${{ steps.cpr.outputs.pull-request-branch }}"
