@@ -55,7 +55,24 @@ export function packCreateNasuStack({ destination, filename }) {
 
     fs.mkdirSync(destination, { recursive: true });
     const target = path.join(destination, filename);
-    fs.renameSync(path.resolve(cli, packed), target);
+    const source = path.resolve(cli, packed);
+
+    // The verifier packs under the checkout but tests from the OS temp
+    // directory, which can be on a different filesystem (EXDEV on CI).
+    // Stage the copy beside its destination so the final rename stays atomic.
+    try {
+      fs.renameSync(source, target);
+    } catch (error) {
+      if (error.code !== "EXDEV") throw error;
+      const staging = `${target}.${process.pid}.tmp`;
+      try {
+        fs.copyFileSync(source, staging);
+        fs.renameSync(staging, target);
+        fs.unlinkSync(source);
+      } finally {
+        fs.rmSync(staging, { force: true });
+      }
+    }
 
     const sha256 = createHash("sha256")
       .update(fs.readFileSync(target))
