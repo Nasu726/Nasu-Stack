@@ -5,7 +5,7 @@
 掲載が無くても、利用者は設定ゼロで部品を入れられます。
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/action-button
 ```
 
 公式文書にもそう書いてあります。
@@ -82,7 +82,7 @@ logo: z.string(),           // SVG かどうかすら見ていない
 入口の CLI は version 付き GitHub Release asset の URL です。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz my-site
 ```
 
 `npx create-nasu-stack` は**空いている名前**なので、打つと他人のコードが動きます。

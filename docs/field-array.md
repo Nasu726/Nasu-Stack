@@ -7,7 +7,7 @@ controls: stable UI keys, indexed names, min/max buttons, and focus after an add
 or removal. It does not decide whether the array is valid for your product.
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/field-array
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/field-array
 ```
 
 ## Start with the component

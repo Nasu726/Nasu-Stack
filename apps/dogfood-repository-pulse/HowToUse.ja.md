@@ -55,8 +55,8 @@ registry aliasは`components.json`にあります。application側の変更を�
 差分を確認してください。
 
 ```bash
-npx shadcn@4.17.0 add @nasu/data-table --dry-run
-npx shadcn@4.17.0 add @nasu/data-table --diff
+npx shadcn@4.23.0 add @nasu/data-table --dry-run
+npx shadcn@4.23.0 add @nasu/data-table --diff
 ```
 
 `--overwrite`は差分確認後だけ使います。後のregistry releaseがコピー済みsourceを

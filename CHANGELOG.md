@@ -6,6 +6,25 @@ below.
 
 ## [Unreleased]
 
+## [2.1.2] - 2026-11-15
+
+Patch release. It refreshes dependencies after newly published security
+advisories caused the scheduled verify and weekly security-repair workflows to fail.
+
+### Security
+
+- Raise the tested shadcn CLI from 4.17.0 to 4.23.0. 4.17.0 depends on zod 3,
+  which has no patched release for GHSA-mrhx-c7xc-m3w5; forcing zod 4 through
+  an override broke `shadcn registry add`, so the CLI itself is upgraded
+- Raise the Astro security floor in the starters from 7.2.10 to 7.4.11
+- Refresh Astro to 7.4.11 in the site and in the Astro/Blog starter lockfiles,
+  clearing the high-severity zod and undici advisories from the distributed
+  production dependency tree
+- Override systeminformation to a patched 5.33.x release in the workspace
+- Keep fast-uri on its declared 3.x line at 3.1.9 instead of forcing the
+  vulnerable 4.2.2, and move minimatch to 11.0.x for ts-morph
+- deepmerge 4.3.1 (low, GHSA-gcqx-w48m-w2h4) remains: no patched release exists
+
 ## [2.1.1] - 2026-09-28
 
 Patch release. It refreshes the Astro starter dependency tree after newly
@@ -169,6 +188,7 @@ Stable is not a claim that the software is defect-free or a promise of perpetual
 maintenance. It means the responsibility boundary and public surface above can
 now be depended on without accepting breaking changes in a minor or patch release.
 
+[2.1.2]: https://github.com/Nasu726/Nasu-Stack/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/Nasu726/Nasu-Stack/compare/v2.0.0...v2.0.1

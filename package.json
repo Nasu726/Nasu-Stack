@@ -1,7 +1,7 @@
 {
   "name": "nasu-stack",
   "private": true,
-  "version": "2.1.1",
+  "version": "2.1.2",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.28.0",
@@ -29,7 +29,7 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
     "playwright": "^1.62.1",
-    "shadcn": "^4.17.0",
+    "shadcn": "^4.23.0",
     "typescript": "^5.9.3"
   }
 }

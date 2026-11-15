@@ -37,7 +37,7 @@ React / Astro 向けの**部品と雛型**です。見た目だけのコンポ�
 コマンドは 1 つです。最初に言語、次にどこから始めるかを選びます。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz my-site
 ```
 
 Stable の入口には version 付き GitHub Release URL を使います。版ごとに URL が
@@ -76,9 +76,9 @@ Stable の入口には version 付き GitHub Release URL を使います。版�
 
 ```bash
 # 日本語の案内
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-pulse --lang ja --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz my-pulse --lang ja --template repository-pulse --yes
 # 英語の案内
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-pulse --lang en --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz my-pulse --lang en --template repository-pulse --yes
 ```
 
 > **npm には publish していません。** 個人的なプロジェクトとして続けるので、
@@ -92,7 +92,7 @@ npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-s
 中身を自由に書き換えられるのが目的なので、これが正しい配り方です。
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/action-button
 ```
 
 **これだけです。設定は要りません。** `components.json` への追記も、
@@ -105,8 +105,8 @@ npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button
 名前空間を 1 回登録すると、以後は短い名前で書けます。
 
 ```bash
-npx shadcn@4.17.0 registry add "@nasu=https://nasu726.github.io/Nasu-Stack/r/{name}.json"
-npx shadcn@4.17.0 add @nasu/action-button
+npx shadcn@4.23.0 registry add "@nasu=https://nasu726.github.io/Nasu-Stack/r/{name}.json"
+npx shadcn@4.23.0 add @nasu/action-button
 ```
 
 `shadcn search @nasu` が使えるようになり、フォークやミラーへ差し替えることも

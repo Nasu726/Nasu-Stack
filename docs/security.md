@@ -4,7 +4,7 @@ The moment this is published, it becomes **something that runs code on other
 people's machines.**
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button   # files get written into your src/
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/action-button   # files get written into your src/
 npx https://…/create-nasu-stack.tgz my-site              # code runs on your machine
 ```
 
@@ -38,7 +38,7 @@ maintenance can't be promised.
 Instead, a **tarball URL** is distributed:
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz my-site
 ```
 
 npm accepts a tarball URL directly (measured, not assumed).
@@ -82,16 +82,16 @@ typed the real URL.** These rules help:
   the same URL, and npm/npx may reuse URL-cached contents, so it is not the
   canonical Stable install command
 - **The SHA-256 of the distributed tarball is published alongside it**
-  (`create-nasu-stack-2.1.1.tgz.sha256`), so you can compare before you run
+  (`create-nasu-stack-2.1.2.tgz.sha256`), so you can compare before you run
   anything
 - **Every URL is https** — the registry JSON and the tarball alike
 
 ```bash
-# For v2.1.1, download once, verify that file, and run that same file.
-curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz
-curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz.sha256
-sha256sum -c create-nasu-stack-2.1.1.tgz.sha256
-npx ./create-nasu-stack-2.1.1.tgz my-site
+# For v2.1.2, download once, verify that file, and run that same file.
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz
+curl -fsSL -O https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz.sha256
+sha256sum -c create-nasu-stack-2.1.2.tgz.sha256
+npx ./create-nasu-stack-2.1.2.tgz my-site
 ```
 
 The release workflow verifies the tag against the package version and refuses

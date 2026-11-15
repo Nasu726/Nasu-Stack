@@ -19,7 +19,7 @@ v2をmajor releaseにした理由はStable contractの拡張と、1つの意図�
 version付きで、release workflowが上書きしないv2のassetを使います。
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz my-site
 ```
 
 言語、始め方、雛型を選ぶ流れは変わりません。既存の`--lang`、`--template`、
@@ -39,9 +39,9 @@ copy済みのfileは利用者のapplicationが所有します。v2の挙動が�
 たとえば次の順です。
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --dry-run
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --diff
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --overwrite
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --dry-run
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --diff
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --overwrite
 ```
 
 最後のcommandは既存fileを置き換えます。applicationにとって安全な差分だと確認するまで

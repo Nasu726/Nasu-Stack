@@ -19,7 +19,7 @@ only delays feedback; authoritative validation still belongs on the server.
 Use the versioned v2 release asset. Its release workflow refuses overwrites:
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz my-site
 ```
 
 The language, starting-point, and template prompts are unchanged. Existing
@@ -40,9 +40,9 @@ behavior you want, one item at a time:
 For example:
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --dry-run
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --diff
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --overwrite
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --dry-run
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --diff
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --overwrite
 ```
 
 The last command replaces existing files. Do not run it until the diff is safe

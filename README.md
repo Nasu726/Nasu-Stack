@@ -39,7 +39,7 @@ reliably get stuck on: **layout** and **async state**.
 One command. It asks for your language first, then how you want to start.
 
 ```bash
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-site
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz my-site
 ```
 
 The versioned GitHub Release URL is the Stable entry point. Each release gets a
@@ -79,9 +79,9 @@ For example, generate Repository Pulse without prompts:
 
 ```bash
 # English guidance
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-pulse --lang en --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz my-pulse --lang en --template repository-pulse --yes
 # Japanese guidance
-npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-stack-2.1.1.tgz my-pulse --lang ja --template repository-pulse --yes
+npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.2/create-nasu-stack-2.1.2.tgz my-pulse --lang ja --template repository-pulse --yes
 ```
 
 > **Not published to npm.** This is a personal project and I can't promise
@@ -96,7 +96,7 @@ Nothing is installed as an npm package. **The code is copied into your
 repository**, so you can edit it freely. That's the point.
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/action-button
 ```
 
 **That's it — no configuration.** No `components.json` entry, no registry
@@ -109,8 +109,8 @@ along automatically — 10 files for `action-button`.
 Register the namespace once, then use the short name everywhere:
 
 ```bash
-npx shadcn@4.17.0 registry add "@nasu=https://nasu726.github.io/Nasu-Stack/r/{name}.json"
-npx shadcn@4.17.0 add @nasu/action-button
+npx shadcn@4.23.0 registry add "@nasu=https://nasu726.github.io/Nasu-Stack/r/{name}.json"
+npx shadcn@4.23.0 add @nasu/action-button
 ```
 
 This also enables `shadcn search @nasu` and lets you point the namespace at a
