@@ -59,8 +59,8 @@ The registry alias lives in `components.json`. Inspect differences before
 overwriting application changes:
 
 ```bash
-npx shadcn@4.17.0 add @nasu/data-table --dry-run
-npx shadcn@4.17.0 add @nasu/data-table --diff
+npx shadcn@4.23.0 add @nasu/data-table --dry-run
+npx shadcn@4.23.0 add @nasu/data-table --diff
 ```
 
 Only use `--overwrite` after reviewing the diff. A later registry release does

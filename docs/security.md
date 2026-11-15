@@ -4,7 +4,7 @@ The moment this is published, it becomes **something that runs code on other
 people's machines.**
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button   # files get written into your src/
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/action-button   # files get written into your src/
 npx https://…/create-nasu-stack.tgz my-site              # code runs on your machine
 ```
 

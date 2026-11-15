@@ -6,6 +6,16 @@ below.
 
 ## [Unreleased]
 
+### Security
+
+- Raise the tested shadcn CLI from 4.17.0 to 4.23.0. 4.17.0 depends on zod 3,
+  which has no patched release for GHSA-mrhx-c7xc-m3w5; forcing zod 4 through
+  an override broke `shadcn registry add`, so the CLI itself is upgraded
+- Refresh Astro to 7.4.11 in the site and in the Astro/Blog starter lockfiles,
+  clearing the high-severity zod and undici advisories from the distributed
+  production dependency tree
+- Override systeminformation to a patched 5.33.x release in the workspace
+
 ## [2.1.1] - 2026-09-28
 
 Patch release. It refreshes the Astro starter dependency tree after newly

@@ -96,7 +96,7 @@ Nothing is installed as an npm package. **The code is copied into your
 repository**, so you can edit it freely. That's the point.
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/action-button
 ```
 
 **That's it — no configuration.** No `components.json` entry, no registry
@@ -109,8 +109,8 @@ along automatically — 10 files for `action-button`.
 Register the namespace once, then use the short name everywhere:
 
 ```bash
-npx shadcn@4.17.0 registry add "@nasu=https://nasu726.github.io/Nasu-Stack/r/{name}.json"
-npx shadcn@4.17.0 add @nasu/action-button
+npx shadcn@4.23.0 registry add "@nasu=https://nasu726.github.io/Nasu-Stack/r/{name}.json"
+npx shadcn@4.23.0 add @nasu/action-button
 ```
 
 This also enables `shadcn search @nasu` and lets you point the namespace at a

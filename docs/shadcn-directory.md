@@ -5,7 +5,7 @@
 掲載が無くても、利用者は設定ゼロで部品を入れられます。
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/action-button
 ```
 
 公式文書にもそう書いてあります。

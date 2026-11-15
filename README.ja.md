@@ -92,7 +92,7 @@ npx https://github.com/Nasu726/Nasu-Stack/releases/download/v2.1.1/create-nasu-s
 中身を自由に書き換えられるのが目的なので、これが正しい配り方です。
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/action-button
 ```
 
 **これだけです。設定は要りません。** `components.json` への追記も、
@@ -105,8 +105,8 @@ npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button
 名前空間を 1 回登録すると、以後は短い名前で書けます。
 
 ```bash
-npx shadcn@4.17.0 registry add "@nasu=https://nasu726.github.io/Nasu-Stack/r/{name}.json"
-npx shadcn@4.17.0 add @nasu/action-button
+npx shadcn@4.23.0 registry add "@nasu=https://nasu726.github.io/Nasu-Stack/r/{name}.json"
+npx shadcn@4.23.0 add @nasu/action-button
 ```
 
 `shadcn search @nasu` が使えるようになり、フォークやミラーへ差し替えることも

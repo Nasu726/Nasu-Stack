@@ -7,7 +7,7 @@
 追加・削除後の focus です。その配列が product にとって正しいかは決めません。
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/field-array
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/field-array
 ```
 
 ## まず component を使う

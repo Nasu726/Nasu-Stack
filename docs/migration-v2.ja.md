@@ -39,9 +39,9 @@ copy済みのfileは利用者のapplicationが所有します。v2の挙動が�
 たとえば次の順です。
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --dry-run
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --diff
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --overwrite
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --dry-run
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --diff
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --overwrite
 ```
 
 最後のcommandは既存fileを置き換えます。applicationにとって安全な差分だと確認するまで

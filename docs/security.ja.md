@@ -3,7 +3,7 @@
 このリポジトリは、公開した時点で **他人のマシンでコードを実行する側** になります。
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/action-button   # 利用者の src/ にファイルが書かれる
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/action-button   # 利用者の src/ にファイルが書かれる
 npx https://…/create-nasu-stack.tgz my-site              # 利用者の手元でコードが動く
 ```
 

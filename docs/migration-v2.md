@@ -40,9 +40,9 @@ behavior you want, one item at a time:
 For example:
 
 ```bash
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --dry-run
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --diff
-npx shadcn@4.17.0 add Nasu726/Nasu-Stack/async-form --overwrite
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --dry-run
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --diff
+npx shadcn@4.23.0 add Nasu726/Nasu-Stack/async-form --overwrite
 ```
 
 The last command replaces existing files. Do not run it until the diff is safe
